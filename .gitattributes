@@ -4,10 +4,12 @@
 # LF e CRLF são apenas maneiras diferentes que um SO identifica fim de linha e início da próxima
 # LF -> \n  | CRLF -> \r\n são os caractere invisíveis
 * text=auto
-*.java text eol=lf # padrão de quebra de linha universal do Unix
+# padrão de quebra de linha universal do Unix
+*.java text eol=lf
 *.xml text eol=lf
 *.properties text eol=lf
 *.md text eol=lf
 *.yml text eol=lf
 mvnw text eol=lf
-*.cmd text eol=crlf # padrão de quebra de linha do windows
+ # padrão de quebra de linha do windows
+*.cmd text eol=crlf
