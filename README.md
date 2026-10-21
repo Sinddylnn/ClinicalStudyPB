@@ -68,6 +68,11 @@ Cada componente terá suas próprias instruções de instalação e execução. 
 
 É necessário um **JDK 21 completo**, incluindo os executáveis `java` e `javac`.
 
+Para iniciar a API, também é necessário PostgreSQL **17.11** disponível. Configure
+`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD`
+no terminal ou na IDE, conforme o banco preparado pela equipe. Os nomes estão em
+`.env.example`, que serve como referência e não é carregado automaticamente.
+
 O Maven Wrapper utiliza o Maven **3.9.16** e faz seu download na primeira execução. Nesse momento, também é necessário acesso à internet para obter as dependências.
 
 #### Linux/macOS 🐧🍎
@@ -104,26 +109,28 @@ O comando `verify` compila o projeto, executa os testes e gera o pacote da aplic
 
 O backend utiliza `http://localhost:8080`. A mensagem `Started ClinicalStudyPbApplication` confirma sua inicialização. Para encerrar, pressione `Ctrl+C` no terminal.
 
-#### Conferir uma resposta da API
+#### Conferir a proteção de acesso
 
 Com o servidor ligado, execute em outro terminal:
 
 ```bash
-curl -i -H 'Accept: application/json' http://localhost:8080/rota-inexistente
+curl -i -H 'Accept: application/json' http://localhost:8080/auth/sessao
 ```
 
 No PowerShell, utilize `curl.exe` no lugar de `curl`.
 
-Como o endereço consultado não existe, a resposta esperada é **HTTP 404**, com o seguinte conteúdo:
+Sem realizar login, a resposta esperada é **HTTP 401**, com o seguinte conteúdo:
 
 ```json
 {
-  "codigo": "RECURSO_NAO_ENCONTRADO",
-  "mensagem": "O recurso solicitado não foi encontrado."
+  "codigo": "AUTENTICACAO_NECESSARIA",
+  "mensagem": "Entre no sistema para realizar esta operação."
 }
 ```
 
-Esse exemplo permite conferir se o servidor está respondendo e se o tratamento de erros está funcionando.
+Esse exemplo confere se o servidor responde e exige autenticação. O fluxo completo
+de login, CSRF, consulta da sessão e logout está no [guia de autenticação](docs/autenticacao.md),
+junto das orientações para integrar a web e preparar os dados de teste.
 
 ### Aplicação web, aplicativo e banco de dados
 
@@ -135,7 +142,10 @@ As instruções de execução serão acrescentadas conforme as bases forem dispo
 | Mobile | Instalação das dependências, execução com Expo, configuração do Android e testes |
 | Banco de dados | Inicialização com Docker Compose, variáveis de ambiente e aplicação das migrações |
 
-Até que a integração com PostgreSQL seja adicionada, a base atual do backend pode ser executada sem banco de dados.
+O backend já utiliza PostgreSQL, JPA e Flyway. O Compose será disponibilizado na
+task de ambiente; até lá, a execução depende de uma instância PostgreSQL configurada.
+Os testes de segurança usam um repositório simulado e não exigem o banco, mas isso
+não substitui a validação das migrações e da persistência no ambiente real.
 
 
 ## Autores

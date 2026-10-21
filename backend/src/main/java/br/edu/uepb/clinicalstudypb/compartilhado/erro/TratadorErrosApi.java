@@ -8,6 +8,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AccountStatusException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -77,6 +81,33 @@ public class TratadorErrosApi extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErroApi> tratarRegraNegocio(RegraNegocioException exception) {
         return ResponseEntity.badRequest()
                 .body(new ErroApi(exception.getCodigo(), exception.getMessage()));
+    }
+
+    // <-------------------SEGURANÇA NOS CONTROLLERS E SERVIÇOS------------------->
+    /**
+     * Recusa o login sem revelar se o e-mail existe ou se a conta está desativada.
+     *
+     * @param exception falha identificada pelo mecanismo de autenticação
+     * @return resposta HTTP 401 com mensagem genérica de credenciais
+     * @since 1.0
+     */
+    @ExceptionHandler({BadCredentialsException.class, AccountStatusException.class})
+    public ResponseEntity<ErroApi> tratarAutenticacao(AuthenticationException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErroApi("CREDENCIAIS_INVALIDAS", "E-mail ou senha inválidos."));
+    }
+
+    /**
+     * Preserva o HTTP 403 quando a autorização é verificada dentro de um método.
+     *
+     * @param exception recusa de uma operação protegida
+     * @return resposta com a indicação de acesso negado
+     * @since 1.0
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErroApi> tratarAcessoNegado(AccessDeniedException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErroApi("ACESSO_NEGADO", "Seu perfil não permite esta operação."));
     }
 
     // <-------------------ERROS HTTP DO SPRING MVC------------------->
