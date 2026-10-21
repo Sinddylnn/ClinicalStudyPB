@@ -1,6 +1,7 @@
 // <-------------------MÓDULO DE ESTUDOS------------------->
 /**
- * Futuro módulo de estudos, organizado com api, service, repository e dominio.
+ * Módulo de estudos, com entidades e enums diretamente neste pacote.
+ * Controllers e DTOs ficam em api; regras em service; acesso ao banco em repository.
  * Na Sprint 1, cobre cadastro e listagem. Protocolo e mudanças de estado
  * pertencem às entregas seguintes do planejamento.
  *

@@ -30,7 +30,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @see TratadorErrosApi
  * @since 20/10/2026
  */
-@SpringBootTest
+@SpringBootTest(properties =
+        "spring.autoconfigure.exclude=" +
+        "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration," +
+        "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration," +
+        "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration")
 @AutoConfigureMockMvc
 @Import(TratadorErrosApiTest.ControllerDeTeste.class)
 class TratadorErrosApiTest {

@@ -1,8 +1,9 @@
 // <-------------------MÓDULO DE USUÁRIOS------------------->
 /**
- * Futuro módulo de contas e perfis, a ser implementado com a modelagem de Luiz.
- * Controllers e DTOs ficam em api; regras em service; acesso ao banco em
- * repository; entidades em dominio. Criar esses pacotes quando houver código.
+ * Módulo de contas e perfis, com a modelagem de Luiz.
+ * Entidades e enums ficam diretamente neste pacote. Controllers e DTOs ficam
+ * em api; regras em service; acesso ao banco em repository.
+ * Criar os subpacotes quando houver código.
  *
  * @author Georis
  * @version 1.0
