@@ -1,0 +1,26 @@
+# <-------------------DIRETÓRIOS PERSONALIZADOS------------------->
+Georis'/
+
+# <-------------------CONFIGURAÇÕES LOCAIS & IDE'S------------------->
+.env
+.env.*
+!.env.example
+!.env.*.example
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# <-------------------JAVA E MAVEN------------------->
+**/target/
+*.class
+*.log
+
+# <-------------------WEB E MOBILE------------------->
+**/node_modules/
+**/dist/
+**/coverage/
+**/.expo/
+**/playwright-report/
+**/test-results/
