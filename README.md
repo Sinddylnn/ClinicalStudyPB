@@ -125,6 +125,21 @@ Como o endereço consultado não existe, a resposta esperada é **HTTP 404**, co
 
 Esse exemplo permite conferir se o servidor está respondendo e se o tratamento de erros está funcionando.
 
+### Aplicação web
+
+Requer **Node.js 24.22.0** (ver `web/.nvmrc`).
+
+```bash
+cd web
+npm install
+npm run dev      # http://localhost:5173
+npm test         # testes com Vitest
+npm run lint     # ESLint
+npm run build    # build de produção
+```
+
+Em desenvolvimento, as chamadas para `/api` são encaminhadas ao backend em `http://localhost:8080` pelo proxy do Vite. Para usar outro endereço, copie `web/.env.example` para `web/.env` e altere `VITE_API_URL`.
+
 ### Aplicação web, aplicativo e banco de dados
 
 As instruções de execução serão acrescentadas conforme as bases forem disponibilizadas:
