@@ -1,0 +1,50 @@
+# <-------------------AMBIENTE LOCAL: POSTGRESQL------------------->
+# Banco local do ClinicalStudyPB (PostgreSQL 17.11, versão fixada no Kickoff).
+# Lê automaticamente o arquivo .env da raiz; sem ele, usa os valores padrão abaixo.
+# Usuário e senha reaproveitam SPRING_DATASOURCE_USERNAME e SPRING_DATASOURCE_PASSWORD,
+# para o backend e o banco usarem sempre os mesmos valores.
+#
+#   Banco de desenvolvimento:  docker compose up -d db
+#   Banco de testes:           docker compose --profile test up -d db-test
+
+services:
+  db:
+    image: postgres:17.11
+    container_name: clinicalstudypb-db
+    environment:
+      POSTGRES_DB: clinicalstudypb
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-clinicalstudypb}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-clinicalstudypb_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - clinicalstudypb-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Banco descartável para testes de integração e E2E.
+  # Fica em um perfil à parte e guarda os dados apenas em memória (tmpfs):
+  # ao parar o contêiner, tudo é apagado e o próximo teste começa do zero.
+  db-test:
+    image: postgres:17.11
+    container_name: clinicalstudypb-db-test
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: clinicalstudypb_test
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-clinicalstudypb}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-clinicalstudypb_dev}
+    ports:
+      - "${POSTGRES_TEST_PORT:-5433}:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  clinicalstudypb-pgdata:

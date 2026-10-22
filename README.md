@@ -68,6 +68,11 @@ Cada componente terá suas próprias instruções de instalação e execução. 
 
 É necessário um **JDK 21 completo**, incluindo os executáveis `java` e `javac`.
 
+Para iniciar a API, também é necessário PostgreSQL **17.11** disponível. Configure
+`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD`
+no terminal ou na IDE, conforme o banco preparado pela equipe. Os nomes estão em
+`.env.example`, que serve como referência e não é carregado automaticamente.
+
 O Maven Wrapper utiliza o Maven **3.9.16** e faz seu download na primeira execução. Nesse momento, também é necessário acesso à internet para obter as dependências.
 
 #### Linux/macOS 🐧🍎
@@ -104,26 +109,28 @@ O comando `verify` compila o projeto, executa os testes e gera o pacote da aplic
 
 O backend utiliza `http://localhost:8080`. A mensagem `Started ClinicalStudyPbApplication` confirma sua inicialização. Para encerrar, pressione `Ctrl+C` no terminal.
 
-#### Conferir uma resposta da API
+#### Conferir a proteção de acesso
 
 Com o servidor ligado, execute em outro terminal:
 
 ```bash
-curl -i -H 'Accept: application/json' http://localhost:8080/rota-inexistente
+curl -i -H 'Accept: application/json' http://localhost:8080/auth/sessao
 ```
 
 No PowerShell, utilize `curl.exe` no lugar de `curl`.
 
-Como o endereço consultado não existe, a resposta esperada é **HTTP 404**, com o seguinte conteúdo:
+Sem realizar login, a resposta esperada é **HTTP 401**, com o seguinte conteúdo:
 
 ```json
 {
-  "codigo": "RECURSO_NAO_ENCONTRADO",
-  "mensagem": "O recurso solicitado não foi encontrado."
+  "codigo": "AUTENTICACAO_NECESSARIA",
+  "mensagem": "Entre no sistema para realizar esta operação."
 }
 ```
 
-Esse exemplo permite conferir se o servidor está respondendo e se o tratamento de erros está funcionando.
+Esse exemplo confere se o servidor responde e exige autenticação. O fluxo completo
+de login, CSRF, consulta da sessão e logout está no [guia de autenticação](docs/autenticacao.md),
+junto das orientações para integrar a web e preparar os dados de teste.
 
 ### Aplicação web, aplicativo e banco de dados
 
@@ -133,9 +140,85 @@ As instruções de execução serão acrescentadas conforme as bases forem dispo
 |---|---|
 | Web | Instalação das dependências, execução com Vite, endereço da API e testes |
 | Mobile | Instalação das dependências, execução com Expo, configuração do Android e testes |
-| Banco de dados | Inicialização com Docker Compose, variáveis de ambiente e aplicação das migrações |
 
-Até que a integração com PostgreSQL seja adicionada, a base atual do backend pode ser executada sem banco de dados.
+O backend já utiliza PostgreSQL, JPA e Flyway.
+Os testes de segurança usam um repositório simulado e não exigem o banco, mas isso
+não substitui a validação das migrações e da persistência no ambiente real.
+
+
+### Banco de dados (PostgreSQL com Docker Compose)
+
+O banco local roda em um contêiner **PostgreSQL 17.11**, definido no `docker-compose.yml` da raiz. É necessário ter o Docker com o Compose v2 instalado (`docker compose version`). No Windows e no macOS, o Docker Desktop precisa estar aberto e com o motor em execução.
+
+#### Subir o banco
+
+A partir da raiz do repositório:
+
+```bash
+cp .env.example .env
+docker compose up -d db
+docker compose ps
+```
+
+No PowerShell, utilize `Copy-Item .env.example .env` no lugar de `cp`. Antes de subir pela primeira vez, defina a senha em `SPRING_DATASOURCE_PASSWORD` no `.env`: o PostgreSQL só lê a senha ao criar o volume. Sem o arquivo `.env`, o Compose usa `clinicalstudypb_dev`.
+
+O serviço está pronto quando `docker compose ps` mostra o estado `healthy`. Os dados ficam no volume `clinicalstudypb-pgdata` e continuam disponíveis depois de reiniciar o contêiner.
+
+| Item | Valor |
+|---|---|
+| Endereço | `localhost:5432` |
+| Banco | `clinicalstudypb` |
+| Usuário e senha | `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD` do `.env` |
+
+Para abrir um terminal SQL dentro do contêiner:
+
+```bash
+docker compose exec db psql -U clinicalstudypb -d clinicalstudypb
+```
+
+#### Executar o backend com o banco
+
+O Spring Boot não lê o `.env` automaticamente. Exporte as variáveis no terminal antes de iniciar o backend. O Flyway aplica as migrações na primeira execução.
+
+```bash
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/clinicalstudypb
+export SPRING_DATASOURCE_USERNAME=clinicalstudypb
+export SPRING_DATASOURCE_PASSWORD=<mesma senha do .env>
+cd backend
+./mvnw spring-boot:run
+```
+
+No PowerShell, utilize `$env:SPRING_DATASOURCE_URL="..."` para cada variável e `.\mvnw.cmd spring-boot:run`.
+
+Para conferir as migrações, consulte a tabela `flyway_schema_history`:
+
+```bash
+docker compose exec db psql -U clinicalstudypb -d clinicalstudypb -c "SELECT version, description, success FROM flyway_schema_history;"
+```
+
+#### Banco de testes
+
+Os testes de integração e o E2E usam um segundo banco, descartável, para não alterar os dados de desenvolvimento:
+
+```bash
+docker compose --profile test up -d db-test
+```
+
+Ele usa `localhost:5433` e o banco `clinicalstudypb_test`, com os mesmos usuário e senha. Os dados ficam apenas em memória: ao parar o contêiner (`docker compose --profile test down`), tudo é apagado.
+
+#### Parar e recomeçar do zero
+
+```bash
+docker compose down        # para os contêineres e mantém os dados
+docker compose down -v     # para e apaga o volume do banco de desenvolvimento
+```
+
+#### Problemas comuns
+
+- **Erro ao conectar na API do Docker (`dockerDesktopLinuxEngine`):** o Docker Desktop não está em execução. Abra-o e aguarde o motor iniciar antes de repetir o comando.
+- **Porta 5432 em uso:** já existe outro PostgreSQL na máquina. Defina `POSTGRES_PORT` no `.env` (por exemplo, `5434`) e ajuste a porta em `SPRING_DATASOURCE_URL`.
+- **Erro de autenticação depois de trocar a senha:** o PostgreSQL só lê a senha na criação do volume. Execute `docker compose down -v` e suba o banco novamente.
+- **Backend não conecta:** confirme que `docker compose ps` mostra `healthy` e que as três variáveis `SPRING_DATASOURCE_*` estão exportadas no mesmo terminal do backend.
 
 
 ## Autores

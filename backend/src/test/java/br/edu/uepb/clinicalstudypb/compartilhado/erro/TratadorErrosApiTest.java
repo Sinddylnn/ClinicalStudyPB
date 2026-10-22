@@ -1,5 +1,6 @@
 package br.edu.uepb.clinicalstudypb.compartilhado.erro;
 
+import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,9 +37,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration," +
         "org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration," +
         "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration")
-@AutoConfigureMockMvc
+// Os filtros são verificados nos testes de autenticação; aqui o foco é o contrato MVC
+@AutoConfigureMockMvc(addFilters = false)
 @Import(TratadorErrosApiTest.ControllerDeTeste.class)
 class TratadorErrosApiTest {
+
+    @MockitoBean
+    private UsuarioRepository usuarios;
 
     @Autowired
     private MockMvc mockMvc;
