@@ -1,10 +1,11 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
-// configurações do Vite
+// <-------------------CONFIGURAÇÃO DO VITE------------------->
 export default defineConfig({
   plugins: [react()],
 
+  // <-------------------SERVIDOR DE DESENVOLVIMENTO------------------->
   // Encaminha /api ao backend: web e API ficam na mesma origem,
   // o que evita problemas de CORS, cookie de sessão e CSRF em desenvolvimento
   server: {
