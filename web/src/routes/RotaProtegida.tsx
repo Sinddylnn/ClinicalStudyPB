@@ -7,8 +7,10 @@ type Props = {
   perfis?: PerfilUsuario[];
 };
 
-// Por enquanto libera todas as rotas; a verificação de sessão e perfil entra na T13
+// <-------------------CONTROLE DE ACESSO NAS ROTAS------------------->
+// Por enquanto libera todas as rotas; a verificação de sessão e perfil entra na T13.
+// O backend continua sendo quem garante o acesso — esconder rota não é segurança.
 export default function RotaProtegida({ perfis }: Props) {
-  void perfis;
+  void perfis;      // será usado na T13
   return <Outlet />;
 }

@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router';
 import App from './App';
 import './index.css';
 
+// <-------------------PONTO DE ENTRADA------------------->
+// BrowserRouter habilita a navegação por URL em toda a aplicação
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>

@@ -6,6 +6,7 @@ import NaoEncontrada from '../pages/NaoEncontrada';
 import PaginaProvisoria from '../pages/PaginaProvisoria';
 
 // <-------------------ROTAS DA APLICAÇÃO------------------->
+// Páginas provisórias serão substituídas nas tasks indicadas
 export default function AppRoutes() {
   return (
     <Routes>
