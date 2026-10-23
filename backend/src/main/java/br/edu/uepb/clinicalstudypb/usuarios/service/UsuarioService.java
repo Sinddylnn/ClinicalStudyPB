@@ -8,6 +8,7 @@ import br.edu.uepb.clinicalstudypb.usuarios.api.UsuarioCadastroEntrada;
 import br.edu.uepb.clinicalstudypb.usuarios.api.UsuarioEdicaoEntrada;
 import br.edu.uepb.clinicalstudypb.usuarios.api.UsuarioResposta;
 import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.http.HttpStatus;
@@ -54,10 +55,12 @@ public class UsuarioService {
      * @param entrada dados informados para a criação do usuário
      * @return dados públicos da conta cadastrada
      * @throws ConflitoException quando o e-mail já pertence a outro usuário
+     * @throws RegraNegocioException quando a senha ultrapassa o limite do BCrypt
      * @since 1.0
      */
     @Transactional
     public UsuarioResposta cadastrar(UsuarioCadastroEntrada entrada) {
+        validarTamanhoSenha(entrada.senha());
         String email = normalizarEmail(entrada.email());
 
         validarEmailDisponivel(email, null);
@@ -105,6 +108,7 @@ public class UsuarioService {
      */
     @Transactional
     public UsuarioResposta editar(Long id, UsuarioEdicaoEntrada entrada) {
+        bloquearAdministradoresAtivos();
         Usuario usuario = buscarUsuario(id);
         String email = normalizarEmail(entrada.email());
 
@@ -133,6 +137,7 @@ public class UsuarioService {
      */
     @Transactional
     public UsuarioResposta desativar(Long id) {
+        bloquearAdministradoresAtivos();
         Usuario usuario = buscarUsuario(id);
 
         validarDesativacaoDoUltimoAdministrador(usuario);
@@ -161,6 +166,35 @@ public class UsuarioService {
     }
 
     // <-------------------REGRAS AUXILIARES------------------->
+
+    /**
+     * Recusa senhas que o BCrypt não consegue codificar integralmente.
+     *
+     * @param senha senha recebida e já verificada como não vazia pelo controller
+     * @throws RegraNegocioException quando a senha ultrapassa 72 bytes em UTF-8
+     * @since 1.0
+     */
+    private void validarTamanhoSenha(String senha) {
+        // Acentos podem ocupar mais de um byte, por isso não basta contar caracteres
+        if (senha.getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new RegraNegocioException(
+                    "SENHA_MUITO_LONGA",
+                    "A senha deve ter no máximo 72 bytes em UTF-8."
+            );
+        }
+    }
+
+    /**
+     * Serializa alterações que poderiam deixar o sistema sem administradores ativos.
+     *
+     * <p>O bloqueio pertence à transação e acontece antes de carregar a conta-alvo.
+     * Assim, duas remoções simultâneas não decidem com a mesma contagem antiga.</p>
+     *
+     * @since 1.0
+     */
+    private void bloquearAdministradoresAtivos() {
+        usuarios.bloquearAtivosPorPerfil(PerfilUsuario.ADMINISTRADOR);
+    }
 
     /**
      * Localiza um usuário pelo identificador.

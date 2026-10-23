@@ -2,12 +2,14 @@ package br.edu.uepb.clinicalstudypb.compartilhado.erro;
 
 import java.util.Map;
 import java.util.TreeMap;
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -83,7 +85,7 @@ public class TratadorErrosApi extends ResponseEntityExceptionHandler {
                 .body(new ErroApi(exception.getCodigo(), exception.getMessage()));
     }
 
-      /**
+    /**
      * Converte um conflito com o estado atual dos dados em uma resposta HTTP 409.
      *
      * @param exception exceção com o código e a mensagem do conflito
@@ -95,6 +97,26 @@ public class TratadorErrosApi extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErroApi> tratarConflito(ConflitoException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErroApi(exception.getCodigo(), exception.getMessage()));
+    }
+
+    /**
+     * Preserva o conflito de e-mail quando cadastros simultâneos chegam ao banco.
+     *
+     * @param exception violação de integridade informada pela persistência
+     * @return conflito de e-mail ou erro interno para uma restrição não reconhecida
+     * @since 1.0
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErroApi> tratarIntegridade(DataIntegrityViolationException exception) {
+        // A consulta prévia não impede duas transações de tentarem o mesmo e-mail
+        for (Throwable causa = exception; causa != null; causa = causa.getCause()) {
+            if (causa instanceof ConstraintViolationException violacao
+                    && "uk_usuarios_email".equals(violacao.getConstraintName())) {
+                return tratarConflito(new ConflitoException(
+                        "EMAIL_JA_CADASTRADO", "Já existe um usuário cadastrado com este e-mail."));
+            }
+        }
+        return tratarErroInesperado(exception);
     }
 
     // <-------------------SEGURANÇA NOS CONTROLLERS E SERVIÇOS------------------->
