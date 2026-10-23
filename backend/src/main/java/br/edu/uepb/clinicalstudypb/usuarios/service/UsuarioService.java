@@ -1,5 +1,6 @@
 package br.edu.uepb.clinicalstudypb.usuarios.service;
 
+import br.edu.uepb.clinicalstudypb.compartilhado.erro.ConflitoException;
 import br.edu.uepb.clinicalstudypb.compartilhado.erro.RegraNegocioException;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
@@ -52,7 +53,7 @@ public class UsuarioService {
      *
      * @param entrada dados informados para a criação do usuário
      * @return dados públicos da conta cadastrada
-     * @throws RegraNegocioException quando o e-mail já pertence a outro usuário
+     * @throws ConflitoException quando o e-mail já pertence a outro usuário
      * @since 1.0
      */
     @Transactional
@@ -97,8 +98,9 @@ public class UsuarioService {
      * @param id identificador do usuário que será alterado
      * @param entrada novos dados da conta
      * @return dados atualizados do usuário
-     * @throws RegraNegocioException quando o e-mail já pertence a outra conta
-     *         ou quando a alteração retiraria o perfil do último administrador ativo
+     * @throws ConflitoException quando o e-mail já pertence a outra conta
+     * @throws RegraNegocioException quando a alteração retiraria o perfil
+     *         do último administrador ativo
      * @since 1.0
      */
     @Transactional
@@ -181,7 +183,7 @@ public class UsuarioService {
      *
      * @param email e-mail normalizado que será utilizado
      * @param idUsuarioAtual identificador da conta em edição ou {@code null} no cadastro
-     * @throws RegraNegocioException quando o e-mail pertence a outra conta
+     * @throws ConflitoException quando o e-mail pertence a outra conta
      * @since 1.0
      */
     private void validarEmailDisponivel(String email, Long idUsuarioAtual) {
@@ -191,7 +193,7 @@ public class UsuarioService {
                             && usuarioEncontrado.getId().equals(idUsuarioAtual);
 
             if (!pertenceAoUsuarioAtual) {
-                throw new RegraNegocioException(
+                throw new ConflitoException(
                         "EMAIL_JA_CADASTRADO",
                         "Já existe um usuário cadastrado com este e-mail."
                 );

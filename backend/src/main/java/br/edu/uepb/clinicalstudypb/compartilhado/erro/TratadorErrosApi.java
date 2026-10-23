@@ -83,6 +83,20 @@ public class TratadorErrosApi extends ResponseEntityExceptionHandler {
                 .body(new ErroApi(exception.getCodigo(), exception.getMessage()));
     }
 
+      /**
+     * Converte um conflito com o estado atual dos dados em uma resposta HTTP 409.
+     *
+     * @param exception exceção com o código e a mensagem do conflito
+     * @return resposta com o motivo do conflito
+     * @see ConflitoException
+     * @since 1.0
+     */
+    @ExceptionHandler(ConflitoException.class)
+    public ResponseEntity<ErroApi> tratarConflito(ConflitoException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErroApi(exception.getCodigo(), exception.getMessage()));
+    }
+
     // <-------------------SEGURANÇA NOS CONTROLLERS E SERVIÇOS------------------->
     /**
      * Recusa o login sem revelar se o e-mail existe ou se a conta está desativada.
