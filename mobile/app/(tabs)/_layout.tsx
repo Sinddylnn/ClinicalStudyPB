@@ -40,15 +40,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="solicitacoes"
-        options={{
-          title: 'Pedidos',
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="cube" size={22} color={color ? String(color) : '#0ea5e9'} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="perfil"
         options={{
           title: 'Perfil',
