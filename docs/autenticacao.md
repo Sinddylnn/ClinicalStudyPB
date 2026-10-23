@@ -42,7 +42,7 @@ uma senha de login acima desse limite é recusada, inclusive quando houver acent
 | Situação | HTTP | Código JSON |
 |---|---|---|
 | Campos de login inválidos | `400` | `VALIDACAO_INVALIDA`, com `errosCampos` |
-| E-mail ausente, senha errada ou conta desativada no login | `401` | `CREDENCIAIS_INVALIDAS` |
+| E-mail não cadastrado, senha errada ou conta desativada no login | `401` | `CREDENCIAIS_INVALIDAS` |
 | Consulta protegida sem sessão válida | `401` | `AUTENTICACAO_NECESSARIA` |
 | Perfil sem permissão | `403` | `ACESSO_NEGADO` |
 | Alteração sem CSRF ou com token inválido | `403` | `CSRF_INVALIDO` |
@@ -63,8 +63,12 @@ receber `403` mesmo sem estar autenticado. Um preflight de origem não permitida
 O filtro controla o perfil. Na task de estudos, o serviço e o repositório também
 precisam limitar o pesquisador aos estudos de sua responsabilidade. O responsável
 por um novo estudo vem do identificador autenticado, nunca de um valor livre do formulário.
-As rotas de gestão e estudos serão implementadas nas respectivas tasks; as permissões
-por si só não criam esses endpoints.
+O coordenador também deverá ver somente os estudos aos quais estiver vinculado,
+conforme a decisão D04 atualizada no Kickoff. Essa filtragem e o vínculo ainda
+dependem da implementação de estudos; a permissão por perfil não os substitui.
+As rotas de gestão de usuários já estão implementadas e documentadas no
+[guia do OpenAPI](openapi.md#testar-a-gestão-de-usuários). As de estudos ainda dependem
+da task correspondente; as permissões por si só não criam esses endpoints.
 
 A conta é relida por identificador nas requisições autenticadas. Desativação encerra
 o acesso na próxima requisição; mudança de perfil atualiza as permissões da sessão.
@@ -103,6 +107,9 @@ SameSite=Lax; uma implantação futura em sites diferentes exige revisar esse ar
 As sessões ficam em memória: reiniciar o backend exige novo login.
 
 ## Conferir o fluxo manualmente
+
+Também é possível usar a página Swagger do backend seguindo o
+[guia de OpenAPI](openapi.md). Os passos abaixo usam `curl` e o mesmo contrato.
 
 Com o backend e o PostgreSQL ligados, começar por:
 

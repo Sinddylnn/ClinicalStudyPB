@@ -132,6 +132,18 @@ Esse exemplo confere se o servidor responde e exige autenticação. O fluxo comp
 de login, CSRF, consulta da sessão e logout está no [guia de autenticação](docs/autenticacao.md),
 junto das orientações para integrar a web e preparar os dados de teste.
 
+#### Consultar a documentação da API
+
+Com o backend ligado, acesse [Swagger UI](http://localhost:8080/swagger-ui.html).
+A página apresenta as operações de autenticação e gestão de usuários, seus campos e
+respostas. O contrato também está disponível em [JSON](http://localhost:8080/v3/api-docs)
+e [YAML](http://localhost:8080/v3/api-docs.yaml).
+
+O [guia do OpenAPI e Swagger](docs/openapi.md) explica como testar login, logout e
+gestão de usuários com sessão e CSRF. As [decisões e versões](docs/decisoes-e-versoes.md) reúnem as
+escolhas do Kickoff e distinguem o que já existe do que ainda será implementado.
+Esses documentos serão complementados conforme novas operações forem entregues.
+
 ### Aplicação web, aplicativo e banco de dados
 
 As instruções de execução serão acrescentadas conforme as bases forem disponibilizadas:
@@ -183,11 +195,12 @@ O Spring Boot não lê o `.env` automaticamente. Exporte as variáveis no termin
 ```bash
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/clinicalstudypb
 export SPRING_DATASOURCE_USERNAME=clinicalstudypb
-export SPRING_DATASOURCE_PASSWORD=<mesma senha do .env>
+export SPRING_DATASOURCE_PASSWORD='SUBSTITUA_PELA_MESMA_SENHA_DO_ENV'
 cd backend
 ./mvnw spring-boot:run
 ```
 
+Substitua o texto entre aspas pela senha definida no seu `.env`, mantendo as aspas.
 No PowerShell, utilize `$env:SPRING_DATASOURCE_URL="..."` para cada variável e `.\mvnw.cmd spring-boot:run`.
 
 Para conferir as migrações, consulte a tabela `flyway_schema_history`:

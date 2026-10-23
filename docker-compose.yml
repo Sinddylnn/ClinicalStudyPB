@@ -1,5 +1,5 @@
 # <-------------------AMBIENTE LOCAL: POSTGRESQL------------------->
-# Banco local do ClinicalStudyPB (PostgreSQL 17.11, versão fixada no Kickoff).
+# Banco local do ClinicalStudyPB (PostgreSQL 17).
 # Lê automaticamente o arquivo .env da raiz; sem ele, usa os valores padrão abaixo.
 # Usuário e senha reaproveitam SPRING_DATASOURCE_USERNAME e SPRING_DATASOURCE_PASSWORD,
 # para o backend e o banco usarem sempre os mesmos valores.

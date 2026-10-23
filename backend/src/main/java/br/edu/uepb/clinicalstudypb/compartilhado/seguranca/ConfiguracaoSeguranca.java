@@ -158,6 +158,9 @@ public class ConfiguracaoSeguranca {
                 .exceptionHandling(config -> config.authenticationEntryPoint(erros).accessDeniedHandler(erros))
                 .authorizeHttpRequests(config -> config
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        // A consulta da documentação é pública; as operações mantêm suas proteções
+                        .requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs.yaml",
+                                "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/auth/csrf").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/auth/sessao").authenticated()
