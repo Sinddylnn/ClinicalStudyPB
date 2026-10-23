@@ -75,6 +75,40 @@ public class Usuario {
         this.ativo = true;
     }
 
+    // <-------------------Alterações da conta------------------->
+
+    /**
+     * Atualiza os dados editáveis do usuário.
+     *
+     * @param nome nome atualizado do usuário
+     * @param email endereço de e-mail atualizado
+     * @param perfil perfil de acesso atualizado
+     * @since 1.0
+     */
+    public void atualizar(String nome, String email, PerfilUsuario perfil) {
+        this.nome = nome;
+        this.email = email;
+        this.perfil = perfil;
+    }
+
+    /**
+     * Desativa a conta sem excluir seu registro do banco.
+     *
+     * @since 1.0
+     */
+    public void desativar() {
+        this.ativo = false;
+    }
+
+    /**
+     * Reativa uma conta anteriormente desativada.
+     *
+     * @since 1.0
+     */
+    public void reativar() {
+        this.ativo = true;
+    }
+
     // <-------------------Métodos de acesso------------------->
 
     /**

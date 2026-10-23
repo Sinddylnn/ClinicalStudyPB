@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 
 // <-------------------CONSULTA DE USUÁRIOS------------------->
 /**
@@ -26,4 +27,13 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Query(value = "SELECT * FROM usuarios WHERE LOWER(BTRIM(email)) = LOWER(BTRIM(:email))",
             nativeQuery = true)
     Optional<Usuario> buscarPorEmail(@Param("email") String email);
+
+    /**
+     * Conta quantos usuários ativos possuem determinado perfil.
+     *
+     * @param perfil perfil usado na contagem
+     * @return quantidade de usuários ativos com o perfil informado
+     * @since 1.0
+     */
+    long countByPerfilAndAtivoTrue(PerfilUsuario perfil);
 }
