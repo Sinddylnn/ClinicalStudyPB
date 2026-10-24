@@ -1,0 +1,55 @@
+<mxfile host="Electron">
+  <diagram id="01_visao_geral" name="Visão geral da arquitetura">
+    <mxGraphModel dx="1472" dy="814" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="960" pageHeight="620" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;fillColor=#EAF1F5;strokeColor=#465867;strokeWidth=2;fontColor=#17212B;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Web&#xa;React e TypeScript" vertex="1">
+          <mxGeometry height="115" width="340" x="40" y="103" as="geometry" />
+        </mxCell>
+        <mxCell id="3" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;fillColor=#EAF1F5;strokeColor=#465867;strokeWidth=2;fontColor=#17212B;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Aplicativo do participante&#xa;React Native e Expo" vertex="1">
+          <mxGeometry height="115" width="340" x="40" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="4" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="API REST compartilhada&#xa;Java e Spring Boot&#xa;Um backend modular" vertex="1">
+          <mxGeometry height="145" width="390" x="530" y="235" as="geometry" />
+        </mxCell>
+        <mxCell id="5" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=classic;endFill=1;startArrow=classic;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="455" y="158" />
+              <mxPoint x="455" y="275" />
+            </Array>
+            <mxPoint x="380" y="158" as="sourcePoint" />
+            <mxPoint x="530" y="275" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=classic;endFill=1;startArrow=classic;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="455" y="448" />
+              <mxPoint x="455" y="340" />
+            </Array>
+            <mxPoint x="380" y="448" as="sourcePoint" />
+            <mxPoint x="530" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7" parent="1" style="shape=text;rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;strokeWidth=2;fontColor=#17212B;fontFamily=Arial;fontSize=22;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="HTTP e JSON&#xa;HTTPS no ambiente compartilhado" vertex="1">
+          <mxGeometry height="66" width="360" x="35" y="263" as="geometry" />
+        </mxCell>
+        <mxCell id="8" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;fillColor=#E3E4FF;strokeColor=#465867;strokeWidth=2;fontColor=#17212B;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="PostgreSQL&#xa;Persistência dos dados" vertex="1">
+          <mxGeometry height="95" width="310" x="576" y="495" as="geometry" />
+        </mxCell>
+        <mxCell id="9" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=classic;endFill=1;startArrow=classic;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="727" y="380" as="sourcePoint" />
+            <mxPoint x="727" y="495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="10" parent="1" style="shape=text;rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;strokeWidth=2;fontColor=#17212B;fontFamily=Arial;fontSize=21;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="JPA e JDBC&#xa;no backend" vertex="1">
+          <mxGeometry height="65" width="260" x="525" y="396" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
