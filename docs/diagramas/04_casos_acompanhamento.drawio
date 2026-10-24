@@ -1,6 +1,6 @@
 <mxfile host="Electron">
   <diagram id="04_casos_acompanhamento" name="Casos de uso de acompanhamento">
-    <mxGraphModel dx="2133" dy="1180" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="900" math="0" shadow="0">
+    <mxGraphModel dx="2133" dy="1180" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="1010" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -193,6 +193,10 @@
             <mxPoint x="790" y="610" as="targetPoint" />
           </mxGeometry>
         </mxCell>
+        <mxCell id="pr-1" parent="1" style="shape=note;whiteSpace=wrap;html=0;backgroundOutline=1;size=18;fillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;fontFamily=Arial;fontSize=17;fontColor=#17212B;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;" value="Todas as ações do Coordenador do estudo se limitam aos estudos vinculados a ele." vertex="1"><mxGeometry height="150" width="195" x="5" y="440" as="geometry" /></mxCell>
+        <mxCell id="pr-2" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=none;dashed=1;" value=""><mxGeometry relative="1" as="geometry"><mxPoint x="100" y="440" as="sourcePoint" /><mxPoint x="100" y="417" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="pr-3" parent="1" style="shape=note;whiteSpace=wrap;html=0;backgroundOutline=1;size=18;fillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;fontFamily=Arial;fontSize=17;fontColor=#17212B;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;" value="O Pesquisador consulta histórico, painel e relatórios somente dos próprios estudos." vertex="1"><mxGeometry height="150" width="195" x="5" y="845" as="geometry" /></mxCell>
+        <mxCell id="pr-4" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=none;dashed=1;" value=""><mxGeometry relative="1" as="geometry"><mxPoint x="100" y="845" as="sourcePoint" /><mxPoint x="100" y="817" as="targetPoint" /></mxGeometry></mxCell>
       </root>
     </mxGraphModel>
   </diagram>

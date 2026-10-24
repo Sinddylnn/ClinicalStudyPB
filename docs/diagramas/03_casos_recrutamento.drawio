@@ -142,6 +142,8 @@
         <mxCell id="rev-33" connectable="0" parent="rev-32" style="edgeLabel;html=0;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Arial;fontSize=18;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="{próprios, leitura}" vertex="1">
           <mxGeometry relative="1" x="0" as="geometry"><mxPoint x="0" y="-22" as="offset" /></mxGeometry>
         </mxCell>
+        <mxCell id="pr-1" parent="1" style="shape=note;whiteSpace=wrap;html=0;backgroundOutline=1;size=18;fillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;fontFamily=Arial;fontSize=17;fontColor=#17212B;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;" value="Todas as ações do Coordenador do estudo se limitam aos estudos vinculados a ele." vertex="1"><mxGeometry height="150" width="220" x="15" y="540" as="geometry" /></mxCell>
+        <mxCell id="pr-2" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=none;dashed=1;" value=""><mxGeometry relative="1" as="geometry"><mxPoint x="125" y="540" as="sourcePoint" /><mxPoint x="115" y="492" as="targetPoint" /></mxGeometry></mxCell>
       </root>
     </mxGraphModel>
   </diagram>
