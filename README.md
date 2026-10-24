@@ -132,6 +132,21 @@ Esse exemplo confere se o servidor responde e exige autenticação. O fluxo comp
 de login, CSRF, consulta da sessão e logout está no [guia de autenticação](docs/autenticacao.md),
 junto das orientações para integrar a web e preparar os dados de teste.
 
+### Aplicação web
+
+Requer **Node.js 24.22.0** (ver `web/.nvmrc`).
+
+```bash
+cd web
+npm install
+npm run dev      # http://localhost:5173
+npm test         # testes com Vitest
+npm run lint     # ESLint
+npm run build    # build de produção
+```
+
+Em desenvolvimento, as chamadas para `/api` são encaminhadas ao backend em `http://localhost:8080` pelo proxy do Vite, que remove o prefixo antes do envio (`/api/usuarios` chega ao backend como `/usuarios`). O prefixo existe só na web, para separar as chamadas à API das rotas de tela com o mesmo nome, como `/usuarios` e `/estudos`. Para usar outro endereço, copie `web/.env.example` para `web/.env` e altere `VITE_API_URL`.
+
 ### Aplicação web, aplicativo e banco de dados
 
 As instruções de execução serão acrescentadas conforme as bases forem disponibilizadas:
