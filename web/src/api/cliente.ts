@@ -1,4 +1,4 @@
-import axios, { isAxiosError, type InternalAxiosRequestConfig } from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { converterErro } from './erros';
 
 // <-------------------CLIENTE HTTP------------------->
@@ -27,22 +27,32 @@ const METODOS_DE_ALTERACAO = ['post', 'put', 'patch', 'delete'];
 // Login e logout renovam a sessão e descartam o token anterior
 const ROTAS_QUE_RENOVAM_CSRF = ['/auth/login', '/auth/logout'];
 
-let tokenCsrf: CsrfResposta | null = null;
-
-// Requisições já repetidas após CSRF_INVALIDO, para não repetir em loop
-const repetidasPorCsrf = new WeakSet<InternalAxiosRequestConfig>();
-
-async function obterTokenCsrf(): Promise<CsrfResposta> {
-  if (!tokenCsrf) {
-    const { data } = await api.get<CsrfResposta>('/auth/csrf');
-    tokenCsrf = data;
+// Marca a requisição já repetida após CSRF_INVALIDO, para não repetir em loop
+// (o Axios cria um novo objeto de configuração a cada api.request)
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    repetidaPorCsrf?: boolean;
   }
-  return tokenCsrf;
+}
+
+// Guarda a consulta (e não só o token): alterações simultâneas
+// aguardam a mesma chamada a /auth/csrf em vez de fazer uma cada
+let consultaCsrf: Promise<CsrfResposta> | null = null;
+
+function obterTokenCsrf(): Promise<CsrfResposta> {
+  consultaCsrf ??= api
+    .get<CsrfResposta>('/auth/csrf')
+    .then(({ data }) => data)
+    .catch((erro: unknown) => {
+      consultaCsrf = null; // permite tentar de novo após uma falha
+      throw erro;
+    });
+  return consultaCsrf;
 }
 
 /** Força uma nova consulta do token na próxima alteração. */
 export function descartarTokenCsrf() {
-  tokenCsrf = null;
+  consultaCsrf = null;
 }
 
 // <-------------------INTERCEPTOR DE REQUISIÇÕES------------------->
@@ -80,10 +90,9 @@ api.interceptors.response.use(
     const config = isAxiosError(erro) ? erro.config : undefined;
 
     // Token vencido ou descartado: busca outro e repete a requisição uma única vez
-    if (erroRequisicao.codigo === 'CSRF_INVALIDO' && config && !repetidasPorCsrf.has(config)) {
-      repetidasPorCsrf.add(config);
+    if (erroRequisicao.codigo === 'CSRF_INVALIDO' && config && !config.repetidaPorCsrf) {
       descartarTokenCsrf();
-      return api.request(config);
+      return api.request({ ...config, repetidaPorCsrf: true });
     }
 
     // No login, 401 significa credenciais inválidas, e não sessão expirada

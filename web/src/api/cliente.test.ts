@@ -124,6 +124,39 @@ describe('token CSRF', () => {
 
     expect(resposta.status).toBe(201);
   });
+
+  it('repete no máximo uma vez quando CSRF_INVALIDO persiste', async () => {
+    let numero = 0;
+    const chamadas = simularBackend({
+      'GET /auth/csrf': () => csrf(`token-${++numero}`)({} as InternalAxiosRequestConfig),
+      'POST /usuarios': () => ({
+        status: 403,
+        data: { codigo: 'CSRF_INVALIDO', mensagem: 'Atualize a proteção.' },
+      }),
+    });
+    // Trava de segurança do teste: interrompe se houver repetição sem fim
+    const adapter = api.defaults.adapter as (c: InternalAxiosRequestConfig) => Promise<AxiosResponse>;
+    api.defaults.adapter = (config) => {
+      if (chamadas.length > 20) return Promise.reject(new Error('repetição sem fim'));
+      return adapter(config);
+    };
+
+    const erro = await api.post('/usuarios', {}).catch((e) => e);
+
+    expect(erro).toMatchObject({ status: 403, codigo: 'CSRF_INVALIDO' });
+    expect(chamadas.filter((c) => c.method === 'post')).toHaveLength(2);
+  });
+
+  it('busca o token uma única vez em alterações simultâneas', async () => {
+    const chamadas = simularBackend({
+      'GET /auth/csrf': csrf('token-1'),
+      'POST /usuarios': () => ({ status: 201 }),
+    });
+
+    await Promise.all([api.post('/usuarios', {}), api.post('/usuarios', {})]);
+
+    expect(chamadas.filter((c) => c.url === '/auth/csrf')).toHaveLength(1);
+  });
 });
 
 // <-------------------TRATAMENTO DE SESSÃO------------------->
