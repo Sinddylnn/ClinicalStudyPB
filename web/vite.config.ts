@@ -7,10 +7,14 @@ export default defineConfig({
 
   // <-------------------SERVIDOR DE DESENVOLVIMENTO------------------->
   // Encaminha /api ao backend: web e API ficam na mesma origem,
-  // o que evita problemas de CORS, cookie de sessão e CSRF em desenvolvimento
+  // o que evita problemas de CORS, cookie de sessão e CSRF em desenvolvimento.
+  // O backend não usa o prefixo: /api/usuarios chega lá como /usuarios
   server: {
     proxy: {
-      '/api': 'http://localhost:8080',
+      '/api': {
+        target: 'http://localhost:8080',
+        rewrite: (caminho) => caminho.replace(/^\/api/, ''),
+      },
     },
   },
 

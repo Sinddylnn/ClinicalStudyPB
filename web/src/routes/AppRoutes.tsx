@@ -26,9 +26,12 @@ export default function AppRoutes() {
         <Route path="/usuarios/:id/editar" element={<PaginaProvisoria titulo="Editar usuário" task="T14" />} />
       </Route>
 
-      {/* <-------------------PESQUISADOR-------------------> */}
-      <Route element={<RotaProtegida perfis={['PESQUISADOR']} />}>
+      {/* <-------------------ESTUDOS-------------------> */}
+      {/* Pesquisador e coordenador consultam; só o pesquisador cadastra (matriz 5.1) */}
+      <Route element={<RotaProtegida perfis={['PESQUISADOR', 'COORDENADOR']} />}>
         <Route path="/estudos" element={<PaginaProvisoria titulo="Estudos" task="T17" />} />
+      </Route>
+      <Route element={<RotaProtegida perfis={['PESQUISADOR']} />}>
         <Route path="/estudos/novo" element={<PaginaProvisoria titulo="Novo estudo" task="T17" />} />
       </Route>
 
