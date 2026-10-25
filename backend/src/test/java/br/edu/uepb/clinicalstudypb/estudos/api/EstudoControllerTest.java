@@ -153,6 +153,64 @@ class EstudoControllerTest {
     }
 
     /**
+     * Aceita os valores mínimos e máximos permitidos no cadastro.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void aceitaLimitesValidosDoCadastro() throws Exception {
+    var entrada = entrada();
+    entrada.put("titulo", "a".repeat(150));
+    entrada.put("objetivo", "b".repeat(2000));
+    entrada.put("limiteParticipantes", 1);
+    mvc.perform(como(1, post("/estudos"))
+                    .content(json.writeValueAsString(entrada)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.titulo").value("a".repeat(150)))
+            .andExpect(jsonPath("$.objetivo").value("b".repeat(2000)))
+            .andExpect(jsonPath("$.limiteParticipantes").value(1));
+    }
+
+    /**
+     * Permite cadastrar estudo com datas passadas quando o período é válido.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void aceitaDatasPassadasNoCadastro() throws Exception {
+        var entrada = entrada();
+        entrada.put("dataInicio", "2025-01-10");
+        entrada.put("dataFim", "2025-02-10");
+
+        mvc.perform(como(1, post("/estudos"))
+                        .content(json.writeValueAsString(entrada)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.dataInicio").value("2025-01-10"))
+                .andExpect(jsonPath("$.dataFim").value("2025-02-10"));
+    }
+
+    /**
+     * Remove espaços das extremidades do título e do objetivo no cadastro.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void normalizaTituloEObjetivoNoCadastro() throws Exception {
+        var entrada = entrada();
+        entrada.put("titulo", "  Estudo com espaços  ");
+        entrada.put("objetivo", "  Objetivo fictício para teste.  ");
+
+        mvc.perform(como(1, post("/estudos"))
+                        .content(json.writeValueAsString(entrada)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.titulo").value("Estudo com espaços"))
+                .andExpect(jsonPath("$.objetivo").value("Objetivo fictício para teste."));
+    }
+
+    /**
      * Recusa contas com perfil diferente e coordenadores desativados nas duas operações.
      *
      * @param id identificador de uma conta inapta

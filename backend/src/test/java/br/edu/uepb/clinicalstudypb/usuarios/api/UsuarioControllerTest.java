@@ -108,6 +108,115 @@ class UsuarioControllerTest {
         });
     }
 
+    // <-------------------VALIDAÇÕES DO CADASTRO------------------->
+
+    /**
+     * Recusa o cadastro quando um campo obrigatório não é informado.
+     *
+     * @param campo campo que deve apresentar erro de validação
+     * @param entrada dados enviados no cadastro
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @MethodSource("camposObrigatoriosCadastro")
+    void recusaCamposObrigatoriosNoCadastro(
+            String campo,
+            UsuarioCadastroEntrada entrada) throws Exception {
+
+        mvc.perform(comoAdmin(post("/usuarios"))
+                        .content(json.writeValueAsString(entrada)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errosCampos." + campo).exists());
+
+        verify(usuarios, never()).save(any());
+    }
+
+    /**
+     * Fornece exemplos de campos obrigatórios ausentes no cadastro.
+     *
+     * @return campos e entradas inválidas
+     * @since 1.0
+     */
+    static Stream<Arguments> camposObrigatoriosCadastro() {
+        return Stream.of(
+                Arguments.of("nome",
+                        new UsuarioCadastroEntrada(
+                                " ",
+                                "nova@example.test",
+                                "SenhaFicticia123",
+                                PerfilUsuario.PESQUISADOR
+                        )),
+                Arguments.of("email",
+                        new UsuarioCadastroEntrada(
+                                "Pessoa fictícia",
+                                " ",
+                                "SenhaFicticia123",
+                                PerfilUsuario.PESQUISADOR
+                        )),
+                Arguments.of("senha",
+                        new UsuarioCadastroEntrada(
+                                "Pessoa fictícia",
+                                "nova@example.test",
+                                " ",
+                                PerfilUsuario.PESQUISADOR
+                        )),
+                Arguments.of("perfil",
+                        new UsuarioCadastroEntrada(
+                                "Pessoa fictícia",
+                                "nova@example.test",
+                                "SenhaFicticia123",
+                                null
+                        ))
+        );
+    }
+
+    /**
+     * Recusa o cadastro quando o formato do e-mail é inválido.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void recusaEmailInvalidoNoCadastro() throws Exception {
+        mvc.perform(comoAdmin(post("/usuarios"))
+                        .content(json.writeValueAsString(
+                                new UsuarioCadastroEntrada(
+                                        "Pessoa fictícia",
+                                        "email-invalido",
+                                        "SenhaFicticia123",
+                                        PerfilUsuario.PESQUISADOR
+                                ))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errosCampos.email").exists());
+
+        verify(usuarios, never()).save(any());
+    }
+
+    /**
+     * Normaliza nome e e-mail antes de salvar o novo usuário.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void normalizaNomeEEmailNoCadastro() throws Exception {
+        mvc.perform(comoAdmin(post("/usuarios"))
+                        .content(json.writeValueAsString(
+                                new UsuarioCadastroEntrada(
+                                        "  Pessoa Teste  ",
+                                        "  NOVA@EXAMPLE.TEST  ",
+                                        "SenhaFicticia123",
+                                        PerfilUsuario.PESQUISADOR
+                                ))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nome").value("Pessoa Teste"))
+                .andExpect(jsonPath("$.email").value("nova@example.test"));
+
+        assertThat(contas.get(10L).getNome()).isEqualTo("Pessoa Teste");
+        assertThat(contas.get(10L).getEmail()).isEqualTo("nova@example.test");
+    }
+
     /**
      * Confere o limite em bytes, inclusive quando há acentos na senha.
      *
@@ -278,6 +387,73 @@ class UsuarioControllerTest {
                                 "SenhaFicticia123", PerfilUsuario.PESQUISADOR))))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("EMAIL_JA_CADASTRADO"));
+    }
+
+    /**
+     * Reativa uma conta que estava desativada.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void permiteReativarUsuario() throws Exception {
+        Usuario usuario = contas.get(2L);
+        usuario.desativar();
+
+        assertThat(usuario.isAtivo()).isFalse();
+
+        mvc.perform(comoAdmin(patch("/usuarios/2/reativar")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ativo").value(true));
+
+        assertThat(usuario.isAtivo()).isTrue();
+    }
+
+    /**
+     * Impede usar na edição um e-mail que já pertence a outra conta.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void impedeEmailRepetidoNaEdicao() throws Exception {
+        Usuario outraConta = conta(3L, PerfilUsuario.COORDENADOR);
+        contas.put(3L, outraConta);
+
+        mvc.perform(comoAdmin(put("/usuarios/2"))
+                        .content(json.writeValueAsString(
+                                new UsuarioEdicaoEntrada(
+                                        "Pessoa alterada",
+                                        outraConta.getEmail(),
+                                        PerfilUsuario.PESQUISADOR
+                                ))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("EMAIL_JA_CADASTRADO"));
+
+        assertThat(contas.get(2L).getEmail()).isNotEqualTo(outraConta.getEmail());
+    }
+
+    /**
+     * Lista usuários ativos e desativados na gestão administrativa.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void listaUsuariosAtivosEDesativados() throws Exception {
+        Usuario usuarioDesativado = contas.get(2L);
+        usuarioDesativado.desativar();
+
+        when(usuarios.findAll()).thenReturn(
+                java.util.List.of(administrador, usuarioDesativado)
+        );
+
+        mvc.perform(comoAdmin(get("/usuarios")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].ativo").value(true))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].ativo").value(false));
     }
 
     // <-------------------PERFIS E VÍNCULOS COM ESTUDOS------------------->

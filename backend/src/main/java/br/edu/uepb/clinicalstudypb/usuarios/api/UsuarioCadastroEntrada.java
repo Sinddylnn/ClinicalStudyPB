@@ -42,4 +42,17 @@ public record UsuarioCadastroEntrada(
         @NotNull(message = "O perfil é obrigatório.")
         PerfilUsuario perfil
 ) {
+
+    /**
+     * Remove espaços das extremidades antes da validação dos campos textuais.
+     */
+    public UsuarioCadastroEntrada {
+        if (nome != null) {
+            nome = nome.trim();
+        }
+
+        if (email != null) {
+            email = email.trim();
+        }
+    }
 }
