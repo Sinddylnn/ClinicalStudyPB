@@ -33,6 +33,7 @@ const ESTUDOS: Estudo[] = [
     limiteParticipantes: 40,
     estado: 'PLANEJAMENTO',
     responsavelId: 2,
+    coordenadorId: 3,
     responsavelNome: 'Paula Pesquisadora',
   },
   {
@@ -44,6 +45,7 @@ const ESTUDOS: Estudo[] = [
     limiteParticipantes: 60,
     estado: 'RECRUTAMENTO',
     responsavelId: 2,
+    coordenadorId: null,
     responsavelNome: 'Paula Pesquisadora',
   },
 ];
@@ -110,6 +112,23 @@ describe('ListaEstudos', () => {
     expect(screen.queryByLabelText('Filtrar por estado')).not.toBeInTheDocument();
     expect(within(linha).getByText('Paula Pesquisadora')).toBeInTheDocument();
     expect(within(linha).getByText('40 vagas')).toBeInTheDocument();
+  });
+
+  it('mostra o número do responsável quando a API não envia o nome', async () => {
+    const semNome = ESTUDOS.map((estudo) => ({ ...estudo, responsavelNome: undefined }));
+    render(
+      <MemoryRouter initialEntries={['/estudos']}>
+        <ListaEstudos servico={criarServico({ listar: vi.fn().mockResolvedValue(semNome) })} usuario={COORDENADOR} />
+      </MemoryRouter>,
+    );
+    const linha = (await screen.findByText('Hábitos alimentares')).closest('tr')!;
+    expect(within(linha).getByText('Pesquisador nº 2')).toBeInTheDocument();
+  });
+
+  it('mostra à pesquisadora o subtítulo dos próprios estudos', async () => {
+    renderizar(criarServico());
+    await screen.findByText('Hábitos alimentares');
+    expect(screen.getByText('Estudos sob sua responsabilidade.')).toBeInTheDocument();
   });
 
   it('busca pelo responsável na lista do coordenador', async () => {
