@@ -1,0 +1,33 @@
+/* <-------------------AVATAR-------------------> */
+/* Cores por perfil, como nos avatares do protótipo */
+.avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 50%;
+}
+
+.avatar-pesquisador {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.avatar-coordenador {
+  color: #0a5a61;
+  background: #e6f4f5;
+}
+
+.avatar-administrador {
+  color: #6d28d9;
+  background: #f5f3ff;
+}
+
+.avatar-participante {
+  color: #374151;
+  background: #f3f4f6;
+}
