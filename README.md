@@ -158,6 +158,16 @@ npm run build    # build de produção
 
 Em desenvolvimento, as chamadas para `/api` são encaminhadas ao backend em `http://localhost:8080` pelo proxy do Vite, que remove o prefixo antes do envio (`/api/usuarios` chega ao backend como `/usuarios`). O prefixo existe só na web, para separar as chamadas à API das rotas de tela com o mesmo nome, como `/usuarios` e `/estudos`. O endereço do backend fica no `target` do proxy, em `web/vite.config.ts`. Já `VITE_API_URL` (ver `web/.env.example`) define o caminho base das chamadas feitas pela web, que por padrão é `/api`.
 
+Todas as telas pedem login, então rodar `npm run dev` sem o backend mostra só "Não foi possível verificar sua sessão". Para usar a web, suba o banco (`docker compose up -d db`) e o backend, conforme as seções [Banco de dados](#banco-de-dados-postgresql-com-docker-compose) e [Backend](#backend), e crie uma conta de teste no banco. Por exemplo, pelo terminal SQL do contêiner (`docker compose exec db psql -U clinicalstudypb -d clinicalstudypb`):
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+INSERT INTO usuarios (nome, email, senha_hash, perfil)
+VALUES ('Paula Pesquisadora', 'paula@exemplo.com', crypt('Senha123', gen_salt('bf', 10)), 'PESQUISADOR');
+```
+
+Depois, entre na web com `paula@exemplo.com` e a senha `Senha123`. O [guia de autenticação](docs/autenticacao.md) traz mais detalhes sobre os dados de teste.
+
 ### Aplicação web, aplicativo e banco de dados
 
 As instruções de execução serão acrescentadas conforme as bases forem disponibilizadas:

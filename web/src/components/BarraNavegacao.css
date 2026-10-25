@@ -1,12 +1,6 @@
 /* <-------------------BARRA DE NAVEGAÇÃO-------------------> */
-/* Medidas do quadro "Barra de navegação" do protótipo (altura 64, margens de 80). */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-/* A barra ocupa a largura toda, sem a margem padrão do navegador.
-   Fica aqui até o index.css (estilos globais) ter o próprio reset. */
-body:has(.barra-navegacao) {
-  margin: 0;
-}
+/* Medidas do quadro "Barra de navegação" do protótipo (altura 64, margens de 80).
+   A fonte Inter é importada em index.css. */
 
 .barra-navegacao {
   position: relative;
@@ -177,11 +171,16 @@ body:has(.barra-navegacao) {
   display: flex;
   gap: 10px;
   align-items: center;
+  width: 100%;
   padding: 10px;
+  font: inherit;
   font-size: 14px;
   font-weight: 500;
   color: #dc2626;
-  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
   border-radius: 8px;
 }
 
@@ -189,6 +188,18 @@ body:has(.barra-navegacao) {
 .barra-conta-sair:focus-visible {
   background: #fef2f2;
   outline: none;
+}
+
+.barra-conta-sair:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.barra-conta-erro {
+  margin: 4px 10px 6px;
+  font-size: 12px;
+  line-height: 16px;
+  color: #991b1b;
 }
 
 @media (max-width: 900px) {

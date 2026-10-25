@@ -1,0 +1,17 @@
+/* <-------------------ESTILOS GLOBAIS-------------------> */
+/* Fonte Inter do protótipo, usada pela barra de navegação e por todas as telas */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Aviso enquanto GET /auth/sessao é consultado (RotaProtegida e login) */
+.carregando-sessao {
+  margin: 0;
+  padding: 24px;
+  font-family: Inter, system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Reset: as telas ocupam a largura toda, sem a margem padrão do navegador */
+body {
+  margin: 0;
+}

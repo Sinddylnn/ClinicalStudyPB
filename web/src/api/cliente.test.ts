@@ -64,6 +64,15 @@ describe('erros da API', () => {
 
     expect(erro).toMatchObject({ status: 0, codigo: 'SEM_CONEXAO' });
   });
+
+  it('mantém o erro da consulta do token quando a alteração não chega a ser enviada', async () => {
+    // Ex.: proxy do Vite sem backend ligado responde 502 em texto puro
+    simularBackend({ 'GET /auth/csrf': () => ({ status: 502, data: 'Bad Gateway' }) });
+
+    const erro = await api.post('/auth/login', {}).catch((e) => e);
+
+    expect(erro).toMatchObject({ status: 502, codigo: 'ERRO_HTTP' });
+  });
 });
 
 // <-------------------PROTEÇÃO CSRF------------------->

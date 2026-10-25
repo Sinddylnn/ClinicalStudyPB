@@ -1,0 +1,330 @@
+/* <-------------------TELA DE LOGIN-------------------> */
+/* Quadros "RF02 • Login" do protótipo: painel escuro à esquerda e formulário à direita.
+   Cores e medidas seguem a barra de navegação e as telas de estudos. */
+.login-pagina {
+  --texto: #111827;
+  --texto-suave: #6b7280;
+  --icone-suave: #9ca3af;
+  --borda-cartao: #e5e7eb;
+  --borda-entrada: #d1d5db;
+  --primaria: #0e7c86;
+  --primaria-escura: #0a636b;
+  --erro: #dc2626;
+  --fundo-escuro: #0f2a3a;
+
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 44fr) minmax(0, 56fr);
+  min-height: 100vh;
+  color: var(--texto);
+  background: #f4f6f8;
+  font-family: Inter, system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-size: 14px;
+  line-height: normal;
+}
+
+.login-pagina *,
+.login-pagina *::before,
+.login-pagina *::after {
+  box-sizing: inherit;
+}
+
+.login-pagina .icone {
+  flex: none;
+}
+
+/* <-------------------APRESENTAÇÃO-------------------> */
+.login-apresentacao {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 40px 48px;
+  overflow: hidden;
+  color: #fff;
+  background: var(--fundo-escuro);
+}
+
+/* Círculos decorativos do protótipo */
+.login-apresentacao::before,
+.login-apresentacao::after {
+  position: absolute;
+  content: '';
+  border: 40px solid rgb(14 124 134 / 18%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.login-apresentacao::before {
+  top: -120px;
+  right: -140px;
+  width: 360px;
+  height: 360px;
+}
+
+.login-apresentacao::after {
+  bottom: -60px;
+  left: -160px;
+  width: 300px;
+  height: 300px;
+}
+
+.login-apresentacao > * {
+  position: relative;
+  z-index: 1;
+}
+
+.login-marca {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.login-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: var(--primaria);
+  border-radius: 9px;
+}
+
+.login-slogan {
+  max-width: 440px;
+  margin: 0 0 20px;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 40px;
+}
+
+.login-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 440px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.login-chips li {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 15px;
+  color: #e2e8f0;
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 999px;
+}
+
+.login-chips .icone {
+  color: #5eead4;
+}
+
+.login-rodape {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* <-------------------FORMULÁRIO-------------------> */
+.login-conteudo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.login-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-formulario h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 28px;
+}
+
+.login-subtitulo {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--texto-suave);
+}
+
+.login-pagina .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login-pagina .campo label {
+  display: flex;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.login-pagina .obrigatorio::after {
+  content: '*';
+  color: var(--erro);
+}
+
+.login-pagina .entrada-com-icone {
+  position: relative;
+}
+
+.login-pagina .entrada-com-icone > .icone {
+  position: absolute;
+  top: 12px;
+  left: 13px;
+  color: var(--icone-suave);
+  pointer-events: none;
+}
+
+.login-pagina .entrada-com-icone:has([aria-invalid='true']) > .icone {
+  color: var(--erro);
+}
+
+.login-pagina input {
+  width: 100%;
+  height: 42px;
+  margin: 0;
+  padding: 10px 12px 10px 41px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--texto);
+  background: #fff;
+  border: 1px solid var(--borda-entrada);
+  border-radius: 8px;
+}
+
+.login-pagina ::placeholder {
+  color: var(--icone-suave);
+  opacity: 1;
+}
+
+.login-pagina input:focus-visible {
+  border-color: var(--primaria);
+  outline: 2px solid rgb(14 124 134 / 20%);
+  outline-offset: 0;
+}
+
+.login-pagina [aria-invalid='true'] {
+  border-color: var(--erro);
+}
+
+.login-pagina .campo-erro {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--erro);
+}
+
+.login-pagina .botao-primario {
+  min-height: 40px;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  background: var(--primaria);
+  border: 0;
+  border-radius: 8px;
+}
+
+.login-pagina .botao-primario:hover {
+  background: var(--primaria-escura);
+}
+
+.login-pagina .botao-primario:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.login-pagina .botao-primario:focus-visible {
+  outline: 2px solid var(--primaria);
+  outline-offset: 2px;
+}
+
+/* <-------------------AVISOS-------------------> */
+.login-pagina .aviso {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+
+.login-pagina .aviso-erro {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.login-pagina .aviso-informacao {
+  color: #0a5a61;
+  background: #e6f4f5;
+  border-color: #b6e0e3;
+}
+
+.login-ajuda {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--texto-suave);
+  background: #fff;
+  border: 1px solid var(--borda-cartao);
+  border-radius: 10px;
+}
+
+.login-ajuda .icone {
+  color: var(--primaria);
+}
+
+/* <-------------------TELAS ESTREITAS-------------------> */
+/* O protótipo só tem a versão larga; abaixo disso o painel vira um cabeçalho */
+@media (max-width: 900px) {
+  .login-pagina {
+    grid-template-columns: 1fr;
+  }
+
+  .login-apresentacao {
+    gap: 20px;
+    padding: 24px 16px;
+  }
+
+  .login-slogan {
+    font-size: 22px;
+    line-height: 28px;
+  }
+
+  .login-conteudo {
+    align-items: flex-start;
+    padding: 32px 16px;
+  }
+}

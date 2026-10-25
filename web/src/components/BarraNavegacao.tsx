@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink } from 'react-router';
-import type { UsuarioSessao } from '../api/sessaoSimulada';
-import type { PerfilUsuario } from '../routes/RotaProtegida';
+import type { PerfilUsuario, UsuarioSessao } from '../api/autenticacao';
+import { useAutenticacao } from '../autenticacao/contextoAutenticacao';
 import Avatar from './Avatar';
 import Icone, { type NomeIcone } from './icones';
 import './BarraNavegacao.css';
@@ -26,8 +26,23 @@ const NOMES_PERFIL: Record<PerfilUsuario, string> = {
 
 // <-------------------BARRA DE NAVEGAÇÃO------------------->
 export default function BarraNavegacao({ usuario }: { usuario: UsuarioSessao }) {
+  const { sair } = useAutenticacao();
   const [menuAberto, setMenuAberto] = useState(false);
+  const [saindo, setSaindo] = useState(false);
+  const [erroSair, setErroSair] = useState<string>();
   const conta = useRef<HTMLDivElement>(null);
+
+  // POST /auth/logout; com sucesso o provedor leva ao /login e a barra desmonta
+  const encerrarSessao = async () => {
+    setSaindo(true);
+    setErroSair(undefined);
+    try {
+      await sair();
+    } catch {
+      setErroSair('Não foi possível sair. Tente novamente.');
+      setSaindo(false);
+    }
+  };
 
   // Clique fora ou Esc fecha o menu da conta, como na nota do protótipo
   useEffect(() => {
@@ -73,7 +88,10 @@ export default function BarraNavegacao({ usuario }: { usuario: UsuarioSessao }) 
           className="barra-conta-botao"
           aria-haspopup="menu"
           aria-expanded={menuAberto}
-          onClick={() => setMenuAberto((aberto) => !aberto)}
+          onClick={() => {
+            setErroSair(undefined); // um erro de tentativa anterior não reaparece ao reabrir
+            setMenuAberto((aberto) => !aberto);
+          }}
         >
           <span className="barra-conta-texto">
             <span className="barra-conta-nome">{usuario.nome}</span>
@@ -92,11 +110,21 @@ export default function BarraNavegacao({ usuario }: { usuario: UsuarioSessao }) 
                 <span className="barra-conta-menu-email">{usuario.email}</span>
               </span>
             </div>
-            {/* O encerramento da sessão (POST /auth/logout) entra na T13 */}
-            <Link className="barra-conta-sair" role="menuitem" to="/login">
+            <button
+              type="button"
+              className="barra-conta-sair"
+              role="menuitem"
+              disabled={saindo}
+              onClick={encerrarSessao}
+            >
               <Icone nome="sair" />
-              Sair
-            </Link>
+              {saindo ? 'Saindo…' : 'Sair'}
+            </button>
+            {erroSair && (
+              <p className="barra-conta-erro" role="alert">
+                {erroSair}
+              </p>
+            )}
           </div>
         )}
       </div>

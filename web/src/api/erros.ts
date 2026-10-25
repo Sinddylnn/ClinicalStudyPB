@@ -40,6 +40,9 @@ function ehErroApi(valor: unknown): valor is ErroApi {
  * Status 0 indica que o servidor não respondeu (desligado ou sem conexão).
  */
 export function converterErro(erro: unknown): ErroRequisicao {
+  // Já convertido: a falha ao buscar o token CSRF passa de novo pelo interceptor da alteração
+  if (erro instanceof ErroRequisicao) return erro;
+
   if (!isAxiosError(erro) || !erro.response) {
     return new ErroRequisicao(0, {
       codigo: 'SEM_CONEXAO',
