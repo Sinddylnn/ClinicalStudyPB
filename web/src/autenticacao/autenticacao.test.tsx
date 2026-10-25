@@ -1,6 +1,6 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { Link, MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { login, logout, sessaoAtual, type UsuarioSessao } from '../api/autenticacao';
 import { registrarTratadoresSessao } from '../api/cliente';
@@ -35,12 +35,13 @@ function tratadores() {
   return vi.mocked(registrarTratadoresSessao).mock.calls.at(-1)![0];
 }
 
-function PaginaEstudos() {
+function PaginaEstudos({ titulo = 'Estudos protegidos' }: { titulo?: string }) {
   const usuario = useUsuarioLogado();
   return (
     <>
       <BarraNavegacao usuario={usuario} />
-      <h1>Estudos protegidos</h1>
+      <h1>{titulo}</h1>
+      <Link to="/estudos/novo">Ir para novo estudo</Link>
     </>
   );
 }
@@ -57,7 +58,7 @@ function renderizarEm(caminho: string) {
           </Route>
           <Route element={<RotaProtegida perfis={['PESQUISADOR']} />}>
             <Route path="/estudos" element={<PaginaEstudos />} />
-            <Route path="/estudos/novo" element={<PaginaEstudos />} />
+            <Route path="/estudos/novo" element={<PaginaEstudos titulo="Novo estudo protegido" />} />
           </Route>
           <Route element={<RotaProtegida perfis={['ADMINISTRADOR']} />}>
             <Route path="/usuarios" element={<h1>Usuários</h1>} />
@@ -109,6 +110,8 @@ describe('RotaProtegida', () => {
 
     expect(await screen.findByRole('heading', { name: 'Estudos protegidos' })).toBeInTheDocument();
     expect(login).toHaveBeenCalledWith('paula@exemplo.com', 'segredo');
+    // O login acabou de confirmar a sessão: a volta à página pedida não revalida
+    expect(sessaoAtual).toHaveBeenCalledTimes(1);
   });
 
   it('leva ao acesso negado quando o perfil não pode abrir a rota', async () => {
@@ -166,13 +169,13 @@ describe('tratadores de sessão', () => {
     vi.mocked(sessaoAtual).mockResolvedValue(PAULA);
     vi.mocked(login).mockResolvedValue(PAULA);
     renderizarEm('/estudos/novo');
-    await screen.findByRole('heading', { name: 'Estudos protegidos' });
+    await screen.findByRole('heading', { name: 'Novo estudo protegido' });
 
     act(() => tratadores().naoAutenticado?.());
     await screen.findByRole('heading', { name: 'Entrar na sua conta' });
     await entrarComo('paula@exemplo.com');
 
-    expect(await screen.findByRole('heading', { name: 'Estudos protegidos' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Novo estudo protegido' })).toBeInTheDocument();
   });
 
   it('leva ao acesso negado (403 ACESSO_NEGADO)', async () => {
@@ -183,6 +186,55 @@ describe('tratadores de sessão', () => {
     act(() => tratadores().acessoNegado?.());
 
     expect(await screen.findByRole('heading', { name: 'Acesso negado' })).toBeInTheDocument();
+  });
+});
+
+// <-------------------REVALIDAÇÃO DA SESSÃO------------------->
+describe('revalidação da sessão', () => {
+  it('ao trocar de rota com a sessão encerrada (401), vai para o login avisando e guarda a página', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValueOnce(PAULA).mockResolvedValue(null);
+    vi.mocked(login).mockResolvedValue(PAULA);
+    renderizarEm('/estudos');
+    await screen.findByRole('heading', { name: 'Estudos protegidos' });
+
+    await userEvent.setup().click(screen.getByRole('link', { name: 'Ir para novo estudo' }));
+
+    expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
+    expect(screen.getByText('Sua sessão expirou. Entre novamente.')).toBeInTheDocument();
+
+    await entrarComo('paula@exemplo.com');
+    expect(await screen.findByRole('heading', { name: 'Novo estudo protegido' })).toBeInTheDocument();
+  });
+
+  it('não desloga quando a revalidação falha por SEM_CONEXAO', async () => {
+    vi.mocked(sessaoAtual)
+      .mockResolvedValueOnce(PAULA)
+      .mockRejectedValue(
+        new ErroRequisicao(0, { codigo: 'SEM_CONEXAO', mensagem: 'Não foi possível conectar ao servidor.' }),
+      );
+    renderizarEm('/estudos');
+    await screen.findByRole('heading', { name: 'Estudos protegidos' });
+
+    await userEvent.setup().click(screen.getByRole('link', { name: 'Ir para novo estudo' }));
+
+    await waitFor(() => expect(sessaoAtual).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole('heading', { name: 'Novo estudo protegido' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Entrar na sua conta' })).not.toBeInTheDocument();
+  });
+
+  it('ao voltar para a aba com a sessão encerrada, vai para o login', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValueOnce(PAULA).mockResolvedValue(null);
+    renderizarEm('/estudos');
+    await screen.findByRole('heading', { name: 'Estudos protegidos' });
+
+    const visibilidade = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
+    expect(screen.getByText('Sua sessão expirou. Entre novamente.')).toBeInTheDocument();
+    visibilidade.mockRestore();
   });
 });
 
