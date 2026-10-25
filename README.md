@@ -147,6 +147,15 @@ npm run build    # build de produção
 
 Em desenvolvimento, as chamadas para `/api` são encaminhadas ao backend em `http://localhost:8080` pelo proxy do Vite, que remove o prefixo antes do envio (`/api/usuarios` chega ao backend como `/usuarios`). O prefixo existe só na web, para separar as chamadas à API das rotas de tela com o mesmo nome, como `/usuarios` e `/estudos`. O endereço do backend fica no `target` do proxy, em `web/vite.config.ts`. Já `VITE_API_URL` (ver `web/.env.example`) define o caminho base das chamadas feitas pela web, que por padrão é `/api`.
 
+As telas de estudos podem usar dados simulados ou o backend. Isso é definido por `VITE_ESTUDOS_API` no `web/.env`:
+
+| Valor | Comportamento |
+|---|---|
+| `simulado` (padrão) | Estudos fictícios guardados em memória, que voltam ao estado inicial ao recarregar a página. O backend de estudos não é necessário. |
+| `real` | Chamadas a `GET /estudos` e `POST /estudos` no backend. |
+
+Para trocar, copie `web/.env.example` para `web/.env`, ajuste o valor e reinicie o `npm run dev`.
+
 ### Aplicação web, aplicativo e banco de dados
 
 As instruções de execução serão acrescentadas conforme as bases forem disponibilizadas:
