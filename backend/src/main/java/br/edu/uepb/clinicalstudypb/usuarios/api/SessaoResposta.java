@@ -2,6 +2,7 @@ package br.edu.uepb.clinicalstudypb.usuarios.api;
 
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 // <-------------------DADOS PÚBLICOS DA SESSÃO------------------->
 /**
@@ -15,7 +16,11 @@ import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
  * @param perfil perfil da conta autenticada
  * @since 21/10/2026
  */
-public record SessaoResposta(Long id, String nome, String email, PerfilUsuario perfil) {
+public record SessaoResposta(
+        @Schema(description = "Identificador da conta.", example = "1") Long id,
+        @Schema(description = "Nome de apresentação.", example = "Pessoa fictícia") String nome,
+        @Schema(description = "E-mail cadastrado.", example = "pesquisador@example.test") String email,
+        @Schema(description = "Perfil atual, conferido pelo backend.") PerfilUsuario perfil) {
 
     /**
      * Monta a resposta sem incluir senha, hash ou identificador do cookie de sessão.

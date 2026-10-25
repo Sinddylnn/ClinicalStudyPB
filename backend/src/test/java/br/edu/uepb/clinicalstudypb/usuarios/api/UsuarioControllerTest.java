@@ -8,8 +8,10 @@ import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.service.AutenticacaoService;
 import br.edu.uepb.clinicalstudypb.usuarios.service.UsuarioService;
+import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -32,6 +35,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.inOrder;
@@ -71,6 +75,8 @@ class UsuarioControllerTest {
     private PasswordEncoder senhas;
     @MockitoBean
     private UsuarioRepository usuarios;
+    @MockitoBean
+    private EstudoRepository estudos;
 
     private final Map<Long, Usuario> contas = new HashMap<>();
     private Usuario administrador;
@@ -86,6 +92,9 @@ class UsuarioControllerTest {
         contas.put(1L, administrador);
         contas.put(2L, conta(2L, PerfilUsuario.PESQUISADOR));
         when(usuarios.findById(anyLong())).thenAnswer(i -> Optional.ofNullable(contas.get(i.getArgument(0))));
+        when(usuarios.bloquearPorIds(anyCollection())).thenAnswer(i ->
+                i.<Collection<Long>>getArgument(0).stream().distinct().sorted()
+                        .map(contas::get).filter(java.util.Objects::nonNull).toList());
         when(usuarios.buscarPorEmail(anyString())).thenAnswer(i -> contas.values().stream()
                 .filter(u -> u.getEmail().equalsIgnoreCase(i.getArgument(0))).findFirst());
         when(usuarios.countByPerfilAndAtivoTrue(PerfilUsuario.ADMINISTRADOR))
@@ -269,6 +278,60 @@ class UsuarioControllerTest {
                                 "SenhaFicticia123", PerfilUsuario.PESQUISADOR))))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("EMAIL_JA_CADASTRADO"));
+    }
+
+    // <-------------------PERFIS E VÍNCULOS COM ESTUDOS------------------->
+
+    /**
+     * Impede retirar o perfil necessário para vínculos já existentes.
+     *
+     * @param perfil perfil da conta vinculada
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @EnumSource(value = PerfilUsuario.class, names = {"PESQUISADOR", "COORDENADOR"})
+    void bloqueiaMudancaDePerfilComEstudos(PerfilUsuario perfil) throws Exception {
+        Usuario vinculada = conta(2L, perfil);
+        contas.put(2L, vinculada);
+        when(estudos.existsByResponsavelId(2L)).thenReturn(perfil == PerfilUsuario.PESQUISADOR);
+        when(estudos.existsByCoordenadorId(2L)).thenReturn(perfil == PerfilUsuario.COORDENADOR);
+        mvc.perform(comoAdmin(put("/usuarios/2")).content(json.writeValueAsString(
+                        new UsuarioEdicaoEntrada("Nome alterado", vinculada.getEmail(), PerfilUsuario.PARTICIPANTE))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("PERFIL_COM_VINCULOS"));
+        assertThat(vinculada.getPerfil()).isEqualTo(perfil);
+        assertThat(vinculada.getNome()).isNotEqualTo("Nome alterado");
+        var ordem = inOrder(usuarios, estudos);
+        ordem.verify(usuarios).bloquearPorIds(java.util.List.of(2L));
+        ordem.verify(estudos).existsByResponsavelId(2L);
+    }
+
+    /**
+     * Permite editar dados pessoais sem retirar o perfil exigido pelo estudo.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void permiteEditarNomeMantendoPerfilVinculado() throws Exception {
+        when(estudos.existsByResponsavelId(2L)).thenReturn(true);
+        mvc.perform(comoAdmin(put("/usuarios/2")).content(json.writeValueAsString(
+                        new UsuarioEdicaoEntrada("Novo nome", contas.get(2L).getEmail(), PerfilUsuario.PESQUISADOR))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.nome").value("Novo nome"));
+    }
+
+    /**
+     * Mantém disponível a troca de perfil quando não há vínculos incompatíveis.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void permiteTrocarPerfilSemEstudos() throws Exception {
+        mvc.perform(comoAdmin(put("/usuarios/2")).content(json.writeValueAsString(
+                        new UsuarioEdicaoEntrada("Pessoa", contas.get(2L).getEmail(), PerfilUsuario.COORDENADOR))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.perfil").value("COORDENADOR"));
     }
 
     /**

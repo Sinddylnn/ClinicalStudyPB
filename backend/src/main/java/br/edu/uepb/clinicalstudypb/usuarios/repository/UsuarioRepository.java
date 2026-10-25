@@ -3,6 +3,7 @@ package br.edu.uepb.clinicalstudypb.usuarios.repository;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import jakarta.persistence.LockModeType;
 import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -53,4 +54,26 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from Usuario u where u.perfil = :perfil and u.ativo = true order by u.id")
     List<Usuario> bloquearAtivosPorPerfil(@Param("perfil") PerfilUsuario perfil);
+
+    /**
+     * Mantém os perfis estáveis durante a edição da conta e a criação de vínculos.
+     *
+     * <p>Os serviços usam a mesma ordem de identificadores ao obter os bloqueios.</p>
+     *
+     * @param ids identificadores das contas participantes da operação
+     * @return contas existentes, bloqueadas até o fim da transação
+     * @since 1.0
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from Usuario u where u.id in :ids order by u.id")
+    List<Usuario> bloquearPorIds(@Param("ids") Collection<Long> ids);
+
+    /**
+     * Oferece contas ativas do perfil solicitado em uma ordem previsível.
+     *
+     * @param perfil perfil exigido na seleção
+     * @return contas ativas ordenadas por nome e identificador
+     * @since 1.0
+     */
+    List<Usuario> findByPerfilAndAtivoTrueOrderByNomeAscIdAsc(PerfilUsuario perfil);
 }
