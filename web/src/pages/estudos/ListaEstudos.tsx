@@ -36,7 +36,7 @@ function textoContagem(quantidade: number): string {
 }
 
 // <-------------------LISTA DE ESTUDOS------------------->
-// Pesquisador: "Meus estudos", com cadastro. Coordenador: todos os estudos, somente leitura.
+// Pesquisador: "Meus estudos", com cadastro. Coordenador: estudos vinculados a ele, somente leitura (D02).
 export default function ListaEstudos({ servico = servicoEstudos, usuario = USUARIO_SIMULADO }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -127,7 +127,7 @@ export default function ListaEstudos({ servico = servicoEstudos, usuario = USUAR
             <p className="estudos-subtitulo">
               {pesquisador
                 ? 'Estudos em que você é a pesquisadora responsável.'
-                : 'Todos os estudos da instalação.'}
+                : 'Estudos vinculados a você como coordenador.'}
             </p>
           </div>
           {pesquisador ? (
@@ -159,11 +159,11 @@ export default function ListaEstudos({ servico = servicoEstudos, usuario = USUAR
             <span className="estudos-vazio-icone">
               <Icone nome="frasco" tamanho={30} />
             </span>
-            <h2>Nenhum estudo cadastrado ainda</h2>
+            <h2>{pesquisador ? 'Nenhum estudo cadastrado ainda' : 'Nenhum estudo vinculado a você'}</h2>
             <p>
               {pesquisador
                 ? 'Cadastre seu primeiro estudo informando título, objetivo, período previsto e limite de participantes. Ele começa no estado Planejamento.'
-                : 'Quando um pesquisador cadastrar um estudo, ele aparecerá aqui.'}
+                : 'Quando um pesquisador atribuir você como coordenador de um estudo, ele aparecerá aqui.'}
             </p>
             {pesquisador && (
               <Link className="botao botao-primario" to="/estudos/novo">

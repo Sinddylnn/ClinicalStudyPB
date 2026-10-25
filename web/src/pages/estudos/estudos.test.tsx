@@ -88,7 +88,7 @@ describe('ListaEstudos', () => {
     expect(screen.getByRole('link', { name: 'Novo estudo' })).toHaveAttribute('href', '/estudos/novo');
   });
 
-  it('mostra ao coordenador todos os estudos, somente leitura', async () => {
+  it('mostra ao coordenador os estudos vinculados, somente leitura', async () => {
     render(
       <MemoryRouter initialEntries={['/estudos']}>
         <ListaEstudos servico={criarServico()} usuario={COORDENADOR} />
@@ -96,6 +96,7 @@ describe('ListaEstudos', () => {
     );
     const linha = (await screen.findByText('Hábitos alimentares')).closest('tr')!;
     expect(screen.getByRole('heading', { name: 'Estudos' })).toBeInTheDocument();
+    expect(screen.getByText('Estudos vinculados a você como coordenador.')).toBeInTheDocument();
     expect(screen.getByText('Somente leitura')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Novo estudo' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Filtrar por estado')).not.toBeInTheDocument();
@@ -112,6 +113,16 @@ describe('ListaEstudos', () => {
     await screen.findByText('Hábitos alimentares');
     await userEvent.setup().type(screen.getByLabelText('Buscar por título ou responsável'), 'paula');
     expect(screen.getByText('Mostrando 1–2 de 2 estudos')).toBeInTheDocument();
+  });
+
+  it('mostra ao coordenador sem vínculos o estado vazio sem cadastro', async () => {
+    render(
+      <MemoryRouter initialEntries={['/estudos']}>
+        <ListaEstudos servico={criarServico({ listar: vi.fn().mockResolvedValue([]) })} usuario={COORDENADOR} />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('Nenhum estudo vinculado a você')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Cadastrar primeiro estudo' })).not.toBeInTheDocument();
   });
 
   it('filtra por título e por estado', async () => {
