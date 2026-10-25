@@ -1,5 +1,6 @@
 package br.edu.uepb.clinicalstudypb.compartilhado.documentacao;
 
+import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,8 @@ class DocumentacaoApiTest {
     private ObjectMapper json;
     @MockitoBean
     private UsuarioRepository usuarios;
+    @MockitoBean
+    private EstudoRepository estudos;
 
     /**
      * Confere rotas, DTOs e mecanismos de acesso publicados no contrato real.

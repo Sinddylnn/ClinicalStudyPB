@@ -1,5 +1,6 @@
 package br.edu.uepb.clinicalstudypb.compartilhado.erro;
 
+import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -44,6 +45,9 @@ class TratadorErrosApiTest {
 
     @MockitoBean
     private UsuarioRepository usuarios;
+
+    @MockitoBean
+    private EstudoRepository estudos;
 
     @Autowired
     private MockMvc mockMvc;
