@@ -180,6 +180,58 @@ class DocumentacaoApiTest {
         assertThat(resposta.has("senhaHash")).isFalse();
     }
 
+    // <-------------------CONTRATO DE ESTUDOS E COORDENADORES------------------->
+    /**
+     * Confere as operações de estudos e a diferença entre coordenador opcional e obrigatório.
+     *
+     * @throws Exception se a consulta ou leitura do contrato falhar
+     * @since 1.0
+     */
+    @Test
+    void documentaEstudosComVinculoDeCoordenador() throws Exception {
+        String corpo = mvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode contrato = json.readTree(corpo);
+        JsonNode rotas = contrato.path("paths");
+        String[][] operacoes = {
+            {"/estudos", "post", "201", "400", "404"},
+            {"/estudos", "get", "200"},
+            {"/estudos/coordenadores", "get", "200"},
+            {"/estudos/{id}/coordenador", "put", "200", "400", "404"}
+        };
+        for (String[] item : operacoes) {
+            JsonNode operacao = rotas.path(item[0]).path(item[1]);
+            assertThat(operacao.isMissingNode()).as("%s %s", item[1], item[0]).isFalse();
+            assertThat(operacao.path("security").path(0).has("sessao")).isTrue();
+            boolean temCsrf = false;
+            for (JsonNode parametro : operacao.path("parameters")) {
+                temCsrf |= "#/components/parameters/TokenCsrf".equals(parametro.path("$ref").asText());
+            }
+            assertThat(temCsrf).isEqualTo(!"get".equals(item[1]));
+            for (String codigo : new String[]{"401", "403"}) {
+                assertThat(operacao.path("responses").has(codigo)).isTrue();
+            }
+            for (int i = 2; i < item.length; i++) {
+                assertThat(operacao.path("responses").has(item[i])).isTrue();
+            }
+        }
+        assertThat(rotas.path("/estudos").path("get").path("description").asText())
+                .containsIgnoringCase("vinculados");
+        JsonNode schemas = contrato.path("components").path("schemas");
+        assertThat(schemas.path("EstudoCadastroEntrada").path("properties").has("coordenadorId")).isTrue();
+        for (JsonNode campo : schemas.path("EstudoCadastroEntrada").path("required")) {
+            assertThat(campo.asText()).isNotEqualTo("coordenadorId");
+        }
+        assertThat(schemas.path("CoordenadorEntrada").path("required").toString()).contains("coordenadorId");
+        assertThat(schemas.path("EstudoResposta").path("properties").has("coordenadorId")).isTrue();
+        JsonNode opcao = schemas.path("CoordenadorResposta").path("properties");
+        assertThat(opcao.size()).isEqualTo(2);
+        assertThat(opcao.has("id")).isTrue();
+        assertThat(opcao.has("nome")).isTrue();
+        assertThat(rotas.path("/usuarios/{id}").path("put").path("responses")
+                .path("400").path("description").asText()).contains("PERFIL_COM_VINCULOS");
+    }
+
     /**
      * Confere os recursos necessários para abrir a interface no navegador sem login.
      *

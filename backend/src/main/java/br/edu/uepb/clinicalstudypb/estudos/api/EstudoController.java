@@ -17,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -28,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * <p>O pesquisador cadastra estudos dos quais se torna responsável.
  * Pesquisadores consultam seus próprios estudos e coordenadores podem
- * consultar todos os estudos cadastrados.</p>
+ * consultar somente os estudos aos quais estão vinculados.</p>
  *
  * @author Luiz
  * @version 1.0
@@ -73,16 +75,17 @@ public class EstudoController {
             summary = "Cadastrar estudo",
             description = "Exige pesquisador e CSRF válido. "
                     + "O pesquisador autenticado é definido automaticamente como responsável. "
-                    + "O estudo é criado inicialmente no estado PLANEJAMENTO.",
+                    + "O estudo é criado inicialmente no estado PLANEJAMENTO. "
+                    + "coordenadorId é opcional; quando informado, deve indicar um coordenador ativo.",
             parameters = @Parameter(ref = "#/components/parameters/TokenCsrf")
     )
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Estudo cadastrado com sucesso."),
         @ApiResponse(responseCode = "400",
-                description = "Campos inválidos, limite não positivo ou período inconsistente.",
+                description = "Campos inválidos, período inconsistente ou COORDENADOR_INVALIDO.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class))),
         @ApiResponse(responseCode = "404",
-                description = "Conta responsável não encontrada.",
+                description = "Conta responsável ou coordenador informado não encontrado.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class)))
     })
     public EstudoResposta cadastrar(
@@ -106,7 +109,8 @@ public class EstudoController {
     @Operation(
             summary = "Listar estudos",
             description = "Pesquisadores consultam somente os estudos pelos quais são responsáveis. "
-                    + "Coordenadores consultam todos os estudos cadastrados. Não exige token CSRF."
+                    + "Coordenadores consultam somente estudos vinculados à própria conta. "
+                    + "Sem vínculos, a lista é vazia. Não exige token CSRF."
     )
     @ApiResponse(responseCode = "200", description = "Lista de estudos permitidos para o perfil; pode estar vazia.")
     public List<EstudoResposta> listar(
@@ -114,5 +118,52 @@ public class EstudoController {
             @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
 
         return estudos.listar(usuarioAutenticado);
+    }
+
+    // <-------------------COORDENADORES DISPONÍVEIS------------------->
+
+    /**
+     * Oferece os coordenadores ativos para a escolha do pesquisador.
+     *
+     * @return somente identificadores e nomes, sem dados administrativos
+     * @since 1.0
+     */
+    @GetMapping("/coordenadores")
+    @Operation(summary = "Listar coordenadores disponíveis",
+            description = "Exige pesquisador. Lista somente ID e nome de contas ativas com perfil "
+                    + "COORDENADOR para preencher a seleção no cadastro ou na atribuição posterior.")
+    @ApiResponse(responseCode = "200", description = "Coordenadores ativos; pode ser uma lista vazia.")
+    public List<CoordenadorResposta> listarCoordenadores() {
+        return estudos.listarCoordenadores();
+    }
+
+    // <-------------------ATRIBUIÇÃO OU SUBSTITUIÇÃO DO COORDENADOR------------------->
+
+    /**
+     * Define o coordenador de um estudo do pesquisador autenticado.
+     *
+     * @param id identificador do estudo
+     * @param entrada coordenador ativo escolhido
+     * @param usuarioAutenticado pesquisador responsável conectado
+     * @return estudo com o vínculo atualizado
+     * @since 1.0
+     */
+    @PutMapping("/{id}/coordenador")
+    @Operation(summary = "Atribuir coordenador ao estudo",
+            description = "Exige pesquisador responsável pelo estudo e CSRF válido. "
+                    + "Atribui ou substitui um único coordenador ativo. "
+                    + "Não remove o vínculo e não altera o responsável ou o estado do estudo.",
+            parameters = @Parameter(ref = "#/components/parameters/TokenCsrf"))
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Coordenador atribuído; retorna o estudo atualizado."),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos ou COORDENADOR_INVALIDO.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404", description = "Estudo inexistente ou de outro pesquisador; conta inexistente.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
+    })
+    public EstudoResposta atribuirCoordenador(@PathVariable Long id,
+            @Valid @RequestBody CoordenadorEntrada entrada,
+            @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
+        return estudos.atribuirCoordenador(id, entrada.coordenadorId(), usuarioAutenticado);
     }
 }

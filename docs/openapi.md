@@ -6,9 +6,9 @@ formato desse contrato; **Swagger UI** é a página que permite consultá-lo e f
 requisições. O **springdoc 3.1.1** lê os controllers e DTOs Java para gerar os dois.
 
 Essa é uma entrega da task **3191: Publicar OpenAPI e documentar decisões e versões**.
-Neste momento, o contrato cobre autenticação e gestão de usuários: oito caminhos e
-nove operações, pois `/usuarios` oferece GET e POST. Os endpoints de estudos serão
-acrescentados quando existirem no código.
+O contrato cobre autenticação, gestão de usuários, cadastro e listagem de estudos,
+consulta de coordenadores disponíveis e atribuição de coordenador a um estudo.
+As operações descritas correspondem aos controllers implementados.
 
 ## Abrir a documentação
 
@@ -99,23 +99,95 @@ teste**, mantendo sua conta administradora disponível. Repetir o cadastro com o
 mesmo e-mail deve retornar `409`. Nome ou e-mail acima de 255 caracteres e senha
 acima de 72 bytes em UTF-8 devem retornar `400`. Acentos podem ocupar mais de um byte.
 O último administrador ativo não pode ser desativado nem perder seu perfil: `400`.
+Também retorna `400 PERFIL_COM_VINCULOS` ao tentar mudar o perfil de um pesquisador
+responsável ou coordenador para um perfil incompatível com os estudos vinculados.
+Alterar nome/e-mail mantendo o perfil continua permitido. A desativação não apaga
+esses vínculos, mas impede o acesso da conta.
 
 Para conferir o perfil, encerre a sessão de administrador, obtenha outro CSRF e
 entre como o pesquisador de teste. `GET /usuarios` deve retornar `403`. Depois do
 logout, `GET /auth/sessao` deve retornar `401`. Se houver `403` em uma alteração,
 confira tanto o perfil quanto o token; o campo `codigo` distingue os dois motivos.
 
+## Testar estudos e atribuição de coordenador
+
+Com o administrador, prepare contas fictícias de **PESQUISADOR** e **COORDENADOR**.
+Anote seus IDs. Depois faça logout, entre como pesquisador e obtenha o novo CSRF.
+O pesquisador não acessa `GET /usuarios`: existe uma consulta específica para a
+seleção do coordenador, expondo somente os dados necessários.
+
+| Operação | O que enviar | Resultado esperado |
+|---|---|---|
+| `GET /estudos/coordenadores` | Sessão de pesquisador | `200`, ID e nome de coordenadores ativos |
+| `POST /estudos` | Sessão de pesquisador, CSRF e JSON de cadastro | `201`, responsável da sessão e estado `PLANEJAMENTO` |
+| `GET /estudos` | Sessão de pesquisador ou coordenador | `200`, somente estudos vinculados àquela conta; pode retornar `[]` |
+| `PUT /estudos/{id}/coordenador` | Sessão do pesquisador responsável, CSRF e `coordenadorId` | `200`, estudo com o coordenador atribuído ou substituído |
+
+Exemplo de cadastro permitido **sem coordenador**:
+
+```json
+{
+  "titulo": "Estudo fictício da Sprint 1",
+  "objetivo": "Demonstrar o cadastro e a consulta de estudos",
+  "dataInicio": "2026-11-01",
+  "dataFim": "2026-11-01",
+  "limiteParticipantes": 20
+}
+```
+
+Para escolher o coordenador já no cadastro, acrescente `"coordenadorId": 3`,
+substituindo `3` pelo ID retornado na consulta de coordenadores disponíveis. Omitir
+o campo ou informar `null` deixa o estudo sem coordenador. O campo `responsavelId`
+não faz parte do cadastro: o backend usa o pesquisador autenticado.
+
+Para atribuir depois, use o ID do estudo em `PUT /estudos/{id}/coordenador` e envie:
+
+```json
+{ "coordenadorId": 3 }
+```
+
+Essa operação exige um ID positivo e não aceita `null` como remoção. Se já havia
+um coordenador, ele é substituído. Repetir a mesma escolha mantém o mesmo vínculo.
+A resposta de estudo contém `id`, `titulo`, `objetivo`, `responsavelId`,
+`coordenadorId`, `dataInicio`, `dataFim`, `limiteParticipantes` e `estado`.
+
+Para conferir o isolamento, cadastre estudos com dois pesquisadores e dois
+coordenadores diferentes. Entre como cada coordenador e execute `GET /estudos`:
+devem aparecer apenas os vinculados à conta. Um coordenador sem vínculo recebe
+lista vazia. Depois de substituir o coordenador de um estudo, ele deve sair da
+listagem do anterior e aparecer na do novo coordenador.
+
+Confira também as recusas:
+
+- Datas iguais são aceitas; término anterior ao início resulta em `400 DATA_INVALIDA`.
+- Campos obrigatórios, título acima de 150 caracteres, objetivo acima de 2000,
+  limite de participantes não positivo e ID de coordenador não positivo resultam
+  em `400 VALIDACAO_INVALIDA`, com os campos indicados em `errosCampos`.
+- Conta escolhida inexistente resulta em `404 RECURSO_NAO_ENCONTRADO`; conta inativa
+  ou de outro perfil resulta em `400 COORDENADOR_INVALIDO`.
+- Atribuição em estudo alheio ou inexistente resulta em `404`. Coordenador,
+  administrador e participante não podem cadastrar nem atribuir coordenadores: `403`.
+
+A regra aprovada exige coordenador antes do recrutamento. **A transição para
+recrutamento ainda será implementada na funcionalidade correspondente**; estes
+endpoints não alteram o estado. A escolha e a atribuição já funcionam nesta entrega.
+
+Ao iniciar o backend atualizado, Flyway aplica **V3** para criar a coluna opcional,
+a chave estrangeira e o índice do coordenador. V1/V2 permanecem intactas. Estudos
+antigos continuam sem coordenador até a atribuição pelo responsável; não é
+necessário apagar o banco ou o volume Docker.
+
 ## Entender as respostas
 
 | Resposta | Significado neste fluxo |
 |---|---|
 | `200` | Consulta, login ou atualização concluída |
-| `201` | Cadastro de usuário concluído |
+| `201` | Cadastro de usuário ou estudo concluído |
 | `204` | Logout concluído, sem JSON de resposta |
 | `400` | Dados inválidos ou regra de negócio recusada, como remover o último administrador ativo |
 | `401` | Credenciais recusadas ou ausência de uma sessão autenticada válida |
 | `403` | Token CSRF ausente/inválido ou perfil sem permissão para a operação |
-| `404` | Usuário informado não encontrado |
+| `404` | Conta inexistente ou estudo inexistente/não pertencente ao pesquisador na atribuição |
 | `409` | E-mail já cadastrado |
 
 CSRF é verificado antes do controller. Por isso, um login sem token pode responder
@@ -135,7 +207,8 @@ códigos e o fluxo por `curl` estão em [autenticação](autenticacao.md).
 | `pom.xml` | Inclui `springdoc-openapi-starter-webmvc-ui` na versão 3.1.1 |
 | `compartilhado/documentacao/ConfiguracaoOpenApi.java` | Define nome, versão, cookie de sessão, cabeçalho CSRF e operação de logout |
 | `usuarios/api/AutenticacaoController.java` e `UsuarioController.java` | Descrevem autenticação e gestão de usuários, resultados e requisitos de acesso |
-| DTOs em `usuarios/api` e `compartilhado/erro/ErroApi.java` | Explicam os campos que entram e saem da API |
+| `estudos/api/EstudoController.java` | Descreve cadastro, listagem, opções e atribuição de coordenadores |
+| DTOs em `usuarios/api`, `estudos/api` e `compartilhado/erro/ErroApi.java` | Explicam os campos que entram e saem da API |
 | `compartilhado/seguranca/ConfiguracaoSeguranca.java` | Permite consultar os arquivos da documentação sem liberar as operações protegidas |
 | `application.properties` | Configura a página Swagger e a geração das respostas documentadas |
 
@@ -160,11 +233,11 @@ essa operação existente ao contrato. Esse código não implementa um segundo l
 - Confira exemplos, formatos de erro e perfis junto de quem implementa a web.
   Uma operação aparecer no Swagger não comprova que a tela está integrada.
 - Atualize os testes do contrato quando novos endpoints entrarem. O teste atual
-  confere as operações de autenticação e usuários, sem limitar o total de caminhos.
+  confere as operações de autenticação, usuários e estudos, sem limitar o total de caminhos.
   Assim, novas rotas podem ser adicionadas sem quebrar uma contagem fixa.
 
 As versões e as decisões aprovadas estão em [decisões e versões](decisoes-e-versoes.md).
-Não foram criadas rotas fictícias para antecipar a task de estudos.
+Os contratos de estudos descritos acima já têm implementação no backend.
 
 ## Verificação automatizada e limites
 
@@ -176,13 +249,40 @@ cd backend
 `DocumentacaoApiTest` gera e lê o contrato, acessa os recursos da interface e confere
 que a sessão, os perfis documentados e o CSRF estão descritos corretamente. Também
 confere DTOs, limites dos campos e respostas sem senha. Os testes de autenticação
-e usuários exercitam os filtros e as regras com repositório simulado.
+e usuários, junto de `EstudoControllerTest`, exercitam os filtros e as regras com
+repositórios simulados. Isso verifica o comportamento da API, mas não substitui a
+conferência da persistência no banco real.
+
+`EstudoPersistenciaIT` usa PostgreSQL real e precisa ser chamado explicitamente.
+Ele não roda no `verify` comum. Prepare um **banco exclusivo de testes** e informe:
+
+```bash
+export CLINICALSTUDYPB_TEST_DB_URL='jdbc:postgresql://localhost:5433/clinicalstudypb_test'
+export CLINICALSTUDYPB_TEST_DB_USER='USUARIO_DO_BANCO_DE_TESTES'
+export CLINICALSTUDYPB_TEST_DB_PASSWORD='SENHA_DO_BANCO_DE_TESTES'
+./mvnw -Dtest=EstudoPersistenciaIT test
+```
+
+O Compose da equipe oferece `db-test` na porta 5433. Os valores devem coincidir com
+esse ambiente; as variáveis acima não iniciam o banco. O teste confere a persistência,
+as consultas filtradas, a troca de coordenador, o bloqueio de mudança de perfil e
+a migração de V2 para V3 preservando um estudo existente. Também confere que a chave
+estrangeira rejeita um coordenador inexistente. Ele cria e remove um schema temporário
+no banco de testes; nunca aponte essas variáveis para seu banco de desenvolvimento.
 
 Em 23/10/2026, a execução local com PostgreSQL 17.11 aplicou V1 e V2 e permitiu
 conferir autenticação e gestão de usuários por HTTP real. A página Swagger também
 foi aberta e executou `GET /auth/csrf` com retorno 200. Isso não comprova testes de
-concorrência nem integração das telas. Cada integrante deve conferir seu ambiente. A integração das telas continua na task 3171. Quando o cadastro de
-estudos for implementado, seu contrato também precisará ser revisado.
+concorrência nem integração das telas. Cada integrante deve conferir seu ambiente.
+A integração das telas continua na task 3171, inclusive a seleção do coordenador
+pelos novos endpoints; a existência do contrato não comprova que a web já o utiliza.
+
+Na revisão de 25/10/2026, `./mvnw verify` passou com **84 testes**, incluindo os
+cinco testes do contrato OpenAPI. Separadamente, os quatro cenários de
+`EstudoPersistenciaIT` passaram em PostgreSQL **17.11** temporário. Foram
+validados tanto um banco vazio quanto a evolução de V2 para V3 com dados existentes.
+Esses resultados não representam uma execução da interface web nem testes de carga
+ou de concorrência simultânea.
 
 
 Referências: [springdoc](https://springdoc.org/),

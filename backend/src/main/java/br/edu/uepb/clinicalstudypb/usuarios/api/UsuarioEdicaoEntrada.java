@@ -31,7 +31,9 @@ public record UsuarioEdicaoEntrada(
         @Size(max = 255, message = "O e-mail deve ter no máximo 255 caracteres.")
         String email,
 
-        @Schema(description = "Novo perfil; não pode remover o último administrador ativo.", example = "PESQUISADOR")
+        @Schema(description = "Novo perfil; não pode remover o último administrador ativo "
+                + "nem tornar incompatíveis os vínculos como responsável ou coordenador de estudos.",
+                example = "PESQUISADOR")
         @NotNull(message = "O perfil é obrigatório.")
         PerfilUsuario perfil
 ) {

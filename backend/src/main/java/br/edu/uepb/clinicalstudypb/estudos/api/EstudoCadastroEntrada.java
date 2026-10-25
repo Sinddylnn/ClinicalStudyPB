@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Recebe os dados necessários para cadastrar um estudo.
@@ -15,6 +16,7 @@ import java.time.LocalDate;
  * @param dataInicio data prevista de início
  * @param dataFim data prevista de término
  * @param limiteParticipantes quantidade máxima de participantes
+ * @param coordenadorId coordenador ativo escolhido, ou {@code null} para atribuir depois
  * @author Luiz
  * @version 1.0
  * @since 25/10/2026
@@ -37,6 +39,11 @@ public record EstudoCadastroEntrada(
 
         @NotNull(message = "O limite de participantes é obrigatório.")
         @Positive(message = "O limite de participantes deve ser maior que zero.")
-        Integer limiteParticipantes
+        Integer limiteParticipantes,
+
+        @Positive(message = "O identificador do coordenador deve ser maior que zero.")
+        @Schema(description = "ID de um coordenador ativo. Opcional no cadastro; pode ser omitido ou nulo.",
+                example = "3", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+        Long coordenadorId
 ) {
 }

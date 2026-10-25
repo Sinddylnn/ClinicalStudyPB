@@ -135,12 +135,12 @@ junto das orientações para integrar a web e preparar os dados de teste.
 #### Consultar a documentação da API
 
 Com o backend ligado, acesse [Swagger UI](http://localhost:8080/swagger-ui.html).
-A página apresenta as operações de autenticação e gestão de usuários, seus campos e
-respostas. O contrato também está disponível em [JSON](http://localhost:8080/v3/api-docs)
+A página apresenta autenticação, gestão de usuários, cadastro/listagem de estudos e
+atribuição de coordenador, com seus campos e respostas. O contrato também está disponível em [JSON](http://localhost:8080/v3/api-docs)
 e [YAML](http://localhost:8080/v3/api-docs.yaml).
 
-O [guia do OpenAPI e Swagger](docs/openapi.md) explica como testar login, logout e
-gestão de usuários com sessão e CSRF. As [decisões e versões](docs/decisoes-e-versoes.md) reúnem as
+O [guia do OpenAPI e Swagger](docs/openapi.md) explica como testar esses fluxos com
+sessão, CSRF e permissões por vínculo. As [decisões e versões](docs/decisoes-e-versoes.md) reúnem as
 escolhas do Kickoff e distinguem o que já existe do que ainda será implementado.
 Esses documentos serão complementados conforme novas operações forem entregues.
 ### Aplicação web

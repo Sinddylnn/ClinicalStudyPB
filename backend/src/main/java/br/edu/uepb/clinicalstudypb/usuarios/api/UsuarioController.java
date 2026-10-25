@@ -113,11 +113,12 @@ public class UsuarioController {
     @PutMapping("/{id}")
     @Operation(summary = "Editar usuário", description = "Exige administrador e CSRF válido. "
             + "Atualiza nome, e-mail e perfil; não altera senha nem situação da conta. "
-            + "O último administrador ativo não pode perder esse perfil.",
+            + "O último administrador ativo não pode perder esse perfil. "
+            + "Vínculos como responsável ou coordenador impedem mudanças incompatíveis de perfil.",
             parameters = @Parameter(ref = "#/components/parameters/TokenCsrf"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Dados atualizados do usuário."),
-        @ApiResponse(responseCode = "400", description = "Dados inválidos ou tentativa de remover o último administrador ativo.",
+        @ApiResponse(responseCode = "400", description = "Dados inválidos, último administrador ativo ou PERFIL_COM_VINCULOS.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class))),
         @ApiResponse(responseCode = "404", description = "Usuário não encontrado.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class))),

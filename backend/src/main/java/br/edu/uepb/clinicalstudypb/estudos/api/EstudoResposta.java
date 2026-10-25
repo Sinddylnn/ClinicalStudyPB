@@ -12,6 +12,7 @@ import java.time.LocalDate;
  * @param titulo título cadastrado
  * @param objetivo objetivo do estudo
  * @param responsavelId identificador do pesquisador responsável
+ * @param coordenadorId identificador do coordenador, ou {@code null} se não atribuído
  * @param dataInicio data prevista de início
  * @param dataFim data prevista de término
  * @param limiteParticipantes quantidade máxima de participantes
@@ -25,6 +26,7 @@ public record EstudoResposta(
         String titulo,
         String objetivo,
         Long responsavelId,
+        Long coordenadorId,
         LocalDate dataInicio,
         LocalDate dataFim,
         Integer limiteParticipantes,
@@ -44,6 +46,7 @@ public record EstudoResposta(
                 estudo.getTitulo(),
                 estudo.getObjetivo(),
                 estudo.getResponsavel().getId(),
+                estudo.getCoordenador() == null ? null : estudo.getCoordenador().getId(),
                 estudo.getDataInicio(),
                 estudo.getDataFim(),
                 estudo.getLimiteParticipantes(),

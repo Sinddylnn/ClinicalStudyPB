@@ -13,14 +13,14 @@ apresentadas como se todos os seus detalhes estivessem expressos no enunciado.
 | Backend Java/Spring Boot em uma aplicação, organizado por módulos | Sem microsserviços. A base e a autenticação já existem; os demais módulos evoluem nas suas tasks |
 | Web React e app React Native usam a API; somente o backend acessa PostgreSQL | As interfaces enviam e recebem JSON; controllers usam DTOs, serviços aplicam regras e repositories acessam o banco |
 | D01: administrador cria, lista, edita, desativa e reativa usuários; e-mail único, sem exclusão física | Entidade, restrições, endpoints de gestão e bloqueio de conta inativa implementados; contrato publicado no OpenAPI |
-| D02: responsável pelo estudo é o pesquisador autenticado | O futuro cadastro deverá obter o ID da sessão; não aceitar escolha livre do responsável no formulário |
+| D02: responsável pelo estudo é o pesquisador autenticado | Implementado no cadastro: o ID vem da sessão e não é escolhido no formulário |
 | D03: estudo e protocolo são separados; protocolo antecede o recrutamento | Modelagem inicial de estudo existe; protocolo e transições ainda dependem das próximas funcionalidades |
-| D04: pesquisador vê seus estudos; coordenador vê os estudos em que foi vinculado; participante vê seus vínculos | A autorização por perfil já está preparada. A filtragem por vínculo será implementada nos serviços e consultas correspondentes |
-| D04 e detalhamento: pesquisador responsável atribui o coordenador; um por estudo e vários estudos por coordenador | Vínculo opcional no cadastro, obrigatório antes do recrutamento. Essa associação ainda não existe no modelo atual |
+| D04: pesquisador vê seus estudos; coordenador vê os estudos em que foi vinculado; participante vê seus vínculos | `GET /estudos` filtra pelo responsável ou coordenador autenticado; sem vínculos retorna lista vazia. Os fluxos do participante continuam previstos para suas próximas tasks |
+| D04 e detalhamento: pesquisador responsável atribui o coordenador; um por estudo e vários estudos por coordenador | Associação implementada em `Estudo`, com coluna opcional na V3. Pode ser informada no cadastro ou atribuída/substituída depois pelo responsável. A exigência antes do recrutamento deverá ser aplicada na futura transição de estado, que ainda não existe |
 | D05: Spring Security, sessão no servidor, 30 minutos sem uso, logout e BCrypt | Implementado com cookie HttpOnly, CSRF e CORS; fluxo local de autenticação e usuários conferido com PostgreSQL 17.11 em 23/10/2026 |
 | D06: execução local, banco com Docker Compose, sem hospedagem paga | Compose disponível; não implica que o banco esteja instalado ou validado em toda máquina |
 | D07: versões de referência fixadas no Kickoff | Conferir manifests e locks antes de integrar mudanças de dependências |
-| D08: detalhar campos e respostas do cadastro | Autenticação e usuários já têm campos, respostas e permissões documentados. Estudos aguardam implementação |
+| D08: detalhar campos e respostas do cadastro | Autenticação, usuários, cadastro/listagem de estudos e atribuição de coordenador têm contrato publicado no OpenAPI |
 | D09: coordenador registra avaliação, consentimento e inclusão; API verifica elegibilidade, aceite e vagas | Previsto para recrutamento; não entregue por esta task |
 | D10: coordenador registra visitas, avaliações e retirada e responde às solicitações do app | Previsto para acompanhamento; confirmação de presença não comprova comparecimento |
 | D11: relatório filtrado por estudo e exportado em PDF | Sem decisão de CSV nesta versão; implementação futura |
@@ -51,8 +51,28 @@ Estes detalhes implementam as decisões acima e permanecem sujeitos à revisão 
 - O código de gestão protege o último administrador ativo, rejeita senhas acima de
   72 bytes em UTF-8 e limita nome/e-mail a 255 caracteres. E-mail duplicado retorna
   409. São detalhes da implementação revisada, não novos requisitos atribuídos à professora.
-- As rotas de estudos serão documentadas quando implementadas. Preparar permissões
-  não cria essas funcionalidades.
+- `POST /estudos` aceita `coordenadorId` opcional e cria o estudo em `PLANEJAMENTO`.
+  O responsável vem da sessão. Datas iguais são aceitas; término anterior ao início
+  retorna `400 DATA_INVALIDA`. Título tem até 150 caracteres, objetivo até 2000 e
+  o limite de participantes deve ser positivo.
+- `GET /estudos` filtra por vínculo. `GET /estudos/coordenadores` oferece ao
+  pesquisador somente ID e nome de coordenadores ativos para preencher a escolha.
+  Não permite ao pesquisador acessar a listagem administrativa de usuários.
+- `PUT /estudos/{id}/coordenador` atribui ou substitui o coordenador de um estudo
+  próprio. Exige sessão de pesquisador, CSRF e ID de coordenador ativo; retorna `200`.
+  Estudo inexistente ou de outro pesquisador retorna `404`. Não há operação de
+  remoção do vínculo nem de transição de estado nesta entrega.
+- Conta escolhida inexistente retorna `404`; conta inativa ou de outro perfil
+  retorna `400 COORDENADOR_INVALIDO`. A resposta de estudo inclui `coordenadorId`,
+  que pode ser `null`. Nenhum coordenador é escolhido automaticamente.
+- A edição de usuários retorna `400 PERFIL_COM_VINCULOS` se a mudança de perfil
+  tornar incompatível um vínculo como responsável ou coordenador. Nome/e-mail
+  continuam editáveis. A desativação preserva vínculos e impede o acesso da conta.
+- A criação/atribuição de vínculos e a edição de perfil usam bloqueio das contas
+  na transação para não aprovar decisões concorrentes incompatíveis.
+- A V3 acrescenta a chave estrangeira `estudos.coordenador_id` e seu índice.
+  V1 e V2 foram preservadas; estudos antigos ficam sem coordenador até a atribuição
+  pelo responsável. Não é preciso apagar o banco nem criar uma entidade "Grupo".
 
 As escolhas da publicação OpenAPI nesta task não alteram o Kickoff, não ampliam o
 escopo funcional e não resolvem, sozinhas, as pendências de integração da task 3171.
@@ -112,7 +132,8 @@ da release 2 passa a `2.0`. Não se incrementa a versão a cada comentário, com
 
 `SNAPSHOT` é um sufixo do Maven. A troca para uma entrega estável deve acompanhar a
 preparação da release; não foi removido agora. Nos Javadocs, conservar o autor e a
-data de criação de cada classe. Classes novas de Georis nesta task usam
-`@author Georis`, `@version 1.0` e `@since 23/10/2026`.
+data de criação de cada classe. Classes criadas por Georis em 23/10 mantêm essa
+data; classes novas desta revisão usam `@author Georis`, `@version 1.0` e
+`@since 25/10/2026`. A revisão ainda integra a entrega inicial `1.0-SNAPSHOT`.
 
 

@@ -166,6 +166,8 @@ public class ConfiguracaoSeguranca {
                         .requestMatchers(HttpMethod.GET, "/auth/sessao").authenticated()
                         .requestMatchers("/usuarios", "/usuarios/**").hasRole("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.POST, "/estudos").hasRole("PESQUISADOR")
+                        .requestMatchers(HttpMethod.PUT, "/estudos/*/coordenador").hasRole("PESQUISADOR")
+                        .requestMatchers(HttpMethod.GET, "/estudos/coordenadores").hasRole("PESQUISADOR")
                         .requestMatchers(HttpMethod.GET, "/estudos", "/estudos/*")
                                 .hasAnyRole("PESQUISADOR", "COORDENADOR")
                         .anyRequest().denyAll())
