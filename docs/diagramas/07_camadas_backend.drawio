@@ -1,0 +1,92 @@
+<mxfile host="Electron">
+  <diagram id="07_camadas_backend" name="Organização interna do backend">
+    <mxGraphModel dx="1712" dy="947" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1000" pageHeight="920" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;fillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;fontColor=#17212B;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="" vertex="1">
+          <mxGeometry height="735" width="880" x="60" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="3" parent="1" style="shape=text;rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;strokeWidth=2;fontColor=#17212B;fontFamily=Arial;fontSize=24;fontStyle=1;align=center;verticalAlign=middle;spacing=4;" value="Backend Spring Boot" vertex="1">
+          <mxGeometry height="40" width="340" x="80" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="4" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Web ou Mobile" vertex="1">
+          <mxGeometry height="70" width="320" x="340" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="5" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Segurança&#xa;Autenticação e autorização" vertex="1">
+          <mxGeometry height="85" width="450" x="275" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="6" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Controller e DTOs&#xa;Entrada HTTP e validação de formato" vertex="1">
+          <mxGeometry height="85" width="450" x="275" y="345" as="geometry" />
+        </mxCell>
+        <mxCell id="7" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Service&#xa;Regras de negócio e transação" vertex="1">
+          <mxGeometry height="85" width="450" x="275" y="485" as="geometry" />
+        </mxCell>
+        <mxCell id="8" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Repository&#xa;Acesso à persistência por JPA" vertex="1">
+          <mxGeometry height="85" width="450" x="275" y="625" as="geometry" />
+        </mxCell>
+        <mxCell id="9" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=classic;endFill=1;startArrow=none;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="85" as="sourcePoint" />
+            <mxPoint x="500" y="205" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="10" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=classic;endFill=1;startArrow=none;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="290" as="sourcePoint" />
+            <mxPoint x="500" y="345" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="11" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=classic;endFill=1;startArrow=none;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="430" as="sourcePoint" />
+            <mxPoint x="500" y="485" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="12" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=classic;endFill=1;startArrow=none;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="570" as="sourcePoint" />
+            <mxPoint x="500" y="625" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="13" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;strokeWidth=2;fontFamily=Arial;fontSize=20;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Entity&#xa;Modelo do&#xa;domínio usado&#xa;por serviço e&#xa;persistência" vertex="1">
+          <mxGeometry height="185" width="155" x="760" y="455" as="geometry" />
+        </mxCell>
+        <mxCell id="14" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=open;endFill=0;startArrow=none;startFill=1;dashed=1;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="725" y="527" as="sourcePoint" />
+            <mxPoint x="760" y="527" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="15" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=open;endFill=0;startArrow=none;startFill=1;dashed=1;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="835" y="667" />
+            </Array>
+            <mxPoint x="725" y="667" as="sourcePoint" />
+            <mxPoint x="835" y="640" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="16" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fontFamily=Arial;fontSize=22;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Módulos de domínio dentro deste backend&#xa;Usuários • Estudos • Recrutamento • Acompanhamento • Relatórios" vertex="1">
+          <mxGeometry height="70" width="830" x="85" y="755" as="geometry" />
+        </mxCell>
+        <mxCell id="17" parent="1" style="shape=rectangle;rounded=0;whiteSpace=wrap;html=0;fillColor=#F6F6F6;strokeColor=#465867;strokeWidth=2;fontColor=#17212B;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="PostgreSQL" vertex="1">
+          <mxGeometry height="55" width="270" x="365" y="860" as="geometry" />
+        </mxCell>
+        <mxCell id="18" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=classic;endFill=1;startArrow=none;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="75" y="667" />
+              <mxPoint x="75" y="887" />
+            </Array>
+            <mxPoint x="275" y="667" as="sourcePoint" />
+            <mxPoint x="365" y="887" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="19" parent="1" style="shape=text;rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;strokeWidth=2;fontColor=#17212B;fontFamily=Arial;fontSize=21;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="JPA e JDBC" vertex="1">
+          <mxGeometry height="25" width="260" x="90" y="892" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

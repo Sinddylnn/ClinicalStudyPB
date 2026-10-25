@@ -143,6 +143,20 @@ O [guia do OpenAPI e Swagger](docs/openapi.md) explica como testar login, logout
 gestão de usuários com sessão e CSRF. As [decisões e versões](docs/decisoes-e-versoes.md) reúnem as
 escolhas do Kickoff e distinguem o que já existe do que ainda será implementado.
 Esses documentos serão complementados conforme novas operações forem entregues.
+### Aplicação web
+
+Requer **Node.js 24.22.0** (ver `web/.nvmrc`).
+
+```bash
+cd web
+npm install
+npm run dev      # http://localhost:5173
+npm test         # testes com Vitest
+npm run lint     # ESLint
+npm run build    # build de produção
+```
+
+Em desenvolvimento, as chamadas para `/api` são encaminhadas ao backend em `http://localhost:8080` pelo proxy do Vite, que remove o prefixo antes do envio (`/api/usuarios` chega ao backend como `/usuarios`). O prefixo existe só na web, para separar as chamadas à API das rotas de tela com o mesmo nome, como `/usuarios` e `/estudos`. O endereço do backend fica no `target` do proxy, em `web/vite.config.ts`. Já `VITE_API_URL` (ver `web/.env.example`) define o caminho base das chamadas feitas pela web, que por padrão é `/api`.
 
 ### Aplicação web, aplicativo e banco de dados
 
