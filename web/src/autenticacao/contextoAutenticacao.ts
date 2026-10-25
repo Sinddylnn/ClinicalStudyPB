@@ -16,6 +16,8 @@ export type Autenticacao = {
   carregando: boolean;
   /** null no primeiro acesso sem sessão e depois de entrar. */
   avisoSessao: AvisoSessao | null;
+  /** true depois do Sair, até o próximo login: o /login abre sem página de origem. */
+  saidaVoluntaria: boolean;
   /** Repassa o ErroRequisicao do login para a tela tratar. */
   entrar: (email: string, senha: string) => Promise<void>;
   /** Falha (sem limpar a sessão) quando o servidor não confirma o logout. */
@@ -28,6 +30,7 @@ const SEM_PROVEDOR: Autenticacao = {
   usuario: null,
   carregando: false,
   avisoSessao: null,
+  saidaVoluntaria: false,
   entrar: () => Promise.reject(new Error('ProvedorAutenticacao ausente.')),
   sair: () => Promise.resolve(),
 };

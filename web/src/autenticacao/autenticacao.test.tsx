@@ -23,6 +23,13 @@ const PAULA: UsuarioSessao = {
   perfil: 'PESQUISADOR',
 };
 
+const CARLOS: UsuarioSessao = {
+  id: 3,
+  nome: 'Carlos Coordenador',
+  email: 'carlos@exemplo.com',
+  perfil: 'COORDENADOR',
+};
+
 // Tratadores que o provedor registrou no cliente HTTP
 function tratadores() {
   return vi.mocked(registrarTratadoresSessao).mock.calls.at(-1)![0];
@@ -45,8 +52,12 @@ function renderizarEm(caminho: string) {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/acesso-negado" element={<h1>Acesso negado</h1>} />
+          <Route element={<RotaProtegida />}>
+            <Route path="/" element={<h1>Início</h1>} />
+          </Route>
           <Route element={<RotaProtegida perfis={['PESQUISADOR']} />}>
             <Route path="/estudos" element={<PaginaEstudos />} />
+            <Route path="/estudos/novo" element={<PaginaEstudos />} />
           </Route>
           <Route element={<RotaProtegida perfis={['ADMINISTRADOR']} />}>
             <Route path="/usuarios" element={<h1>Usuários</h1>} />
@@ -55,6 +66,13 @@ function renderizarEm(caminho: string) {
       </ProvedorAutenticacao>
     </MemoryRouter>,
   );
+}
+
+async function entrarComo(email: string) {
+  const usuario = userEvent.setup();
+  await usuario.type(screen.getByLabelText('E-mail'), email);
+  await usuario.type(screen.getByLabelText('Senha'), 'segredo');
+  await usuario.click(screen.getByRole('button', { name: 'Entrar' }));
 }
 
 async function clicarEmSair() {
@@ -144,6 +162,19 @@ describe('tratadores de sessão', () => {
     expect(screen.getByText('Sua sessão expirou. Entre novamente.')).toBeInTheDocument();
   });
 
+  it('depois da sessão expirada, volta à página de origem ao entrar de novo', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue(PAULA);
+    vi.mocked(login).mockResolvedValue(PAULA);
+    renderizarEm('/estudos/novo');
+    await screen.findByRole('heading', { name: 'Estudos protegidos' });
+
+    act(() => tratadores().naoAutenticado?.());
+    await screen.findByRole('heading', { name: 'Entrar na sua conta' });
+    await entrarComo('paula@exemplo.com');
+
+    expect(await screen.findByRole('heading', { name: 'Estudos protegidos' })).toBeInTheDocument();
+  });
+
   it('leva ao acesso negado (403 ACESSO_NEGADO)', async () => {
     vi.mocked(sessaoAtual).mockResolvedValue(PAULA);
     renderizarEm('/estudos');
@@ -167,6 +198,21 @@ describe('sair', () => {
     expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
     expect(logout).toHaveBeenCalledTimes(1);
     expect(screen.queryByText('Sua sessão expirou. Entre novamente.')).not.toBeInTheDocument();
+  });
+
+  it('sai e entra com outra conta → vai para /', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue(PAULA);
+    vi.mocked(logout).mockResolvedValue();
+    vi.mocked(login).mockResolvedValue(CARLOS);
+    renderizarEm('/estudos/novo');
+
+    await clicarEmSair();
+    await screen.findByRole('heading', { name: 'Entrar na sua conta' });
+    await entrarComo('carlos@exemplo.com');
+
+    // Não herda a página de quem saiu (/estudos/novo levaria o coordenador ao acesso negado)
+    expect(await screen.findByRole('heading', { name: 'Início' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Acesso negado' })).not.toBeInTheDocument();
   });
 
   it('vai para o login quando a sessão já estava encerrada (401)', async () => {

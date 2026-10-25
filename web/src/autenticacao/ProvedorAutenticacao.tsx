@@ -12,6 +12,7 @@ export default function ProvedorAutenticacao({ children }: { children: ReactNode
   const [usuario, setUsuario] = useState<UsuarioSessao | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [avisoSessao, setAvisoSessao] = useState<AvisoSessao | null>(null);
+  const [saidaVoluntaria, setSaidaVoluntaria] = useState(false);
 
   // Lidos pelos tratadores do cliente, chamados fora do ciclo de renderização
   const usuarioAtual = useRef<UsuarioSessao | null>(null);
@@ -60,10 +61,13 @@ export default function ProvedorAutenticacao({ children }: { children: ReactNode
   const entrar = useCallback(async (email: string, senha: string) => {
     const logado = await login(email, senha);
     setAvisoSessao(null);
+    setSaidaVoluntaria(false);
     setUsuario(logado);
   }, []);
 
-  // A sessão só é limpa na tela quando o servidor a invalidou (204) ou ela já não existia (401)
+  // A sessão só é limpa na tela quando o servidor a invalidou (204) ou ela já não existia (401).
+  // saidaVoluntaria muda no mesmo render que o usuário: a RotaProtegida não guarda a página
+  // de quem saiu, e a próxima pessoa a entrar vai para "/"
   const sair = useCallback(async () => {
     saindo.current = true;
     try {
@@ -73,13 +77,14 @@ export default function ProvedorAutenticacao({ children }: { children: ReactNode
     } finally {
       saindo.current = false;
     }
+    setSaidaVoluntaria(true);
     setUsuario(null);
     navigate('/login', { replace: true });
   }, [navigate]);
 
   const valor = useMemo<Autenticacao>(
-    () => ({ usuario, carregando, avisoSessao, entrar, sair }),
-    [usuario, carregando, avisoSessao, entrar, sair],
+    () => ({ usuario, carregando, avisoSessao, saidaVoluntaria, entrar, sair }),
+    [usuario, carregando, avisoSessao, saidaVoluntaria, entrar, sair],
   );
 
   return <ContextoAutenticacao.Provider value={valor}>{children}</ContextoAutenticacao.Provider>;
