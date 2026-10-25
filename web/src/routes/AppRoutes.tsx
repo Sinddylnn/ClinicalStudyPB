@@ -4,6 +4,8 @@ import Inicio from '../pages/Inicio';
 import AcessoNegado from '../pages/AcessoNegado';
 import NaoEncontrada from '../pages/NaoEncontrada';
 import PaginaProvisoria from '../pages/PaginaProvisoria';
+import ListaEstudos from '../pages/estudos/ListaEstudos';
+import NovoEstudo from '../pages/estudos/NovoEstudo';
 
 // <-------------------ROTAS DA APLICAÇÃO------------------->
 // Páginas provisórias serão substituídas nas tasks indicadas
@@ -29,10 +31,10 @@ export default function AppRoutes() {
       {/* <-------------------ESTUDOS-------------------> */}
       {/* Pesquisador e coordenador consultam; só o pesquisador cadastra (matriz 5.1) */}
       <Route element={<RotaProtegida perfis={['PESQUISADOR', 'COORDENADOR']} />}>
-        <Route path="/estudos" element={<PaginaProvisoria titulo="Estudos" task="T17" />} />
+        <Route path="/estudos" element={<ListaEstudos />} />
       </Route>
       <Route element={<RotaProtegida perfis={['PESQUISADOR']} />}>
-        <Route path="/estudos/novo" element={<PaginaProvisoria titulo="Novo estudo" task="T17" />} />
+        <Route path="/estudos/novo" element={<NovoEstudo />} />
       </Route>
 
       {/* <-------------------ROTA NÃO ENCONTRADA-------------------> */}

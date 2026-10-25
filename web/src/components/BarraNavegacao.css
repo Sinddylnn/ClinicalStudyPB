@@ -1,0 +1,211 @@
+/* <-------------------BARRA DE NAVEGAÇÃO-------------------> */
+/* Medidas do quadro "Barra de navegação" do protótipo (altura 64, margens de 80). */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* A barra ocupa a largura toda, sem a margem padrão do navegador.
+   Fica aqui até o index.css (estilos globais) ter o próprio reset. */
+body:has(.barra-navegacao) {
+  margin: 0;
+}
+
+.barra-navegacao {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  height: 64px;
+  padding: 0 80px;
+  font-family: Inter, system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: #0f2a3a;
+}
+
+.barra-navegacao * {
+  box-sizing: border-box;
+}
+
+.barra-navegacao .icone {
+  flex: none;
+}
+
+.barra-marca {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+}
+
+.barra-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: #fff;
+  background: #0e7c86;
+  border-radius: 9px;
+}
+
+.barra-menu {
+  display: flex;
+  gap: 4px;
+  align-self: stretch;
+}
+
+.barra-item {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #94a3b8;
+  text-decoration: none;
+}
+
+.barra-item:hover {
+  color: #fff;
+}
+
+.barra-item.active {
+  font-weight: 600;
+  color: #fff;
+}
+
+.barra-item.active .icone {
+  color: #5eead4;
+}
+
+.barra-item.active::after {
+  position: absolute;
+  right: 8px;
+  bottom: 0;
+  left: 8px;
+  height: 3px;
+  content: '';
+  background: #5eead4;
+  border-radius: 3px 3px 0 0;
+}
+
+/* <-------------------CONTA-------------------> */
+.barra-conta {
+  position: relative;
+  margin-left: auto;
+}
+
+.barra-conta-botao {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 10px 6px 12px;
+  font: inherit;
+  color: #94a3b8;
+  cursor: pointer;
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 10px;
+}
+
+.barra-conta-botao:focus-visible,
+.barra-item:focus-visible,
+.barra-marca:focus-visible {
+  outline: 2px solid #5eead4;
+  outline-offset: 2px;
+}
+
+.barra-conta-texto {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.barra-conta-nome {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+  color: #fff;
+}
+
+.barra-conta-perfil {
+  font-size: 12px;
+  line-height: 15px;
+  color: #94a3b8;
+}
+
+.barra-conta-menu {
+  position: absolute;
+  top: calc(100% + 13px);
+  right: 0;
+  width: 260px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+}
+
+.barra-conta-identificacao {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 10px 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.barra-conta-menu-nome {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 17px;
+  color: #111827;
+}
+
+.barra-conta-menu-email {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 15px;
+  color: #6b7280;
+}
+
+.barra-conta-sair {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #dc2626;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.barra-conta-sair:hover,
+.barra-conta-sair:focus-visible {
+  background: #fef2f2;
+  outline: none;
+}
+
+@media (max-width: 900px) {
+  .barra-navegacao {
+    gap: 16px;
+    padding: 0 16px;
+  }
+
+  .barra-marca {
+    font-size: 0;
+  }
+
+  .barra-item {
+    padding: 0 10px;
+  }
+
+  .barra-conta-texto {
+    display: none;
+  }
+}
