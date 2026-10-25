@@ -1,23 +1,32 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: '#0D9488',
+        tabBarInactiveTintColor: '#9CA3AF',
         headerShown: false,
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E7EB',
+          height: 60,
+          paddingBottom: 6,
+          paddingTop: 6,
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Início',
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="home" size={22} color={color ? String(color) : '#0ea5e9'} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? "home" : "home-outline"} 
+              size={22} 
+              color={color ? String(color) : '#0D9488'} 
+            />
           ),
         }}
       />
@@ -25,8 +34,12 @@ export default function TabLayout() {
         name="estudos"
         options={{
           title: 'Estudos',
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="medical" size={22} color={color ? String(color) : '#0ea5e9'} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? "flask" : "flask-outline"} 
+              size={22} 
+              color={color ? String(color) : '#0D9488'} 
+            />
           ),
         }}
       />
@@ -34,8 +47,12 @@ export default function TabLayout() {
         name="visitas"
         options={{
           title: 'Visitas',
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="calendar" size={22} color={color ? String(color) : '#0ea5e9'} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? "calendar" : "calendar-outline"} 
+              size={22} 
+              color={color ? String(color) : '#0D9488'} 
+            />
           ),
         }}
       />
@@ -43,8 +60,12 @@ export default function TabLayout() {
         name="perfil"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="person" size={22} color={color ? String(color) : '#0ea5e9'} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? "person" : "person-outline"} 
+              size={22} 
+              color={color ? String(color) : '#0D9488'} 
+            />
           ),
         }}
       />
