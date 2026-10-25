@@ -1,6 +1,15 @@
 package br.edu.uepb.clinicalstudypb.usuarios.api;
 
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
+import br.edu.uepb.clinicalstudypb.compartilhado.erro.ErroApi;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -36,6 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "Autenticação", description = "Sessão, credenciais e proteção das requisições de alteração.")
 public class AutenticacaoController {
 
     private final AuthenticationManager autenticador;
@@ -64,7 +74,11 @@ public class AutenticacaoController {
      * @since 1.0
      */
     @GetMapping("/csrf")
-    public CsrfResposta csrf(CsrfToken token) {
+    @Operation(summary = "Obter o token CSRF", description = "Disponível antes do login. "
+            + "Mantenha o cookie recebido e envie o token no cabeçalho indicado por headerName. "
+            + "Consulte novamente após autenticar, pois o token anterior é descartado.")
+    @ApiResponse(responseCode = "200", description = "Token e nome do cabeçalho para a sessão atual.")
+    public CsrfResposta csrf(@Parameter(hidden = true) CsrfToken token) {
         return new CsrfResposta(token.getToken(), token.getHeaderName());
     }
 
@@ -79,6 +93,19 @@ public class AutenticacaoController {
      * @since 1.0
      */
     @PostMapping("/login")
+    @Operation(summary = "Autenticar com e-mail e senha", description = "Usa uma conta ativa já cadastrada. "
+            + "Renova a sessão e o token CSRF; não devolve senha, hash ou token Bearer. "
+            + "A senha é preservada como digitada e deve ter no máximo 72 bytes em UTF-8.",
+            parameters = @Parameter(ref = "#/components/parameters/TokenCsrf"))
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Login realizado; cookie administrado pelo navegador."),
+        @ApiResponse(responseCode = "400", description = "JSON ou campos inválidos.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "401", description = "Credenciais inválidas ou conta desativada.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "403", description = "CSRF ausente ou inválido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
+    })
     public SessaoResposta login(@Valid @RequestBody LoginEntrada entrada,
             HttpServletRequest request, HttpServletResponse response) {
         try {
@@ -110,6 +137,14 @@ public class AutenticacaoController {
      * @since 1.0
      */
     @GetMapping("/sessao")
+    @Operation(summary = "Consultar a sessão autenticada",
+            description = "Recupera os dados públicos de quem está conectado, inclusive após recarregar a página.")
+    @SecurityRequirement(name = "sessao")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Identificação e perfil atuais do usuário."),
+        @ApiResponse(responseCode = "401", description = "Sessão ausente, expirada ou conta desativada.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
+    })
     public SessaoResposta sessao(@AuthenticationPrincipal UsuarioAutenticado usuario) {
         return SessaoResposta.de(usuario);
     }

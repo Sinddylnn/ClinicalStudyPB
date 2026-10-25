@@ -2,6 +2,7 @@ package br.edu.uepb.clinicalstudypb.usuarios.api;
 
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Representa os dados de um usuário devolvidos pela API.
@@ -17,11 +18,17 @@ import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
  * @version 1.0
  * @since 23/10/2026
  */
+@Schema(description = "Dados públicos da conta. Não contém senha nem hash BCrypt.")
 public record UsuarioResposta(
+        @Schema(description = "Identificador gerado pelo banco.", example = "2")
         Long id,
+        @Schema(description = "Nome cadastrado.", example = "Ana Pesquisa")
         String nome,
+        @Schema(description = "E-mail normalizado.", example = "ana.pesquisa@example.test")
         String email,
+        @Schema(description = "Perfil de acesso.", example = "PESQUISADOR")
         PerfilUsuario perfil,
+        @Schema(description = "Indica se a conta pode acessar o sistema.", example = "true")
         boolean ativo
 ) {
 

@@ -1,6 +1,7 @@
 package br.edu.uepb.clinicalstudypb.compartilhado.erro;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Map;
 
 // <-------------------CONTRATO DE ERRO DA API------------------->
@@ -18,7 +19,12 @@ import java.util.Map;
  * @since 20/10/2026
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ErroApi(String codigo, String mensagem, Map<String, String> errosCampos) {
+public record ErroApi(
+        @Schema(description = "Código reconhecido pelas interfaces.", example = "VALIDACAO_INVALIDA") String codigo,
+        @Schema(description = "Explicação para a pessoa que fez a requisição.", example = "Confira os campos informados.")
+        String mensagem,
+        @Schema(description = "Mapa de campo para mensagem; omitido quando não houver erros de preenchimento.")
+        Map<String, String> errosCampos) {
 
     /**
      * Cria um erro que não pertence a um campo específico do formulário.
