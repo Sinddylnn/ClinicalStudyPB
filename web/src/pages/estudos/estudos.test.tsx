@@ -4,12 +4,20 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { ErroRequisicao } from '../../api/erros';
 import type { Estudo, ServicoEstudos } from '../../api/estudos';
-import type { UsuarioSessao } from '../../api/sessaoSimulada';
+import type { UsuarioSessao } from '../../api/autenticacao';
 import ListaEstudos from './ListaEstudos';
 import NovoEstudo from './NovoEstudo';
 
 // <-------------------TESTES DAS TELAS DE ESTUDOS------------------->
+const PESQUISADORA: UsuarioSessao = {
+  id: 2,
+  nome: 'Paula Pesquisadora',
+  email: 'paula.pesquisadora@exemplo.com',
+  perfil: 'PESQUISADOR',
+};
+
 const COORDENADOR: UsuarioSessao = {
+  id: 3,
   nome: 'Carlos Coordenador',
   email: 'carlos.coordenador@exemplo.com',
   perfil: 'COORDENADOR',
@@ -52,8 +60,8 @@ function renderizar(servico: ServicoEstudos, caminho = '/estudos') {
   render(
     <MemoryRouter initialEntries={[caminho]}>
       <Routes>
-        <Route path="/estudos" element={<ListaEstudos servico={servico} />} />
-        <Route path="/estudos/novo" element={<NovoEstudo servico={servico} />} />
+        <Route path="/estudos" element={<ListaEstudos servico={servico} usuario={PESQUISADORA} />} />
+        <Route path="/estudos/novo" element={<NovoEstudo servico={servico} usuario={PESQUISADORA} />} />
       </Routes>
     </MemoryRouter>,
   );

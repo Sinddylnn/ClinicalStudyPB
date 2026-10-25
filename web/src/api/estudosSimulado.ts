@@ -1,6 +1,5 @@
 import { ErroRequisicao } from './erros';
 import type { Estudo, EstudoCadastroEntrada, ServicoEstudos } from './estudos';
-import { USUARIO_SIMULADO } from './sessaoSimulada';
 import { MENSAGEM_PERIODO_INVALIDO, validarEstudo } from '../pages/estudos/validacao';
 
 // <-------------------SERVIÇO SIMULADO------------------->
@@ -8,6 +7,7 @@ import { MENSAGEM_PERIODO_INVALIDO, validarEstudo } from '../pages/estudos/valid
 // mesmos códigos de erro e o estudo novo sempre em PLANEJAMENTO.
 // Os dados são fictícios e voltam ao estado inicial ao recarregar a página.
 const ID_PESQUISADORA_SIMULADA = 2;
+const NOME_PESQUISADORA_SIMULADA = 'Paula Pesquisadora';
 const ATRASO_MS = 300;
 
 const ESTUDOS_INICIAIS: Estudo[] = [
@@ -21,7 +21,7 @@ const ESTUDOS_INICIAIS: Estudo[] = [
     limiteParticipantes: 45,
     estado: 'PLANEJAMENTO',
     responsavelId: ID_PESQUISADORA_SIMULADA,
-    responsavelNome: USUARIO_SIMULADO.nome,
+    responsavelNome: NOME_PESQUISADORA_SIMULADA,
   },
   {
     id: 2,
@@ -32,7 +32,7 @@ const ESTUDOS_INICIAIS: Estudo[] = [
     limiteParticipantes: 20,
     estado: 'PLANEJAMENTO',
     responsavelId: ID_PESQUISADORA_SIMULADA,
-    responsavelNome: USUARIO_SIMULADO.nome,
+    responsavelNome: NOME_PESQUISADORA_SIMULADA,
   },
 ];
 
@@ -77,7 +77,7 @@ export const servicoEstudosSimulado: ServicoEstudos = {
       id: Math.max(0, ...estudos.map((e) => e.id)) + 1,
       estado: 'PLANEJAMENTO',
       responsavelId: ID_PESQUISADORA_SIMULADA,
-      responsavelNome: USUARIO_SIMULADO.nome,
+      responsavelNome: NOME_PESQUISADORA_SIMULADA,
     };
     estudos = [novo, ...estudos];
     return novo;

@@ -4,6 +4,7 @@ import Inicio from '../pages/Inicio';
 import AcessoNegado from '../pages/AcessoNegado';
 import NaoEncontrada from '../pages/NaoEncontrada';
 import PaginaProvisoria from '../pages/PaginaProvisoria';
+import Login from '../pages/login/Login';
 import ListaEstudos from '../pages/estudos/ListaEstudos';
 import NovoEstudo from '../pages/estudos/NovoEstudo';
 
@@ -13,7 +14,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       {/* <-------------------ROTAS PÚBLICAS-------------------> */}
-      <Route path="/login" element={<PaginaProvisoria titulo="Login" task="T13" />} />
+      <Route path="/login" element={<Login />} />
       <Route path="/acesso-negado" element={<AcessoNegado />} />
 
       {/* <-------------------ROTAS AUTENTICADAS-------------------> */}

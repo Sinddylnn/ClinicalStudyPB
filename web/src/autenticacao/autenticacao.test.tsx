@@ -1,0 +1,218 @@
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { login, logout, sessaoAtual, type UsuarioSessao } from '../api/autenticacao';
+import { registrarTratadoresSessao } from '../api/cliente';
+import { ErroRequisicao } from '../api/erros';
+import BarraNavegacao from '../components/BarraNavegacao';
+import Login from '../pages/login/Login';
+import RotaProtegida from '../routes/RotaProtegida';
+import { useUsuarioLogado } from './contextoAutenticacao';
+import ProvedorAutenticacao from './ProvedorAutenticacao';
+
+// <-------------------SIMULAÇÕES------------------->
+// A rede fica fora: as chamadas de autenticação e o registro dos tratadores são simulados
+vi.mock('../api/autenticacao', () => ({ login: vi.fn(), logout: vi.fn(), sessaoAtual: vi.fn() }));
+vi.mock('../api/cliente', () => ({ registrarTratadoresSessao: vi.fn() }));
+
+const PAULA: UsuarioSessao = {
+  id: 2,
+  nome: 'Paula Pesquisadora',
+  email: 'paula@exemplo.com',
+  perfil: 'PESQUISADOR',
+};
+
+// Tratadores que o provedor registrou no cliente HTTP
+function tratadores() {
+  return vi.mocked(registrarTratadoresSessao).mock.calls.at(-1)![0];
+}
+
+function PaginaEstudos() {
+  const usuario = useUsuarioLogado();
+  return (
+    <>
+      <BarraNavegacao usuario={usuario} />
+      <h1>Estudos protegidos</h1>
+    </>
+  );
+}
+
+function renderizarEm(caminho: string) {
+  render(
+    <MemoryRouter initialEntries={[caminho]}>
+      <ProvedorAutenticacao>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/acesso-negado" element={<h1>Acesso negado</h1>} />
+          <Route element={<RotaProtegida perfis={['PESQUISADOR']} />}>
+            <Route path="/estudos" element={<PaginaEstudos />} />
+          </Route>
+          <Route element={<RotaProtegida perfis={['ADMINISTRADOR']} />}>
+            <Route path="/usuarios" element={<h1>Usuários</h1>} />
+          </Route>
+        </Routes>
+      </ProvedorAutenticacao>
+    </MemoryRouter>,
+  );
+}
+
+async function clicarEmSair() {
+  const usuario = userEvent.setup();
+  await usuario.click(await screen.findByRole('button', { name: /Paula Pesquisadora/ }));
+  await usuario.click(screen.getByRole('menuitem', { name: 'Sair' }));
+}
+
+beforeEach(() => {
+  vi.resetAllMocks();
+});
+
+// <-------------------ROTA PROTEGIDA------------------->
+describe('RotaProtegida', () => {
+  it('mostra carregando enquanto consulta a sessão', () => {
+    vi.mocked(sessaoAtual).mockReturnValue(new Promise(() => {}));
+    renderizarEm('/estudos');
+    expect(screen.getByRole('status')).toHaveTextContent('Carregando…');
+  });
+
+  it('sem sessão leva ao login e, após entrar, volta à página pedida', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue(null);
+    vi.mocked(login).mockResolvedValue(PAULA);
+    renderizarEm('/estudos');
+
+    expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
+    // Primeiro acesso sem sessão não é expiração
+    expect(screen.queryByText('Sua sessão expirou. Entre novamente.')).not.toBeInTheDocument();
+
+    const usuario = userEvent.setup();
+    await usuario.type(screen.getByLabelText('E-mail'), 'paula@exemplo.com');
+    await usuario.type(screen.getByLabelText('Senha'), 'segredo');
+    await usuario.click(screen.getByRole('button', { name: 'Entrar' }));
+
+    expect(await screen.findByRole('heading', { name: 'Estudos protegidos' })).toBeInTheDocument();
+    expect(login).toHaveBeenCalledWith('paula@exemplo.com', 'segredo');
+  });
+
+  it('leva ao acesso negado quando o perfil não pode abrir a rota', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue(PAULA);
+    renderizarEm('/usuarios');
+    expect(await screen.findByRole('heading', { name: 'Acesso negado' })).toBeInTheDocument();
+  });
+
+  it('leva ao login avisando quando não consegue verificar a sessão (SEM_CONEXAO)', async () => {
+    vi.mocked(sessaoAtual).mockRejectedValue(
+      new ErroRequisicao(0, { codigo: 'SEM_CONEXAO', mensagem: 'Não foi possível conectar ao servidor.' }),
+    );
+    renderizarEm('/estudos');
+
+    expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Não foi possível verificar sua sessão. Tente novamente.',
+    );
+  });
+
+  it('tira o aviso de falha na verificação depois de entrar', async () => {
+    vi.mocked(sessaoAtual).mockRejectedValue(
+      new ErroRequisicao(0, { codigo: 'SEM_CONEXAO', mensagem: 'Não foi possível conectar ao servidor.' }),
+    );
+    vi.mocked(login).mockResolvedValue(PAULA);
+    vi.mocked(logout).mockResolvedValue();
+    renderizarEm('/estudos');
+    await screen.findByRole('heading', { name: 'Entrar na sua conta' });
+
+    const usuario = userEvent.setup();
+    await usuario.type(screen.getByLabelText('E-mail'), 'paula@exemplo.com');
+    await usuario.type(screen.getByLabelText('Senha'), 'segredo');
+    await usuario.click(screen.getByRole('button', { name: 'Entrar' }));
+    await clicarEmSair();
+
+    expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
+    expect(screen.queryByText('Não foi possível verificar sua sessão. Tente novamente.')).not.toBeInTheDocument();
+  });
+});
+
+// <-------------------TRATADORES DE SESSÃO------------------->
+describe('tratadores de sessão', () => {
+  it('leva ao login avisando que a sessão expirou (401 com alguém logado)', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue(PAULA);
+    renderizarEm('/estudos');
+    await screen.findByRole('heading', { name: 'Estudos protegidos' });
+
+    act(() => tratadores().naoAutenticado?.());
+
+    expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
+    expect(screen.getByText('Sua sessão expirou. Entre novamente.')).toBeInTheDocument();
+  });
+
+  it('leva ao acesso negado (403 ACESSO_NEGADO)', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue(PAULA);
+    renderizarEm('/estudos');
+    await screen.findByRole('heading', { name: 'Estudos protegidos' });
+
+    act(() => tratadores().acessoNegado?.());
+
+    expect(await screen.findByRole('heading', { name: 'Acesso negado' })).toBeInTheDocument();
+  });
+});
+
+// <-------------------SAIR------------------->
+describe('sair', () => {
+  it('encerra a sessão no servidor e vai para o login (204)', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue(PAULA);
+    vi.mocked(logout).mockResolvedValue();
+    renderizarEm('/estudos');
+
+    await clicarEmSair();
+
+    expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
+    expect(logout).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Sua sessão expirou. Entre novamente.')).not.toBeInTheDocument();
+  });
+
+  it('vai para o login quando a sessão já estava encerrada (401)', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue(PAULA);
+    // Como o cliente real, avisa o tratador antes de recusar
+    vi.mocked(logout).mockImplementation(async () => {
+      tratadores().naoAutenticado?.();
+      throw new ErroRequisicao(401, { codigo: 'AUTENTICACAO_NECESSARIA', mensagem: 'Sessão encerrada.' });
+    });
+    renderizarEm('/estudos');
+
+    await clicarEmSair();
+
+    expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
+    expect(screen.queryByText('Sua sessão expirou. Entre novamente.')).not.toBeInTheDocument();
+  });
+
+  it('mantém a pessoa logada e avisa quando o logout falha (SEM_CONEXAO)', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue(PAULA);
+    vi.mocked(logout).mockRejectedValue(
+      new ErroRequisicao(0, { codigo: 'SEM_CONEXAO', mensagem: 'Não foi possível conectar ao servidor.' }),
+    );
+    renderizarEm('/estudos');
+
+    await clicarEmSair();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível sair. Tente novamente.');
+    expect(screen.getByRole('heading', { name: 'Estudos protegidos' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Sair' })).toBeEnabled();
+  });
+
+  it('limpa o erro do Sair ao reabrir o menu da conta', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue(PAULA);
+    vi.mocked(logout).mockRejectedValue(
+      new ErroRequisicao(0, { codigo: 'SEM_CONEXAO', mensagem: 'Não foi possível conectar ao servidor.' }),
+    );
+    renderizarEm('/estudos');
+    await clicarEmSair();
+    await screen.findByRole('alert');
+
+    const usuario = userEvent.setup();
+    const conta = screen.getByRole('button', { name: /Paula Pesquisadora/ });
+    await usuario.click(conta); // fecha
+    await usuario.click(conta); // reabre
+
+    expect(screen.getByRole('menuitem', { name: 'Sair' })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+});

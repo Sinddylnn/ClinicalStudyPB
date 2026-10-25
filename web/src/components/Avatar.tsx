@@ -1,4 +1,4 @@
-import type { PerfilUsuario } from '../routes/RotaProtegida';
+import type { PerfilUsuario } from '../api/autenticacao';
 import './Avatar.css';
 
 // <-------------------AVATAR COM INICIAIS------------------->

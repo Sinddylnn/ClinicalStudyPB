@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { ErroRequisicao } from '../../api/erros';
 import { servicoEstudos, type EstadoEstudo, type Estudo, type ServicoEstudos } from '../../api/estudos';
-import { USUARIO_SIMULADO, type UsuarioSessao } from '../../api/sessaoSimulada';
+import type { UsuarioSessao } from '../../api/autenticacao';
+import { useUsuarioLogado } from '../../autenticacao/contextoAutenticacao';
 import Avatar from '../../components/Avatar';
 import BarraNavegacao from '../../components/BarraNavegacao';
 import Icone from '../../components/icones';
@@ -11,7 +12,7 @@ import './estudos.css';
 
 type Props = {
   servico?: ServicoEstudos;
-  /** Quem está na sessão; até a T13, a pesquisadora simulada. */
+  /** Quem está na sessão; quando omitido, vem do contexto de autenticação. */
   usuario?: UsuarioSessao;
 };
 
@@ -37,7 +38,8 @@ function textoContagem(quantidade: number): string {
 
 // <-------------------LISTA DE ESTUDOS------------------->
 // Pesquisador: "Meus estudos", com cadastro. Coordenador: estudos vinculados a ele, somente leitura (D02).
-export default function ListaEstudos({ servico = servicoEstudos, usuario = USUARIO_SIMULADO }: Props) {
+export default function ListaEstudos({ servico = servicoEstudos, usuario: usuarioProp }: Props) {
+  const usuario = useUsuarioLogado(usuarioProp);
   const location = useLocation();
   const navigate = useNavigate();
   const [tela, setTela] = useState<EstadoTela>({ tipo: 'carregando' });

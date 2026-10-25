@@ -2,7 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ErroRequisicao } from '../../api/erros';
 import { servicoEstudos, type ServicoEstudos } from '../../api/estudos';
-import { USUARIO_SIMULADO, type UsuarioSessao } from '../../api/sessaoSimulada';
+import type { UsuarioSessao } from '../../api/autenticacao';
+import { useUsuarioLogado } from '../../autenticacao/contextoAutenticacao';
 import BarraNavegacao from '../../components/BarraNavegacao';
 import Icone from '../../components/icones';
 import type { AvisoCadastro } from './ListaEstudos';
@@ -17,7 +18,7 @@ import './estudos.css';
 
 type Props = {
   servico?: ServicoEstudos;
-  /** Quem está na sessão; até a T13, a pesquisadora simulada. */
+  /** Quem está na sessão; quando omitido, vem do contexto de autenticação. */
   usuario?: UsuarioSessao;
 };
 
@@ -44,7 +45,8 @@ function errosDoServidor(errosCampos: Record<string, string>): Erros {
 }
 
 // <-------------------CADASTRO DE ESTUDO------------------->
-export default function NovoEstudo({ servico = servicoEstudos, usuario = USUARIO_SIMULADO }: Props) {
+export default function NovoEstudo({ servico = servicoEstudos, usuario: usuarioProp }: Props) {
+  const usuario = useUsuarioLogado(usuarioProp);
   const navigate = useNavigate();
   const [dados, setDados] = useState<DadosEstudo>(VAZIO);
   const [erros, setErros] = useState<Erros>({});
