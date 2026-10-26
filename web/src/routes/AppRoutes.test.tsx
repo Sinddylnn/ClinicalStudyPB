@@ -36,7 +36,7 @@ beforeEach(() => {
 describe('AppRoutes', () => {
   it('mostra a página inicial na rota /', async () => {
     renderizarEm('/');
-    expect(await screen.findByRole('heading', { name: 'ClinicalStudyPB' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Olá, Paula' })).toBeInTheDocument();
   });
 
   it('mostra a barra com o usuário da sessão na página inicial', async () => {
@@ -66,5 +66,22 @@ describe('AppRoutes', () => {
   it('leva ao acesso negado quando o perfil não pode abrir a rota', async () => {
     renderizarEm('/usuarios');
     expect(await screen.findByRole('heading', { name: 'Acesso negado' })).toBeInTheDocument();
+    expect(screen.getByText('Erro 403')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Voltar ao início' })).toHaveAttribute('href', '/');
+  });
+
+  it('mantém a barra da sessão no acesso negado e na página não encontrada', async () => {
+    renderizarEm('/usuarios');
+    await screen.findByRole('heading', { name: 'Acesso negado' });
+    expect(screen.getByRole('button', { name: /Paula Pesquisadora/ })).toBeInTheDocument();
+  });
+
+  it('mostra a página não encontrada sem a barra quando não há sessão', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue(null);
+    renderizarEm('/rota-inexistente');
+    expect(screen.getByText('Erro 404')).toBeInTheDocument();
+    // Espera a consulta da sessão terminar: sem usuário, a barra não aparece
+    await vi.waitFor(() => expect(sessaoAtual).toHaveBeenCalled());
+    expect(screen.queryByRole('navigation', { name: 'Menu principal' })).not.toBeInTheDocument();
   });
 });

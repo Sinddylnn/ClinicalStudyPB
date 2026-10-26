@@ -418,6 +418,42 @@ describe('EditarUsuario', () => {
     expect(screen.getByRole('link', { name: 'Voltar para usuários' })).toHaveAttribute('href', '/usuarios');
   });
 
+  it('mostra o erro ao carregar e tenta de novo com sucesso', async () => {
+    const listar = vi
+      .fn()
+      .mockRejectedValueOnce(erroApi(0, 'SEM_CONEXAO', 'Não foi possível conectar ao servidor. Tente novamente.'))
+      .mockResolvedValue(USUARIOS);
+    renderizar(criarServico({ listar }), '/usuarios/3/editar');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível conectar ao servidor. Tente novamente.',
+    );
+    expect(screen.queryByLabelText('Nome completo')).not.toBeInTheDocument();
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+    expect(await screen.findByLabelText('Nome completo')).toHaveValue('Carlos Coordenador');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(listar).toHaveBeenCalledTimes(2);
+  });
+
+  it('valida os campos vazios na edição sem chamar a API', async () => {
+    const servico = criarServico();
+    renderizar(servico, '/usuarios/3/editar');
+    await screen.findByLabelText('Nome completo');
+    const usuario = userEvent.setup();
+    await usuario.clear(screen.getByLabelText('Nome completo'));
+    await usuario.clear(screen.getByLabelText('E-mail'));
+    await usuario.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível salvar. Confira os campos destacados.');
+    expect(screen.getByLabelText('Nome completo')).toHaveAccessibleDescription('Informe o nome completo.');
+    expect(screen.getByLabelText('E-mail')).toHaveAccessibleDescription(
+      'Informe um e-mail válido, como nome@exemplo.com.',
+    );
+    expect(servico.editar).not.toHaveBeenCalled();
+  });
+
   it('avisa quando o usuário deixou de existir ao salvar (404)', async () => {
     const servico = criarServico({
       editar: vi.fn().mockRejectedValue(erroApi(404, 'RECURSO_NAO_ENCONTRADO', 'Usuário não encontrado.')),
@@ -501,6 +537,33 @@ describe('desativar e reativar', () => {
     await usuario.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(servico.desativar).not.toHaveBeenCalled();
+  });
+
+  it('prende o foco no diálogo: Tab no último volta ao primeiro, Shift+Tab no primeiro vai ao último', async () => {
+    renderizar(criarServico());
+    const usuario = userEvent.setup();
+    await usuario.click(await screen.findByRole('button', { name: 'Desativar Paula Pesquisadora' }));
+    const dialogo = screen.getByRole('dialog');
+    const cancelar = within(dialogo).getByRole('button', { name: 'Cancelar' });
+    const confirmar = within(dialogo).getByRole('button', { name: 'Desativar conta' });
+
+    confirmar.focus();
+    await usuario.tab();
+    expect(cancelar).toHaveFocus();
+
+    await usuario.tab({ shift: true });
+    expect(confirmar).toHaveFocus();
+  });
+
+  it('Shift+Tab logo ao abrir (foco no próprio diálogo) vai ao último botão', async () => {
+    renderizar(criarServico());
+    const usuario = userEvent.setup();
+    await usuario.click(await screen.findByRole('button', { name: 'Desativar Paula Pesquisadora' }));
+    expect(screen.getByRole('dialog')).toHaveFocus();
+
+    await usuario.tab({ shift: true });
+
+    expect(screen.getByRole('button', { name: 'Desativar conta' })).toHaveFocus();
   });
 
   it('mostra ULTIMO_ADMINISTRADOR dentro do diálogo', async () => {

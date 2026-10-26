@@ -1,0 +1,82 @@
+/* <-------------------PÁGINA DE ERRO------------------->
+   Quadro "Acesso negado (403)" do protótipo; a base vem de estilos/comum.css. */
+.pagina-erro-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px 80px 32px;
+}
+
+.pagina-erro-cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  width: 520px;
+  max-width: 100%;
+  /* Espaço de 60px do protótipo, entre os dois espaçamentos de 24px */
+  margin: 84px 0 0;
+  padding: 48px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid var(--borda-cartao);
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+}
+
+.pagina-erro-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+}
+
+.pagina-erro-cartao h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 29px;
+}
+
+.pagina-erro-cartao p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--texto-suave);
+}
+
+/* <-------------------TONS-------------------> */
+/* Perigo: acesso negado (403) */
+.pagina-erro-perigo .pagina-erro-icone,
+.pagina-erro-perigo .pagina-erro-etiqueta {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+/* Neutro: página não encontrada (404) */
+.pagina-erro-neutro .pagina-erro-icone {
+  color: #0a5a61;
+  background: #e6f4f5;
+}
+
+.pagina-erro-neutro .pagina-erro-etiqueta {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+/* <-------------------TELAS ESTREITAS-------------------> */
+@media (max-width: 900px) {
+  .pagina-erro-conteudo {
+    padding: 16px 16px 32px;
+  }
+
+  .pagina-erro-cartao {
+    margin-top: 24px;
+    padding: 32px 20px;
+  }
+}

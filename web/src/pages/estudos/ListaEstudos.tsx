@@ -248,7 +248,10 @@ export default function ListaEstudos({ servico = servicoEstudos, usuario: usuari
                         {!pesquisador && (
                           <td>
                             <span className="estudos-pessoa">
-                              <Avatar nome={estudo.responsavelNome ?? '?'} perfil="PESQUISADOR" />
+                              {/* Sem o nome não há iniciais: o avatar só aparece quando a API envia responsavelNome */}
+                              {estudo.responsavelNome && (
+                                <Avatar nome={estudo.responsavelNome} perfil="PESQUISADOR" />
+                              )}
                               {estudo.responsavelNome ?? `Pesquisador nº ${estudo.responsavelId}`}
                             </span>
                           </td>

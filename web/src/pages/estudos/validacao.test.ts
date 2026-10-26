@@ -49,6 +49,20 @@ describe('validarEstudo', () => {
     );
   });
 
+  it('recusa limite acima do maior inteiro aceito pelo backend', () => {
+    expect(validarEstudo({ ...VALIDO, limiteParticipantes: 2_147_483_647 }).errosCampos).toEqual({});
+    expect(validarEstudo({ ...VALIDO, limiteParticipantes: '3000000000' }).errosCampos.limiteParticipantes).toBe(
+      'O limite de participantes deve ser no máximo 2.147.483.647.',
+    );
+  });
+
+  it('recusa datas que não existem no calendário', () => {
+    const { errosCampos, periodoInvalido } = validarEstudo({ ...VALIDO, dataInicio: '2026-02-30' });
+    expect(errosCampos.dataInicio).toBe('Informe uma data válida.');
+    expect(periodoInvalido).toBe(false);
+    expect(validarEstudo({ ...VALIDO, dataFim: '2028-02-29' }).errosCampos).toEqual({});
+  });
+
   it('aceita o limite vindo do campo como texto', () => {
     expect(validarEstudo({ ...VALIDO, limiteParticipantes: '12' }).errosCampos).toEqual({});
   });

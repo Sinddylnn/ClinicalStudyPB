@@ -123,6 +123,8 @@ describe('ListaEstudos', () => {
     );
     const linha = (await screen.findByText('Hábitos alimentares')).closest('tr')!;
     expect(within(linha).getByText('Pesquisador nº 2')).toBeInTheDocument();
+    // Sem o nome não há iniciais, então não aparece avatar com "?"
+    expect(within(linha).queryByText('?')).not.toBeInTheDocument();
   });
 
   it('mostra à pesquisadora o subtítulo dos próprios estudos', async () => {
