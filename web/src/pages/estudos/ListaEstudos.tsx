@@ -8,6 +8,7 @@ import Avatar from '../../components/Avatar';
 import BarraNavegacao from '../../components/BarraNavegacao';
 import Icone from '../../components/icones';
 import { formatarPeriodo, NOMES_ESTADO } from './formatacao';
+import '../../estilos/comum.css';
 import './estudos.css';
 
 type Props = {
@@ -106,7 +107,7 @@ export default function ListaEstudos({ servico = servicoEstudos, usuario: usuari
   );
 
   return (
-    <div className="estudos-pagina">
+    <div className="pagina-interna estudos-pagina">
       <BarraNavegacao usuario={usuario} />
 
       {notificacaoVisivel && cadastro && (

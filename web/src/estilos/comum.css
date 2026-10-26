@@ -1,0 +1,273 @@
+/* <-------------------ESTILOS COMUNS DAS TELAS INTERNAS-------------------> */
+/* Base das telas com a barra de navegação (estudos e usuários), extraída de estudos.css.
+   A raiz de cada tela usa a classe .pagina-interna, além da própria (.estudos-pagina...).
+   As regras escopadas valem só dentro dela; as globais já eram globais em estudos.css. */
+.pagina-interna {
+  --texto: #111827;
+  --texto-suave: #6b7280;
+  --texto-tabela: #374151;
+  --icone-suave: #9ca3af;
+  --borda-cartao: #e5e7eb;
+  --borda-entrada: #d1d5db;
+  --primaria: #0e7c86;
+  --primaria-escura: #0a636b;
+  --erro: #dc2626;
+
+  box-sizing: border-box;
+  min-height: 100vh;
+  color: var(--texto);
+  background: #f4f6f8;
+  font-family: Inter, system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-size: 14px;
+  line-height: normal;
+}
+
+.pagina-interna *,
+.pagina-interna *::before,
+.pagina-interna *::after {
+  box-sizing: inherit;
+}
+
+.pagina-interna .icone {
+  flex: none;
+}
+
+/* <-------------------BOTÕES-------------------> */
+.pagina-interna .botao {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 17px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.pagina-interna .botao-primario {
+  min-height: 38px;
+  color: #fff;
+  background: var(--primaria);
+  border: 0;
+}
+
+.pagina-interna .botao-primario:hover {
+  background: var(--primaria-escura);
+}
+
+.pagina-interna .botao-primario:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.pagina-interna .botao-secundario {
+  color: var(--texto);
+  background: #fff;
+  border-color: var(--borda-entrada);
+}
+
+.pagina-interna .botao:focus-visible {
+  outline: 2px solid var(--primaria);
+  outline-offset: 2px;
+}
+
+/* <-------------------ETIQUETAS-------------------> */
+/* Só a base; as cores de cada etiqueta ficam no CSS de cada área */
+.etiqueta {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 15px;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+/* <-------------------AVISOS E NOTIFICAÇÃO-------------------> */
+.pagina-interna .aviso {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+
+.pagina-interna .aviso-erro {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.aviso-texto {
+  flex: 1;
+}
+
+.pagina-interna .aviso-informacao {
+  color: #0a5a61;
+  background: #e6f4f5;
+  border-color: #b6e0e3;
+}
+
+/* Notificação após salvar: canto superior direito, logo abaixo da barra */
+.notificacao {
+  position: fixed;
+  top: 72px;
+  right: 80px;
+  z-index: 20;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+}
+
+/* <-------------------ENTRADAS-------------------> */
+.pagina-interna input,
+.pagina-interna select,
+.pagina-interna textarea {
+  width: 100%;
+  height: 42px;
+  margin: 0;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--texto);
+  background: #fff;
+  border: 1px solid var(--borda-entrada);
+  border-radius: 8px;
+}
+
+.pagina-interna textarea {
+  height: 104px;
+  resize: vertical;
+}
+
+.pagina-interna ::placeholder {
+  color: var(--icone-suave);
+  opacity: 1;
+}
+
+.pagina-interna input:focus-visible,
+.pagina-interna select:focus-visible,
+.pagina-interna textarea:focus-visible {
+  border-color: var(--primaria);
+  outline: 2px solid rgb(14 124 134 / 20%);
+  outline-offset: 0;
+}
+
+.pagina-interna [aria-invalid='true'] {
+  border-color: var(--erro);
+}
+
+.entrada-com-icone,
+.entrada-selecao {
+  position: relative;
+}
+
+.entrada-com-icone > .icone {
+  position: absolute;
+  top: 12px;
+  left: 13px;
+  color: var(--icone-suave);
+  pointer-events: none;
+}
+
+.pagina-interna .entrada-com-icone input {
+  padding-left: 41px;
+}
+
+.entrada-com-icone:has([aria-invalid='true']) > .icone {
+  color: var(--erro);
+}
+
+/* O seletor de data nativo já tem o próprio ícone; o do protótipo fica à esquerda */
+.pagina-interna input[type='date']::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+}
+
+.pagina-interna .entrada-selecao select {
+  padding-right: 40px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.entrada-selecao > .icone {
+  position: absolute;
+  top: 12px;
+  right: 13px;
+  color: var(--texto-suave);
+  pointer-events: none;
+}
+
+/* <-------------------CAMPOS DE FORMULÁRIO-------------------> */
+.pagina-interna .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pagina-interna .campo label {
+  display: flex;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.pagina-interna .obrigatorio::after {
+  content: '*';
+  color: var(--erro);
+}
+
+.campo-rodape {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.campo-ajuda {
+  color: var(--texto-suave);
+}
+
+.campo-erro {
+  color: var(--erro);
+}
+
+.campo-contador {
+  margin-left: auto;
+  color: var(--texto-suave);
+}
+
+/* <-------------------TELAS ESTREITAS-------------------> */
+@media (max-width: 900px) {
+  .notificacao {
+    right: 16px;
+  }
+}

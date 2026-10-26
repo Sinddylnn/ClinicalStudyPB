@@ -9,6 +9,7 @@ import AppRoutes from './AppRoutes';
 // A sessão vem de GET /auth/sessao, aqui simulada
 vi.mock('../api/autenticacao', () => ({ login: vi.fn(), logout: vi.fn(), sessaoAtual: vi.fn() }));
 vi.mock('../api/cliente', () => ({ registrarTratadoresSessao: vi.fn() }));
+vi.mock('../api/usuarios', () => ({ servicoUsuarios: { listar: vi.fn().mockResolvedValue([]) } }));
 
 const PAULA: UsuarioSessao = {
   id: 2,
@@ -53,6 +54,13 @@ describe('AppRoutes', () => {
     vi.mocked(sessaoAtual).mockResolvedValue(null);
     renderizarEm('/');
     expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
+  });
+
+  it('mostra a lista de usuários ao administrador', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue({ ...PAULA, perfil: 'ADMINISTRADOR' });
+    renderizarEm('/usuarios');
+    expect(await screen.findByRole('heading', { name: 'Usuários' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Nenhum usuário cadastrado' })).toBeInTheDocument();
   });
 
   it('leva ao acesso negado quando o perfil não pode abrir a rota', async () => {

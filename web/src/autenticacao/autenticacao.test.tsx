@@ -206,6 +206,19 @@ describe('revalidação da sessão', () => {
     expect(await screen.findByRole('heading', { name: 'Novo estudo protegido' })).toBeInTheDocument();
   });
 
+  it('ao trocar de rota, atualiza a barra quando os dados da conta mudaram', async () => {
+    vi.mocked(sessaoAtual)
+      .mockResolvedValueOnce(PAULA)
+      .mockResolvedValue({ ...PAULA, nome: 'Paula Lima' });
+    renderizarEm('/estudos');
+    await screen.findByRole('heading', { name: 'Estudos protegidos' });
+
+    await userEvent.setup().click(screen.getByRole('link', { name: 'Ir para novo estudo' }));
+
+    expect(await screen.findByRole('button', { name: /Paula Lima/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Novo estudo protegido' })).toBeInTheDocument();
+  });
+
   it('não desloga quando a revalidação falha por SEM_CONEXAO', async () => {
     vi.mocked(sessaoAtual)
       .mockResolvedValueOnce(PAULA)
