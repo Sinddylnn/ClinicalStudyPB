@@ -22,5 +22,13 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
+    // Cobertura com Istanbul (kickoff): npm run test:coverage gera o resumo no terminal
+    // e o relatório em coverage/index.html (pasta ignorada pelo Git)
+    coverage: {
+      provider: 'istanbul',
+      reporter: ['text', 'html'],
+      include: ['src/**'],
+      exclude: ['src/**/*.test.*', 'src/test/**', 'src/main.tsx'],
+    },
   },
 });
