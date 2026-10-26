@@ -2,8 +2,7 @@ import { api } from './cliente';
 import { servicoEstudosSimulado } from './estudosSimulado';
 
 // <-------------------CONTRATO DE ESTUDOS------------------->
-// Espelha a entidade Estudo e a migração V2 do backend.
-// As rotas seguem o diagrama 08 e docs/autenticacao.md; conferir com a Task 3241.
+// Espelha EstudoCadastroEntrada e EstudoResposta do backend (docs/openapi.md).
 export type EstadoEstudo = 'PLANEJAMENTO' | 'RECRUTAMENTO' | 'EXECUCAO' | 'ENCERRADO';
 
 /** Dados enviados em POST /estudos. Datas no formato AAAA-MM-DD. */
@@ -13,6 +12,8 @@ export type EstudoCadastroEntrada = {
   dataInicio: string;
   dataFim: string;
   limiteParticipantes: number;
+  /** Opcional no cadastro. A tela ainda não envia: a escolha do coordenador é da Sprint 2. */
+  coordenadorId?: number | null;
 };
 
 /** Estudo devolvido pela API. O responsável vem da sessão, nunca do formulário (D02). */
@@ -20,9 +21,11 @@ export type Estudo = EstudoCadastroEntrada & {
   id: number;
   estado: EstadoEstudo;
   responsavelId: number;
+  /** null enquanto nenhum coordenador foi atribuído. */
+  coordenadorId: number | null;
   /**
    * Nome do pesquisador responsável, mostrado ao coordenador (coluna Responsável do protótipo).
-   * Ainda não está no contrato do planejamento (8.2); combinar com a Task 3241.
+   * Ainda não vem em EstudoResposta; sem ele, a tela mostra "Pesquisador nº {responsavelId}".
    */
   responsavelNome?: string;
 };
@@ -33,7 +36,7 @@ export type ServicoEstudos = {
 };
 
 // <-------------------SERVIÇO REAL------------------->
-// O backend filtra a lista: pesquisador vê os próprios estudos, coordenador os vinculados (D04)
+// O backend filtra a lista: pesquisador vê os próprios estudos, coordenador os vinculados (D02)
 export const servicoEstudosApi: ServicoEstudos = {
   async listar() {
     const { data } = await api.get<Estudo[]>('/estudos');
@@ -46,7 +49,7 @@ export const servicoEstudosApi: ServicoEstudos = {
 };
 
 // <-------------------SERVIÇO EM USO------------------->
-// Enquanto os endpoints de estudos não chegam à main, as telas usam o simulado.
-// Com o backend pronto, definir VITE_ESTUDOS_API=real no web/.env
+// O simulado continua como padrão até a integração (Task 3131).
+// Para usar o backend, definir VITE_ESTUDOS_API=real no web/.env
 export const servicoEstudos: ServicoEstudos =
   import.meta.env.VITE_ESTUDOS_API === 'real' ? servicoEstudosApi : servicoEstudosSimulado;

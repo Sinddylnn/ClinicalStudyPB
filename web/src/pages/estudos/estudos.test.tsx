@@ -33,6 +33,7 @@ const ESTUDOS: Estudo[] = [
     limiteParticipantes: 40,
     estado: 'PLANEJAMENTO',
     responsavelId: 2,
+    coordenadorId: 3,
     responsavelNome: 'Paula Pesquisadora',
   },
   {
@@ -44,6 +45,7 @@ const ESTUDOS: Estudo[] = [
     limiteParticipantes: 60,
     estado: 'RECRUTAMENTO',
     responsavelId: 2,
+    coordenadorId: null,
     responsavelNome: 'Paula Pesquisadora',
   },
 ];
@@ -112,6 +114,23 @@ describe('ListaEstudos', () => {
     expect(within(linha).getByText('40 vagas')).toBeInTheDocument();
   });
 
+  it('mostra o número do responsável quando a API não envia o nome', async () => {
+    const semNome = ESTUDOS.map((estudo) => ({ ...estudo, responsavelNome: undefined }));
+    render(
+      <MemoryRouter initialEntries={['/estudos']}>
+        <ListaEstudos servico={criarServico({ listar: vi.fn().mockResolvedValue(semNome) })} usuario={COORDENADOR} />
+      </MemoryRouter>,
+    );
+    const linha = (await screen.findByText('Hábitos alimentares')).closest('tr')!;
+    expect(within(linha).getByText('Pesquisador nº 2')).toBeInTheDocument();
+  });
+
+  it('mostra à pesquisadora o subtítulo dos próprios estudos', async () => {
+    renderizar(criarServico());
+    await screen.findByText('Hábitos alimentares');
+    expect(screen.getByText('Estudos sob sua responsabilidade.')).toBeInTheDocument();
+  });
+
   it('busca pelo responsável na lista do coordenador', async () => {
     render(
       <MemoryRouter initialEntries={['/estudos']}>
@@ -144,6 +163,17 @@ describe('ListaEstudos', () => {
 
     await usuario.selectOptions(screen.getByLabelText('Filtrar por estado'), 'PLANEJAMENTO');
     expect(screen.getByText('Nenhum estudo encontrado com esses filtros.')).toBeInTheDocument();
+  });
+
+  it('mostra o carregamento enquanto a API não responde', async () => {
+    let responder: (estudos: Estudo[]) => void = () => {};
+    const listar = vi.fn(() => new Promise<Estudo[]>((resolver) => (responder = resolver)));
+    renderizar(criarServico({ listar }));
+
+    expect(screen.getByText('Carregando estudos…')).toBeInTheDocument();
+    responder(ESTUDOS);
+    expect(await screen.findByText('Hábitos alimentares')).toBeInTheDocument();
+    expect(screen.queryByText('Carregando estudos…')).not.toBeInTheDocument();
   });
 
   it('mostra o estado vazio', async () => {
@@ -207,6 +237,57 @@ describe('NovoEstudo', () => {
       dataFim: '2027-03-01',
       limiteParticipantes: 25,
     });
+  });
+
+  it('aceita início e término no mesmo dia', async () => {
+    const servico = criarServico();
+    renderizar(servico, '/estudos/novo');
+    const usuario = await preencher({ ...FORMULARIO_VALIDO, 'Data de término': '2026-12-01' });
+
+    await usuario.click(screen.getByRole('button', { name: 'Salvar estudo' }));
+
+    await waitFor(() =>
+      expect(servico.cadastrar).toHaveBeenCalledWith(
+        expect.objectContaining({ dataInicio: '2026-12-01', dataFim: '2026-12-01' }),
+      ),
+    );
+    expect(screen.queryByText('A data final deve ser igual ou posterior à inicial.')).not.toBeInTheDocument();
+  });
+
+  it('atualiza a listagem com o estudo cadastrado', async () => {
+    const novo: Estudo = {
+      id: 3,
+      titulo: 'Novo estudo',
+      objetivo: 'Objetivo do estudo.',
+      dataInicio: '2026-12-01',
+      dataFim: '2027-03-01',
+      limiteParticipantes: 25,
+      estado: 'PLANEJAMENTO',
+      responsavelId: 2,
+      coordenadorId: null,
+    };
+    // A API passa a devolver o estudo novo depois do cadastro
+    let salvos: Estudo[] = [];
+    const servico = criarServico({
+      listar: vi.fn(async () => salvos),
+      cadastrar: vi.fn(async () => {
+        salvos = [novo];
+        return novo;
+      }),
+    });
+    renderizar(servico, '/estudos');
+    expect(await screen.findByText('Nenhum estudo cadastrado ainda')).toBeInTheDocument();
+
+    const usuario = userEvent.setup();
+    await usuario.click(screen.getByRole('link', { name: 'Novo estudo' }));
+    await preencher(FORMULARIO_VALIDO);
+    await usuario.click(screen.getByRole('button', { name: 'Salvar estudo' }));
+
+    const linha = (await screen.findByText('Novo estudo', { selector: 'td *' })).closest('tr')!;
+    expect(linha).toHaveClass('estudos-linha-nova');
+    expect(within(linha).getByText('0 de 25 incluídos')).toBeInTheDocument();
+    expect(screen.getByText('Mostrando 1 de 1 estudo')).toBeInTheDocument();
+    expect(servico.listar).toHaveBeenCalledTimes(2);
   });
 
   it('mostra nos campos os erros devolvidos pelo backend', async () => {

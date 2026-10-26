@@ -128,7 +128,7 @@ export default function ListaEstudos({ servico = servicoEstudos, usuario: usuari
             <h1>{titulo}</h1>
             <p className="estudos-subtitulo">
               {pesquisador
-                ? 'Estudos em que você é a pesquisadora responsável.'
+                ? 'Estudos sob sua responsabilidade.'
                 : 'Estudos vinculados a você como coordenador.'}
             </p>
           </div>

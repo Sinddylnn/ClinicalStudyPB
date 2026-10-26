@@ -168,6 +168,15 @@ VALUES ('Paula Pesquisadora', 'paula@exemplo.com', crypt('Senha123', gen_salt('b
 
 Depois, entre na web com `paula@exemplo.com` e a senha `Senha123`. O [guia de autenticação](docs/autenticacao.md) traz mais detalhes sobre os dados de teste.
 
+O login sempre usa o backend, mas as telas de estudos podem usar dados simulados ou a API de estudos. Isso é definido por `VITE_ESTUDOS_API` no `web/.env`:
+
+| Valor | Comportamento |
+|---|---|
+| `simulado` (padrão) | Estudos fictícios guardados em memória na web, que voltam ao estado inicial ao recarregar a página. |
+| `real` | Chamadas a `GET /estudos` e `POST /estudos` no backend. |
+
+Para trocar, copie `web/.env.example` para `web/.env`, ajuste o valor e reinicie o `npm run dev`.
+
 ### Aplicação web, aplicativo e banco de dados
 
 As instruções de execução serão acrescentadas conforme as bases forem disponibilizadas:

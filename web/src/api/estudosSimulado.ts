@@ -8,6 +8,7 @@ import { MENSAGEM_PERIODO_INVALIDO, validarEstudo } from '../pages/estudos/valid
 // Os dados são fictícios e voltam ao estado inicial ao recarregar a página.
 const ID_PESQUISADORA_SIMULADA = 2;
 const NOME_PESQUISADORA_SIMULADA = 'Paula Pesquisadora';
+const ID_COORDENADOR_SIMULADO = 3;
 const ATRASO_MS = 300;
 
 const ESTUDOS_INICIAIS: Estudo[] = [
@@ -22,6 +23,7 @@ const ESTUDOS_INICIAIS: Estudo[] = [
     estado: 'PLANEJAMENTO',
     responsavelId: ID_PESQUISADORA_SIMULADA,
     responsavelNome: NOME_PESQUISADORA_SIMULADA,
+    coordenadorId: ID_COORDENADOR_SIMULADO,
   },
   {
     id: 2,
@@ -33,6 +35,8 @@ const ESTUDOS_INICIAIS: Estudo[] = [
     estado: 'PLANEJAMENTO',
     responsavelId: ID_PESQUISADORA_SIMULADA,
     responsavelNome: NOME_PESQUISADORA_SIMULADA,
+    // Sem coordenador: a atribuição é opcional enquanto o estudo está em planejamento
+    coordenadorId: null,
   },
 ];
 
@@ -78,6 +82,7 @@ export const servicoEstudosSimulado: ServicoEstudos = {
       estado: 'PLANEJAMENTO',
       responsavelId: ID_PESQUISADORA_SIMULADA,
       responsavelNome: NOME_PESQUISADORA_SIMULADA,
+      coordenadorId: entrada.coordenadorId ?? null,
     };
     estudos = [novo, ...estudos];
     return novo;
