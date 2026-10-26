@@ -132,6 +132,17 @@ Esse exemplo confere se o servidor responde e exige autenticação. O fluxo comp
 de login, CSRF, consulta da sessão e logout está no [guia de autenticação](docs/autenticacao.md),
 junto das orientações para integrar a web e preparar os dados de teste.
 
+#### Consultar a documentação da API
+
+Com o backend ligado, acesse [Swagger UI](http://localhost:8080/swagger-ui.html).
+A página apresenta autenticação, gestão de usuários, cadastro/listagem de estudos e
+atribuição de coordenador, com seus campos e respostas. O contrato também está disponível em [JSON](http://localhost:8080/v3/api-docs)
+e [YAML](http://localhost:8080/v3/api-docs.yaml).
+
+O [guia do OpenAPI e Swagger](docs/openapi.md) explica como testar esses fluxos com
+sessão, CSRF e permissões por vínculo. As [decisões e versões](docs/decisoes-e-versoes.md) reúnem as
+escolhas do Kickoff e distinguem o que já existe do que ainda será implementado.
+Esses documentos serão complementados conforme novas operações forem entregues.
 ### Aplicação web
 
 Requer **Node.js 24.22.0** (ver `web/.nvmrc`).
@@ -147,11 +158,21 @@ npm run build    # build de produção
 
 Em desenvolvimento, as chamadas para `/api` são encaminhadas ao backend em `http://localhost:8080` pelo proxy do Vite, que remove o prefixo antes do envio (`/api/usuarios` chega ao backend como `/usuarios`). O prefixo existe só na web, para separar as chamadas à API das rotas de tela com o mesmo nome, como `/usuarios` e `/estudos`. O endereço do backend fica no `target` do proxy, em `web/vite.config.ts`. Já `VITE_API_URL` (ver `web/.env.example`) define o caminho base das chamadas feitas pela web, que por padrão é `/api`.
 
-As telas de estudos podem usar dados simulados ou o backend. Isso é definido por `VITE_ESTUDOS_API` no `web/.env`:
+Todas as telas pedem login, então rodar `npm run dev` sem o backend mostra só "Não foi possível verificar sua sessão". Para usar a web, suba o banco (`docker compose up -d db`) e o backend, conforme as seções [Banco de dados](#banco-de-dados-postgresql-com-docker-compose) e [Backend](#backend), e crie uma conta de teste no banco. Por exemplo, pelo terminal SQL do contêiner (`docker compose exec db psql -U clinicalstudypb -d clinicalstudypb`):
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+INSERT INTO usuarios (nome, email, senha_hash, perfil)
+VALUES ('Paula Pesquisadora', 'paula@exemplo.com', crypt('Senha123', gen_salt('bf', 10)), 'PESQUISADOR');
+```
+
+Depois, entre na web com `paula@exemplo.com` e a senha `Senha123`. O [guia de autenticação](docs/autenticacao.md) traz mais detalhes sobre os dados de teste.
+
+O login sempre usa o backend, mas as telas de estudos podem usar dados simulados ou a API de estudos. Isso é definido por `VITE_ESTUDOS_API` no `web/.env`:
 
 | Valor | Comportamento |
 |---|---|
-| `simulado` (padrão) | Estudos fictícios guardados em memória, que voltam ao estado inicial ao recarregar a página. O backend de estudos não é necessário. |
+| `simulado` (padrão) | Estudos fictícios guardados em memória na web, que voltam ao estado inicial ao recarregar a página. |
 | `real` | Chamadas a `GET /estudos` e `POST /estudos` no backend. |
 
 Para trocar, copie `web/.env.example` para `web/.env`, ajuste o valor e reinicie o `npm run dev`.
@@ -207,11 +228,12 @@ O Spring Boot não lê o `.env` automaticamente. Exporte as variáveis no termin
 ```bash
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/clinicalstudypb
 export SPRING_DATASOURCE_USERNAME=clinicalstudypb
-export SPRING_DATASOURCE_PASSWORD=<mesma senha do .env>
+export SPRING_DATASOURCE_PASSWORD='SUBSTITUA_PELA_MESMA_SENHA_DO_ENV'
 cd backend
 ./mvnw spring-boot:run
 ```
 
+Substitua o texto entre aspas pela senha definida no seu `.env`, mantendo as aspas.
 No PowerShell, utilize `$env:SPRING_DATASOURCE_URL="..."` para cada variável e `.\mvnw.cmd spring-boot:run`.
 
 Para conferir as migrações, consulte a tabela `flyway_schema_history`:

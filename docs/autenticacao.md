@@ -42,7 +42,7 @@ uma senha de login acima desse limite é recusada, inclusive quando houver acent
 | Situação | HTTP | Código JSON |
 |---|---|---|
 | Campos de login inválidos | `400` | `VALIDACAO_INVALIDA`, com `errosCampos` |
-| E-mail ausente, senha errada ou conta desativada no login | `401` | `CREDENCIAIS_INVALIDAS` |
+| E-mail não cadastrado, senha errada ou conta desativada no login | `401` | `CREDENCIAIS_INVALIDAS` |
 | Consulta protegida sem sessão válida | `401` | `AUTENTICACAO_NECESSARIA` |
 | Perfil sem permissão | `403` | `ACESSO_NEGADO` |
 | Alteração sem CSRF ou com token inválido | `403` | `CSRF_INVALIDO` |
@@ -51,20 +51,32 @@ A verificação CSRF acontece antes do login. Por isso, um POST sem o token pode
 receber `403` mesmo sem estar autenticado. Um preflight de origem não permitida
 é recusado pelo filtro CORS, que pode responder sem o corpo JSON da API.
 
-## Permissões preparadas para as rotas da Sprint 1
+## Permissões das rotas implementadas na Sprint 1
 
 | Operação | Perfil permitido |
 |---|---|
 | Gestão em `/usuarios` e seus subendereços | Administrador |
 | `POST /estudos` | Pesquisador |
-| `GET /estudos` e `GET /estudos/{id}` | Pesquisador e coordenador |
+| `GET /estudos` | Pesquisador: próprios estudos; coordenador: estudos vinculados |
+| `GET /estudos/coordenadores` | Pesquisador; retorna ID e nome de coordenadores ativos |
+| `PUT /estudos/{id}/coordenador` | Somente o pesquisador responsável pelo estudo; exige CSRF |
 | Consulta da própria sessão | Qualquer perfil autenticado |
 
-O filtro controla o perfil. Na task de estudos, o serviço e o repositório também
-precisam limitar o pesquisador aos estudos de sua responsabilidade. O responsável
-por um novo estudo vem do identificador autenticado, nunca de um valor livre do formulário.
-As rotas de gestão e estudos serão implementadas nas respectivas tasks; as permissões
-por si só não criam esses endpoints.
+O filtro controla o perfil, enquanto o serviço e o repositório limitam o acesso
+pelos vínculos. O responsável de um novo estudo vem do identificador autenticado,
+nunca de um valor livre do formulário. O coordenador só recebe os estudos ligados
+à própria conta; sem vínculos, recebe `[]`. Não existe consulta individual
+`GET /estudos/{id}` nesta entrega.
+
+O coordenador pode ser escolhido no cadastro ou atribuído/substituído depois pelo
+pesquisador responsável. Ao tentar alterar um estudo alheio, a API retorna `404`.
+Coordenador inativo ou de outro perfil resulta em `400 COORDENADOR_INVALIDO`;
+conta inexistente resulta em `404`. A seleção retorna só ID e nome, preservando
+os dados administrativos. Consulte exemplos no [guia do OpenAPI](openapi.md).
+
+Na gestão de usuários, uma mudança de perfil incompatível com estudos existentes
+é rejeitada com `400 PERFIL_COM_VINCULOS`. A desativação continua preservando os
+vínculos, mas impede que essa conta use o sistema ou seja escolhida em nova atribuição.
 
 A conta é relida por identificador nas requisições autenticadas. Desativação encerra
 o acesso na próxima requisição; mudança de perfil atualiza as permissões da sessão.
@@ -103,6 +115,9 @@ SameSite=Lax; uma implantação futura em sites diferentes exige revisar esse ar
 As sessões ficam em memória: reiniciar o backend exige novo login.
 
 ## Conferir o fluxo manualmente
+
+Também é possível usar a página Swagger do backend seguindo o
+[guia de OpenAPI](openapi.md). Os passos abaixo usam `curl` e o mesmo contrato.
 
 Com o backend e o PostgreSQL ligados, começar por:
 

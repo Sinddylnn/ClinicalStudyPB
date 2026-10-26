@@ -1,5 +1,6 @@
 package br.edu.uepb.clinicalstudypb.usuarios.api;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -15,9 +16,14 @@ import jakarta.validation.constraints.Size;
  * @since 21/10/2026
  */
 public record LoginEntrada(
+        @Schema(description = "E-mail de uma conta fictícia já cadastrada.", example = "pesquisador@example.test",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "Informe o e-mail.")
         @Email(message = "Informe um e-mail válido.")
         @Size(max = 255, message = "O e-mail deve ter até 255 caracteres.") String email,
+        @Schema(description = "Senha original da conta; até 72 bytes em UTF-8. Nunca é devolvida na resposta.",
+                format = "password", accessMode = Schema.AccessMode.WRITE_ONLY,
+                requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "Informe a senha.") String senha) {
 
     /**

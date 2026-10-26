@@ -11,7 +11,7 @@
   color: #6b7280;
 }
 
-/* As telas com layout próprio ocupam a largura toda, sem a margem padrão do navegador */
-body:has(.login-pagina) {
+/* Reset: as telas ocupam a largura toda, sem a margem padrão do navegador */
+body {
   margin: 0;
 }

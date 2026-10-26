@@ -50,6 +50,12 @@ public class Estudo {
     @JoinColumn(name = "responsavel_id", nullable = false)
     private Usuario responsavel;
 
+    // <-------------------Coordenador vinculado ao estudo------------------->
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coordenador_id")
+    private Usuario coordenador;
+
     // <-------------------Período previsto------------------->
 
     @Column(name = "data_inicio", nullable = false)
@@ -140,6 +146,26 @@ public class Estudo {
      */
     public Usuario getResponsavel() {
         return responsavel;
+    }
+
+    /**
+     * Consulta o coordenador atribuído pelo pesquisador responsável.
+     *
+     * @return coordenador do estudo, ou {@code null} enquanto não houver atribuição
+     * @since 1.0
+     */
+    public Usuario getCoordenador() {
+        return coordenador;
+    }
+
+    /**
+     * Atribui ou substitui o coordenador previamente validado pelo serviço.
+     *
+     * @param coordenador conta ativa com perfil de coordenador
+     * @since 1.0
+     */
+    public void atribuirCoordenador(Usuario coordenador) {
+        this.coordenador = java.util.Objects.requireNonNull(coordenador);
     }
 
     /**

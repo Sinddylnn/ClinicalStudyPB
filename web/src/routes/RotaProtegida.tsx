@@ -8,10 +8,10 @@ type Props = {
 };
 
 // <-------------------CONTROLE DE ACESSO NAS ROTAS------------------->
-// Sem sessão vai para o login (guardando a página pedida); perfil fora da lista, para acesso negado.
+// Sem sessão vai para o login (guardando a página pedida, exceto depois do Sair); perfil fora da lista, para acesso negado.
 // O backend continua sendo quem garante o acesso — esconder rota não é segurança.
 export default function RotaProtegida({ perfis }: Props) {
-  const { usuario, carregando } = useAutenticacao();
+  const { usuario, carregando, saidaVoluntaria } = useAutenticacao();
   const local = useLocation();
 
   if (carregando) {
@@ -23,6 +23,8 @@ export default function RotaProtegida({ perfis }: Props) {
   }
 
   if (!usuario) {
+    // Depois do Sair, a página atual era de quem saiu: não vale para a próxima pessoa
+    if (saidaVoluntaria) return <Navigate to="/login" replace />;
     const estado: EstadoLogin = { de: local.pathname + local.search };
     return <Navigate to="/login" replace state={estado} />;
   }

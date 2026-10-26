@@ -2,12 +2,6 @@
 /* Medidas do quadro "Barra de navegação" do protótipo (altura 64, margens de 80).
    A fonte Inter é importada em index.css. */
 
-/* A barra ocupa a largura toda, sem a margem padrão do navegador.
-   Fica aqui até o index.css (estilos globais) ter o próprio reset. */
-body:has(.barra-navegacao) {
-  margin: 0;
-}
-
 .barra-navegacao {
   position: relative;
   z-index: 10;

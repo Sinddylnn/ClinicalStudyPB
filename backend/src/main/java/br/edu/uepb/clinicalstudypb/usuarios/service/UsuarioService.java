@@ -8,6 +8,7 @@ import br.edu.uepb.clinicalstudypb.usuarios.api.UsuarioCadastroEntrada;
 import br.edu.uepb.clinicalstudypb.usuarios.api.UsuarioEdicaoEntrada;
 import br.edu.uepb.clinicalstudypb.usuarios.api.UsuarioResposta;
 import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
@@ -22,7 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
  * Implementa as operações e regras de negócio da gestão de usuários.
  *
  * <p>Centraliza cadastro, listagem, edição, desativação e reativação,
- * mantendo as regras de e-mail único e proteção do último administrador ativo.</p>
+ * mantendo as regras de e-mail único, vínculos de estudos e proteção do último administrador ativo.</p>
  *
  * @author Luiz
  * @version 1.0
@@ -33,18 +34,22 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarios;
     private final PasswordEncoder passwordEncoder;
+    private final EstudoRepository estudos;
 
     /**
      * Recebe as dependências utilizadas na gestão de usuários.
      *
      * @param usuarios repositório utilizado para acessar as contas persistidas
      * @param passwordEncoder codificador utilizado para armazenar senhas com segurança
+     * @param estudos consultas dos vínculos que precisam ser preservados na edição
      */
     public UsuarioService(
             UsuarioRepository usuarios,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            EstudoRepository estudos) {
         this.usuarios = usuarios;
         this.passwordEncoder = passwordEncoder;
+        this.estudos = estudos;
     }
 
     // <-------------------CADASTRO------------------->
@@ -103,17 +108,21 @@ public class UsuarioService {
      * @return dados atualizados do usuário
      * @throws ConflitoException quando o e-mail já pertence a outra conta
      * @throws RegraNegocioException quando a alteração retiraria o perfil
-     *         do último administrador ativo
+     *         do último administrador ativo ou tornaria vínculos incompatíveis
      * @since 1.0
      */
     @Transactional
     public UsuarioResposta editar(Long id, UsuarioEdicaoEntrada entrada) {
         bloquearAdministradoresAtivos();
-        Usuario usuario = buscarUsuario(id);
+        // O mesmo bloqueio é usado ao vincular contas aos estudos
+        Usuario usuario = usuarios.bloquearPorIds(List.of(id)).stream().findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Usuário não encontrado."));
         String email = normalizarEmail(entrada.email());
 
         validarEmailDisponivel(email, id);
         validarAlteracaoDoUltimoAdministrador(usuario, entrada.perfil());
+        validarPerfilComVinculos(usuario, entrada.perfil());
 
         usuario.atualizar(
                 entrada.nome().trim(),
@@ -166,6 +175,28 @@ public class UsuarioService {
     }
 
     // <-------------------REGRAS AUXILIARES------------------->
+
+    /**
+     * Impede alterar o perfil quando os estudos ainda dependem dele.
+     *
+     * @param usuario conta que está sendo editada
+     * @param novoPerfil perfil solicitado pelo administrador
+     * @throws RegraNegocioException quando existem vínculos incompatíveis
+     * @since 1.0
+     */
+    private void validarPerfilComVinculos(Usuario usuario, PerfilUsuario novoPerfil) {
+        if (usuario.getPerfil() == novoPerfil) {
+            return;
+        }
+        boolean responsavelIncompativel = novoPerfil != PerfilUsuario.PESQUISADOR
+                && estudos.existsByResponsavelId(usuario.getId());
+        boolean coordenadorIncompativel = novoPerfil != PerfilUsuario.COORDENADOR
+                && estudos.existsByCoordenadorId(usuario.getId());
+        if (responsavelIncompativel || coordenadorIncompativel) {
+            throw new RegraNegocioException("PERFIL_COM_VINCULOS",
+                    "Não é possível alterar o perfil enquanto houver vínculos incompatíveis com estudos.");
+        }
+    }
 
     /**
      * Recusa senhas que o BCrypt não consegue codificar integralmente.
