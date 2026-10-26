@@ -8,7 +8,7 @@ import { ErroRequisicao } from '../api/erros';
 import BarraNavegacao from '../components/BarraNavegacao';
 import Login from '../pages/login/Login';
 import RotaProtegida from '../routes/RotaProtegida';
-import { useUsuarioLogado } from './contextoAutenticacao';
+import { useAutenticacao, useUsuarioLogado } from './contextoAutenticacao';
 import ProvedorAutenticacao from './ProvedorAutenticacao';
 
 // <-------------------SIMULAÇÕES------------------->
@@ -37,11 +37,15 @@ function tratadores() {
 
 function PaginaEstudos({ titulo = 'Estudos protegidos' }: { titulo?: string }) {
   const usuario = useUsuarioLogado();
+  const { atualizarSessao } = useAutenticacao();
   return (
     <>
       <BarraNavegacao usuario={usuario} />
       <h1>{titulo}</h1>
       <Link to="/estudos/novo">Ir para novo estudo</Link>
+      <button type="button" onClick={() => void atualizarSessao()}>
+        Atualizar sessão
+      </button>
     </>
   );
 }
@@ -251,6 +255,24 @@ describe('revalidação da sessão', () => {
   });
 });
 
+// <-------------------ATUALIZAR A SESSÃO------------------->
+// Sem troca de rota: só o atualizarSessao() pode trazer os dados novos
+describe('atualizarSessao', () => {
+  it('traz os dados novos da conta para a barra, sem trocar de rota', async () => {
+    vi.mocked(sessaoAtual)
+      .mockResolvedValueOnce(PAULA)
+      .mockResolvedValue({ ...PAULA, nome: 'Paula Lima' });
+    renderizarEm('/estudos');
+    await screen.findByRole('heading', { name: 'Estudos protegidos' });
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Atualizar sessão' }));
+
+    expect(await screen.findByRole('button', { name: /^Paula Lima/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Estudos protegidos' })).toBeInTheDocument();
+    expect(sessaoAtual).toHaveBeenCalledTimes(2);
+  });
+});
+
 // <-------------------SAIR------------------->
 describe('sair', () => {
   it('encerra a sessão no servidor e vai para o login (204)', async () => {
@@ -266,7 +288,8 @@ describe('sair', () => {
   });
 
   it('sai e entra com outra conta → vai para /', async () => {
-    vi.mocked(sessaoAtual).mockResolvedValue(PAULA);
+    // Como o backend: depois que o Carlos entra, /auth/sessao devolve o Carlos
+    vi.mocked(sessaoAtual).mockResolvedValueOnce(PAULA).mockResolvedValue(CARLOS);
     vi.mocked(logout).mockResolvedValue();
     vi.mocked(login).mockResolvedValue(CARLOS);
     renderizarEm('/estudos/novo');

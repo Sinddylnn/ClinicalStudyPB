@@ -40,6 +40,9 @@ const NOTA_ULTIMO_ADMIN = 'O último administrador ativo não pode ser desativad
 
 const DURACAO_NOTIFICACAO_MS = 6000;
 
+const MENSAGEM_SAIR_APOS_DESATIVAR =
+  'Sua conta foi desativada, mas não foi possível encerrar a sessão. Recarregue a página.';
+
 // Textos dos quadros "Desativar conta" e "Reativar conta" do protótipo
 const CONSEQUENCIAS: Record<Confirmacao['acao'], ItemConsequencia[]> = {
   desativar: [
@@ -111,7 +114,14 @@ export default function ListaUsuarios({ servico = servicoUsuarios, usuario: usua
   };
 
   // <-------------------BUSCA, ABAS E FILTRO------------------->
-  const usuarios = useMemo(() => (tela.tipo === 'pronto' ? tela.usuarios : []), [tela]);
+  // Ordem alfabética: o backend não garante a ordem, e a linha editada não muda de lugar
+  const usuarios = useMemo(
+    () =>
+      tela.tipo === 'pronto'
+        ? [...tela.usuarios].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }))
+        : [],
+    [tela],
+  );
 
   // Busca e perfil valem para as contagens das abas; a aba escolhe só a situação
   const buscados = useMemo(() => {
@@ -157,9 +167,14 @@ export default function ListaUsuarios({ servico = servicoUsuarios, usuario: usua
       const atualizado =
         acao === 'desativar' ? await servico.desativar(alvo.id) : await servico.reativar(alvo.id);
 
-      // A própria conta desativada já não tem sessão: o Sair leva ao login sem guardar a página
+      // A própria conta desativada já não tem sessão: o Sair leva ao login sem guardar a página.
+      // O sair() só falha com erro que não é 401 (ex.: rede); a conta já foi desativada mesmo assim
       if (acao === 'desativar' && alvo.id === usuario.id) {
-        await sair().catch(() => undefined);
+        try {
+          await sair();
+        } catch {
+          setErroConfirmacao(MENSAGEM_SAIR_APOS_DESATIVAR);
+        }
         return;
       }
 
@@ -173,7 +188,7 @@ export default function ListaUsuarios({ servico = servicoUsuarios, usuario: usua
       );
       setDestaqueId(atualizado.id);
       setNotificacao({
-        texto: `${atualizado.nome} foi ${acao === 'desativar' ? 'desativado' : 'reativado'}.`,
+        texto: `A conta de ${atualizado.nome} foi ${acao === 'desativar' ? 'desativada' : 'reativada'}.`,
       });
       setConfirmacao(undefined);
     } catch (erro) {

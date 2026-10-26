@@ -5,7 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { logout, sessaoAtual, type UsuarioSessao } from '../../api/autenticacao';
 import { ErroRequisicao } from '../../api/erros';
 import type { ServicoUsuarios, Usuario } from '../../api/usuarios';
-import { useUsuarioLogado } from '../../autenticacao/contextoAutenticacao';
+import {
+  ContextoAutenticacao,
+  useUsuarioLogado,
+  type Autenticacao,
+} from '../../autenticacao/contextoAutenticacao';
 import ProvedorAutenticacao from '../../autenticacao/ProvedorAutenticacao';
 import BarraNavegacao from '../../components/BarraNavegacao';
 import Login from '../login/Login';
@@ -194,6 +198,27 @@ describe('ListaUsuarios', () => {
       'Mostrando 4 usuários • O último administrador ativo não pode ser desativado.',
     );
     expect(screen.getByRole('link', { name: 'Novo usuário' })).toHaveAttribute('href', '/usuarios/novo');
+  });
+
+  it('ordena por nome, sem diferenciar maiúsculas e acentos', async () => {
+    const ester = { ...PAULA, id: 6, nome: 'ester Lima', email: 'ester@exemplo.com' };
+    const edson = { ...CARLOS, id: 7, nome: 'Édson Rocha', email: 'edson@exemplo.com' };
+    // Ordem do backend sem critério, como no findAll()
+    renderizar(criarServico({ listar: vi.fn().mockResolvedValue([PAULA, ester, JOAO, ANA, edson, CARLOS]) }));
+    await screen.findByRole('table');
+
+    // Cada linha começa pelo avatar (iniciais) e segue com o nome
+    const linhas = screen.getAllByRole('row').slice(1);
+    const esperados = [
+      'Ana Administradora',
+      'Carlos Coordenador',
+      'Édson Rocha',
+      'ester Lima',
+      'João Pereira',
+      'Paula Pesquisadora',
+    ];
+    expect(linhas).toHaveLength(esperados.length);
+    esperados.forEach((nome, posicao) => expect(within(linhas[posicao]).getByText(nome)).toBeInTheDocument());
   });
 
   it('busca por nome ou e-mail', async () => {
@@ -438,7 +463,7 @@ describe('desativar e reativar', () => {
     expect(dialogo).toHaveTextContent('Novos logins são bloqueados e sessões abertas encerradas.');
     await usuario.click(within(dialogo).getByRole('button', { name: 'Desativar conta' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Paula Pesquisadora foi desativado.');
+    expect(await screen.findByRole('status')).toHaveTextContent('A conta de Paula Pesquisadora foi desativada.');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const linha = await linhaDe('Paula Pesquisadora');
     expect(within(linha).getByText('Inativo')).toBeInTheDocument();
@@ -456,7 +481,7 @@ describe('desativar e reativar', () => {
     expect(dialogo).toHaveTextContent('Nenhuma conta nova é criada, sem duplicar o e-mail.');
     await usuario.click(within(dialogo).getByRole('button', { name: 'Reativar conta' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('João Pereira foi reativado.');
+    expect(await screen.findByRole('status')).toHaveTextContent('A conta de João Pereira foi reativada.');
     expect(within(await linhaDe('João Pereira')).getByText('Ativo')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Inativos 0' })).toBeInTheDocument();
   });
@@ -521,6 +546,91 @@ describe('a própria conta do administrador', () => {
     expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
     expect(screen.queryByText('Sua sessão expirou. Entre novamente.')).not.toBeInTheDocument();
     expect(logout).toHaveBeenCalledTimes(1);
+  });
+
+  it('avisa no diálogo quando a conta foi desativada, mas o sair() falhou', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue(sessaoDe(ANA));
+    vi.mocked(logout).mockRejectedValue(
+      erroApi(0, 'SEM_CONEXAO', 'Não foi possível conectar ao servidor. Tente novamente.'),
+    );
+    const servico = criarServico({
+      listar: vi.fn().mockResolvedValue([ANA, BRUNO]),
+      desativar: vi.fn().mockResolvedValue({ ...ANA, ativo: false }),
+    });
+    renderizarComSessao(servico, '/usuarios');
+    const usuario = userEvent.setup();
+    await usuario.click(await screen.findByRole('button', { name: 'Desativar Ana Administradora' }));
+    await usuario.click(screen.getByRole('button', { name: 'Desativar conta' }));
+
+    const dialogo = screen.getByRole('dialog');
+    expect(await within(dialogo).findByRole('alert')).toHaveTextContent(
+      'Sua conta foi desativada, mas não foi possível encerrar a sessão. Recarregue a página.',
+    );
+    expect(screen.queryByRole('heading', { name: 'Entrar na sua conta' })).not.toBeInTheDocument();
+  });
+
+  it('editar a própria conta chama atualizarSessao() antes de voltar à lista', async () => {
+    // Contexto simulado: sem o provedor, nenhuma revalidação poderia atualizar a sessão no lugar dele
+    const atualizarSessao = vi.fn().mockResolvedValue(undefined);
+    const contexto: Autenticacao = {
+      usuario: sessaoDe(ANA),
+      carregando: false,
+      avisoSessao: null,
+      saidaVoluntaria: false,
+      entrar: vi.fn(),
+      sair: vi.fn(),
+      atualizarSessao,
+    };
+    const servico = criarServico({
+      listar: vi.fn().mockResolvedValue([ANA, BRUNO]),
+      editar: vi.fn().mockResolvedValue({ ...ANA, nome: 'Ana Maria Souza' }),
+    });
+    render(
+      <ContextoAutenticacao.Provider value={contexto}>
+        <MemoryRouter initialEntries={['/usuarios/1/editar']}>
+          <Routes>
+            <Route path="/usuarios" element={<ListaUsuarios servico={servico} />} />
+            <Route path="/usuarios/:id/editar" element={<EditarUsuario servico={servico} />} />
+          </Routes>
+        </MemoryRouter>
+      </ContextoAutenticacao.Provider>,
+    );
+    await screen.findByLabelText('Nome completo');
+    const usuario = await preencher({ 'Nome completo': 'Ana Maria Souza' });
+    await usuario.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Usuário atualizado com sucesso.');
+    expect(atualizarSessao).toHaveBeenCalledTimes(1);
+  });
+
+  it('editar outra conta não mexe na sessão', async () => {
+    const atualizarSessao = vi.fn().mockResolvedValue(undefined);
+    const contexto: Autenticacao = {
+      usuario: sessaoDe(ANA),
+      carregando: false,
+      avisoSessao: null,
+      saidaVoluntaria: false,
+      entrar: vi.fn(),
+      sair: vi.fn(),
+      atualizarSessao,
+    };
+    const servico = criarServico({ editar: vi.fn().mockResolvedValue({ ...CARLOS, nome: 'Carlos Lima' }) });
+    render(
+      <ContextoAutenticacao.Provider value={contexto}>
+        <MemoryRouter initialEntries={['/usuarios/3/editar']}>
+          <Routes>
+            <Route path="/usuarios" element={<ListaUsuarios servico={servico} />} />
+            <Route path="/usuarios/:id/editar" element={<EditarUsuario servico={servico} />} />
+          </Routes>
+        </MemoryRouter>
+      </ContextoAutenticacao.Provider>,
+    );
+    await screen.findByLabelText('Nome completo');
+    const usuario = await preencher({ 'Nome completo': 'Carlos Lima' });
+    await usuario.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Usuário atualizado com sucesso.');
+    expect(atualizarSessao).not.toHaveBeenCalled();
   });
 
   it('mudar o próprio nome atualiza a barra', async () => {

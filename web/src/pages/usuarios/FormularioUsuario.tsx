@@ -19,6 +19,9 @@ type Props = {
 
 const AJUDA_PERFIL = 'Administrador, Pesquisador, Coordenador ou Participante.';
 
+// Mesmo @Size(max = 255) do nome e do e-mail no backend
+const LIMITE_TEXTO = 255;
+
 // <-------------------FORMULÁRIO DE USUÁRIO------------------->
 // Seções "Dados da conta" e "Acesso" dos quadros "Novo usuário" e "Editar usuário"
 export default function FormularioUsuario({
@@ -89,6 +92,7 @@ export default function FormularioUsuario({
             <input
               {...propsCampo('nome')}
               autoComplete="off"
+              maxLength={LIMITE_TEXTO}
               placeholder="Ex.: Maria Souza"
               value={dados.nome}
               onChange={(e) => alterar('nome', e.target.value)}
@@ -104,6 +108,7 @@ export default function FormularioUsuario({
                 {...propsCampo('email')}
                 type="email"
                 autoComplete="off"
+                maxLength={LIMITE_TEXTO}
                 placeholder="nome@exemplo.com"
                 value={dados.email}
                 onChange={(e) => alterar('email', e.target.value)}
