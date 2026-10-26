@@ -14,18 +14,20 @@ O desenvolvimento será dividido em três releases e seis sprints. As funcionali
 
 Como se trata de um projeto acadêmico, serão utilizados dados fictícios. O sistema não realiza diagnósticos nem decisões clínicas automatizadas.
 
+---
+
 ## Arquitetura e tecnologias
 
-![fluxo_geral.png](assets/fluxo_geral.png)
+
+<div align="center">
+  <img src="assets/fluxo_geral.png" alt="visão geral proposta" width="70%">
+</div>
 
 A aplicação web e o aplicativo se comunicam com o mesmo backend por meio de uma API REST. O backend concentra as regras de negócio, o controle de acesso e a comunicação com o banco de dados.
 
-// Colocar diagrama aqui
-```text
-Web — React ─────────────┐
-                         ├── API REST — Spring Boot ── PostgreSQL
-Mobile — React Native ───┘
-```
+<div align="center">
+  <img src="docs/diagramas/01_visao_geral.png" alt="visão geral do sistema" width="50%">
+</div>
 
 As interfaces não acessam diretamente o banco. Dessa forma, as regras e os dados permanecem centralizados, mesmo quando são utilizados em telas diferentes.
 
@@ -59,6 +61,7 @@ Gabriela apoia os testes integrados e prepara o ambiente com Docker Compose e a 
 
 As pastas ainda sem implementação contêm apenas `.gitkeep`, um marcador vazio que permite registrá-las no Git. Sua existência organiza o trabalho, mas não significa que o componente esteja concluído.
 
+---
 
 ## Executar o projeto
 
@@ -143,6 +146,8 @@ O [guia do OpenAPI e Swagger](docs/openapi.md) explica como testar esses fluxos 
 sessão, CSRF e permissões por vínculo. As [decisões e versões](docs/decisoes-e-versoes.md) reúnem as
 escolhas do Kickoff e distinguem o que já existe do que ainda será implementado.
 Esses documentos serão complementados conforme novas operações forem entregues.
+
+
 ### Aplicação web
 
 Requer **Node.js 24.22.0** (ver `web/.nvmrc`).
@@ -167,6 +172,16 @@ VALUES ('Paula Pesquisadora', 'paula@exemplo.com', crypt('Senha123', gen_salt('b
 ```
 
 Depois, entre na web com `paula@exemplo.com` e a senha `Senha123`. O [guia de autenticação](docs/autenticacao.md) traz mais detalhes sobre os dados de teste.
+
+
+O login sempre usa o backend, mas as telas de estudos podem usar dados simulados ou a API de estudos. Isso é definido por `VITE_ESTUDOS_API` no `web/.env`:
+
+| Valor | Comportamento |
+|---|---|
+| `simulado` (padrão) | Estudos fictícios guardados em memória na web, que voltam ao estado inicial ao recarregar a página. |
+| `real` | Chamadas a `GET /estudos` e `POST /estudos` no backend. |
+
+Para trocar, copie `web/.env.example` para `web/.env`, ajuste o valor e reinicie o `npm run dev`.
 
 ### Aplicação mobile
 
