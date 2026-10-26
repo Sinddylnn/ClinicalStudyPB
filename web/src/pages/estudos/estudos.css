@@ -1,36 +1,8 @@
 /* <-------------------TELAS DE ESTUDOS-------------------> */
 /* Medidas, cores e textos dos quadros "Pesquisador / Estudos – ..." e
    "Coordenador / Estudos – lista" do protótipo (Figma, quadros de 1440 px).
-   Estilos restritos a estas telas; os globais ficam em index.css. */
-.estudos-pagina {
-  --texto: #111827;
-  --texto-suave: #6b7280;
-  --texto-tabela: #374151;
-  --icone-suave: #9ca3af;
-  --borda-cartao: #e5e7eb;
-  --borda-entrada: #d1d5db;
-  --primaria: #0e7c86;
-  --primaria-escura: #0a636b;
-  --erro: #dc2626;
-
-  box-sizing: border-box;
-  min-height: 100vh;
-  color: var(--texto);
-  background: #f4f6f8;
-  font-family: Inter, system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
-  font-size: 14px;
-  line-height: normal;
-}
-
-.estudos-pagina *,
-.estudos-pagina *::before,
-.estudos-pagina *::after {
-  box-sizing: inherit;
-}
-
-.estudos-pagina .icone {
-  flex: none;
-}
+   Estilos restritos a estas telas; os globais ficam em index.css e a base comum
+   das telas internas (cores, botões, avisos, entradas e campos) em estilos/comum.css. */
 
 .estudos-conteudo {
   display: flex;
@@ -110,63 +82,7 @@
   box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
 }
 
-/* <-------------------BOTÕES, ETIQUETAS E AVISOS-------------------> */
-.estudos-pagina .botao {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 16px;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 17px;
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-  border: 1px solid transparent;
-  border-radius: 8px;
-}
-
-.estudos-pagina .botao-primario {
-  min-height: 38px;
-  color: #fff;
-  background: var(--primaria);
-  border: 0;
-}
-
-.estudos-pagina .botao-primario:hover {
-  background: var(--primaria-escura);
-}
-
-.estudos-pagina .botao-primario:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-.estudos-pagina .botao-secundario {
-  color: var(--texto);
-  background: #fff;
-  border-color: var(--borda-entrada);
-}
-
-.estudos-pagina .botao:focus-visible {
-  outline: 2px solid var(--primaria);
-  outline-offset: 2px;
-}
-
-.etiqueta {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-  padding: 3px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 15px;
-  white-space: nowrap;
-  border-radius: 999px;
-}
-
+/* <-------------------ETIQUETAS DE ESTADO-------------------> */
 /* Ponto colorido antes do estado ("Somente leitura" não tem ponto) */
 .etiqueta-planejamento::before,
 .etiqueta-recrutamento::before,
@@ -210,137 +126,6 @@
 .etiqueta-leitura {
   color: #374151;
   background: #f3f4f6;
-}
-
-.estudos-pagina .aviso {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin: 0;
-  padding: 12px 14px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-}
-
-.estudos-pagina .aviso-erro {
-  color: #991b1b;
-  background: #fef2f2;
-  border-color: #fecaca;
-}
-
-.aviso-texto {
-  flex: 1;
-}
-
-.estudos-pagina .aviso-informacao {
-  color: #0a5a61;
-  background: #e6f4f5;
-  border-color: #b6e0e3;
-}
-
-/* Notificação do cadastro: canto superior direito, logo abaixo da barra */
-.notificacao {
-  position: fixed;
-  top: 72px;
-  right: 80px;
-  z-index: 20;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  width: 380px;
-  max-width: calc(100vw - 32px);
-  margin: 0;
-  padding: 12px 14px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-  color: #166534;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 10px;
-  box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
-}
-
-/* <-------------------ENTRADAS-------------------> */
-.estudos-pagina input,
-.estudos-pagina select,
-.estudos-pagina textarea {
-  width: 100%;
-  height: 42px;
-  margin: 0;
-  padding: 10px 12px;
-  font: inherit;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--texto);
-  background: #fff;
-  border: 1px solid var(--borda-entrada);
-  border-radius: 8px;
-}
-
-.estudos-pagina textarea {
-  height: 104px;
-  resize: vertical;
-}
-
-.estudos-pagina ::placeholder {
-  color: var(--icone-suave);
-  opacity: 1;
-}
-
-.estudos-pagina input:focus-visible,
-.estudos-pagina select:focus-visible,
-.estudos-pagina textarea:focus-visible {
-  border-color: var(--primaria);
-  outline: 2px solid rgb(14 124 134 / 20%);
-  outline-offset: 0;
-}
-
-.estudos-pagina [aria-invalid='true'] {
-  border-color: var(--erro);
-}
-
-.entrada-com-icone,
-.entrada-selecao {
-  position: relative;
-}
-
-.entrada-com-icone > .icone {
-  position: absolute;
-  top: 12px;
-  left: 13px;
-  color: var(--icone-suave);
-  pointer-events: none;
-}
-
-.estudos-pagina .entrada-com-icone input {
-  padding-left: 41px;
-}
-
-.entrada-com-icone:has([aria-invalid='true']) > .icone {
-  color: var(--erro);
-}
-
-/* O seletor de data nativo já tem o próprio ícone; o do protótipo fica à esquerda */
-.estudos-pagina input[type='date']::-webkit-calendar-picker-indicator {
-  opacity: 0.5;
-}
-
-.estudos-pagina .entrada-selecao select {
-  padding-right: 40px;
-  appearance: none;
-  cursor: pointer;
-}
-
-.entrada-selecao > .icone {
-  position: absolute;
-  top: 12px;
-  right: 13px;
-  color: var(--texto-suave);
-  pointer-events: none;
 }
 
 /* <-------------------LISTA-------------------> */
@@ -614,47 +399,6 @@
   border: 0;
 }
 
-.estudos-pagina .campo {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.estudos-pagina .campo label {
-  display: flex;
-  gap: 4px;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 16px;
-}
-
-.estudos-pagina .obrigatorio::after {
-  content: '*';
-  color: var(--erro);
-}
-
-.campo-rodape {
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-  font-size: 12px;
-  line-height: 16px;
-}
-
-.campo-ajuda {
-  color: var(--texto-suave);
-}
-
-.campo-erro {
-  color: var(--erro);
-}
-
-.campo-contador {
-  margin-left: auto;
-  color: var(--texto-suave);
-}
-
 .estudos-acoes {
   display: flex;
   gap: 12px;
@@ -667,10 +411,6 @@
 @media (max-width: 900px) {
   .estudos-conteudo {
     padding: 16px 16px 32px;
-  }
-
-  .notificacao {
-    right: 16px;
   }
 
   .estudos-filtros,
