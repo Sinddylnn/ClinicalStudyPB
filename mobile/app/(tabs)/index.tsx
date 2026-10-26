@@ -1,195 +1,125 @@
-import { StyleSheet, ScrollView, TouchableOpacity, Platform } from "react-native";
-import { Text, View } from '@/components/Themed';
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+import React from 'react';
+import { StyleSheet, Text, View, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
-  const colorScheme = useColorScheme();
-  const themeColors = Colors[colorScheme ?? 'light'];
-
   return (
-    <ScrollView style={[styles.container, { backgroundColor: themeColors.background }]}>
-
-      {/* Cabeçalho de Boas-Vindas */}
-
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.welcomeSubtitle}>Participante / Paciente</Text>
-          <Text style={styles.welcomeTitle}>Painel de Saúde</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Cabeçalho idêntico ao Figma */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <View style={styles.logoIconBox}>
+              <Ionicons name="flask-outline" size={16} color="#FFFFFF" />
+            </View>
+            <Text style={styles.logoText}>ClinicalStudyPB</Text>
+          </View>
+          <Text style={styles.greeting}>Olá!</Text>
+          <Text style={styles.subtitle}>Aplicativo do participante</Text>
         </View>
-        <TouchableOpacity style={[styles.profileButton, { backgroundColor: themeColors.primary + '20' }]}>
-          <Ionicons name="person-outline" size={24} color={themeColors.primary} />
-        </TouchableOpacity>
+
+        {/* Bloco inferior com o cartão */}
+        <View style={styles.contentContainer}>
+          <View style={styles.card}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="home-outline" size={24} color="#374151" />
+            </View>
+            <Text style={styles.cardTitle}>Disponível na Sprint 3</Text>
+            <Text style={styles.cardDescription}>
+              Aqui você vai acompanhar a próxima visita, seus estudos e o comparecimento.
+            </Text>
+          </View>
+        </View>
       </View>
-
-      {/* Próximo Compromisso / Card de Destaque */}
-
-      <View style={[
-        styles.highlightCard, 
-        { 
-          backgroundColor: themeColors.cardBackground, 
-          borderColor: themeColors.secondary,
-          shadowOpacity: colorScheme === 'dark' ? 0.2 : 0.05 // Movido para cá dinamicamente
-        }
-      ]}>
-        <View style={styles.cardHeaderRow}>
-          <Ionicons name="calendar" size={22} color={themeColors.secondary} />
-          <Text style={[styles.cardTag, { color: themeColors.secondary }]}>Próxima Visita</Text>
-        </View>
-        <Text style={styles.cardTitle}>Consulta de Acompanhamento</Text>
-        <Text style={styles.cardInfo}>Amanhã, às 14:30 - Dr. Carlos Silva</Text>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: themeColors.primary }]}>
-          <Text style={styles.actionButtonText}>Confirmar Presença</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Seção de Ações Rápidas */}
-      
-      <Text style={styles.sectionTitle}>Ações do Participante</Text>
-
-      <TouchableOpacity style={[styles.menuCard, { backgroundColor: themeColors.cardBackground }]}>
-        <View style={[styles.iconContainer, { backgroundColor: themeColors.primary + '15' }]}>
-          <Ionicons name="medical-outline" size={24} color={themeColors.primary} />
-        </View>
-        <View style={styles.menuTextContainer}>
-          <Text style={styles.menuTitle}>Consultar Estudos e Visitas</Text>
-          <Text style={styles.menuDescription}>Visualize o cronograma e os detalhes do seu estudo clínico.</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={[styles.menuCard, { backgroundColor: themeColors.cardBackground }]}>
-        <View style={[styles.iconContainer, { backgroundColor: themeColors.secondary + '15' }]}>
-          <Ionicons name="calendar-number-outline" size={24} color={themeColors.secondary} />
-        </View>
-        <View style={styles.menuTextContainer}>
-          <Text style={styles.menuTitle}>Reagendamento</Text>
-          <Text style={styles.menuDescription}>Confirme sua presença ou solicite alteração de horário.</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={[styles.menuCard, { backgroundColor: themeColors.cardBackground }]}>
-        <View style={[styles.iconContainer, { backgroundColor: themeColors.primary + '15' }]}>
-          <Ionicons name="cube-outline" size={24} color={themeColors.primary} />
-        </View>
-        <View style={styles.menuTextContainer}>
-          <Text style={styles.menuTitle}>Retiradas e Pedidos</Text>
-          <Text style={styles.menuDescription}>Solicite kits e acompanhe o status dos seus pedidos.</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
-      </TouchableOpacity>
-    </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#0F293B',
+  },
   container: {
     flex: 1,
-    padding: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    backgroundColor: '#0F2A3A',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 10,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 24,
   },
-  welcomeSubtitle: {
-    fontSize: 14,
-    color: '#64748b',
-    fontWeight: '600',
-  },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  profileButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  highlightCard: {
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 24,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardHeaderRow: {
+  logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  cardTag: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginLeft: 6,
-    textTransform: 'uppercase',
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  cardInfo: {
-    fontSize: 14,
-    color: '#64748b',
+    alignSelf: 'flex-start',
     marginBottom: 16,
   },
-  actionButton: {
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-    actionButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
+  logoText: {
+    marginLeft: 8,
+    fontWeight: '600',
+    color: '#FFFFFF',
     fontSize: 14,
   },
-  sectionTitle: {
-    fontSize: 16,
+  logoIconBox: {
+  width: 24,
+  height: 24,
+  borderRadius: 6,
+  backgroundColor: '#0E7C86',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+  greeting: {
+    fontSize: 34, // Aumentado para corresponder ao destaque do Figma
     fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#64748b',
+    color: '#FFFFFF',
+    marginBottom: 4,
   },
-  menuCard: {
-    flexDirection: 'row',
+  subtitle: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 20,
+    paddingTop: 32,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  iconContainer: {
+  iconCircle: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: 24,
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginBottom: 16,
   },
-  menuTextContainer: {
-    flex: 1,
-  },
-  menuTitle: {
+  cardTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 8,
   },
-  menuDescription: {
-    fontSize: 12,
-    color: '#64748b',
+  cardDescription: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });
