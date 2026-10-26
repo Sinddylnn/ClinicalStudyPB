@@ -23,22 +23,24 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 public record EstudoCadastroEntrada(
 
-        @NotBlank(message = "O título é obrigatório.")
+        @NotBlank(message = "Informe o título.")
         @Size(max = 150, message = "O título deve ter no máximo 150 caracteres.")
         String titulo,
 
-        @NotBlank(message = "O objetivo é obrigatório.")
+        @NotBlank(message = "Informe o objetivo.")
         @Size(max = 2000, message = "O objetivo deve ter no máximo 2000 caracteres.")
         String objetivo,
 
-        @NotNull(message = "A data de início é obrigatória.")
+        @NotNull(message = "Informe a data de início.")
         LocalDate dataInicio,
 
-        @NotNull(message = "A data de término é obrigatória.")
+        @NotNull(message = "Informe a data de término.")
         LocalDate dataFim,
 
-        @NotNull(message = "O limite de participantes é obrigatório.")
-        @Positive(message = "O limite de participantes deve ser maior que zero.")
+        @NotNull(message = "Informe o limite de participantes.")
+        @Positive(message = "Informe um número inteiro maior que zero.")
+        @Schema(description = "Número inteiro entre 1 e 2.147.483.647; decimais não são convertidos.",
+                minimum = "1", maximum = "2147483647", example = "20")
         Integer limiteParticipantes,
 
         @Positive(message = "O identificador do coordenador deve ser maior que zero.")

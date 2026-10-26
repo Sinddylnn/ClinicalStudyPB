@@ -15,8 +15,8 @@ export type DadosUsuario = {
 
 export type ErrosUsuario = Partial<Record<CampoUsuario, string>>;
 
-// Mínimo do protótipo. O backend ainda NÃO exige tamanho mínimo de senha (só o máximo de
-// 72 bytes, SENHA_MUITO_LONGA): falta combinar com o Luiz para ele validar também.
+// Mínimo aprovado para novas contas e validado também no backend
+// O limite de 72 bytes em UTF-8 continua sendo verificado pela API
 export const SENHA_MINIMA = 8;
 
 // Formato básico nome@dominio.tld; o @Email do backend é a palavra final
@@ -27,7 +27,7 @@ export function validarUsuario(dados: DadosUsuario, comSenha: boolean): ErrosUsu
   const erros: ErrosUsuario = {};
   if (!dados.nome.trim()) erros.nome = 'Informe o nome completo.';
   if (!EMAIL.test(dados.email.trim())) erros.email = 'Informe um e-mail válido, como nome@exemplo.com.';
-  if (comSenha && dados.senha.length < SENHA_MINIMA) {
+  if (comSenha && (!dados.senha.trim() || dados.senha.length < SENHA_MINIMA)) {
     erros.senha = `A senha deve ter pelo menos ${SENHA_MINIMA} caracteres.`;
   }
   if (!dados.perfil) erros.perfil = 'Selecione um perfil.';

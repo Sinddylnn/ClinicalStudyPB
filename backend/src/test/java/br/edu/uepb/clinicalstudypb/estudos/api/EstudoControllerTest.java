@@ -100,11 +100,13 @@ class EstudoControllerTest {
                 .thenAnswer(i -> contas.values().stream()
                         .filter(u -> u.isAtivo() && u.getPerfil() == PerfilUsuario.COORDENADOR)
                         .sorted(Comparator.comparing(Usuario::getNome).thenComparing(Usuario::getId)).toList());
-        when(estudos.findByResponsavelId(anyLong())).thenAnswer(i -> registros.values().stream()
-                .filter(e -> e.getResponsavel().getId().equals(i.getArgument(0))).toList());
-        when(estudos.findByCoordenadorId(anyLong())).thenAnswer(i -> registros.values().stream()
+        when(estudos.findByResponsavelIdOrderByIdDesc(anyLong())).thenAnswer(i -> registros.values().stream()
+                .filter(e -> e.getResponsavel().getId().equals(i.getArgument(0)))
+                .sorted(Comparator.comparing(Estudo::getId).reversed()).toList());
+        when(estudos.findByCoordenadorIdOrderByIdDesc(anyLong())).thenAnswer(i -> registros.values().stream()
                 .filter(e -> e.getCoordenador() != null
-                        && e.getCoordenador().getId().equals(i.getArgument(0))).toList());
+                        && e.getCoordenador().getId().equals(i.getArgument(0)))
+                .sorted(Comparator.comparing(Estudo::getId).reversed()).toList());
         when(estudos.findByIdAndResponsavelId(anyLong(), anyLong())).thenAnswer(i ->
                 Optional.ofNullable(registros.get(i.getArgument(0)))
                         .filter(e -> e.getResponsavel().getId().equals(i.getArgument(1))));
@@ -129,6 +131,7 @@ class EstudoControllerTest {
         mvc.perform(como(1, post("/estudos")).content(json.writeValueAsString(entrada())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.responsavelId").value(1))
+                .andExpect(jsonPath("$.responsavelNome").value("Pessoa 1"))
                 .andExpect(jsonPath("$.estado").value("PLANEJAMENTO"))
                 .andExpect(jsonPath("$.titulo").value("Estudo novo"))
                 .andExpect(jsonPath("$.dataInicio").value("2026-11-01"))
@@ -297,6 +300,58 @@ class EstudoControllerTest {
         verify(estudos, never()).save(any());
     }
 
+    /**
+     * Recusa números decimais no JSON sem arredondar nem salvar um estudo.
+     *
+     * @param valor representação numérica enviada diretamente na requisição
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"2.5", "2.0", "2e0", "2147483648"})
+    void recusaNumeroIncompativelComInteiro(String valor) throws Exception {
+        String corpo = json.writeValueAsString(entrada()).replace(
+                "\"limiteParticipantes\":10", "\"limiteParticipantes\":" + valor);
+        mvc.perform(como(1, post("/estudos")).content(corpo))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"));
+        verify(estudos, never()).save(any());
+        assertThat(registros).doesNotContainKey(100L);
+    }
+
+    /**
+     * Aceita o maior inteiro suportado sem alterar seu valor.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void aceitaMaiorLimiteInteiro() throws Exception {
+        var dados = entrada();
+        dados.put("limiteParticipantes", Integer.MAX_VALUE);
+        mvc.perform(como(1, post("/estudos")).content(json.writeValueAsString(dados)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.limiteParticipantes").value(Integer.MAX_VALUE));
+    }
+
+    /**
+     * Usa os mesmos textos dos campos obrigatórios no formulário web.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void padronizaMensagensDosCamposDoEstudo() throws Exception {
+        mvc.perform(como(1, post("/estudos")).content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errosCampos.titulo").value("Informe o título."))
+                .andExpect(jsonPath("$.errosCampos.objetivo").value("Informe o objetivo."))
+                .andExpect(jsonPath("$.errosCampos.dataInicio").value("Informe a data de início."))
+                .andExpect(jsonPath("$.errosCampos.dataFim").value("Informe a data de término."))
+                .andExpect(jsonPath("$.errosCampos.limiteParticipantes").value("Informe o limite de participantes."));
+        verify(estudos, never()).save(any());
+    }
+
     // <-------------------LISTAGEM E ATRIBUIÇÃO------------------->
 
     /**
@@ -308,9 +363,9 @@ class EstudoControllerTest {
     @Test
     void filtraPorResponsavelEPorCoordenador() throws Exception {
         mvc.perform(como(1, get("/estudos"))).andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].id", containsInAnyOrder(10, 12)));
+                .andExpect(jsonPath("$[*].id", org.hamcrest.Matchers.contains(12, 10)));
         mvc.perform(como(3, get("/estudos"))).andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].id", containsInAnyOrder(10, 11)));
+                .andExpect(jsonPath("$[*].id", org.hamcrest.Matchers.contains(11, 10)));
         mvc.perform(como(4, get("/estudos"))).andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].id", containsInAnyOrder(12)));
         mvc.perform(como(7, get("/estudos"))).andExpect(status().isOk())

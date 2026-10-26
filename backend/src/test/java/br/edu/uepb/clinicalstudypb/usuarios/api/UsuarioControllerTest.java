@@ -22,6 +22,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -109,6 +110,59 @@ class UsuarioControllerTest {
     }
 
     // <-------------------VALIDAÇÕES DO CADASTRO------------------->
+
+    /**
+     * Recusa senhas curtas ou em branco com uma única mensagem de campo.
+     *
+     * @param senha senha inválida enviada pelo administrador
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"a", "1234567", "", " ", "        "})
+    void recusaSenhaAbaixoDoMinimoOuEmBranco(String senha) throws Exception {
+        mvc.perform(comoAdmin(post("/usuarios")).content(json.writeValueAsString(
+                        new UsuarioCadastroEntrada("Pessoa", "nova@example.test", senha, PerfilUsuario.PESQUISADOR))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("VALIDACAO_INVALIDA"))
+                .andExpect(jsonPath("$.errosCampos.senha").value("A senha deve ter pelo menos 8 caracteres."));
+        verify(usuarios, never()).save(any());
+    }
+
+    /**
+     * Aceita exatamente oito caracteres e armazena somente o hash BCrypt.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void aceitaSenhaComOitoCaracteres() throws Exception {
+        mvc.perform(comoAdmin(post("/usuarios")).content(json.writeValueAsString(
+                        new UsuarioCadastroEntrada("Pessoa", "nova@example.test", "Senha123", PerfilUsuario.PESQUISADOR))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.senha").doesNotExist())
+                .andExpect(jsonPath("$.senhaHash").doesNotExist());
+        assertThat(senhas.matches("Senha123", contas.get(10L).getSenhaHash())).isTrue();
+    }
+
+    /**
+     * Mantém os textos do formulário no cadastro e na edição.
+     *
+     * @throws Exception se a requisição falhar
+     * @since 1.0
+     */
+    @Test
+    void padronizaMensagensDosCamposDeUsuario() throws Exception {
+        for (var pedido : new MockHttpServletRequestBuilder[]{post("/usuarios"), put("/usuarios/2")}) {
+            mvc.perform(comoAdmin(pedido).content("{\"nome\":\"\",\"email\":\" \"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errosCampos.nome").value("Informe o nome completo."))
+                    .andExpect(jsonPath("$.errosCampos.email").value("Informe um e-mail válido, como nome@exemplo.com."))
+                    .andExpect(jsonPath("$.errosCampos.perfil").value("Selecione um perfil."));
+        }
+        verify(usuarios, never()).save(any());
+    }
+
 
     /**
      * Recusa o cadastro quando um campo obrigatório não é informado.

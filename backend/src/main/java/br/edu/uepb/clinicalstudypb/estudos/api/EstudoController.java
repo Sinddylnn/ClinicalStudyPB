@@ -110,6 +110,7 @@ public class EstudoController {
             summary = "Listar estudos",
             description = "Pesquisadores consultam somente os estudos pelos quais são responsáveis. "
                     + "Coordenadores consultam somente estudos vinculados à própria conta. "
+                    + "Retorna os IDs de cadastro em ordem decrescente, sem ordenar pela data de início. "
                     + "Sem vínculos, a lista é vazia. Não exige token CSRF."
     )
     @ApiResponse(responseCode = "200", description = "Lista de estudos permitidos para o perfil; pode estar vazia.")
