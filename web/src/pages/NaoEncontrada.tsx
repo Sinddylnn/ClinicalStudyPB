@@ -1,10 +1,14 @@
-import { Link } from 'react-router';
+import PaginaErro from '../components/PaginaErro';
 
+// Endereço que não corresponde a nenhuma rota da aplicação
 export default function NaoEncontrada() {
   return (
-    <main>
-      <h1>Página não encontrada</h1>
-      <Link to="/">Voltar ao início</Link>
-    </main>
+    <PaginaErro
+      codigo="Erro 404"
+      titulo="Página não encontrada"
+      mensagem="O endereço que você tentou abrir não existe ou mudou. Confira o link ou volte ao início."
+      icone="busca"
+      tom="neutro"
+    />
   );
 }

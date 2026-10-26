@@ -1,11 +1,14 @@
-import { Link } from 'react-router';
+import PaginaErro from '../components/PaginaErro';
 
+// Para onde a RotaProtegida leva quem não tem o perfil da rota (403 ACESSO_NEGADO)
 export default function AcessoNegado() {
   return (
-    <main>
-      <h1>Acesso negado</h1>
-      <p>Você não tem permissão para acessar esta página.</p>
-      <Link to="/">Voltar ao início</Link>
-    </main>
+    <PaginaErro
+      codigo="Erro 403"
+      titulo="Acesso negado"
+      mensagem="Seu perfil não tem permissão para acessar esta página. Se acredita que isso é um erro, fale com o administrador."
+      icone="escudoAlerta"
+      tom="perigo"
+    />
   );
 }

@@ -3,13 +3,14 @@ import RotaProtegida from './RotaProtegida';
 import Inicio from '../pages/Inicio';
 import AcessoNegado from '../pages/AcessoNegado';
 import NaoEncontrada from '../pages/NaoEncontrada';
-import PaginaProvisoria from '../pages/PaginaProvisoria';
 import Login from '../pages/login/Login';
 import ListaEstudos from '../pages/estudos/ListaEstudos';
 import NovoEstudo from '../pages/estudos/NovoEstudo';
+import ListaUsuarios from '../pages/usuarios/ListaUsuarios';
+import NovoUsuario from '../pages/usuarios/NovoUsuario';
+import EditarUsuario from '../pages/usuarios/EditarUsuario';
 
 // <-------------------ROTAS DA APLICAÇÃO------------------->
-// Páginas provisórias serão substituídas nas tasks indicadas
 export default function AppRoutes() {
   return (
     <Routes>
@@ -24,9 +25,9 @@ export default function AppRoutes() {
 
       {/* <-------------------ADMINISTRADOR-------------------> */}
       <Route element={<RotaProtegida perfis={['ADMINISTRADOR']} />}>
-        <Route path="/usuarios" element={<PaginaProvisoria titulo="Usuários" task="T14" />} />
-        <Route path="/usuarios/novo" element={<PaginaProvisoria titulo="Novo usuário" task="T14" />} />
-        <Route path="/usuarios/:id/editar" element={<PaginaProvisoria titulo="Editar usuário" task="T14" />} />
+        <Route path="/usuarios" element={<ListaUsuarios />} />
+        <Route path="/usuarios/novo" element={<NovoUsuario />} />
+        <Route path="/usuarios/:id/editar" element={<EditarUsuario />} />
       </Route>
 
       {/* <-------------------ESTUDOS-------------------> */}

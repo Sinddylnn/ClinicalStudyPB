@@ -27,6 +27,21 @@ export const MENSAGEM_PERIODO_INVALIDO = 'A data final deve ser igual ou posteri
 
 const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 
+// Maior valor do Integer do backend: acima disso a API recusa a requisição inteira
+export const LIMITE_MAXIMO_PARTICIPANTES = 2_147_483_647;
+
+// Confere o formato e se o dia existe no calendário (2026-02-30 não existe)
+function dataValida(valor: string): boolean {
+  if (!DATA_ISO.test(valor)) return false;
+  const data = new Date(`${valor}T00:00:00Z`);
+  return !Number.isNaN(data.getTime()) && data.toISOString().startsWith(valor);
+}
+
+function validarData(valor: string, vazio: string): string | undefined {
+  if (valor.trim() === '') return vazio;
+  return dataValida(valor) ? undefined : 'Informe uma data válida.';
+}
+
 function validarTexto(valor: string, nome: string, maximo: number): string | undefined {
   if (valor.trim() === '') return `Informe ${nome.toLowerCase()}.`;
   if (valor.length > maximo) return `${nome} deve ter no máximo ${maximo} caracteres.`;
@@ -41,6 +56,9 @@ function validarLimite(valor: number | string): string | undefined {
   if (!Number.isInteger(numero) || numero <= 0) {
     return 'Informe um número inteiro maior que zero.';
   }
+  if (numero > LIMITE_MAXIMO_PARTICIPANTES) {
+    return 'O limite de participantes deve ser no máximo 2.147.483.647.';
+  }
   return undefined;
 }
 
@@ -49,8 +67,8 @@ export function validarEstudo(dados: DadosEstudo): ResultadoValidacao {
   const erros: ResultadoValidacao['errosCampos'] = {
     titulo: validarTexto(dados.titulo, 'O título', LIMITES.titulo),
     objetivo: validarTexto(dados.objetivo, 'O objetivo', LIMITES.objetivo),
-    dataInicio: DATA_ISO.test(dados.dataInicio) ? undefined : 'Informe a data de início.',
-    dataFim: DATA_ISO.test(dados.dataFim) ? undefined : 'Informe a data de término.',
+    dataInicio: validarData(dados.dataInicio, 'Informe a data de início.'),
+    dataFim: validarData(dados.dataFim, 'Informe a data de término.'),
     limiteParticipantes: validarLimite(dados.limiteParticipantes),
   };
 

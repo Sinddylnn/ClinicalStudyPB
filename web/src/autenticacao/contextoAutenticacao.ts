@@ -22,6 +22,8 @@ export type Autenticacao = {
   entrar: (email: string, senha: string) => Promise<void>;
   /** Falha (sem limpar a sessão) quando o servidor não confirma o logout. */
   sair: () => Promise<void>;
+  /** Recarrega o usuário da sessão (GET /auth/sessao). Repassa falhas que não sejam 401. */
+  atualizarSessao: () => Promise<void>;
 };
 
 // Valor fora do ProvedorAutenticacao: permite renderizar telas isoladas nos testes,
@@ -33,6 +35,7 @@ const SEM_PROVEDOR: Autenticacao = {
   saidaVoluntaria: false,
   entrar: () => Promise.reject(new Error('ProvedorAutenticacao ausente.')),
   sair: () => Promise.resolve(),
+  atualizarSessao: () => Promise.resolve(),
 };
 
 export const ContextoAutenticacao = createContext<Autenticacao>(SEM_PROVEDOR);

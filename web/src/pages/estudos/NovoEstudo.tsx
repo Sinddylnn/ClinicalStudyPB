@@ -14,6 +14,7 @@ import {
   type CampoEstudo,
   type DadosEstudo,
 } from './validacao';
+import '../../estilos/comum.css';
 import './estudos.css';
 
 type Props = {
@@ -148,7 +149,7 @@ export default function NovoEstudo({ servico = servicoEstudos, usuario: usuarioP
   );
 
   return (
-    <div className="estudos-pagina">
+    <div className="pagina-interna estudos-pagina">
       <BarraNavegacao usuario={usuario} />
 
       <main className="estudos-conteudo estudos-conteudo-formulario">

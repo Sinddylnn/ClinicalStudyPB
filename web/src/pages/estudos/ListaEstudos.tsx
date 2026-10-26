@@ -8,6 +8,7 @@ import Avatar from '../../components/Avatar';
 import BarraNavegacao from '../../components/BarraNavegacao';
 import Icone from '../../components/icones';
 import { formatarPeriodo, NOMES_ESTADO } from './formatacao';
+import '../../estilos/comum.css';
 import './estudos.css';
 
 type Props = {
@@ -106,7 +107,7 @@ export default function ListaEstudos({ servico = servicoEstudos, usuario: usuari
   );
 
   return (
-    <div className="estudos-pagina">
+    <div className="pagina-interna estudos-pagina">
       <BarraNavegacao usuario={usuario} />
 
       {notificacaoVisivel && cadastro && (
@@ -128,7 +129,7 @@ export default function ListaEstudos({ servico = servicoEstudos, usuario: usuari
             <h1>{titulo}</h1>
             <p className="estudos-subtitulo">
               {pesquisador
-                ? 'Estudos em que você é a pesquisadora responsável.'
+                ? 'Estudos sob sua responsabilidade.'
                 : 'Estudos vinculados a você como coordenador.'}
             </p>
           </div>
@@ -247,7 +248,10 @@ export default function ListaEstudos({ servico = servicoEstudos, usuario: usuari
                         {!pesquisador && (
                           <td>
                             <span className="estudos-pessoa">
-                              <Avatar nome={estudo.responsavelNome ?? '?'} perfil="PESQUISADOR" />
+                              {/* Sem o nome não há iniciais: o avatar só aparece quando a API envia responsavelNome */}
+                              {estudo.responsavelNome && (
+                                <Avatar nome={estudo.responsavelNome} perfil="PESQUISADOR" />
+                              )}
                               {estudo.responsavelNome ?? `Pesquisador nº ${estudo.responsavelId}`}
                             </span>
                           </td>
