@@ -1,0 +1,2400 @@
+{
+  "info": {
+    "name": "ClinicalStudyPB API",
+    "description": "Coleção com dados fictícios, alinhada ao OpenAPI do backend. Rodar na ordem (Runner). O script da coleção busca um token CSRF novo antes de cada requisição. Cada requisição traz um exemplo de resposta (válido ou inválido, conforme o nome); os exemplos foram montados a partir do contrato OpenAPI, e as mensagens de erro são ilustrativas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Busca token CSRF novo antes de cada requisição (o token muda após o login)",
+          "pm.sendRequest({ url: pm.environment.get('baseUrl') + '/auth/csrf', method: 'GET' }, function (err, res) {",
+          "  if (err) { console.error('Falha ao obter CSRF', err); return; }",
+          "  pm.environment.set('csrfToken', res.json().token);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Autenticação",
+      "item": [
+        {
+          "name": "Obter CSRF",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.environment.set(\"csrfToken\", pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/csrf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "csrf"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Obter CSRF",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/csrf",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "csrf"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"token\": \"<token-csrf-da-sessao>\",\n  \"headerName\": \"X-CSRF-TOKEN\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login inválido (senha errada) - 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"SenhaErrada!1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Login inválido (senha errada) - 401",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"SenhaErrada!1\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"mensagem\": \"Credenciais inválidas ou conta desativada.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login Admin - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminSenha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Login Admin - 200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminSenha}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 1,\n  \"nome\": \"Admin Teste\",\n  \"email\": \"admin@example.test\",\n  \"perfil\": \"ADMINISTRADOR\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar sessão - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/sessao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "sessao"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Consultar sessão - 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/sessao",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "sessao"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 1,\n  \"nome\": \"Admin Teste\",\n  \"email\": \"admin@example.test\",\n  \"perfil\": \"ADMINISTRADOR\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Usuários (como Administrador)",
+      "item": [
+        {
+          "name": "Cadastrar pesquisador - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set(\"pesquisadorId\", pm.response.json().id);"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set(\"pesqEmail\", \"pesquisador.\" + Date.now() + \"@example.test\");"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Pesquisador Teste\",\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar pesquisador - 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Pesquisador Teste\",\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 2,\n  \"nome\": \"Pesquisador Teste\",\n  \"email\": \"pesquisador.1700000000000@example.test\",\n  \"perfil\": \"PESQUISADOR\",\n  \"ativo\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar coordenador - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set(\"coordenadorId\", pm.response.json().id);"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set(\"coordEmail\", \"coordenador.\" + Date.now() + \"@example.test\");"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Coordenador Teste\",\n  \"email\": \"{{coordEmail}}\",\n  \"senha\": \"{{coordSenha}}\",\n  \"perfil\": \"COORDENADOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar coordenador - 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Coordenador Teste\",\n  \"email\": \"{{coordEmail}}\",\n  \"senha\": \"{{coordSenha}}\",\n  \"perfil\": \"COORDENADOR\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 3,\n  \"nome\": \"Coordenador Teste\",\n  \"email\": \"coordenador.1700000000000@example.test\",\n  \"perfil\": \"COORDENADOR\",\n  \"ativo\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar e-mail duplicado - 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409\", function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Duplicado\",\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"Outra@12345\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar e-mail duplicado - 409",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Duplicado\",\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"Outra@12345\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"mensagem\": \"E-mail já cadastrado, inclusive em uma conta desativada.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar inválido (sem nome, e-mail malformado) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"codigo VALIDACAO_INVALIDA\", function () { pm.expect(pm.response.json().codigo).to.eql(\"VALIDACAO_INVALIDA\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"\",\n  \"email\": \"nao-e-email\",\n  \"senha\": \"Abc@12345\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar inválido (sem nome, e-mail malformado) - 400",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"\",\n  \"email\": \"nao-e-email\",\n  \"senha\": \"Abc@12345\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"VALIDACAO_INVALIDA\",\n  \"mensagem\": \"Confira os campos informados.\",\n  \"errosCampos\": {\n    \"nome\": \"<mensagem do campo>\",\n    \"email\": \"<mensagem do campo>\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar usuários - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"é lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Listar usuários - 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"id\": 1,\n    \"nome\": \"Admin Teste\",\n    \"email\": \"admin@example.test\",\n    \"perfil\": \"ADMINISTRADOR\",\n    \"ativo\": true\n  },\n  {\n    \"id\": 2,\n    \"nome\": \"Pesquisador Teste\",\n    \"email\": \"pesquisador.1700000000000@example.test\",\n    \"perfil\": \"PESQUISADOR\",\n    \"ativo\": true\n  },\n  {\n    \"id\": 3,\n    \"nome\": \"Coordenador Teste\",\n    \"email\": \"coordenador.1700000000000@example.test\",\n    \"perfil\": \"COORDENADOR\",\n    \"ativo\": true\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Editar usuário - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/{{pesquisadorId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{pesquisadorId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Pesquisador Teste Editado\",\n  \"email\": \"{{pesqEmail}}\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Editar usuário - 200",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios/{{pesquisadorId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios",
+                    "{{pesquisadorId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Pesquisador Teste Editado\",\n  \"email\": \"{{pesqEmail}}\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 2,\n  \"nome\": \"Pesquisador Teste Editado\",\n  \"email\": \"pesquisador.1700000000000@example.test\",\n  \"perfil\": \"PESQUISADOR\",\n  \"ativo\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Editar inválido (perfil inexistente) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/{{pesquisadorId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{pesquisadorId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"{{pesqEmail}}\",\n  \"perfil\": \"PERFIL_FALSO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Editar inválido (perfil inexistente) - 400",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios/{{pesquisadorId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios",
+                    "{{pesquisadorId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"{{pesqEmail}}\",\n  \"perfil\": \"PERFIL_FALSO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"mensagem\": \"Dados inválidos.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Editar usuário inexistente - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "999999"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"x.inexistente@example.test\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Editar usuário inexistente - 404",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios/999999",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios",
+                    "999999"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"x.inexistente@example.test\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"mensagem\": \"Usuário não encontrado.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Desativar usuário - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ativo=false\", function () { pm.expect(pm.response.json().ativo).to.eql(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/{{pesquisadorId}}/desativar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{pesquisadorId}}",
+                "desativar"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Desativar usuário - 200",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios/{{pesquisadorId}}/desativar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios",
+                    "{{pesquisadorId}}",
+                    "desativar"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 2,\n  \"nome\": \"Pesquisador Teste\",\n  \"email\": \"pesquisador.1700000000000@example.test\",\n  \"perfil\": \"PESQUISADOR\",\n  \"ativo\": false\n}"
+            }
+          ]
+        },
+        {
+          "name": "Desativar usuário inexistente - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/999999/desativar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "999999",
+                "desativar"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Desativar usuário inexistente - 404",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios/999999/desativar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios",
+                    "999999",
+                    "desativar"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"mensagem\": \"Usuário não encontrado.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Reativar usuário - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"ativo=true\", function () { pm.expect(pm.response.json().ativo).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/{{pesquisadorId}}/reativar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                "{{pesquisadorId}}",
+                "reativar"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Reativar usuário - 200",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios/{{pesquisadorId}}/reativar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios",
+                    "{{pesquisadorId}}",
+                    "reativar"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 2,\n  \"nome\": \"Pesquisador Teste\",\n  \"email\": \"pesquisador.1700000000000@example.test\",\n  \"perfil\": \"PESQUISADOR\",\n  \"ativo\": true\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Trocar de sessão (Admin → Pesquisador)",
+      "item": [
+        {
+          "name": "Logout Admin - 204",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Logout Admin - 204",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Login Pesquisador - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Login Pesquisador - 200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 2,\n  \"nome\": \"Pesquisador Teste\",\n  \"email\": \"pesquisador.1700000000000@example.test\",\n  \"perfil\": \"PESQUISADOR\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Estudos (como Pesquisador)",
+      "item": [
+        {
+          "name": "Listar coordenadores disponíveis - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/coordenadores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "coordenadores"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Listar coordenadores disponíveis - 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/coordenadores",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "coordenadores"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"id\": 3,\n    \"nome\": \"Coordenador Teste\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar estudo - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set(\"estudoId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar estudo - 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 50\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 1,\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"responsavelId\": 2,\n  \"coordenadorId\": null,\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 50,\n  \"estado\": \"PLANEJAMENTO\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar estudo inválido (campos vazios, limite 0) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"codigo VALIDACAO_INVALIDA\", function () { pm.expect(pm.response.json().codigo).to.eql(\"VALIDACAO_INVALIDA\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"\",\n  \"objetivo\": \"\",\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar estudo inválido (campos vazios, limite 0) - 400",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"titulo\": \"\",\n  \"objetivo\": \"\",\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 0\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"VALIDACAO_INVALIDA\",\n  \"mensagem\": \"Confira os campos informados.\",\n  \"errosCampos\": {\n    \"titulo\": \"<mensagem do campo>\",\n    \"objetivo\": \"<mensagem do campo>\",\n    \"limiteParticipantes\": \"<mensagem do campo>\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar estudo inválido (fim antes do início) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"dataInicio\": \"2027-05-01\",\n  \"dataFim\": \"2026-11-01\",\n  \"limiteParticipantes\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar estudo inválido (fim antes do início) - 400",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"dataInicio\": \"2027-05-01\",\n  \"dataFim\": \"2026-11-01\",\n  \"limiteParticipantes\": 50\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"mensagem\": \"Período inconsistente: a data final deve ser posterior à inicial.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar estudo com coordenador inexistente - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 50,\n  \"coordenadorId\": 999999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar estudo com coordenador inexistente - 404",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 50,\n  \"coordenadorId\": 999999\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"mensagem\": \"Conta responsável ou coordenador informado não encontrado.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar estudos - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"é lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Listar estudos - 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"id\": 1,\n    \"titulo\": \"Estudo Teste Postman\",\n    \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n    \"responsavelId\": 2,\n    \"coordenadorId\": 3,\n    \"dataInicio\": \"2026-11-01\",\n    \"dataFim\": \"2027-05-01\",\n    \"limiteParticipantes\": 50,\n    \"estado\": \"PLANEJAMENTO\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Atribuir coordenador - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudoId}}/coordenador",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudoId}}",
+                "coordenador"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordenadorId\": \"{{coordenadorId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Atribuir coordenador - 200",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudoId}}/coordenador",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudoId}}",
+                    "coordenador"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"coordenadorId\": \"{{coordenadorId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 1,\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"responsavelId\": 2,\n  \"coordenadorId\": 3,\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 50,\n  \"estado\": \"PLANEJAMENTO\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Atribuir coordenador inválido (conta não é coordenador) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"codigo COORDENADOR_INVALIDO\", function () { pm.expect(pm.response.json().codigo).to.eql(\"COORDENADOR_INVALIDO\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudoId}}/coordenador",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudoId}}",
+                "coordenador"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordenadorId\": \"{{pesquisadorId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Atribuir coordenador inválido (conta não é coordenador) - 400",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudoId}}/coordenador",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudoId}}",
+                    "coordenador"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"coordenadorId\": \"{{pesquisadorId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"COORDENADOR_INVALIDO\",\n  \"mensagem\": \"A conta informada não é um coordenador ativo.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Atribuir coordenador a estudo inexistente - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/999999/coordenador",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "999999",
+                "coordenador"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordenadorId\": \"{{coordenadorId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Atribuir coordenador a estudo inexistente - 404",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/999999/coordenador",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "999999",
+                    "coordenador"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"coordenadorId\": \"{{coordenadorId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"mensagem\": \"Estudo inexistente ou de outro pesquisador; conta inexistente.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar usuários sem permissão (Pesquisador) - 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Listar usuários sem permissão (Pesquisador) - 403",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"mensagem\": \"Perfil sem permissão.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Encerrar sessão",
+      "item": [
+        {
+          "name": "Logout - 204",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Logout - 204",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Rota protegida após logout - 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 401\", function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Rota protegida após logout - 401",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"mensagem\": \"Sessão ausente, expirada ou conta desativada.\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
