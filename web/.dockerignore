@@ -1,0 +1,12 @@
+# <-------------------ARQUIVOS QUE NÃO ENTRAM NA IMAGEM------------------->
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.git/
+.idea/
+.vscode/
+*.log
+.env
+.env.*
