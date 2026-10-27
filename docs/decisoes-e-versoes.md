@@ -95,6 +95,23 @@ uma data/hora de auditoria e não garante a ordem de conclusão de transações 
 Não foi criada uma coluna de data de cadastro, nem alterada qualquer migração existente.
 As mudanças não exigem apagar o banco ou recriar o volume Docker.
 
+## Execução local com Docker — 27/10/2026
+
+A equipe passou a oferecer banco e backend como serviços básicos do Compose e a
+web como profile opcional `web`. O profile `test` mantém o banco descartável.
+O Expo continua fora do Docker, em outro terminal; não foi alterado o escopo mobile.
+
+Os Dockerfiles usam Temurin **21.0.12.1+1** (JDK para construir e JRE para executar)
+e Node **24.22.0**, preservando as versões acordadas. O backend é construído pelo
+Maven Wrapper e seus testes; a web instala pelo lockfile com `npm ci` e usa Vite para
+execução local. A atualização do código exige reconstrução com `--build`; não há
+sincronização automática de arquivos nesta primeira configuração.
+
+O Compose fornece as variáveis ao backend, usa `db:5432` internamente e direciona
+o proxy da web a `backend:8080`. A API, a sessão, as permissões e as migrações não
+foram alteradas. O volume existente do banco foi preservado. Os detalhes estão em
+[execução com Docker](execucao-docker.md).
+
 ## Versões acordadas
 
 Esta tabela reproduz a seção 2.1 do Kickoff. Ela indica o alvo aprovado, e não uma
