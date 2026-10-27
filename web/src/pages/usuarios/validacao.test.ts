@@ -28,6 +28,11 @@ describe('validarUsuario', () => {
     expect(validarUsuario({ ...VALIDO, email: '  maria@exemplo.com ' }, true)).toEqual({});
   });
 
+  it('recusa uma senha formada apenas por espaços', () => {
+    expect(validarUsuario({ ...VALIDO, senha: '        ' }, true).senha)
+      .toBe('A senha deve ter pelo menos 8 caracteres.');
+  });
+
   it('não valida a senha na edição', () => {
     expect(validarUsuario({ ...VALIDO, senha: '' }, false)).toEqual({});
   });
@@ -41,11 +46,11 @@ describe('errosDoServidor', () => {
     expect(
       errosDoServidor(
         erro('VALIDACAO_INVALIDA', 'Confira os campos informados.', {
-          email: 'O e-mail informado é inválido.',
+          email: 'Informe um e-mail válido, como nome@exemplo.com.',
           outro: 'ignorado',
         }),
       ),
-    ).toEqual({ erros: { email: 'O e-mail informado é inválido.' }, erroGeral: MENSAGEM_CAMPOS_DESTACADOS });
+    ).toEqual({ erros: { email: 'Informe um e-mail válido, como nome@exemplo.com.' }, erroGeral: MENSAGEM_CAMPOS_DESTACADOS });
   });
 
   it('mostra a mensagem do backend quando a validação não aponta campo da tela', () => {

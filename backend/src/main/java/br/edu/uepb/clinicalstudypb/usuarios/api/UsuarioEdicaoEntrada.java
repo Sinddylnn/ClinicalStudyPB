@@ -21,20 +21,20 @@ import jakarta.validation.constraints.Size;
 public record UsuarioEdicaoEntrada(
 
         @Schema(description = "Nome atualizado, com até 255 caracteres.", example = "Ana Pesquisa")
-        @NotBlank(message = "O nome é obrigatório.")
+        @NotBlank(message = "Informe o nome completo.")
         @Size(max = 255, message = "O nome deve ter no máximo 255 caracteres.")
         String nome,
 
         @Schema(description = "E-mail único, com até 255 caracteres.", example = "ana.pesquisa@example.test")
-        @NotBlank(message = "O e-mail é obrigatório.")
-        @Email(message = "O e-mail informado é inválido.")
+        @NotBlank(message = "Informe um e-mail válido, como nome@exemplo.com.")
+        @Email(message = "Informe um e-mail válido, como nome@exemplo.com.")
         @Size(max = 255, message = "O e-mail deve ter no máximo 255 caracteres.")
         String email,
 
         @Schema(description = "Novo perfil; não pode remover o último administrador ativo "
                 + "nem tornar incompatíveis os vínculos como responsável ou coordenador de estudos.",
                 example = "PESQUISADOR")
-        @NotNull(message = "O perfil é obrigatório.")
+        @NotNull(message = "Selecione um perfil.")
         PerfilUsuario perfil
 ) {
 

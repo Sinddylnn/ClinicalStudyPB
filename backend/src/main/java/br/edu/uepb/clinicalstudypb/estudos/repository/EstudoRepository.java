@@ -4,6 +4,7 @@ import br.edu.uepb.clinicalstudypb.estudos.Estudo;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 /**
  * Centraliza o acesso aos estudos persistidos no PostgreSQL.
@@ -15,22 +16,25 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface EstudoRepository extends JpaRepository<Estudo, Long> {
 
     /**
-     * Lista os estudos vinculados a determinado pesquisador responsável.
+     * Lista os estudos do pesquisador pela ordem decrescente dos IDs de cadastro.
      *
      * @param responsavelId identificador do pesquisador responsável
      * @return estudos associados ao pesquisador informado
      * @since 1.0
      */
-    List<Estudo> findByResponsavelId(Long responsavelId);
+    // Carrega o nome do responsável junto da lista, evitando uma consulta por estudo
+    @EntityGraph(attributePaths = "responsavel")
+    List<Estudo> findByResponsavelIdOrderByIdDesc(Long responsavelId);
 
     /**
-     * Lista somente os estudos atribuídos ao coordenador informado.
+     * Lista os estudos do coordenador pela ordem decrescente dos IDs de cadastro.
      *
      * @param coordenadorId identificador do coordenador autenticado
      * @return estudos vinculados à conta, ou lista vazia
      * @since 1.0
      */
-    List<Estudo> findByCoordenadorId(Long coordenadorId);
+    @EntityGraph(attributePaths = "responsavel")
+    List<Estudo> findByCoordenadorIdOrderByIdDesc(Long coordenadorId);
 
     /**
      * Localiza um estudo sem permitir acesso a outro pesquisador.

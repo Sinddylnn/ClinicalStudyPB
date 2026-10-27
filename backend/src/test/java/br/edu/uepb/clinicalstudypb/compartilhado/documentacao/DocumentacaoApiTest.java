@@ -165,6 +165,7 @@ class DocumentacaoApiTest {
         JsonNode cadastro = schemas.path("UsuarioCadastroEntrada").path("properties");
         assertThat(cadastro.path("senha").path("writeOnly").asBoolean()).isTrue();
         assertThat(cadastro.path("senha").path("description").asText()).contains("72 bytes");
+        assertThat(cadastro.path("senha").path("minLength").asInt()).isEqualTo(8);
         for (String nome : new String[]{"UsuarioCadastroEntrada", "UsuarioEdicaoEntrada"}) {
             for (String campo : new String[]{"nome", "email"}) {
                 assertThat(schemas.path(nome).path("properties").path(campo).path("maxLength").asInt())
@@ -218,6 +219,7 @@ class DocumentacaoApiTest {
         assertThat(rotas.path("/estudos").path("get").path("description").asText())
                 .containsIgnoringCase("vinculados");
         JsonNode schemas = contrato.path("components").path("schemas");
+        assertThat(schemas.path("EstudoResposta").path("properties").has("responsavelNome")).isTrue();
         assertThat(schemas.path("EstudoCadastroEntrada").path("properties").has("coordenadorId")).isTrue();
         for (JsonNode campo : schemas.path("EstudoCadastroEntrada").path("required")) {
             assertThat(campo.asText()).isNotEqualTo("coordenadorId");
