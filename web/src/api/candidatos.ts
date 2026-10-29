@@ -33,8 +33,8 @@ export type ServicoCandidatos = {
 };
 
 // <-------------------SERVIÇO REAL------------------->
-// O backend responde 404 para estudo fora do escopo do coordenador e
-// 409 para e-mail repetido no mesmo estudo ou estudo fora de Recrutamento
+// O backend responde 404 para estudo fora do escopo do coordenador, 400 para estudo fora
+// de Recrutamento (regra de negócio) e 409 para e-mail repetido no mesmo estudo (conflito)
 export const servicoCandidatosApi: ServicoCandidatos = {
   async listar(estudoId) {
     const { data } = await api.get<Candidato[]>(`/estudos/${estudoId}/candidatos`);

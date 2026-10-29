@@ -157,7 +157,7 @@ describe('NovoCandidato', () => {
     const servicos = criarServicos();
     renderizar(servicos, '/estudos/3/candidatos/novo');
 
-    await userEvent.type(screen.getByLabelText('E-mail'), 'sem-arroba');
+    await userEvent.type(await screen.findByLabelText('E-mail'), 'sem-arroba');
     await userEvent.click(screen.getByRole('button', { name: 'Cadastrar candidato' }));
 
     expect(screen.getByText('Revise os campos destacados antes de cadastrar.')).toBeInTheDocument();
@@ -171,7 +171,7 @@ describe('NovoCandidato', () => {
     const servicos = criarServicos();
     renderizar(servicos, '/estudos/3/candidatos/novo');
 
-    await userEvent.type(screen.getByLabelText('Nome completo'), '  Gabriel Rocha ');
+    await userEvent.type(await screen.findByLabelText('Nome completo'), '  Gabriel Rocha ');
     await userEvent.type(screen.getByLabelText('E-mail'), 'gabriel@exemplo.com');
     await userEvent.click(screen.getByRole('button', { name: 'Cadastrar candidato' }));
 
@@ -192,7 +192,7 @@ describe('NovoCandidato', () => {
     );
     renderizar(criarServicos(ESTUDO, { cadastrar }), '/estudos/3/candidatos/novo');
 
-    await userEvent.type(screen.getByLabelText('Nome completo'), 'Outra Maria');
+    await userEvent.type(await screen.findByLabelText('Nome completo'), 'Outra Maria');
     await userEvent.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
     await userEvent.click(screen.getByRole('button', { name: 'Cadastrar candidato' }));
 
@@ -205,6 +205,45 @@ describe('NovoCandidato', () => {
 
   it('volta para o recrutamento ao cancelar', async () => {
     renderizar(criarServicos(), '/estudos/3/candidatos/novo');
-    expect(screen.getByRole('link', { name: 'Cancelar' })).toHaveAttribute('href', '/estudos/3/recrutamento');
+    expect(await screen.findByRole('link', { name: 'Cancelar' })).toHaveAttribute('href', '/estudos/3/recrutamento');
+  });
+
+  it('não mostra o formulário para estudo fora do escopo do coordenador', async () => {
+    renderizar(criarServicos(), '/estudos/99/candidatos/novo');
+
+    expect(await screen.findByRole('heading', { name: 'Estudo não encontrado' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Nome completo')).not.toBeInTheDocument();
+  });
+
+  it('não mostra o formulário para estudo fora de Recrutamento', async () => {
+    renderizar(criarServicos({ ...ESTUDO, estado: 'PLANEJAMENTO' }), '/estudos/3/candidatos/novo');
+
+    expect(
+      await screen.findByText('Só é possível cadastrar candidatos com o estudo em Recrutamento.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Voltar ao recrutamento' })).toHaveAttribute(
+      'href',
+      '/estudos/3/recrutamento',
+    );
+    expect(screen.queryByLabelText('Nome completo')).not.toBeInTheDocument();
+  });
+
+  it('mostra o ESTADO_INVALIDO quando o estudo sai de Recrutamento antes do envio', async () => {
+    const cadastrar = vi.fn().mockRejectedValue(
+      new ErroRequisicao(400, {
+        codigo: 'ESTADO_INVALIDO',
+        mensagem: 'Só é possível cadastrar candidatos em estudos em Recrutamento.',
+      }),
+    );
+    renderizar(criarServicos(ESTUDO, { cadastrar }), '/estudos/3/candidatos/novo');
+
+    await userEvent.type(await screen.findByLabelText('Nome completo'), 'Ana Costa');
+    await userEvent.type(screen.getByLabelText('E-mail'), 'ana@exemplo.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Cadastrar candidato' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Só é possível cadastrar candidatos em estudos em Recrutamento.',
+    );
+    expect(screen.getByRole('button', { name: 'Cadastrar candidato' })).toBeEnabled();
   });
 });

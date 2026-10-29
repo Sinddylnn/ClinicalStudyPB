@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { reiniciarCandidatosSimulados, servicoCandidatosSimulado } from './candidatosSimulado';
-import { reiniciarEstudosSimulados } from './estudosSimulado';
+import type { ServicoCandidatos } from './candidatos';
+import { CANDIDATOS_INICIAIS, criarServicoCandidatosSimulado } from './candidatosSimulado';
+import { reiniciarEstudosSimulados, servicoEstudosSimulado } from './estudosSimulado';
 
 // <-------------------TESTES DO SERVIÇO SIMULADO DE CANDIDATOS------------------->
 const RECRUTAMENTO = 3;
@@ -19,10 +20,12 @@ async function executar<T>(promessa: Promise<T>): Promise<T> {
 }
 
 describe('servicoCandidatosSimulado', () => {
+  let servicoCandidatosSimulado: ServicoCandidatos;
+
   beforeEach(() => {
     vi.useFakeTimers();
     reiniciarEstudosSimulados();
-    reiniciarCandidatosSimulados();
+    servicoCandidatosSimulado = criarServicoCandidatosSimulado(servicoEstudosSimulado, CANDIDATOS_INICIAIS);
   });
 
   afterEach(() => {
@@ -75,10 +78,23 @@ describe('servicoCandidatosSimulado', () => {
     expect(await executar(servicoCandidatosSimulado.listar(RECRUTAMENTO))).toHaveLength(6);
   });
 
-  it('responde 409 quando o estudo não está em recrutamento', async () => {
+  it('responde 400 (regra de negócio) quando o estudo não está em recrutamento', async () => {
     const erro = await executar(
       servicoCandidatosSimulado.cadastrar(PLANEJAMENTO, { nome: 'Ana Costa', email: 'ana@exemplo.com' }),
     ).catch((e: unknown) => e);
-    expect(erro).toMatchObject({ status: 409, codigo: 'ESTADO_INVALIDO' });
+    expect(erro).toMatchObject({ status: 400, codigo: 'ESTADO_INVALIDO' });
+  });
+
+  it('procura o estudo na fonte de estudos recebida, sem misturar com os simulados', async () => {
+    const [modelo] = await executar(servicoEstudosSimulado.listar());
+    const estudosReais = {
+      listar: vi.fn().mockResolvedValue([{ ...modelo, id: 10, estado: 'RECRUTAMENTO' }]),
+      cadastrar: vi.fn(),
+    };
+    const servico = criarServicoCandidatosSimulado(estudosReais, []);
+
+    expect(await executar(servico.listar(10))).toEqual([]);
+    const erro = await executar(servico.listar(RECRUTAMENTO)).catch((e: unknown) => e);
+    expect(erro).toMatchObject({ status: 404 });
   });
 });
