@@ -2273,7 +2273,596 @@
       ]
     },
     {
-      "name": "5. Encerrar sessão",
+      "name": "5. Estados do estudo (como Pesquisador)",
+      "description": "Executar após o cadastro e a atribuição de coordenador. Não há protocolo nem inclusão no estudo criado pela coleção. O grupo encerra esse estudo antes do logout.",
+      "item": [
+        {
+          "name": "Abrir recrutamento sem protocolo - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"codigo esperado\", function () { pm.expect(pm.response.json().codigo).to.eql(\"PROTOCOLO_INCOMPLETO\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudoId}}",
+                "estado"
+              ]
+            },
+            "description": "Cadastre o protocolo antes de iniciar o recrutamento.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Abrir recrutamento sem protocolo - 400",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudoId}}",
+                    "estado"
+                  ]
+                },
+                "description": "Cadastre o protocolo antes de iniciar o recrutamento.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"codigo\": \"PROTOCOLO_INCOMPLETO\",\n  \"mensagem\": \"Cadastre o protocolo antes de iniciar o recrutamento.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Pular planejamento para execução - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"codigo esperado\", function () { pm.expect(pm.response.json().codigo).to.eql(\"TRANSICAO_ESTADO_INVALIDA\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudoId}}",
+                "estado"
+              ]
+            },
+            "description": "Não é permitido mudar de PLANEJAMENTO para EXECUCAO.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EXECUCAO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Pular planejamento para execução - 400",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudoId}}",
+                    "estado"
+                  ]
+                },
+                "description": "Não é permitido mudar de PLANEJAMENTO para EXECUCAO.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"EXECUCAO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"codigo\": \"TRANSICAO_ESTADO_INVALIDA\",\n  \"mensagem\": \"Não é permitido mudar de PLANEJAMENTO para EXECUCAO.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Encerrar sem justificativa - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"codigo esperado\", function () { pm.expect(pm.response.json().codigo).to.eql(\"JUSTIFICATIVA_OBRIGATORIA\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudoId}}",
+                "estado"
+              ]
+            },
+            "description": "Informe a justificativa para encerrar o estudo antes da execução.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"ENCERRADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Encerrar sem justificativa - 400",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudoId}}",
+                    "estado"
+                  ]
+                },
+                "description": "Informe a justificativa para encerrar o estudo antes da execução.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"ENCERRADO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"codigo\": \"JUSTIFICATIVA_OBRIGATORIA\",\n  \"mensagem\": \"Informe a justificativa para encerrar o estudo antes da execução.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Encerrar estudo sem inclusões - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"estado esperado\", function () { pm.expect(pm.response.json().estado).to.eql(\"ENCERRADO\"); });",
+                  "pm.test(\"justificativaEncerramento esperado\", function () { pm.expect(pm.response.json().justificativaEncerramento).to.eql(\"Estudo de teste encerrado antes da inclusão.\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudoId}}",
+                "estado"
+              ]
+            },
+            "description": "Encerra o estudo criado pela coleção. A resposta contém todos os campos de EstudoResposta; o exemplo destaca os campos da transição.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"ENCERRADO\",\n  \"justificativaEncerramento\": \"Estudo de teste encerrado antes da inclusão.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Encerrar estudo sem inclusões - 200",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudoId}}",
+                    "estado"
+                  ]
+                },
+                "description": "Encerra o estudo criado pela coleção. A resposta contém todos os campos de EstudoResposta; o exemplo destaca os campos da transição.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"ENCERRADO\",\n  \"justificativaEncerramento\": \"Estudo de teste encerrado antes da inclusão.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"responsavelId\": 2,\n  \"responsavelNome\": \"Pesquisador de teste\",\n  \"coordenadorId\": 3,\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 50,\n  \"estado\": \"ENCERRADO\",\n  \"justificativaEncerramento\": \"Estudo de teste encerrado antes da inclusão.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Reabrir estudo encerrado - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"codigo esperado\", function () { pm.expect(pm.response.json().codigo).to.eql(\"TRANSICAO_ESTADO_INVALIDA\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudoId}}",
+                "estado"
+              ]
+            },
+            "description": "Não é permitido mudar de ENCERRADO para RECRUTAMENTO.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Reabrir estudo encerrado - 400",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudoId}}",
+                    "estado"
+                  ]
+                },
+                "description": "Não é permitido mudar de ENCERRADO para RECRUTAMENTO.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"codigo\": \"TRANSICAO_ESTADO_INVALIDA\",\n  \"mensagem\": \"Não é permitido mudar de ENCERRADO para RECRUTAMENTO.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Alterar coordenador após encerramento - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"codigo esperado\", function () { pm.expect(pm.response.json().codigo).to.eql(\"ESTUDO_ENCERRADO\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudoId}}/coordenador",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudoId}}",
+                "coordenador"
+              ]
+            },
+            "description": "Não é permitido alterar o coordenador de um estudo encerrado.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordenadorId\": \"{{coordenadorId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Alterar coordenador após encerramento - 400",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudoId}}/coordenador",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudoId}}",
+                    "coordenador"
+                  ]
+                },
+                "description": "Não é permitido alterar o coordenador de um estudo encerrado.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"coordenadorId\": \"{{coordenadorId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"codigo\": \"ESTUDO_ENCERRADO\",\n  \"mensagem\": \"Não é permitido alterar o coordenador de um estudo encerrado.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Encerrar sessão",
       "item": [
         {
           "name": "Logout - 204",
