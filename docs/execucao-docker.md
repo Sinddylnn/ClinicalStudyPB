@@ -56,12 +56,12 @@ na IDE ou no terminal; o Spring Boot não passa a carregar `.env` sozinho.
 
 Execute um dos comandos abaixo na raiz do projeto:
 
-| Quero executar | Comando |
-|---|---|
-| Banco + backend + web | `docker compose --profile web up -d --build --wait` |
-| Banco + backend, sem web | `docker compose up -d --build --wait` |
-| Somente banco, para programar o backend na IDE | `docker compose up -d --wait db` |
-| Somente o banco descartável de testes | `docker compose --profile test up -d --wait db-test` |
+| Quero executar                                 | Comando                                              |
+| ---------------------------------------------- | ---------------------------------------------------- |
+| Banco + backend + web                          | `docker compose --profile web up -d --build --wait`  |
+| Banco + backend, sem web                       | `docker compose up -d --build --wait`                |
+| Somente banco, para programar o backend na IDE | `docker compose up -d --wait db`                     |
+| Somente o banco descartável de testes          | `docker compose --profile test up -d --wait db-test` |
 
 `--build` constrói as imagens com o código atual, `-d` deixa os serviços rodando
 em segundo plano e `--wait` aguarda os serviços ficarem saudáveis. O banco inicia
@@ -85,22 +85,22 @@ especifique `db-test` como na tabela para não iniciar também os serviços da b
 
 Com as portas padrão:
 
-| Serviço | Endereço |
-|---|---|
-| Web | http://localhost:5173 |
-| Swagger | http://localhost:8080/swagger-ui.html |
-| Contrato OpenAPI | http://localhost:8080/v3/api-docs |
+| Serviço               | Endereço                                                |
+| --------------------- | ------------------------------------------------------- |
+| Web                   | http://localhost:5173                                   |
+| Swagger               | http://localhost:8080/swagger-ui.html                   |
+| Contrato OpenAPI      | http://localhost:8080/v3/api-docs                       |
 | PostgreSQL no DBeaver | Host `localhost`, porta `5432`, banco `clinicalstudypb` |
 
 A web no Docker usa `VITE_ESTUDOS_API=real`: cadastro e listagem consultam o backend.
 A migração V4 prepara as contas fictícias abaixo ao ser aplicada:
 
-| Perfil | E-mail | Senha fictícia |
-|---|---|---|
-| Administrador | `admin@clinicalstudypb.test` | `Demo@123` |
-| Pesquisador | `pesquisador@clinicalstudypb.test` | `Demo@123` |
-| Coordenador | `coordenador@clinicalstudypb.test` | `Demo@123` |
-| Participante | `participante@clinicalstudypb.test` | `Demo@123` |
+| Perfil        | E-mail                              | Senha fictícia |
+| ------------- | ----------------------------------- | -------------- |
+| Administrador | `admin@clinicalstudypb.test`        | `Demo@123`     |
+| Pesquisador   | `pesquisador@clinicalstudypb.test`  | `Demo@123`     |
+| Coordenador   | `coordenador@clinicalstudypb.test`  | `Demo@123`     |
+| Participante  | `participante@clinicalstudypb.test` | `Demo@123`     |
 
 Senhas alteradas depois da migração não são restauradas ao reiniciar o sistema.
 A senha de login da aplicação é diferente da senha de conexão com o PostgreSQL.
@@ -156,15 +156,15 @@ Dentro de um container, `localhost` significa aquele próprio container. Por iss
 o backend acessa `db` e o proxy da web acessa `backend`. O navegador continua usando
 `localhost`; não recebe esses nomes internos como endereço da API.
 
-| Configuração | Papel |
-|---|---|
-| `SERVER_PORT` no `.env` | Porta publicada do backend no computador; internamente ele usa `8080` |
-| `WEB_PORT` | Porta publicada da web; internamente o Vite usa `5173` |
-| `POSTGRES_PORT` | Porta publicada do banco para DBeaver/Java local; internamente usa `5432` |
-| `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD` | Credenciais fornecidas ao banco e ao backend |
-| `SPRING_DATASOURCE_URL` no `.env.example` | Referência para Java fora do Docker; no container o Compose usa `db:5432` |
-| `API_PROXY_TARGET` | Destino do proxy do Vite: `backend:8080` no Docker e `localhost:8080` fora dele |
-| `VITE_API_URL` | Prefixo `/api` utilizado pelo navegador |
+| Configuração                                                | Papel                                                                           |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `SERVER_PORT` no `.env`                                     | Porta publicada do backend no computador; internamente ele usa `8080`           |
+| `WEB_PORT`                                                  | Porta publicada da web; internamente o Vite usa `5173`                          |
+| `POSTGRES_PORT`                                             | Porta publicada do banco para DBeaver/Java local; internamente usa `5432`       |
+| `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD` | Credenciais fornecidas ao banco e ao backend                                    |
+| `SPRING_DATASOURCE_URL` no `.env.example`                   | Referência para Java fora do Docker; no container o Compose usa `db:5432`       |
+| `API_PROXY_TARGET`                                          | Destino do proxy do Vite: `backend:8080` no Docker e `localhost:8080` fora dele |
+| `VITE_API_URL`                                              | Prefixo `/api` utilizado pelo navegador                                         |
 
 O Compose monta a origem web a partir de `WEB_PORT`, salvo se `WEB_ORIGINS` for
 explicitamente configurado. Cookies de sessão e CSRF mantêm o contrato existente.
