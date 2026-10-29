@@ -10,6 +10,35 @@ import AppRoutes from './AppRoutes';
 vi.mock('../api/autenticacao', () => ({ login: vi.fn(), logout: vi.fn(), sessaoAtual: vi.fn() }));
 vi.mock('../api/cliente', () => ({ registrarTratadoresSessao: vi.fn() }));
 vi.mock('../api/usuarios', () => ({ servicoUsuarios: { listar: vi.fn().mockResolvedValue([]) } }));
+// Estudos e protocolo simulados aqui: o web/.env local pode apontar para o backend real
+vi.mock('../api/estudos', () => ({
+  servicoEstudos: {
+    listar: vi.fn().mockResolvedValue([
+      {
+        id: 1,
+        titulo: 'Sono e rotina de estudantes',
+        objetivo: 'Objetivo.',
+        dataInicio: '2026-11-03',
+        dataFim: '2027-02-28',
+        limiteParticipantes: 45,
+        estado: 'PLANEJAMENTO',
+        responsavelId: 2,
+        coordenadorId: null,
+      },
+    ]),
+  },
+}));
+vi.mock('../api/protocolo', () => ({
+  servicoProtocolo: {
+    obter: vi.fn().mockResolvedValue({
+      estudoId: 1,
+      criteriosInclusao: [],
+      criteriosExclusao: [],
+      semCriteriosExclusao: false,
+      pendenciasRecrutamento: ['CRITERIO_INCLUSAO', 'CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA'],
+    }),
+  },
+}));
 
 const PAULA: UsuarioSessao = {
   id: 2,
@@ -83,5 +112,22 @@ describe('AppRoutes', () => {
     // Espera a consulta da sessão terminar: sem usuário, a barra não aparece
     await vi.waitFor(() => expect(sessaoAtual).toHaveBeenCalled());
     expect(screen.queryByRole('navigation', { name: 'Menu principal' })).not.toBeInTheDocument();
+  });
+
+  it('mostra à pesquisadora o protocolo do estudo em /estudos/:id', async () => {
+    renderizarEm('/estudos/1');
+    expect(await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Critérios de inclusão e exclusão' })).toBeInTheDocument();
+  });
+
+  it('mantém /estudos/novo no cadastro, sem confundir com /estudos/:id', async () => {
+    renderizarEm('/estudos/novo');
+    expect(await screen.findByRole('heading', { name: 'Novo estudo' })).toBeInTheDocument();
+  });
+
+  it('leva o coordenador ao acesso negado no protocolo do estudo (consulta prevista para a T51)', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue({ ...PAULA, perfil: 'COORDENADOR' });
+    renderizarEm('/estudos/1');
+    expect(await screen.findByRole('heading', { name: 'Acesso negado' })).toBeInTheDocument();
   });
 });

@@ -1,0 +1,266 @@
+/* <-------------------PROTOCOLO DO ESTUDO-------------------> */
+/* Sem protótipo ainda (o Figma vem depois): segue a base das telas de estudos e de
+   recrutamento (estudos.css e recrutamento.css); aqui ficam só os acréscimos. */
+
+/* <-------------------GRADE-------------------> */
+/* Critérios à esquerda e o quadro "Para abrir o recrutamento" à direita */
+.protocolo-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+.protocolo-grade-unica {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.protocolo-criterios {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.protocolo-secao-texto h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.protocolo-secao-texto p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--texto-suave);
+}
+
+/* <-------------------CARTÃO DE CRITÉRIOS-------------------> */
+.protocolo-cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px;
+}
+
+.protocolo-cartao-cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+}
+
+.protocolo-cartao-cabecalho h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.protocolo-vazio {
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--texto-suave);
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.protocolo-lista {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: criterio;
+  border: 1px solid var(--borda-cartao);
+  border-radius: 10px;
+}
+
+.protocolo-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--texto-tabela);
+  counter-increment: criterio;
+}
+
+.protocolo-item + .protocolo-item {
+  border-top: 1px solid var(--borda-cartao);
+}
+
+/* Número do critério, como nos protocolos de pesquisa */
+.protocolo-item::before {
+  flex: none;
+  min-width: 20px;
+  font-weight: 600;
+  color: var(--texto-suave);
+  content: counter(criterio) '.';
+}
+
+.protocolo-item-edicao::before {
+  padding-top: 2px;
+}
+
+.protocolo-descricao {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.protocolo-item-acoes {
+  display: inline-flex;
+  flex: none;
+  gap: 8px;
+}
+
+/* Mesmo botão de ícone das ações da lista de usuários */
+.pagina-interna .protocolo-botao-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: var(--texto);
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--borda-entrada);
+  border-radius: 8px;
+}
+
+.pagina-interna .protocolo-botao-icone:hover {
+  background: #f9fafb;
+}
+
+.pagina-interna .protocolo-botao-remover {
+  color: var(--erro);
+}
+
+.pagina-interna .protocolo-botao-icone:focus-visible {
+  outline: 2px solid var(--primaria);
+  outline-offset: 2px;
+}
+
+/* <-------------------FORMULÁRIO DO CRITÉRIO-------------------> */
+.protocolo-formulario {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.protocolo-formulario .botao:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* <-------------------SEM CRITÉRIOS DE EXCLUSÃO-------------------> */
+.protocolo-sem-exclusao {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.protocolo-opcao {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.pagina-interna .protocolo-opcao input {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  accent-color: var(--primaria);
+  cursor: pointer;
+}
+
+.pagina-interna .protocolo-opcao input:disabled {
+  cursor: not-allowed;
+}
+
+.protocolo-opcao:has(input:disabled) {
+  color: var(--texto-suave);
+  cursor: not-allowed;
+}
+
+/* <-------------------PARA ABRIR O RECRUTAMENTO-------------------> */
+.protocolo-quadro {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+}
+
+.protocolo-quadro h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.protocolo-quadro-resumo {
+  margin: -6px 0 0;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--texto-suave);
+}
+
+.protocolo-requisitos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.protocolo-requisitos li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.protocolo-requisitos .icone {
+  margin-top: 1px;
+}
+
+.protocolo-requisito-ok .icone {
+  color: #16a34a;
+}
+
+.protocolo-requisito-pendente .icone {
+  color: #b45309;
+}
+
+.protocolo-requisito-situacao {
+  display: block;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--texto-suave);
+}
+
+/* <-------------------TELAS ESTREITAS-------------------> */
+@media (max-width: 900px) {
+  .protocolo-grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .protocolo-cartao {
+    padding: 16px;
+  }
+}

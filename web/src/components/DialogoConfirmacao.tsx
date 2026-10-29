@@ -1,5 +1,6 @@
 import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
-import Icone, { type NomeIcone } from '../../components/icones';
+import Icone, { type NomeIcone } from './icones';
+import './DialogoConfirmacao.css';
 
 export type ItemConsequencia = { texto: string; tipo: 'perde' | 'mantem' };
 
@@ -7,7 +8,7 @@ type Props = {
   titulo: string;
   descricao: string;
   icone: NomeIcone;
-  /** "perigo" (desativar) ou "positivo" (reativar): define as cores do ícone e do botão. */
+  /** "perigo" (desativar, remover) ou "positivo" (reativar): define as cores do ícone e do botão. */
   tom: 'perigo' | 'positivo';
   consequencias: ItemConsequencia[];
   /** Aviso extra abaixo das consequências (ex.: a própria conta). */
@@ -22,7 +23,7 @@ type Props = {
 const FOCAVEIS = 'button:not([disabled]), a[href], input, select, textarea';
 
 // <-------------------DIÁLOGO DE CONFIRMAÇÃO------------------->
-// Explica as consequências antes de desativar ou reativar uma conta.
+// Explica as consequências antes de uma ação (desativar uma conta, remover um critério...).
 // Recebe o foco ao abrir, Esc e Cancelar fecham, Tab circula só dentro dele
 // e, ao fechar, o foco volta ao botão que o abriu.
 export default function DialogoConfirmacao({
@@ -72,10 +73,10 @@ export default function DialogoConfirmacao({
   };
 
   return (
-    <div className="usuarios-sobreposicao">
+    <div className="dialogo-sobreposicao">
       <div
         ref={dialogo}
-        className="usuarios-dialogo"
+        className="dialogo"
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialogo-titulo"
@@ -83,17 +84,17 @@ export default function DialogoConfirmacao({
         tabIndex={-1}
         onKeyDown={aoTeclar}
       >
-        <span className={`usuarios-dialogo-icone usuarios-dialogo-${tom}`}>
+        <span className={`dialogo-icone dialogo-${tom}`}>
           <Icone nome={icone} tamanho={22} />
         </span>
         <h2 id="dialogo-titulo">{titulo}</h2>
-        <p id="dialogo-descricao" className="usuarios-dialogo-descricao">
+        <p id="dialogo-descricao" className="dialogo-descricao">
           {descricao}
         </p>
 
-        <ul className="usuarios-consequencias">
+        <ul className="dialogo-consequencias">
           {consequencias.map((item) => (
-            <li key={item.texto} className={`usuarios-consequencia-${item.tipo}`}>
+            <li key={item.texto} className={`dialogo-consequencia-${item.tipo}`}>
               <Icone nome={item.tipo === 'perde' ? 'fechar' : 'sucesso'} tamanho={16} />
               {item.texto}
             </li>
@@ -109,7 +110,7 @@ export default function DialogoConfirmacao({
           </p>
         )}
 
-        <div className="usuarios-dialogo-acoes">
+        <div className="dialogo-acoes">
           <button type="button" className="botao botao-secundario" onClick={aoCancelar} disabled={enviando}>
             Cancelar
           </button>
