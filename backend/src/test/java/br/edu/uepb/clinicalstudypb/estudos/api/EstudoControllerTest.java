@@ -4,7 +4,14 @@ import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.ConfiguracaoSeguranca
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.RespostaErroSeguranca;
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
 import br.edu.uepb.clinicalstudypb.estudos.Estudo;
+import br.edu.uepb.clinicalstudypb.estudos.EstadoEstudo;
+import br.edu.uepb.clinicalstudypb.estudos.Protocolo;
+import br.edu.uepb.clinicalstudypb.estudos.TipoCriterio;
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ProtocoloRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.CriterioRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaPrevistaRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.service.EstudoService;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
@@ -46,6 +53,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -63,6 +71,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({ConfiguracaoSeguranca.class, RespostaErroSeguranca.class,
         AutenticacaoService.class, EstudoService.class})
 class EstudoControllerTest {
+
+    @MockitoBean private ProtocoloRepository protocoloRepository;
+    @MockitoBean private CriterioRepository criterioRepository;
+    @MockitoBean private VisitaPrevistaRepository visitaPrevistaRepository;
+    @MockitoBean private ParticipacaoRepository participacaoRepository;
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper json;
@@ -107,7 +120,7 @@ class EstudoControllerTest {
                 .filter(e -> e.getCoordenador() != null
                         && e.getCoordenador().getId().equals(i.getArgument(0)))
                 .sorted(Comparator.comparing(Estudo::getId).reversed()).toList());
-        when(estudos.findByIdAndResponsavelId(anyLong(), anyLong())).thenAnswer(i ->
+        when(estudos.bloquearPorIdEResponsavelId(anyLong(), anyLong())).thenAnswer(i ->
                 Optional.ofNullable(registros.get(i.getArgument(0)))
                         .filter(e -> e.getResponsavel().getId().equals(i.getArgument(1))));
         when(estudos.save(any(Estudo.class))).thenAnswer(i -> {
@@ -489,6 +502,127 @@ class EstudoControllerTest {
     void recusaContaDesativada() throws Exception {
         contas.get(1L).desativar();
         mvc.perform(como(1, get("/estudos"))).andExpect(status().isUnauthorized());
+    }
+
+    // <-------------------ESTADOS: API, REGRAS E SEGURANÇA------------------->
+
+    /** Confere as cinco transições pela API, usando o serviço e os filtros reais. */
+    @Test
+    void alteraEstadosComAsCondicoesExigidas() throws Exception {
+        protocoloCompleto();
+        mvc.perform(como(1, patch("/estudos/10/estado")).content("{\"estado\":\"RECRUTAMENTO\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.estado").value("RECRUTAMENTO"));
+        when(participacaoRepository.existsByEstudoId(10L)).thenReturn(true);
+        mvc.perform(como(1, patch("/estudos/10/estado")).content("{\"estado\":\"EXECUCAO\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.estado").value("EXECUCAO"));
+        mvc.perform(como(1, patch("/estudos/10/estado")).content("{\"estado\":\"ENCERRADO\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.estado").value("ENCERRADO"));
+        when(participacaoRepository.existsByEstudoId(10L)).thenReturn(false);
+        for (EstadoEstudo origem : new EstadoEstudo[]{EstadoEstudo.PLANEJAMENTO, EstadoEstudo.RECRUTAMENTO}) {
+            ReflectionTestUtils.setField(registros.get(10L), "estado", origem);
+            mvc.perform(como(1, patch("/estudos/10/estado"))
+                            .content("{\"estado\":\"ENCERRADO\",\"justificativaEncerramento\":\"  Cancelado  \"}"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.justificativaEncerramento").value("Cancelado"));
+        }
+    }
+
+    /** Exige um protocolo completo e identifica a visita ainda sem atividade. */
+    @Test
+    void impedeAbrirRecrutamentoComConfiguracaoIncompleta() throws Exception {
+        var pedido = "{\"estado\":\"RECRUTAMENTO\"}";
+        mvc.perform(como(1, patch("/estudos/10/estado")).content(pedido))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.codigo").value("PROTOCOLO_INCOMPLETO"));
+        protocoloCompleto();
+        when(criterioRepository.existsByProtocoloIdAndTipo(50L, TipoCriterio.INCLUSAO)).thenReturn(false);
+        mvc.perform(como(1, patch("/estudos/10/estado")).content(pedido))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.mensagem")
+                        .value("Cadastre pelo menos um critério de inclusão para iniciar o recrutamento."));
+        protocoloCompleto();
+        when(visitaPrevistaRepository.existsByProtocoloId(50L)).thenReturn(false);
+        mvc.perform(como(1, patch("/estudos/10/estado")).content(pedido)).andExpect(status().isBadRequest());
+        protocoloCompleto();
+        when(visitaPrevistaRepository.buscarNomesSemAtividades(50L)).thenReturn(java.util.List.of("Visita final"));
+        mvc.perform(como(1, patch("/estudos/10/estado")).content(pedido))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.mensagem")
+                        .value("Cadastre pelo menos uma atividade na visita: Visita final."));
+        assertThat(registros.get(10L).getEstado()).isEqualTo(EstadoEstudo.PLANEJAMENTO);
+        mvc.perform(como(2, patch("/estudos/13/estado")).content(pedido))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.codigo").value("COORDENADOR_OBRIGATORIO"));
+    }
+
+    /** Confere as quatro combinações possíveis entre exclusões cadastradas e declaração. */
+    @Test
+    void confereDeclaracaoDeAusenciaDeExclusoes() throws Exception {
+        for (boolean declaracao : new boolean[]{false, true}) {
+            for (boolean possuiExclusao : new boolean[]{false, true}) {
+                protocoloCompleto();
+                Protocolo protocolo = new Protocolo(registros.get(10L), declaracao);
+                ReflectionTestUtils.setField(protocolo, "id", 50L);
+                ReflectionTestUtils.setField(registros.get(10L), "estado", EstadoEstudo.PLANEJAMENTO);
+                when(protocoloRepository.findByEstudoId(10L)).thenReturn(Optional.of(protocolo));
+                when(criterioRepository.existsByProtocoloIdAndTipo(50L, TipoCriterio.EXCLUSAO)).thenReturn(possuiExclusao);
+                mvc.perform(como(1, patch("/estudos/10/estado")).content("{\"estado\":\"RECRUTAMENTO\"}"))
+                        .andExpect(declaracao != possuiExclusao ? status().isOk() : status().isBadRequest());
+            }
+        }
+    }
+
+    /** Bloqueia execução sem inclusão, encerramento antecipado com inclusão e reabertura. */
+    @Test
+    void impedeMudancasIncompativeisComInclusoesEEncerramento() throws Exception {
+        ReflectionTestUtils.setField(registros.get(10L), "estado", EstadoEstudo.RECRUTAMENTO);
+        mvc.perform(como(1, patch("/estudos/10/estado")).content("{\"estado\":\"EXECUCAO\"}"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.codigo").value("ESTUDO_SEM_PARTICIPANTES"));
+        when(participacaoRepository.existsByEstudoId(10L)).thenReturn(true);
+        mvc.perform(como(1, patch("/estudos/10/estado"))
+                        .content("{\"estado\":\"ENCERRADO\",\"justificativaEncerramento\":\"Cancelamento\"}"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.codigo").value("ESTUDO_COM_PARTICIPANTES"));
+        ReflectionTestUtils.setField(registros.get(10L), "estado", EstadoEstudo.ENCERRADO);
+        mvc.perform(como(1, patch("/estudos/10/estado")).content("{\"estado\":\"PLANEJAMENTO\"}"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.codigo").value("TRANSICAO_ESTADO_INVALIDA"));
+        mvc.perform(como(1, put("/estudos/10/coordenador")).content("{\"coordenadorId\":4}"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.codigo").value("ESTUDO_ENCERRADO"));
+        assertThat(registros.get(10L).getCoordenador().getId()).isEqualTo(3L);
+    }
+
+    /** Rejeita corpo inválido e justificativa ausente sem modificar o estudo. */
+    @Test
+    void validaEntradaDaMudancaDeEstado() throws Exception {
+        for (String corpo : new String[]{"{}", "{\"estado\":null}", "{\"estado\":\"INEXISTENTE\"}",
+                "{\"estado\":\"ENCERRADO\"}", "{\"estado\":\"ENCERRADO\",\"justificativaEncerramento\":\"   \"}",
+                "{\"estado\":\"ENCERRADO\",\"justificativaEncerramento\":\"" + "x".repeat(501) + "\"}"}) {
+            mvc.perform(como(1, patch("/estudos/10/estado")).content(corpo)).andExpect(status().isBadRequest());
+            assertThat(registros.get(10L).getEstado()).isEqualTo(EstadoEstudo.PLANEJAMENTO);
+        }
+    }
+
+    /** Mantém sessão, CSRF, perfil e isolamento por pesquisador no novo endpoint. */
+    @Test
+    void protegeAlteracaoDeEstado() throws Exception {
+        String corpo = "{\"estado\":\"ENCERRADO\",\"justificativaEncerramento\":\"Cancelado\"}";
+        mvc.perform(patch("/estudos/10/estado").with(csrf()).contentType("application/json").content(corpo))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(patch("/estudos/10/estado").with(user(new UsuarioAutenticado(contas.get(1L))))
+                        .contentType("application/json").content(corpo)).andExpect(status().isForbidden());
+        for (long conta : new long[]{3, 5, 6}) {
+            mvc.perform(como(conta, patch("/estudos/10/estado")).content(corpo)).andExpect(status().isForbidden());
+        }
+        mvc.perform(como(2, patch("/estudos/10/estado")).content(corpo)).andExpect(status().isNotFound());
+        mvc.perform(como(1, patch("/estudos/9999/estado")).content(corpo)).andExpect(status().isNotFound());
+        contas.get(1L).desativar();
+        mvc.perform(como(1, patch("/estudos/10/estado")).content(corpo)).andExpect(status().isUnauthorized());
+        assertThat(registros.get(10L).getEstado()).isEqualTo(EstadoEstudo.PLANEJAMENTO);
+    }
+
+    /** Prepara somente as consultas simuladas do protocolo completo no teste de API. */
+    private void protocoloCompleto() {
+        Protocolo protocolo = new Protocolo(registros.get(10L), true);
+        ReflectionTestUtils.setField(protocolo, "id", 50L);
+        when(protocoloRepository.findByEstudoId(10L)).thenReturn(Optional.of(protocolo));
+        when(criterioRepository.existsByProtocoloIdAndTipo(50L, TipoCriterio.INCLUSAO)).thenReturn(true);
+        when(criterioRepository.existsByProtocoloIdAndTipo(50L, TipoCriterio.EXCLUSAO)).thenReturn(false);
+        when(visitaPrevistaRepository.existsByProtocoloId(50L)).thenReturn(true);
+        when(visitaPrevistaRepository.buscarNomesSemAtividades(50L)).thenReturn(java.util.List.of());
     }
 
     // <-------------------DADOS E REQUISIÇÕES DOS TESTES------------------->
