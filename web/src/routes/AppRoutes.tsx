@@ -6,6 +6,8 @@ import NaoEncontrada from '../pages/NaoEncontrada';
 import Login from '../pages/login/Login';
 import ListaEstudos from '../pages/estudos/ListaEstudos';
 import NovoEstudo from '../pages/estudos/NovoEstudo';
+import Recrutamento from '../pages/recrutamento/Recrutamento';
+import NovoCandidato from '../pages/recrutamento/NovoCandidato';
 import ListaUsuarios from '../pages/usuarios/ListaUsuarios';
 import NovoUsuario from '../pages/usuarios/NovoUsuario';
 import EditarUsuario from '../pages/usuarios/EditarUsuario';
@@ -37,6 +39,13 @@ export default function AppRoutes() {
       </Route>
       <Route element={<RotaProtegida perfis={['PESQUISADOR']} />}>
         <Route path="/estudos/novo" element={<NovoEstudo />} />
+      </Route>
+
+      {/* <-------------------RECRUTAMENTO-------------------> */}
+      {/* O coordenador cadastra e acompanha os candidatos dos estudos vinculados (RF08) */}
+      <Route element={<RotaProtegida perfis={['COORDENADOR']} />}>
+        <Route path="/estudos/:id/recrutamento" element={<Recrutamento />} />
+        <Route path="/estudos/:id/candidatos/novo" element={<NovoCandidato />} />
       </Route>
 
       {/* <-------------------ROTA NÃO ENCONTRADA-------------------> */}

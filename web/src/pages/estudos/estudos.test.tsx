@@ -98,7 +98,7 @@ describe('ListaEstudos', () => {
     expect(screen.getByRole('link', { name: 'Novo estudo' })).toHaveAttribute('href', '/estudos/novo');
   });
 
-  it('mostra ao coordenador os estudos vinculados, somente leitura', async () => {
+  it('mostra ao coordenador os estudos vinculados, com link para o recrutamento', async () => {
     render(
       <MemoryRouter initialEntries={['/estudos']}>
         <ListaEstudos servico={criarServico()} usuario={COORDENADOR} />
@@ -107,7 +107,7 @@ describe('ListaEstudos', () => {
     const linha = (await screen.findByText('Hábitos alimentares')).closest('tr')!;
     expect(screen.getByRole('heading', { name: 'Estudos' })).toBeInTheDocument();
     expect(screen.getByText('Estudos vinculados a você como coordenador.')).toBeInTheDocument();
-    expect(screen.getByText('Somente leitura')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Hábitos alimentares' })).toHaveAttribute('href', '/estudos/1/recrutamento');
     expect(screen.queryByRole('link', { name: 'Novo estudo' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Filtrar por estado')).not.toBeInTheDocument();
     expect(within(linha).getByText('Paula Pesquisadora')).toBeInTheDocument();

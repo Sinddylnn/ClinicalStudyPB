@@ -24,7 +24,7 @@ type Painel = {
 };
 
 // <-------------------PAINEL DE CADA PERFIL------------------->
-// Textos dos quadros "Início" do protótipo; na Sprint 1 o Início só tem atalhos
+// Textos dos quadros "Início" do protótipo; o Início só tem atalhos
 const PAINEIS: Record<PerfilUsuario, Painel> = {
   ADMINISTRADOR: {
     resumo: 'Painel do administrador',
@@ -68,11 +68,11 @@ const PAINEIS: Record<PerfilUsuario, Painel> = {
   },
   COORDENADOR: {
     resumo: 'Acompanhamento dos estudos vinculados a você',
-    subtitulo: 'Consulta dos estudos',
+    subtitulo: 'Acompanhamento dos estudos',
     atalhos: [
       {
         titulo: 'Ver estudos',
-        descricao: 'Estudos vinculados a você, somente leitura.',
+        descricao: 'Estudos vinculados a você e o recrutamento de candidatos.',
         destino: '/estudos',
         icone: 'frasco',
         tom: 'primario',
