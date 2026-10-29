@@ -12,6 +12,8 @@ type Props = {
   editavel: boolean;
   /** Texto mostrado quando a lista está vazia. */
   textoVazio: string;
+  /** Quando informado, "Adicionar critério" fica desativado e este texto explica o motivo. */
+  bloqueioAdicao?: string;
   /** Repassa o ErroRequisicao para o formulário mostrar. */
   aoAdicionar: (descricao: string) => Promise<void>;
   aoEditar: (criterio: Criterio, descricao: string) => Promise<void>;
@@ -27,6 +29,7 @@ export default function ListaCriterios({
   criterios,
   editavel,
   textoVazio,
+  bloqueioAdicao,
   aoAdicionar,
   aoEditar,
   aoPedirRemocao,
@@ -36,6 +39,7 @@ export default function ListaCriterios({
   const [edicao, setEdicao] = useState<'novo' | number | null>(null);
   const nome = NOMES_TIPO_CRITERIO[tipo];
   const idTitulo = `criterios-${tipo.toLowerCase()}`;
+  const idBloqueio = `bloqueio-adicao-${tipo.toLowerCase()}`;
 
   const salvarNovo = async (descricao: string) => {
     await aoAdicionar(descricao);
@@ -52,12 +56,24 @@ export default function ListaCriterios({
       <header className="protocolo-cartao-cabecalho">
         <h3 id={idTitulo}>Critérios de {nome}</h3>
         {editavel && edicao !== 'novo' && (
-          <button type="button" className="botao botao-secundario" onClick={() => setEdicao('novo')}>
+          <button
+            type="button"
+            className="botao botao-secundario"
+            disabled={Boolean(bloqueioAdicao)}
+            aria-describedby={bloqueioAdicao ? idBloqueio : undefined}
+            onClick={() => setEdicao('novo')}
+          >
             <Icone nome="mais" />
             Adicionar critério
           </button>
         )}
       </header>
+
+      {editavel && bloqueioAdicao && (
+        <p id={idBloqueio} className="campo-ajuda protocolo-bloqueio">
+          {bloqueioAdicao}
+        </p>
+      )}
 
       {criterios.length === 0 && edicao !== 'novo' && <p className="protocolo-vazio">{textoVazio}</p>}
 

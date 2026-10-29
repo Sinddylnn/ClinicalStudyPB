@@ -1,5 +1,5 @@
 import { ErroRequisicao } from './erros';
-import { servicoEstudos, type ServicoEstudos } from './estudos';
+import { servicoEstudos, type Estudo, type ServicoEstudos } from './estudos';
 import { servicoEstudosSimulado } from './estudosSimulado';
 import type { Criterio, Protocolo, ServicoProtocolo, TipoCriterio } from './protocolo';
 import { calcularPendencias, validarCriterio } from '../pages/protocolo/validacao';
@@ -7,7 +7,8 @@ import { calcularPendencias, validarCriterio } from '../pages/protocolo/validaca
 // <-------------------SERVIÇO SIMULADO------------------->
 // Guarda os protocolos em memória e responde como o backend deve responder:
 // 404 para estudo fora da lista da sessão ou critério inexistente e 400 para descrição inválida,
-// estudo fora de Planejamento ou "sem exclusão" com critérios de exclusão cadastrados.
+// estudo fora de Planejamento e as combinações proibidas da seção 3 da modelagem: declarar
+// "sem exclusão" com exclusões cadastradas ou cadastrar exclusão com a declaração marcada.
 // Os dados são fictícios e voltam ao estado inicial ao recarregar a página.
 const ATRASO_MS = 300;
 
@@ -97,12 +98,13 @@ export function criarServicoProtocoloSimulado(
     protocolos = [...protocolos.filter((p) => p.estudoId !== protocolo.estudoId), protocolo];
   }
 
-  function resposta(protocolo: ProtocoloSimulado): Protocolo {
+  // As pendências dependem também do estudo (coordenador atribuído, seção 5 da modelagem)
+  function resposta(protocolo: ProtocoloSimulado, estudo: Estudo): Protocolo {
     return {
       ...protocolo,
       criteriosInclusao: [...protocolo.criteriosInclusao],
       criteriosExclusao: [...protocolo.criteriosExclusao],
-      pendenciasRecrutamento: calcularPendencias(protocolo),
+      pendenciasRecrutamento: calcularPendencias(protocolo, estudo.coordenadorId),
     };
   }
 
@@ -118,9 +120,9 @@ export function criarServicoProtocoloSimulado(
 
   return {
     async obter(estudoId) {
-      await buscarEstudo(estudoId);
+      const estudo = await buscarEstudo(estudoId);
       await aguardar();
-      return resposta(protocoloDe(estudoId));
+      return resposta(protocoloDe(estudoId), estudo);
     },
 
     async adicionarCriterio(estudoId, entrada) {
@@ -132,15 +134,19 @@ export function criarServicoProtocoloSimulado(
       if (erro) throw erroValidacao(erro);
       exigirPlanejamento(estudo.estado);
 
-      const novo: Criterio = { id: proximoId(), descricao: entrada.descricao.trim() };
       const protocolo = protocoloDe(estudoId);
+      // Exclusão com a declaração marcada é combinação inválida: o pesquisador desmarca antes (seção 3)
+      if (entrada.tipo === 'EXCLUSAO' && protocolo.semCriteriosExclusao) {
+        throw new ErroRequisicao(400, {
+          codigo: 'SEM_EXCLUSAO_DECLARADA',
+          mensagem:
+            'Desmarque a opção de que o estudo não possui critérios de exclusão antes de cadastrar um.',
+        });
+      }
+
+      const novo: Criterio = { id: proximoId(), descricao: entrada.descricao.trim() };
       const lista = LISTAS[entrada.tipo];
-      salvar({
-        ...protocolo,
-        [lista]: [...protocolo[lista], novo],
-        // Um critério de exclusão desfaz a indicação de que não há exclusões
-        semCriteriosExclusao: entrada.tipo === 'EXCLUSAO' ? false : protocolo.semCriteriosExclusao,
-      });
+      salvar({ ...protocolo, [lista]: [...protocolo[lista], novo] });
       return { ...novo };
     },
 
@@ -178,12 +184,12 @@ export function criarServicoProtocoloSimulado(
       if (semCriteriosExclusao && protocolo.criteriosExclusao.length > 0) {
         throw new ErroRequisicao(400, {
           codigo: 'EXCLUSAO_JA_DEFINIDA',
-          mensagem: 'Remova os critérios de exclusão antes de indicar que o estudo não tem nenhum.',
+          mensagem: 'Remova os critérios de exclusão antes de indicar que o estudo não possui nenhum.',
         });
       }
       const atualizado = { ...protocolo, semCriteriosExclusao };
       salvar(atualizado);
-      return resposta(atualizado);
+      return resposta(atualizado, estudo);
     },
   };
 }

@@ -59,6 +59,18 @@
   line-height: 18px;
 }
 
+.protocolo-bloqueio {
+  margin: -8px 0 0;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* Botão desativado pelo bloqueio da adição (não está aguardando: não usa o cursor de espera) */
+.pagina-interna .protocolo-cartao-cabecalho .botao:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .protocolo-vazio {
   margin: 0;
   padding: 14px 16px;

@@ -49,7 +49,8 @@ describe('servicoProtocoloSimulado', () => {
       criteriosInclusao: [],
       criteriosExclusao: [],
       semCriteriosExclusao: false,
-      pendenciasRecrutamento: ['CRITERIO_INCLUSAO', 'CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA'],
+      // O estudo 2 também não tem coordenador atribuído
+      pendenciasRecrutamento: ['COORDENADOR', 'CRITERIO_INCLUSAO', 'CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA'],
     });
   });
 
@@ -68,20 +69,25 @@ describe('servicoProtocoloSimulado', () => {
 
     const protocolo = await executar(servico.obter(SEM_PROTOCOLO));
     expect(protocolo.criteriosInclusao).toEqual([novo]);
-    expect(protocolo.pendenciasRecrutamento).toEqual(['CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA']);
+    expect(protocolo.pendenciasRecrutamento).toEqual(['COORDENADOR', 'CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA']);
   });
 
-  it('responde VALIDACAO_INVALIDA para descrição vazia ou acima de 500 caracteres', async () => {
+  it('responde VALIDACAO_INVALIDA para descrição vazia ou acima de 1.000 caracteres', async () => {
     expect(await falha(servico.adicionarCriterio(PLANEJAMENTO, { tipo: 'INCLUSAO', descricao: '   ' }))).toMatchObject({
       status: 400,
       codigo: 'VALIDACAO_INVALIDA',
       errosCampos: { descricao: 'Descreva o critério.' },
     });
-    expect(await falha(servico.editarCriterio(PLANEJAMENTO, 1, 'a'.repeat(501)))).toMatchObject({
+    expect(await falha(servico.editarCriterio(PLANEJAMENTO, 1, 'a'.repeat(1001)))).toMatchObject({
       status: 400,
       codigo: 'VALIDACAO_INVALIDA',
-      errosCampos: { descricao: 'Use até 500 caracteres.' },
+      errosCampos: { descricao: 'Use até 1.000 caracteres.' },
     });
+  });
+
+  it('aceita descrição com 1.000 caracteres, contados sem os espaços das pontas', async () => {
+    const descricao = 'a'.repeat(1000);
+    expect(await executar(servico.editarCriterio(PLANEJAMENTO, 1, `  ${descricao}  `))).toEqual({ id: 1, descricao });
   });
 
   it('edita e remove critérios de cada lista', async () => {
@@ -114,16 +120,61 @@ describe('servicoProtocoloSimulado', () => {
     expect((await executar(servico.obter(RECRUTAMENTO))).criteriosInclusao).toHaveLength(1);
   });
 
-  it('marca "sem exclusão" e desmarca ao adicionar um critério de exclusão', async () => {
+  it('marca "sem exclusão" e passa a considerar as exclusões definidas', async () => {
     const marcado = await executar(servico.definirSemExclusao(PLANEJAMENTO, true));
     expect(marcado.semCriteriosExclusao).toBe(true);
     expect(marcado.pendenciasRecrutamento).toEqual(['VISITA_PREVISTA']);
+  });
 
+  it('responde SEM_EXCLUSAO_DECLARADA ao cadastrar exclusão com a declaração marcada, sem desmarcá-la', async () => {
+    await executar(servico.definirSemExclusao(PLANEJAMENTO, true));
+
+    expect(
+      await falha(servico.adicionarCriterio(PLANEJAMENTO, { tipo: 'EXCLUSAO', descricao: 'Trabalho noturno.' })),
+    ).toMatchObject({
+      status: 400,
+      codigo: 'SEM_EXCLUSAO_DECLARADA',
+      message: 'Desmarque a opção de que o estudo não possui critérios de exclusão antes de cadastrar um.',
+    });
+    const protocolo = await executar(servico.obter(PLANEJAMENTO));
+    expect(protocolo.semCriteriosExclusao).toBe(true);
+    expect(protocolo.criteriosExclusao).toEqual([]);
+
+    // Depois de desmarcar, o cadastro é aceito e a declaração continua desmarcada
+    await executar(servico.definirSemExclusao(PLANEJAMENTO, false));
     await executar(servico.adicionarCriterio(PLANEJAMENTO, { tipo: 'EXCLUSAO', descricao: 'Trabalho noturno.' }));
+    const depois = await executar(servico.obter(PLANEJAMENTO));
+    expect(depois.criteriosExclusao).toHaveLength(1);
+    expect(depois.semCriteriosExclusao).toBe(false);
+  });
+
+  it('confere campos e estado do estudo antes da declaração "sem exclusão"', async () => {
+    const declarado = { estudoId: RECRUTAMENTO, criteriosInclusao: [], criteriosExclusao: [], semCriteriosExclusao: true };
+    const comDeclaracao = criarServicoProtocoloSimulado(servicoEstudosSimulado, [
+      { ...declarado, estudoId: PLANEJAMENTO },
+      declarado,
+    ]);
+
+    expect(
+      await falha(comDeclaracao.adicionarCriterio(PLANEJAMENTO, { tipo: 'EXCLUSAO', descricao: ' ' })),
+    ).toMatchObject({ codigo: 'VALIDACAO_INVALIDA' });
+    expect(
+      await falha(comDeclaracao.adicionarCriterio(RECRUTAMENTO, { tipo: 'EXCLUSAO', descricao: 'Gestantes.' })),
+    ).toMatchObject({ codigo: 'ESTUDO_FORA_DE_PLANEJAMENTO' });
+    expect(await falha(comDeclaracao.adicionarCriterio(99, { tipo: 'EXCLUSAO', descricao: ' ' }))).toMatchObject({
+      status: 404,
+    });
+  });
+
+  it('deixa as exclusões pendentes ao remover a última, sem declarar ausência sozinho', async () => {
+    await executar(servico.adicionarCriterio(PLANEJAMENTO, { tipo: 'EXCLUSAO', descricao: 'Trabalho noturno.' }));
+    const [exclusao] = (await executar(servico.obter(PLANEJAMENTO))).criteriosExclusao;
+    await executar(servico.removerCriterio(PLANEJAMENTO, exclusao.id));
+
+    // Seção 3: a definição volta a ficar pendente, sem declarar ausência sozinha
     const protocolo = await executar(servico.obter(PLANEJAMENTO));
     expect(protocolo.semCriteriosExclusao).toBe(false);
-    expect(protocolo.criteriosExclusao).toHaveLength(1);
-    expect(protocolo.pendenciasRecrutamento).toEqual(['VISITA_PREVISTA']);
+    expect(protocolo.pendenciasRecrutamento).toEqual(['CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA']);
   });
 
   it('mantém "sem exclusão" ao adicionar um critério de inclusão', async () => {
@@ -146,6 +197,22 @@ describe('servicoProtocoloSimulado', () => {
     await executar(servico.removerCriterio(PLANEJAMENTO, 1));
     const outro = criarServicoProtocoloSimulado(servicoEstudosSimulado, PROTOCOLOS_INICIAIS);
     expect((await executar(outro.obter(PLANEJAMENTO))).criteriosInclusao).toHaveLength(2);
+  });
+
+  it('aponta o coordenador como pendência conforme o estudo recebido', async () => {
+    const [modelo] = await executar(servicoEstudosSimulado.listar());
+    const estudos = {
+      listar: vi.fn().mockResolvedValue([{ ...modelo, id: 10, coordenadorId: null }]),
+      cadastrar: vi.fn(),
+    };
+    const semCoordenador = criarServicoProtocoloSimulado(estudos, []);
+    expect((await executar(semCoordenador.obter(10))).pendenciasRecrutamento[0]).toBe('COORDENADOR');
+
+    estudos.listar.mockResolvedValue([{ ...modelo, id: 10, coordenadorId: 3 }]);
+    expect((await executar(semCoordenador.definirSemExclusao(10, true))).pendenciasRecrutamento).toEqual([
+      'CRITERIO_INCLUSAO',
+      'VISITA_PREVISTA',
+    ]);
   });
 
   it('procura o estudo na fonte de estudos recebida, sem misturar com os simulados', async () => {

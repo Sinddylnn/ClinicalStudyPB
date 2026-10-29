@@ -103,10 +103,23 @@ describe('ProtocoloEstudo', () => {
     expect(within(cartao('exclusão')).getByText('Nenhum critério de exclusão cadastrado.')).toBeInTheDocument();
 
     expect(within(quadro()).getByText('Faltam 2 itens.')).toBeInTheDocument();
-    const [incl, excl, visita] = within(quadro()).getAllByRole('listitem');
+    const [coordenador, incl, excl, visita] = within(quadro()).getAllByRole('listitem');
+    expect(coordenador).toHaveTextContent('Coordenador atribuídoAtendido');
     expect(incl).toHaveTextContent('Pelo menos 1 critério de inclusãoAtendido');
     expect(excl).toHaveTextContent('Critérios de exclusão definidos ou indicação de que não háPendente');
-    expect(visita).toHaveTextContent('Pendente: cadastro de visitas em breve');
+    expect(visita).toHaveTextContent(
+      'Pelo menos 1 visita prevista, com atividade em cada visitaPendente: cadastro de visitas em breve',
+    );
+  });
+
+  it('aponta o coordenador como pendente quando o estudo ainda não tem um', async () => {
+    renderizar(criarServicos({ ...ESTUDO, coordenadorId: null }));
+    await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' });
+
+    expect(within(quadro()).getByText('Faltam 3 itens.')).toBeInTheDocument();
+    const [coordenador] = within(quadro()).getAllByRole('listitem');
+    expect(coordenador).toHaveTextContent('Coordenador atribuídoPendente');
+    expect(coordenador).toHaveClass('protocolo-requisito-pendente');
   });
 
   it('adiciona um critério com contador de caracteres e notificação', async () => {
@@ -119,7 +132,7 @@ describe('ProtocoloEstudo', () => {
     const campo = screen.getByLabelText('Novo critério de exclusão');
     expect(campo).toHaveFocus();
     await usuario.type(campo, 'Gestantes.');
-    expect(within(cartao('exclusão')).getByText('10/500')).toBeInTheDocument();
+    expect(within(cartao('exclusão')).getByText('10/1000')).toBeInTheDocument();
     await usuario.click(within(cartao('exclusão')).getByRole('button', { name: 'Adicionar' }));
 
     expect(servicos.protocolo.adicionarCriterio).toHaveBeenCalledWith(1, { tipo: 'EXCLUSAO', descricao: 'Gestantes.' });
@@ -141,7 +154,7 @@ describe('ProtocoloEstudo', () => {
 
     expect(screen.getByText('Descreva o critério.')).toBeInTheDocument();
     expect(screen.getByLabelText('Novo critério de inclusão')).toHaveAttribute('aria-invalid', 'true');
-    expect(screen.getByLabelText('Novo critério de inclusão')).toHaveAttribute('maxLength', '500');
+    expect(screen.getByLabelText('Novo critério de inclusão')).toHaveAttribute('maxLength', '1000');
     expect(servicos.protocolo.adicionarCriterio).not.toHaveBeenCalled();
 
     await usuario.click(within(cartao('inclusão')).getByRole('button', { name: 'Cancelar' }));
@@ -155,7 +168,7 @@ describe('ProtocoloEstudo', () => {
         new ErroRequisicao(400, {
           codigo: 'VALIDACAO_INVALIDA',
           mensagem: 'Confira os campos informados.',
-          errosCampos: { descricao: 'Use até 500 caracteres.' },
+          errosCampos: { descricao: 'Use até 1.000 caracteres.' },
         }),
       )
       .mockRejectedValueOnce(
@@ -171,7 +184,7 @@ describe('ProtocoloEstudo', () => {
     await usuario.click(within(cartao('inclusão')).getByRole('button', { name: 'Adicionar critério' }));
     await usuario.type(screen.getByLabelText('Novo critério de inclusão'), 'Adultos.');
     await usuario.click(within(cartao('inclusão')).getByRole('button', { name: 'Adicionar' }));
-    expect(await screen.findByText('Use até 500 caracteres.')).toBeInTheDocument();
+    expect(await screen.findByText('Use até 1.000 caracteres.')).toBeInTheDocument();
 
     await usuario.click(within(cartao('inclusão')).getByRole('button', { name: 'Adicionar' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -235,42 +248,68 @@ describe('ProtocoloEstudo', () => {
     expect(within(cartao('inclusão')).getAllByRole('listitem')).toHaveLength(2);
   });
 
-  it('indica que o estudo não tem critérios de exclusão', async () => {
+  it('indica que o estudo não possui critérios de exclusão', async () => {
     const servicos = criarServicos();
     renderizar(servicos);
     await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' });
     const usuario = userEvent.setup();
 
-    const opcao = screen.getByRole('checkbox', { name: 'Este estudo não tem critérios de exclusão' });
+    const opcao = screen.getByRole('checkbox', { name: 'Este estudo não possui critérios de exclusão' });
     expect(opcao).not.toBeChecked();
     await usuario.click(opcao);
 
     expect(servicos.protocolo.definirSemExclusao).toHaveBeenCalledWith(1, true);
     expect(await within(quadro()).findByText('Falta 1 item.')).toBeInTheDocument();
     expect(opcao).toBeChecked();
-    expect(within(cartao('exclusão')).getByText('Este estudo não tem critérios de exclusão.')).toBeInTheDocument();
+    expect(within(cartao('exclusão')).getByText('Este estudo não possui critérios de exclusão.')).toBeInTheDocument();
   });
 
-  it('desmarca "sem exclusão" ao adicionar um critério de exclusão', async () => {
-    renderizar(criarServicos(ESTUDO, { semCriteriosExclusao: true }));
+  it('desativa a adição de exclusões com a opção marcada e libera ao desmarcar', async () => {
+    const servicos = criarServicos(ESTUDO, { semCriteriosExclusao: true });
+    renderizar(servicos);
     await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' });
     const usuario = userEvent.setup();
     expect(screen.getByRole('checkbox')).toBeChecked();
+
+    const adicionar = within(cartao('exclusão')).getByRole('button', { name: 'Adicionar critério' });
+    expect(adicionar).toBeDisabled();
+    expect(adicionar).toHaveAccessibleDescription('Para cadastrar um critério de exclusão, desmarque a opção abaixo.');
+    // A inclusão não depende da opção
+    expect(within(cartao('inclusão')).getByRole('button', { name: 'Adicionar critério' })).toBeEnabled();
+
+    await usuario.click(screen.getByRole('checkbox'));
+    expect(servicos.protocolo.definirSemExclusao).toHaveBeenCalledWith(1, false);
+    await vi.waitFor(() => expect(adicionar).toBeEnabled());
+    expect(adicionar).not.toHaveAccessibleDescription();
+    expect(screen.queryByText('Para cadastrar um critério de exclusão, desmarque a opção abaixo.')).not.toBeInTheDocument();
+  });
+
+  it('mantém a opção marcada quando o backend recusa a exclusão (SEM_EXCLUSAO_DECLARADA)', async () => {
+    // Ex.: a opção foi marcada em outra aba depois que esta tela carregou
+    const adicionarCriterio = vi.fn().mockRejectedValue(
+      new ErroRequisicao(400, {
+        codigo: 'SEM_EXCLUSAO_DECLARADA',
+        mensagem: 'Desmarque a opção de que o estudo não possui critérios de exclusão antes de cadastrar um.',
+      }),
+    );
+    renderizar(criarServicos(ESTUDO, {}, { adicionarCriterio }));
+    await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' });
+    const usuario = userEvent.setup();
 
     await usuario.click(within(cartao('exclusão')).getByRole('button', { name: 'Adicionar critério' }));
     await usuario.type(screen.getByLabelText('Novo critério de exclusão'), 'Gestantes.');
     await usuario.click(within(cartao('exclusão')).getByRole('button', { name: 'Adicionar' }));
 
-    await screen.findByRole('status');
-    expect(screen.getByRole('checkbox')).not.toBeChecked();
-    expect(screen.getByRole('checkbox')).toBeDisabled();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Desmarque a opção de que o estudo não possui');
+    expect(screen.getByLabelText('Novo critério de exclusão')).toHaveValue('Gestantes.');
+    expect(within(cartao('exclusão')).queryByRole('listitem')).not.toBeInTheDocument();
   });
 
   it('desativa "sem exclusão" com critérios de exclusão cadastrados', async () => {
     renderizar(criarServicos(ESTUDO, { criteriosExclusao: [{ id: 5, descricao: 'Gestantes.' }] }));
     await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' });
 
-    const opcao = screen.getByRole('checkbox', { name: 'Este estudo não tem critérios de exclusão' });
+    const opcao = screen.getByRole('checkbox', { name: 'Este estudo não possui critérios de exclusão' });
     expect(opcao).toBeDisabled();
     expect(opcao).toHaveAccessibleDescription('Para marcar esta opção, remova os critérios de exclusão cadastrados.');
     expect(within(quadro()).getByText('Falta 1 item.')).toBeInTheDocument();
@@ -280,7 +319,7 @@ describe('ProtocoloEstudo', () => {
     const definirSemExclusao = vi.fn().mockRejectedValue(
       new ErroRequisicao(400, {
         codigo: 'EXCLUSAO_JA_DEFINIDA',
-        mensagem: 'Remova os critérios de exclusão antes de indicar que o estudo não tem nenhum.',
+        mensagem: 'Remova os critérios de exclusão antes de indicar que o estudo não possui nenhum.',
       }),
     );
     renderizar(criarServicos(ESTUDO, {}, { definirSemExclusao }));
@@ -304,7 +343,7 @@ describe('ProtocoloEstudo', () => {
     expect(screen.getByText('Recrutamento')).toHaveClass('etiqueta-recrutamento');
     expect(screen.getByText(/O protocolo fica só para consulta/)).toBeInTheDocument();
     expect(within(cartao('inclusão')).getAllByRole('listitem')).toHaveLength(2);
-    expect(within(cartao('exclusão')).getByText('Este estudo não tem critérios de exclusão.')).toBeInTheDocument();
+    expect(within(cartao('exclusão')).getByText('Este estudo não possui critérios de exclusão.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Adicionar critério' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Editar critério/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Remover critério/ })).not.toBeInTheDocument();

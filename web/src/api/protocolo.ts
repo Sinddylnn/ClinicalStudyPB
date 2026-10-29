@@ -3,6 +3,7 @@ import { servicoProtocoloSimulado } from './protocoloSimulado';
 
 // <-------------------CONTRATO DO PROTOCOLO------------------->
 // Contrato proposto para a T39 (backend ainda sem protocolo); conferir na integração.
+// Campos e regras seguem docs/modelagem/RF05-RF07.md; as rotas e os DTOs saem no OpenAPI.
 // Os critérios são textos avaliados pelo coordenador: o sistema não decide elegibilidade (RF05).
 
 export type TipoCriterio = 'INCLUSAO' | 'EXCLUSAO';
@@ -13,17 +14,21 @@ export type Criterio = {
 };
 
 /**
- * O que ainda impede a passagem para Recrutamento (regra da T47).
- * VISITA_PREVISTA depende das visitas do protocolo (T46).
+ * O que ainda impede a passagem para Recrutamento (modelagem, seção 5; transição da T47).
+ * COORDENADOR vem do estudo; VISITA_PREVISTA depende das visitas do protocolo (T46).
  */
-export type PendenciaRecrutamento = 'CRITERIO_INCLUSAO' | 'CRITERIOS_EXCLUSAO' | 'VISITA_PREVISTA';
+export type PendenciaRecrutamento =
+  | 'COORDENADOR'
+  | 'CRITERIO_INCLUSAO'
+  | 'CRITERIOS_EXCLUSAO'
+  | 'VISITA_PREVISTA';
 
 /** Protocolo do estudo (no máximo um por estudo). Sem protocolo, as listas vêm vazias. */
 export type Protocolo = {
   estudoId: number;
   criteriosInclusao: Criterio[];
   criteriosExclusao: Criterio[];
-  /** Indicação explícita de que o estudo não tem critérios de exclusão. */
+  /** Declaração explícita de que o estudo não possui critérios de exclusão (modelagem, seção 3). */
   semCriteriosExclusao: boolean;
   pendenciasRecrutamento: PendenciaRecrutamento[];
 };
@@ -43,8 +48,10 @@ export type ServicoProtocolo = {
 };
 
 // <-------------------SERVIÇO REAL------------------->
-// O backend responde 404 para estudo inexistente ou de outro pesquisador e 400 para
-// campos inválidos, estudo fora de Planejamento ou "sem exclusão" com exclusões cadastradas
+// O backend responde 404 para estudo inexistente ou de outro pesquisador (ou critério de outro
+// protocolo) e 400 para: VALIDACAO_INVALIDA (descrição vazia ou acima de 1.000 caracteres),
+// ESTUDO_FORA_DE_PLANEJAMENTO, EXCLUSAO_JA_DEFINIDA (declarar "sem exclusão" com exclusões
+// cadastradas) e SEM_EXCLUSAO_DECLARADA (cadastrar exclusão com a declaração marcada)
 export const servicoProtocoloApi: ServicoProtocolo = {
   async obter(estudoId) {
     const { data } = await api.get<Protocolo>(`/estudos/${estudoId}/protocolo`);

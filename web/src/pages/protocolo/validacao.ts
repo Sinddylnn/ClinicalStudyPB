@@ -2,37 +2,49 @@ import type { PendenciaRecrutamento, Protocolo } from '../../api/protocolo';
 
 // <-------------------VALIDAÇÃO DO CRITÉRIO------------------->
 // Mesmas regras usadas pelo serviço simulado, para a tela e o "backend" concordarem
-export const LIMITE_DESCRICAO_CRITERIO = 500;
+// Modelagem RF05-RF07, seção 2.2: de 1 a 1.000 caracteres após retirar espaços das pontas
+export const LIMITE_DESCRICAO_CRITERIO = 1000;
 
 export function validarCriterio(descricao: string): string | undefined {
   const texto = descricao.trim();
   if (!texto) return 'Descreva o critério.';
-  if (texto.length > LIMITE_DESCRICAO_CRITERIO) return `Use até ${LIMITE_DESCRICAO_CRITERIO} caracteres.`;
+  if (texto.length > LIMITE_DESCRICAO_CRITERIO) {
+    return `Use até ${LIMITE_DESCRICAO_CRITERIO.toLocaleString('pt-BR')} caracteres.`;
+  }
   return undefined;
 }
 
 // <-------------------REQUISITOS PARA O RECRUTAMENTO------------------->
-// Regra da T47 (kickoff 8.3): ao menos 1 critério de inclusão, exclusão definida ou
-// dispensada e ao menos 1 visita prevista com atividade
+// Modelagem RF05-RF07, seção 5 (transição da T47): coordenador atribuído, ao menos 1 critério de
+// inclusão, exclusões definidas ou declaradas ausentes e ao menos 1 visita prevista, com atividade em cada uma
 type CriteriosProtocolo = Pick<Protocolo, 'criteriosInclusao' | 'criteriosExclusao' | 'semCriteriosExclusao'>;
 
-/** Requisitos atendidos pelos critérios; VISITA_PREVISTA fica para a T46. */
-export function requisitosCriterios(protocolo: CriteriosProtocolo): Record<
-  Exclude<PendenciaRecrutamento, 'VISITA_PREVISTA'>,
-  boolean
-> {
+/** Ordem em que os requisitos aparecem no quadro e nas pendências. */
+export const ORDEM_REQUISITOS: PendenciaRecrutamento[] = [
+  'COORDENADOR',
+  'CRITERIO_INCLUSAO',
+  'CRITERIOS_EXCLUSAO',
+  'VISITA_PREVISTA',
+];
+
+/** Situação de cada requisito. Sem as visitas (T46), VISITA_PREVISTA nunca é atendido. */
+export function requisitosRecrutamento(
+  protocolo: CriteriosProtocolo,
+  coordenadorId: number | null,
+): Record<PendenciaRecrutamento, boolean> {
   return {
+    COORDENADOR: coordenadorId !== null,
     CRITERIO_INCLUSAO: protocolo.criteriosInclusao.length > 0,
     CRITERIOS_EXCLUSAO: protocolo.criteriosExclusao.length > 0 || protocolo.semCriteriosExclusao,
+    VISITA_PREVISTA: false,
   };
 }
 
-/** Pendências na ordem da regra. Sem as visitas (T46), VISITA_PREVISTA sempre falta. */
-export function calcularPendencias(protocolo: CriteriosProtocolo): PendenciaRecrutamento[] {
-  const atendidos = requisitosCriterios(protocolo);
-  const pendencias: PendenciaRecrutamento[] = [];
-  if (!atendidos.CRITERIO_INCLUSAO) pendencias.push('CRITERIO_INCLUSAO');
-  if (!atendidos.CRITERIOS_EXCLUSAO) pendencias.push('CRITERIOS_EXCLUSAO');
-  pendencias.push('VISITA_PREVISTA');
-  return pendencias;
+/** Requisitos ainda não atendidos, na ordem do quadro. */
+export function calcularPendencias(
+  protocolo: CriteriosProtocolo,
+  coordenadorId: number | null,
+): PendenciaRecrutamento[] {
+  const atendidos = requisitosRecrutamento(protocolo, coordenadorId);
+  return ORDEM_REQUISITOS.filter((codigo) => !atendidos[codigo]);
 }

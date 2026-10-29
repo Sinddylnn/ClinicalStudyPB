@@ -113,12 +113,7 @@ export default function ProtocoloEstudo({
 
   const adicionar = (tipo: TipoCriterio) => async (descricao: string) => {
     const novo = await protocoloProp.adicionarCriterio(estudoId, { tipo, descricao });
-    alterarProtocolo((p) => ({
-      ...p,
-      [LISTAS[tipo]]: [...p[LISTAS[tipo]], novo],
-      // Um critério de exclusão desfaz a indicação de que não há exclusões (mesma regra do backend)
-      semCriteriosExclusao: tipo === 'EXCLUSAO' ? false : p.semCriteriosExclusao,
-    }));
+    alterarProtocolo((p) => ({ ...p, [LISTAS[tipo]]: [...p[LISTAS[tipo]], novo] }));
     setNotificacao('Critério adicionado.');
   };
 
@@ -289,8 +284,14 @@ export default function ProtocoloEstudo({
                   editavel={editavel}
                   textoVazio={
                     tela.protocolo.semCriteriosExclusao
-                      ? 'Este estudo não tem critérios de exclusão.'
+                      ? 'Este estudo não possui critérios de exclusão.'
                       : 'Nenhum critério de exclusão cadastrado.'
+                  }
+                  // Com a declaração marcada, a exclusão seria recusada (SEM_EXCLUSAO_DECLARADA)
+                  bloqueioAdicao={
+                    tela.protocolo.semCriteriosExclusao
+                      ? 'Para cadastrar um critério de exclusão, desmarque a opção abaixo.'
+                      : undefined
                   }
                   aoAdicionar={adicionar('EXCLUSAO')}
                   aoEditar={editar('EXCLUSAO')}
@@ -309,7 +310,7 @@ export default function ProtocoloEstudo({
               </section>
 
               {/* Com o recrutamento aberto, não há o que conferir para abri-lo */}
-              {editavel && <QuadroRecrutamento protocolo={tela.protocolo} />}
+              {editavel && <QuadroRecrutamento protocolo={tela.protocolo} coordenadorId={estudo.coordenadorId} />}
             </div>
           </>
         )}
@@ -342,7 +343,8 @@ type PropsSemExclusao = {
   aoAlterar: (marcado: boolean) => void;
 };
 
-// O backend recusa a indicação com exclusões cadastradas (EXCLUSAO_JA_DEFINIDA): a opção fica desativada
+// Modelagem, seção 3: a declaração com exclusões cadastradas é recusada (EXCLUSAO_JA_DEFINIDA),
+// então a opção fica desativada até o pesquisador remover as exclusões
 function OpcaoSemExclusao({ marcado, temExclusoes, salvando, erro, aoAlterar }: PropsSemExclusao) {
   return (
     <div className="protocolo-sem-exclusao">
@@ -354,7 +356,7 @@ function OpcaoSemExclusao({ marcado, temExclusoes, salvando, erro, aoAlterar }: 
           aria-describedby={temExclusoes ? 'nota-sem-exclusao' : undefined}
           onChange={(e) => aoAlterar(e.target.checked)}
         />
-        Este estudo não tem critérios de exclusão
+        Este estudo não possui critérios de exclusão
       </label>
       {temExclusoes && (
         <span id="nota-sem-exclusao" className="campo-ajuda">
