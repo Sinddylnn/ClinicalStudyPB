@@ -36,19 +36,19 @@ describe('servicoEstudosSimulado', () => {
 
   it('lista os estudos iniciais', async () => {
     const estudos = await executar(servicoEstudosSimulado.listar());
-    expect(estudos.map((e) => e.id)).toEqual([1, 2]);
+    expect(estudos.map((e) => e.id)).toEqual([1, 2, 3]);
   });
 
   it('cadastra em planejamento, com texto aparado e no topo da lista', async () => {
     const novo = await executar(servicoEstudosSimulado.cadastrar(ENTRADA));
     expect(novo).toMatchObject({
-      id: 3,
+      id: 4,
       titulo: 'Novo estudo',
       objetivo: 'Objetivo.',
       estado: 'PLANEJAMENTO',
     });
     const estudos = await executar(servicoEstudosSimulado.listar());
-    expect(estudos[0].id).toBe(3);
+    expect(estudos[0].id).toBe(4);
   });
 
   it('responde VALIDACAO_INVALIDA com os erros por campo', async () => {
@@ -73,6 +73,6 @@ describe('servicoEstudosSimulado', () => {
   it('não guarda o estudo recusado', async () => {
     await executar(servicoEstudosSimulado.cadastrar({ ...ENTRADA, titulo: '' })).catch(() => {});
     const estudos = await executar(servicoEstudosSimulado.listar());
-    expect(estudos).toHaveLength(2);
+    expect(estudos).toHaveLength(3);
   });
 });

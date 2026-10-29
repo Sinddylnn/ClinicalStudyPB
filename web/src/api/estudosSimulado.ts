@@ -38,6 +38,19 @@ const ESTUDOS_INICIAIS: Estudo[] = [
     // Sem coordenador: a atribuição é opcional enquanto o estudo está em planejamento
     coordenadorId: null,
   },
+  {
+    // Estudo das telas de recrutamento do protótipo (Sprint 2); os candidatos ficam em candidatosSimulado
+    id: 3,
+    titulo: 'Acompanhamento de hábitos',
+    objetivo: 'Acompanhar hábitos de sono, alimentação e atividade física ao longo de três visitas.',
+    dataInicio: '2026-10-20',
+    dataFim: '2026-12-20',
+    limiteParticipantes: 30,
+    estado: 'RECRUTAMENTO',
+    responsavelId: ID_PESQUISADORA_SIMULADA,
+    responsavelNome: NOME_PESQUISADORA_SIMULADA,
+    coordenadorId: ID_COORDENADOR_SIMULADO,
+  },
 ];
 
 let estudos = [...ESTUDOS_INICIAIS];

@@ -38,7 +38,7 @@ function textoContagem(quantidade: number): string {
 }
 
 // <-------------------LISTA DE ESTUDOS------------------->
-// Pesquisador: "Meus estudos", com cadastro. Coordenador: estudos vinculados a ele, somente leitura (D02).
+// Pesquisador: "Meus estudos", com cadastro. Coordenador: estudos vinculados a ele (D02), com acesso ao recrutamento.
 export default function ListaEstudos({ servico = servicoEstudos, usuario: usuarioProp }: Props) {
   const usuario = useUsuarioLogado(usuarioProp);
   const location = useLocation();
@@ -133,13 +133,11 @@ export default function ListaEstudos({ servico = servicoEstudos, usuario: usuari
                 : 'Estudos vinculados a você como coordenador.'}
             </p>
           </div>
-          {pesquisador ? (
+          {pesquisador && (
             <Link className="botao botao-primario" to="/estudos/novo">
               <Icone nome="mais" />
               Novo estudo
             </Link>
-          ) : (
-            <span className="etiqueta etiqueta-leitura">Somente leitura</span>
           )}
         </header>
 
@@ -242,7 +240,17 @@ export default function ListaEstudos({ servico = servicoEstudos, usuario: usuari
                         className={estudo.id === cadastro?.novoId ? 'estudos-linha-nova' : undefined}
                       >
                         <td>
-                          <span className="estudos-titulo">{estudo.titulo}</span>
+                          {pesquisador ? (
+                            <span className="estudos-titulo">{estudo.titulo}</span>
+                          ) : (
+                            // O coordenador abre o recrutamento do estudo (RF08 a RF11)
+                            <Link
+                              className="estudos-titulo estudos-titulo-link"
+                              to={`/estudos/${estudo.id}/recrutamento`}
+                            >
+                              {estudo.titulo}
+                            </Link>
+                          )}
                           <span className="estudos-objetivo">{estudo.objetivo}</span>
                         </td>
                         {!pesquisador && (

@@ -1,0 +1,141 @@
+/* <-------------------TELAS DE RECRUTAMENTO-------------------> */
+/* Quadros "Coordenador / Recrutamento – ..." do protótipo (Sprint 2).
+   Reaproveita a base das telas de estudos (estudos.css); aqui ficam só os acréscimos. */
+
+/* <-------------------CABEÇALHO-------------------> */
+.recrutamento-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.recrutamento-dados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: center;
+}
+
+.recrutamento-dados .icone {
+  color: var(--icone-suave);
+}
+
+/* <-------------------INDICADORES-------------------> */
+.recrutamento-indicadores {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recrutamento-indicador {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 20px;
+}
+
+.recrutamento-indicador-rotulo {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--texto-suave);
+}
+
+.recrutamento-indicador-valor {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 29px;
+}
+
+/* <-------------------LISTA-------------------> */
+.recrutamento-filtros {
+  min-height: 74px;
+}
+
+/* Larguras das colunas do protótipo: 360, 180, 180, 160 e 240 */
+.recrutamento-tabela th:nth-child(1) {
+  width: 32%;
+}
+
+.recrutamento-tabela th:nth-child(2),
+.recrutamento-tabela th:nth-child(3) {
+  width: 16%;
+}
+
+.recrutamento-tabela th:nth-child(4) {
+  width: 14.5%;
+}
+
+.recrutamento-tabela td {
+  height: 64px;
+}
+
+.pagina-interna .recrutamento-etapa {
+  width: 196px;
+  max-width: 100%;
+}
+
+/* As etapas abrem telas das próximas tasks; até lá ficam desativadas */
+.pagina-interna .recrutamento-etapa:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.recrutamento-incluido {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+  line-height: 16px;
+  color: #6d28d9;
+}
+
+/* <-------------------ETIQUETAS DO CANDIDATO-------------------> */
+/* Cores confirmadas no protótipo: verde, âmbar, vermelho, roxo e cinza */
+.etiqueta-elegivel,
+.etiqueta-aceitou {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.etiqueta-incompleta {
+  color: #b45309;
+  background: #fffbeb;
+}
+
+.etiqueta-inelegivel,
+.etiqueta-recusou {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.etiqueta-incluido {
+  color: #6d28d9;
+  background: #f5f3ff;
+}
+
+.etiqueta-nao_avaliado,
+.etiqueta-pendente,
+.etiqueta-candidato {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+/* <-------------------TELAS ESTREITAS-------------------> */
+@media (max-width: 900px) {
+  .recrutamento-indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recrutamento-tabela td {
+    height: auto;
+  }
+
+  .pagina-interna .recrutamento-etapa {
+    width: 100%;
+  }
+}
