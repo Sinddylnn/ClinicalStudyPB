@@ -96,8 +96,10 @@ Exemplo fictício para cadastro; troque o e-mail se já existir no seu banco:
 
 Use o ID devolvido no cadastro para editar, desativar e reativar **essa conta de
 teste**, mantendo sua conta administradora disponível. Repetir o cadastro com o
-mesmo e-mail deve retornar `409`. Nome ou e-mail acima de 255 caracteres e senha
-acima de 72 bytes em UTF-8 devem retornar `400`. Acentos podem ocupar mais de um byte.
+mesmo e-mail deve retornar `409`. Novas senhas precisam ter pelo menos **8 caracteres**
+e não podem conter apenas espaços. Senha curta, nome ou e-mail acima de 255 caracteres
+e senha acima de 72 bytes em UTF-8 retornam `400`. Acentos podem ocupar mais de um byte.
+O mínimo se aplica ao cadastro; não altera a autenticação de contas já existentes.
 O último administrador ativo não pode ser desativado nem perder seu perfil: `400`.
 Também retorna `400 PERFIL_COM_VINCULOS` ao tentar mudar o perfil de um pesquisador
 responsável ou coordenador para um perfil incompatível com os estudos vinculados.
@@ -149,7 +151,16 @@ Para atribuir depois, use o ID do estudo em `PUT /estudos/{id}/coordenador` e en
 Essa operação exige um ID positivo e não aceita `null` como remoção. Se já havia
 um coordenador, ele é substituído. Repetir a mesma escolha mantém o mesmo vínculo.
 A resposta de estudo contém `id`, `titulo`, `objetivo`, `responsavelId`,
-`coordenadorId`, `dataInicio`, `dataFim`, `limiteParticipantes` e `estado`.
+`responsavelNome`, `coordenadorId`, `dataInicio`, `dataFim`, `limiteParticipantes` e `estado`.
+
+`responsavelNome` é o nome atual do pesquisador, obtido pelo backend. A web pode
+mostrá-lo e usá-lo na busca sem consultar a rota administrativa de usuários.
+O nome também aparece nas respostas de cadastro e de atribuição do coordenador.
+
+A listagem usa **ID decrescente**, seguindo a sequência de inclusão dos cadastros.
+A data prevista de início não determina essa ordem. O ID não é uma data/hora de
+auditoria nem indica a ordem exata dos commits de transações simultâneas; ele é
+o critério simples adotado para esta entrega.
 
 Para conferir o isolamento, cadastre estudos com dois pesquisadores e dois
 coordenadores diferentes. Entre como cada coordenador e execute `GET /estudos`:
@@ -158,6 +169,11 @@ lista vazia. Depois de substituir o coordenador de um estudo, ele deve sair da
 listagem do anterior e aparecer na do novo coordenador.
 
 Confira também as recusas:
+
+- `limiteParticipantes` aceita inteiros de `1` a `2147483647`. Enviar `2.5`, `2.0`,
+  `2e0` ou um número acima desse máximo resulta em `400 REQUISICAO_INVALIDA`,
+  sem salvar o estudo. O cliente deve enviar `2`, por exemplo. A conversão de
+  decimal para inteiro foi desativada na API, inclusive para IDs recebidos no JSON.
 
 - Datas iguais são aceitas; término anterior ao início resulta em `400 DATA_INVALIDA`.
 - Campos obrigatórios, título acima de 150 caracteres, objetivo acima de 2000,
@@ -197,7 +213,16 @@ No cadastro, ultrapassar esse limite é uma validação `400` (`SENHA_MUITO_LONG
 no login, as credenciais são recusadas com `401`.
 
 Os erros controlados usam `codigo`, `mensagem` e, quando houver validação de campos,
-`errosCampos`. DTOs de resposta nunca incluem senha ou hash. A tabela detalhada de
+`errosCampos`. Campos obrigatórios usam os mesmos textos do formulário web, como
+“Informe o título.” e “Informe o nome completo.”. Mensagens repetidas de validações
+do mesmo campo são apresentadas apenas uma vez.
+
+Quando o JSON tem um tipo incompatível, a leitura falha antes da validação dos DTOs.
+Nesse caso, a resposta permanece `400 REQUISICAO_INVALIDA`, com a mensagem geral
+“Confira o formato e os dados da requisição.”; não há `errosCampos`. Isso é diferente
+de receber um inteiro válido, como `0`, que é recusado pela regra do campo.
+
+DTOs de resposta nunca incluem senha ou hash. A tabela detalhada de
 códigos e o fluxo por `curl` estão em [autenticação](autenticacao.md).
 
 ## Onde a documentação é construída

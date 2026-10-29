@@ -25,7 +25,8 @@ export type Estudo = EstudoCadastroEntrada & {
   coordenadorId: number | null;
   /**
    * Nome do pesquisador responsável, mostrado ao coordenador (coluna Responsável do protótipo).
-   * Ainda não vem em EstudoResposta; sem ele, a tela mostra "Pesquisador nº {responsavelId}".
+   * Fornecido por EstudoResposta; o campo opcional preserva compatibilidade com respostas antigas.
+   * Sem ele, a tela mostra "Pesquisador nº {responsavelId}".
    */
   responsavelNome?: string;
 };

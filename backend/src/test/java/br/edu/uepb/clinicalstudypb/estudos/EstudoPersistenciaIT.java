@@ -127,6 +127,32 @@ class EstudoPersistenciaIT {
         assertThat(usuarios.findById(alvo.getId()).orElseThrow().getPerfil()).isEqualTo(perfil);
     }
 
+    /**
+     * Ordena pelo cadastro mesmo quando o último estudo tem data prevista anterior.
+     *
+     * @since 1.0
+     */
+    @Test
+    void listaCadastrosRecentesComNomeDoResponsavel() {
+        Usuario pesquisador = conta(PerfilUsuario.PESQUISADOR);
+        Usuario outro = conta(PerfilUsuario.PESQUISADOR);
+        Usuario coordenador = conta(PerfilUsuario.COORDENADOR);
+        var identidade = new UsuarioAutenticado(pesquisador);
+        var primeiro = estudos.cadastrar(entrada(coordenador.getId()), identidade);
+        LocalDate anterior = LocalDate.of(2025, 1, 1);
+        var recente = estudos.cadastrar(new EstudoCadastroEntrada("Cadastro recente", "Objetivo",
+                anterior, anterior, 10, coordenador.getId()), identidade);
+        estudos.cadastrar(entrada(null), new UsuarioAutenticado(outro));
+        entidades.flush();
+        entidades.clear();
+
+        for (var conta : new UsuarioAutenticado[]{identidade, new UsuarioAutenticado(coordenador)}) {
+            var lista = estudos.listar(conta);
+            assertThat(lista).extracting(r -> r.id()).containsExactly(recente.id(), primeiro.id());
+            assertThat(lista).allSatisfy(r -> assertThat(r.responsavelNome()).isEqualTo(pesquisador.getNome()));
+        }
+    }
+
     // <-------------------EVOLUÇÃO DE UM BANCO QUE JÁ POSSUI DADOS------------------->
 
     /**
@@ -160,7 +186,7 @@ class EstudoPersistenciaIT {
                         """);
 
                 Flyway.configure().dataSource(url, usuario, senha).schemas(schema).defaultSchema(schema)
-                        .load().migrate();
+                        .target("3").load().migrate();
                 try (var dados = sql.executeQuery("SELECT titulo, responsavel_id, coordenador_id FROM estudos")) {
                     assertThat(dados.next()).isTrue();
                     assertThat(dados.getString("titulo")).isEqualTo("Estudo anterior");

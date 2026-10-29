@@ -22,24 +22,25 @@ import jakarta.validation.constraints.Size;
 public record UsuarioCadastroEntrada(
 
         @Schema(description = "Nome do usuário, com até 255 caracteres.", example = "Ana Pesquisa")
-        @NotBlank(message = "O nome é obrigatório.")
+        @NotBlank(message = "Informe o nome completo.")
         @Size(max = 255, message = "O nome deve ter no máximo 255 caracteres.")
         String nome,
 
         @Schema(description = "E-mail único, com até 255 caracteres; espaços nas pontas e maiúsculas são normalizados.",
                 example = "ana.pesquisa@example.test")
-        @NotBlank(message = "O e-mail é obrigatório.")
-        @Email(message = "O e-mail informado é inválido.")
+        @NotBlank(message = "Informe um e-mail válido, como nome@exemplo.com.")
+        @Email(message = "Informe um e-mail válido, como nome@exemplo.com.")
         @Size(max = 255, message = "O e-mail deve ter no máximo 255 caracteres.")
         String email,
 
-        @Schema(description = "Senha inicial, com até 72 bytes em UTF-8. Acentos podem ocupar mais de um byte.",
+        @Schema(description = "Senha inicial, com pelo menos 8 caracteres e até 72 bytes em UTF-8. Acentos podem ocupar mais de um byte.",
                 format = "password", accessMode = Schema.AccessMode.WRITE_ONLY)
-        @NotBlank(message = "A senha é obrigatória.")
+        @NotBlank(message = "A senha deve ter pelo menos 8 caracteres.")
+        @Size(min = 8, message = "A senha deve ter pelo menos 8 caracteres.")
         String senha,
 
         @Schema(description = "Perfil atribuído pelo administrador.", example = "PESQUISADOR")
-        @NotNull(message = "O perfil é obrigatório.")
+        @NotNull(message = "Selecione um perfil.")
         PerfilUsuario perfil
 ) {
 

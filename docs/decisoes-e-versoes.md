@@ -54,7 +54,7 @@ Estes detalhes implementam as decisões acima e permanecem sujeitos à revisão 
 - `POST /estudos` aceita `coordenadorId` opcional e cria o estudo em `PLANEJAMENTO`.
   O responsável vem da sessão. Datas iguais são aceitas; término anterior ao início
   retorna `400 DATA_INVALIDA`. Título tem até 150 caracteres, objetivo até 2000 e
-  o limite de participantes deve ser positivo.
+  o limite de participantes deve ser um inteiro positivo.
 - `GET /estudos` filtra por vínculo. `GET /estudos/coordenadores` oferece ao
   pesquisador somente ID e nome de coordenadores ativos para preencher a escolha.
   Não permite ao pesquisador acessar a listagem administrativa de usuários.
@@ -76,6 +76,24 @@ Estes detalhes implementam as decisões acima e permanecem sujeitos à revisão 
 
 As escolhas da publicação OpenAPI nesta task não alteram o Kickoff, não ampliam o
 escopo funcional e não resolvem, sozinhas, as pendências de integração da task 3171.
+
+## Ajustes aprovados na revisão de integração — 26/10/2026
+
+Estas definições foram confirmadas por Georis após a revisão da web. São decisões
+da equipe que detalham o contrato; não são exigências novas atribuídas à professora.
+
+| Decisão | Aplicação no projeto |
+|---|---|
+| Senha mínima de 8 caracteres para novas contas | Backend e web recusam senha curta ou formada apenas por espaços. O limite de 72 bytes do BCrypt permanece; o login de contas existentes não recebe a nova exigência |
+| Não converter decimal em inteiro | JSON com `limiteParticipantes: 2.5` retorna 400, sem salvar. A configuração Jackson também protege os demais campos inteiros do JSON |
+| Devolver o nome do responsável | `responsavelNome` acompanha `responsavelId` nas respostas de estudo, usando o nome atual do usuário |
+| Cadastros mais recentes primeiro | `GET /estudos` usa ID decrescente, conservando os filtros de pesquisador/coordenador. A data prevista de início não participa da ordenação |
+| Textos de validação consistentes | Campos obrigatórios e senha mínima usam os textos já adotados na web; a leitura de JSON incompatível mantém o erro geral `REQUISICAO_INVALIDA` |
+
+A ordenação pelo ID representa a sequência de inclusão nesta entrega. Não substitui
+uma data/hora de auditoria e não garante a ordem de conclusão de transações simultâneas.
+Não foi criada uma coluna de data de cadastro, nem alterada qualquer migração existente.
+As mudanças não exigem apagar o banco ou recriar o volume Docker.
 
 ## Versões acordadas
 

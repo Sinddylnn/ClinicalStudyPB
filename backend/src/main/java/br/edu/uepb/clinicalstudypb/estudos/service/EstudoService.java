@@ -106,9 +106,9 @@ public class EstudoService {
 
         if (usuarioAutenticado.getPerfil() == PerfilUsuario.PESQUISADOR) {
             estudosPermitidos =
-                    estudos.findByResponsavelId(usuarioAutenticado.getId());
+                    estudos.findByResponsavelIdOrderByIdDesc(usuarioAutenticado.getId());
         } else if (usuarioAutenticado.getPerfil() == PerfilUsuario.COORDENADOR) {
-            estudosPermitidos = estudos.findByCoordenadorId(usuarioAutenticado.getId());
+            estudosPermitidos = estudos.findByCoordenadorIdOrderByIdDesc(usuarioAutenticado.getId());
         } else {
             throw new AccessDeniedException(
                     "Seu perfil não permite consultar estudos."

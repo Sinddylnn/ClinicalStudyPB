@@ -14,18 +14,20 @@ O desenvolvimento será dividido em três releases e seis sprints. As funcionali
 
 Como se trata de um projeto acadêmico, serão utilizados dados fictícios. O sistema não realiza diagnósticos nem decisões clínicas automatizadas.
 
+---
+
 ## Arquitetura e tecnologias
 
-![fluxo_geral.png](assets/fluxo_geral.png)
+
+<div align="center">
+  <img src="assets/fluxo_geral.png" alt="visão geral proposta" width="70%">
+</div>
 
 A aplicação web e o aplicativo se comunicam com o mesmo backend por meio de uma API REST. O backend concentra as regras de negócio, o controle de acesso e a comunicação com o banco de dados.
 
-// Colocar diagrama aqui
-```text
-Web — React ─────────────┐
-                         ├── API REST — Spring Boot ── PostgreSQL
-Mobile — React Native ───┘
-```
+<div align="center">
+  <img src="docs/diagramas/01_visao_geral.png" alt="visão geral do sistema" width="50%">
+</div>
 
 As interfaces não acessam diretamente o banco. Dessa forma, as regras e os dados permanecem centralizados, mesmo quando são utilizados em telas diferentes.
 
@@ -59,6 +61,7 @@ Gabriela apoia os testes integrados e prepara o ambiente com Docker Compose e a 
 
 As pastas ainda sem implementação contêm apenas `.gitkeep`, um marcador vazio que permite registrá-las no Git. Sua existência organiza o trabalho, mas não significa que o componente esteja concluído.
 
+---
 
 ## Executar o projeto
 
@@ -143,6 +146,8 @@ O [guia do OpenAPI e Swagger](docs/openapi.md) explica como testar esses fluxos 
 sessão, CSRF e permissões por vínculo. As [decisões e versões](docs/decisoes-e-versoes.md) reúnem as
 escolhas do Kickoff e distinguem o que já existe do que ainda será implementado.
 Esses documentos serão complementados conforme novas operações forem entregues.
+
+
 ### Aplicação web
 
 Requer **Node.js 24.22.0** (ver `web/.nvmrc`).
@@ -168,6 +173,7 @@ VALUES ('Paula Pesquisadora', 'paula@exemplo.com', crypt('Senha123', gen_salt('b
 
 Depois, entre na web com `paula@exemplo.com` e a senha `Senha123`. O [guia de autenticação](docs/autenticacao.md) traz mais detalhes sobre os dados de teste.
 
+
 O login sempre usa o backend, mas as telas de estudos podem usar dados simulados ou a API de estudos. Isso é definido por `VITE_ESTUDOS_API` no `web/.env`:
 
 | Valor | Comportamento |
@@ -176,6 +182,103 @@ O login sempre usa o backend, mas as telas de estudos podem usar dados simulados
 | `real` | Chamadas a `GET /estudos` e `POST /estudos` no backend. |
 
 Para trocar, copie `web/.env.example` para `web/.env`, ajuste o valor e reinicie o `npm run dev`.
+
+### Aplicação mobile
+
+Aplicativo mobile do participante do ClinicalStudyPB, feito com React Native, TypeScript e Expo Router. Este guia explica como instalar as dependências, iniciar o Expo e executar o app no Android.
+
+#### Versões utilizadas
+
+|Item                | Versão  |
+|--------------------|---------|
+|React Native        | 0.88.0  |
+|React               | 0.88.0  |
+|TypeScript          | 6.0.3   |
+|Expo                | 58.0.17 |
+|Expo Router         | 58.0.25 |
+|Jest                | 30.5.2  |
+|Jest-expo           | 58.0.12 |
+|React Native Testing Library      | 14.1.0  |
+|Node.js             | 24.11.1 |
+|npm                 | 11.6.2  |
+
+#### Pré-requisitos
+
+- Node.js e npm instalados (versões acima).
+- Git para clonar o repositório.
+- Android Studio com pelo menos um emulador (AVD) criado. Para criar: Android Studio -> More actions -> Virtual Device Manager -> Create Device.
+
+#### Passo a passo
+
+##### 1. Clonar repositório e entrar na pasta do app
+
+```bash
+git clone https://github.com/Sinddylnn/ClinicalStudyPB.git
+cd ClinicalStudyPB/mobile
+```
+
+Todos os comandos abaixo são executados dentro da pasta `mobile/`.
+
+##### 2. Instalar as dependências
+
+```bash
+npm install
+```
+
+##### 3. Abrir o emulador Android
+
+Abra o Android Studio, vá em Device Manager e inicie o emulador. Espere a tela inicial do Android aparecer antes do próximo passo.
+
+Para conferir se o emulador foi reconhecido:
+
+```bash
+adb devices
+```
+
+O emulador deve aparecer na lista com o status `device`.
+
+##### 4. Iniciar o Expo no Android
+
+```bash
+npx expo start --android
+```
+
+O Expo inicia o servidor de desenvolvimento, abre o app no emulador e recarrega automaticamente quando o código é alterado. Se o emulador não abrir o app sozinho, com o servidor rodando pressione a no terminal.
+
+##### 5. Verificar se deu certo
+
+- O app abre na tela Início, com o cabeçalho "Olá!" e o cartão "Disponível na Sprint 3".
+- A barra inferior tem quatro abas: Início, Estudos, Visitas e Perfil.
+- Ao tocar em cada aba, a tela correspondente é exibida sem erros de compilação.
+
+#### Endereço da API
+
+O endereço da API muda conforme onde o app está rodando:
+
+|Onde o app roda     | Endereço do servidor           |
+|--------------------|--------------------------------|
+|Emulador Android    | 10.0.2.2                       |
+|Celular físico      | IP do computador na rede local |
+
+- **Emulador Android:** dentro do emulador, localhost aponta para o próprio emulador, e não para o seu computador. O endereço especial 10.0.2.2 é o apelido que o emulador usa para acessar a máquina onde ele está rodando.
+- **Celular físico:** use o IP do computador na rede local, e deixe celular e computador no mesmo Wi-Fi.
+
+A API ainda não é consumida pelo app na Sprint 1. Esta seção registra a configuração para quando a integração for implementada.
+
+#### Executando em um celular físico (opcional)
+
+- 1. Instale o app **Expo Go** no celular.
+- 2. Conecte celular e computador na mesma rede Wi-Fi.
+- 3. Rode `npx expo start` e leia o QR code exibido no terminal com o Expo Go.
+
+## Testes automatizados
+
+```bash
+npm test
+npm test -- --ci
+```
+
+Resultado esperado: 1 suíte e 6 testes passando. O segundo comando é a execução no modo de integração contínua.
 
 ### Aplicação web, aplicativo e banco de dados
 

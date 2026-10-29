@@ -6,11 +6,11 @@ Este guia mostra como instalar, executar e testar a aplicação web do ClinicalS
 
 Na Sprint 1, a web entrega três requisitos:
 
-| Requisito | O que a web faz |
-|---|---|
-| RF01 | O administrador lista, cadastra, edita, desativa e reativa contas dos quatro perfis. |
-| RF02 | Qualquer conta ativa entra com e-mail e senha e sai encerrando a sessão no servidor. |
-| RF03 | Cada perfil vê apenas o que pode usar. Rotas de outro perfil levam ao acesso negado. |
+| Requisito | O que a web faz                                                                      |
+| --------- | ------------------------------------------------------------------------------------ |
+| RF01      | O administrador lista, cadastra, edita, desativa e reativa contas dos quatro perfis. |
+| RF02      | Qualquer conta ativa entra com e-mail e senha e sai encerrando a sessão no servidor. |
+| RF03      | Cada perfil vê apenas o que pode usar. Rotas de outro perfil levam ao acesso negado. |
 
 Quem usa a web na Sprint 1:
 
@@ -22,11 +22,11 @@ A segurança é garantida pelo backend. A web organiza a navegação e mostra as
 
 ## Pré-requisitos
 
-| Ferramenta | Versão | Uso |
-|---|---|---|
-| Node.js | 24.22.0 (ver `web/.nvmrc`) | Aplicação web |
-| Docker com Compose v2 | — | Banco PostgreSQL local |
-| JDK | 21 completo (`java` e `javac`) | Backend |
+| Ferramenta            | Versão                         | Uso                    |
+| --------------------- | ------------------------------ | ---------------------- |
+| Node.js               | 24.22.0 (ver `web/.nvmrc`)     | Aplicação web          |
+| Docker com Compose v2 | —                              | Banco PostgreSQL local |
+| JDK                   | 21 completo (`java` e `javac`) | Backend                |
 
 No Windows e no macOS, o Docker Desktop precisa estar aberto antes de subir o banco.
 
@@ -51,12 +51,12 @@ Se `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD` já estiverem def
 
 O backend precisa destas variáveis, no mesmo terminal em que ele será iniciado:
 
-| Variável | Valor local |
-|---|---|
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/clinicalstudypb` |
-| `SPRING_DATASOURCE_USERNAME` | `clinicalstudypb` |
+| Variável                     | Valor local                                         |
+| ---------------------------- | --------------------------------------------------- |
+| `SPRING_DATASOURCE_URL`      | `jdbc:postgresql://localhost:5432/clinicalstudypb`  |
+| `SPRING_DATASOURCE_USERNAME` | `clinicalstudypb`                                   |
 | `SPRING_DATASOURCE_PASSWORD` | a senha do banco (`clinicalstudypb_dev` sem `.env`) |
-| `WEB_ORIGINS` | `http://localhost:5173` |
+| `WEB_ORIGINS`                | `http://localhost:5173`                             |
 
 `WEB_ORIGINS` define a origem aceita para a web. Esse já é o valor padrão do backend, mas vale declarar.
 
@@ -106,10 +106,10 @@ INSERT INTO usuarios (nome, email, senha_hash, perfil)
 VALUES ('Ana Administradora', 'ana@exemplo.com', crypt('Senha123', gen_salt('bf', 10)), 'ADMINISTRADOR');
 ```
 
-| Conta | Senha | Perfil | Para testar |
-|---|---|---|---|
-| `paula@exemplo.com` | `Senha123` | PESQUISADOR | Login, logout e acesso negado |
-| `ana@exemplo.com` | `Senha123` | ADMINISTRADOR | Gestão de usuários |
+| Conta               | Senha      | Perfil        | Para testar                   |
+| ------------------- | ---------- | ------------- | ----------------------------- |
+| `paula@exemplo.com` | `Senha123` | PESQUISADOR   | Login, logout e acesso negado |
+| `ana@exemplo.com`   | `Senha123` | ADMINISTRADOR | Gestão de usuários            |
 
 A senha é gravada com BCrypt (`gen_salt('bf', 10)`), como faz o backend. Depois disso, as outras contas podem ser criadas pela própria tela de usuários, com a conta de administrador.
 
@@ -130,10 +130,10 @@ Abra **http://localhost:5173**.
 
 O login e os usuários sempre usam o backend. As telas de estudos podem usar dados simulados ou a API, conforme `VITE_ESTUDOS_API` no `web/.env`:
 
-| Valor | Comportamento |
-|---|---|
+| Valor               | Comportamento                                                             |
+| ------------------- | ------------------------------------------------------------------------- |
 | `simulado` (padrão) | Estudos fictícios em memória, que voltam ao estado inicial ao recarregar. |
-| `real` | Estudos vindos do backend. |
+| `real`              | Estudos vindos do backend.                                                |
 
 Para trocar, copie `web/.env.example` para `web/.env`, ajuste o valor e reinicie o `npm run dev`.
 
@@ -154,11 +154,11 @@ Os testes não precisam do backend nem do banco: as chamadas à API são simulad
 
 ## Problemas comuns
 
-| Sintoma | Causa | Solução |
-|---|---|---|
-| A web mostra só "Não foi possível verificar sua sessão. Tente novamente." | O backend está parado ou não conecta ao banco. | Suba o banco e o backend. Confira: `curl -i -H "Accept: application/json" http://localhost:5173/api/auth/sessao` deve responder **401** (ninguém logado). Um **502** indica backend parado. |
-| `Cannot find module` ao rodar a web ou os testes | Dependências não instaladas, ou comando fora de `web/`. | Entre em `web/` e rode `npm ci`. |
-| `npm ci` falha com `EPERM` no Windows | O `npm run dev` está aberto e trava arquivos de `node_modules`. | Pare o `npm run dev` (`Ctrl+C`) e rode `npm ci` de novo. |
+| Sintoma                                                                   | Causa                                                           | Solução                                                                                                                                                                                     |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A web mostra só "Não foi possível verificar sua sessão. Tente novamente." | O backend está parado ou não conecta ao banco.                  | Suba o banco e o backend. Confira: `curl -i -H "Accept: application/json" http://localhost:5173/api/auth/sessao` deve responder **401** (ninguém logado). Um **502** indica backend parado. |
+| `Cannot find module` ao rodar a web ou os testes                          | Dependências não instaladas, ou comando fora de `web/`.         | Entre em `web/` e rode `npm ci`.                                                                                                                                                            |
+| `npm ci` falha com `EPERM` no Windows                                     | O `npm run dev` está aberto e trava arquivos de `node_modules`. | Pare o `npm run dev` (`Ctrl+C`) e rode `npm ci` de novo.                                                                                                                                    |
 
 No PowerShell, use `curl.exe` no lugar de `curl`.
 
@@ -170,63 +170,63 @@ As capturas foram feitas com o banco PostgreSQL e o backend locais, usando conta
 
 #### 1. Login do administrador
 
-![Início do administrador após o login](./evidencias/web/01-login-sucesso-admin.png)
+![Início do administrador após o login](./releases/release1/evidencias/web/01-login-sucesso-admin.png)
 
 **Mostra:** a tela inicial da Ana Administradora logo após o login, com "Olá, Ana", o menu "Usuários" e os atalhos "Cadastrar usuário" e "Gerenciar usuários".
 **Comprova:** RF02 (login com e-mail e senha) e RF03 (o administrador vê o menu de usuários).
 
 #### 2. Início do pesquisador
 
-![Início da pesquisadora](./evidencias/web/02-inicio-pesquisador.png)
+![Início da pesquisadora](./releases/release1/evidencias/web/02-inicio-pesquisador.png)
 
 **Mostra:** a tela inicial da Paula Pesquisadora, com o menu "Meus estudos" e sem o menu "Usuários".
 **Comprova:** RF03. O menu e os atalhos mudam conforme o perfil.
 
 #### 3. Lista de usuários
 
-![Lista de usuários](./evidencias/web/03-usuarios-lista.png)
+![Lista de usuários](./releases/release1/evidencias/web/03-usuarios-lista.png)
 
 **Mostra:** a lista com nome, e-mail, perfil e situação; a busca; as abas Todos, Ativos e Inativos com contagem; e o filtro por perfil.
 **Comprova:** RF01 (listagem). Contas ativas e inativas aparecem juntas, porque não há exclusão física (D01).
 
 #### 4. Usuário cadastrado
 
-![Usuário cadastrado com sucesso](./evidencias/web/04-usuario-cadastrado.png)
+![Usuário cadastrado com sucesso](./releases/release1/evidencias/web/04-usuario-cadastrado.png)
 
 **Mostra:** a notificação "Usuário cadastrado com sucesso." e a nova conta destacada na lista, já como "Ativo".
 **Comprova:** RF01. O cadastro gera uma conta que começa ativa.
 
 #### 5. Edição de usuário
 
-![Edição de usuário](./evidencias/web/05-usuario-edicao.png)
+![Edição de usuário](./releases/release1/evidencias/web/05-usuario-edicao.png)
 
 **Mostra:** o formulário com nome, e-mail e perfil. A senha não aparece, e a situação indica "Para desativar, use a ação na lista."
 **Comprova:** RF01 (edição). A senha não é alterada nesta tela.
 
 #### 6. Confirmação para desativar
 
-![Confirmação para desativar uma conta](./evidencias/web/06-usuario-desativar.png)
+![Confirmação para desativar uma conta](./releases/release1/evidencias/web/06-usuario-desativar.png)
 
 **Mostra:** o diálogo "Desativar …?", que explica que novos logins são bloqueados, as sessões abertas são encerradas, os registros são preservados e a conta pode ser reativada.
 **Comprova:** D01 e a regra 5.3. Desativar não exclui a conta e bloqueia o acesso.
 
 #### 7. Confirmação para reativar
 
-![Confirmação para reativar uma conta](./evidencias/web/07-usuario-reativar.png)
+![Confirmação para reativar uma conta](./releases/release1/evidencias/web/07-usuario-reativar.png)
 
 **Mostra:** o diálogo "Reativar …?" de uma conta inativa: a pessoa entra com o mesmo e-mail e senha, o perfil e os vínculos continuam iguais e nenhuma conta nova é criada.
 **Comprova:** D01 e a regra 5.3. Reativar não duplica o e-mail.
 
 #### 8. Menu da conta
 
-![Menu da conta com a opção Sair](./evidencias/web/08-logout-menu-conta.png)
+![Menu da conta com a opção Sair](./releases/release1/evidencias/web/08-logout-menu-conta.png)
 
 **Mostra:** o menu da conta aberto na barra, com nome, e-mail e a opção "Sair".
 **Comprova:** RF02. O logout está disponível em todas as telas internas.
 
 #### 9. Logout com sessão encerrada no servidor
 
-![Login após o logout, com as requisições no DevTools](./evidencias/web/09-logout-sessao-encerrada.png)
+![Login após o logout, com as requisições no DevTools](./releases/release1/evidencias/web/09-logout-sessao-encerrada.png)
 
 **Mostra:** a tela de login depois do Sair. No DevTools aparecem `GET /auth/csrf`, `POST /auth/login` (200), as consultas `GET /auth/sessao` (200), um novo `GET /auth/csrf` e **`POST /auth/logout` com 204**.
 **Comprova:** RF02. O logout encerra a sessão no servidor, e não só na tela. Também mostra a proteção CSRF: o token é buscado antes do login e do logout, que são alterações.
@@ -235,49 +235,49 @@ As capturas foram feitas com o banco PostgreSQL e o backend locais, usando conta
 
 #### 10. Credenciais inválidas
 
-![Login com credenciais inválidas](./evidencias/web/10-credenciais-invalidas.png)
+![Login com credenciais inválidas](./releases/release1/evidencias/web/10-credenciais-invalidas.png)
 
 **Mostra:** a mensagem "E-mail ou senha inválidos. Confira os dados e tente novamente." O campo de senha é limpo.
 **Comprova:** RF02. A mensagem é genérica e não revela se o e-mail existe.
 
 #### 11. Cadastro com campos vazios
 
-![Cadastro com campos vazios](./evidencias/web/11-cadastro-campos-vazios.png)
+![Cadastro com campos vazios](./releases/release1/evidencias/web/11-cadastro-campos-vazios.png)
 
 **Mostra:** a faixa "Não foi possível salvar. Confira os campos destacados." e o erro de cada campo: nome, e-mail, senha com pelo menos 8 caracteres e perfil.
 **Comprova:** RF01. Nome, e-mail, senha inicial e perfil são obrigatórios: a web valida antes de enviar, e o backend valida de novo. A exceção é o mínimo de 8 caracteres da senha, que por enquanto só a web confere (pendência registrada para o backend).
 
 #### 12. E-mail já cadastrado
 
-![Cadastro com e-mail duplicado](./evidencias/web/12-email-duplicado.png)
+![Cadastro com e-mail duplicado](./releases/release1/evidencias/web/12-email-duplicado.png)
 
 **Mostra:** a mensagem "Já existe um usuário cadastrado com este e-mail." no campo e-mail. O e-mail usado é o de uma conta **inativa**.
 **Comprova:** RF01. O e-mail é único, inclusive entre contas desativadas (resposta 409 `EMAIL_JA_CADASTRADO`).
 
 #### 13. Último administrador ativo
 
-![Último administrador ativo protegido](./evidencias/web/13-ultimo-administrador.png)
+![Último administrador ativo protegido](./releases/release1/evidencias/web/13-ultimo-administrador.png)
 
 **Mostra:** o botão de desativar da única administradora ativa está desabilitado, com a dica "O último administrador ativo não pode ser desativado." A mesma nota aparece no rodapé da lista.
 **Comprova:** a regra 5.3. O sistema nunca fica sem um administrador ativo. O backend também recusa a operação (`ULTIMO_ADMINISTRADOR`).
 
 #### 14. Acesso negado por perfil
 
-![Acesso negado](./evidencias/web/14-acesso-negado.png)
+![Acesso negado](./releases/release1/evidencias/web/14-acesso-negado.png)
 
 **Mostra:** a tela "Acesso negado" (Erro 403) para a administradora, ao abrir uma página de outro perfil, com o botão "Voltar ao início".
 **Comprova:** RF03. Cada rota exige um perfil. O backend também responde 403 (`ACESSO_NEGADO`) quando o perfil não tem permissão.
 
 #### 15. Sessão expirada
 
-![Sessão expirada](./evidencias/web/15-sessao-expirada.png)
+![Sessão expirada](./releases/release1/evidencias/web/15-sessao-expirada.png)
 
 **Mostra:** a tela de login com o aviso "Sua sessão expirou. Entre novamente."
 **Comprova:** RF02. Quando o backend responde 401 com alguém logado (sessão expirada, cookie apagado ou conta desativada), a web encerra a sessão na tela, avisa e, depois do novo login, volta à página de origem.
 
 #### 16. Página não encontrada
 
-![Página não encontrada](./evidencias/web/16-pagina-nao-encontrada.png)
+![Página não encontrada](./releases/release1/evidencias/web/16-pagina-nao-encontrada.png)
 
 **Mostra:** a tela "Página não encontrada" (Erro 404) com a barra da pesquisadora e o botão "Voltar ao início".
 **Comprova:** endereços inexistentes têm uma resposta clara, sem perder a sessão.
@@ -286,25 +286,25 @@ As capturas foram feitas com o banco PostgreSQL e o backend locais, usando conta
 
 #### 17. Testes
 
-![Resultado do npm test](./evidencias/web/17-testes.png)
+![Resultado do npm test](./releases/release1/evidencias/web/17-testes.png)
 
 **Mostra:** o fim da execução do `npm test`: **12 arquivos e 146 testes passando**. Aparecem os grupos de sessão, revalidação, sair, estudos e usuários.
 **Comprova:** os componentes de login e de usuários têm testes automatizados (Vitest e Testing Library).
 
 #### 18. Cobertura
 
-![Relatório de cobertura com Istanbul](./evidencias/web/18-cobertura.png)
+![Relatório de cobertura com Istanbul](./releases/release1/evidencias/web/18-cobertura.png)
 
 **Mostra:** a tabela do `npm run test:coverage`, gerada pelo Istanbul.
 **Comprova:** a cobertura da web, prevista no kickoff:
 
-| Escopo | Linhas cobertas |
-|---|---|
-| Toda a web (`src`) | **98,23%** |
-| Login (`src/pages/login`) | 100% |
-| Usuários (`src/pages/usuarios`) | 99,6% |
-| Serviço de usuários (`src/api/usuarios.ts`) | 100% |
-| Autenticação (`src/autenticacao`) | 94,73% |
+| Escopo                                      | Linhas cobertas |
+| ------------------------------------------- | --------------- |
+| Toda a web (`src`)                          | **98,23%**      |
+| Login (`src/pages/login`)                   | 100%            |
+| Usuários (`src/pages/usuarios`)             | 99,6%           |
+| Serviço de usuários (`src/api/usuarios.ts`) | 100%            |
+| Autenticação (`src/autenticacao`)           | 94,73%          |
 
 Dois arquivos aparecem em vermelho, e isso é esperado:
 

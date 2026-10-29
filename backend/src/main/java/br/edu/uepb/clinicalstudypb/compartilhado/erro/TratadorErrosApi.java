@@ -58,12 +58,12 @@ public class TratadorErrosApi extends ResponseEntityExceptionHandler {
             HttpStatusCode status,
             WebRequest request) {
         Map<String, String> errosCampos = new TreeMap<>();
-        // Acumula as mensagens quando mais de uma validação falha no mesmo campo
+        // Acumula mensagens diferentes quando mais de uma validação falha no mesmo campo
         exception.getBindingResult().getFieldErrors().forEach(erro ->
                 errosCampos.merge(
                         erro.getField(),
                         erro.getDefaultMessage() == null ? "Valor inválido." : erro.getDefaultMessage(),
-                        (primeira, proxima) -> primeira + " " + proxima));
+                        (primeira, proxima) -> primeira.equals(proxima) ? primeira : primeira + " " + proxima));
 
         ErroApi erro = new ErroApi(
                 "VALIDACAO_INVALIDA", "Confira os campos informados.", errosCampos);
