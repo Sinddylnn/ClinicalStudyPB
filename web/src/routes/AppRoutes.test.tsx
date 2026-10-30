@@ -117,7 +117,7 @@ describe('AppRoutes', () => {
   it('mostra à pesquisadora o protocolo do estudo em /estudos/:id', async () => {
     renderizarEm('/estudos/1');
     expect(await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Critérios de inclusão e exclusão' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Resumo', selected: true })).toBeInTheDocument();
   });
 
   it('mantém /estudos/novo no cadastro, sem confundir com /estudos/:id', async () => {

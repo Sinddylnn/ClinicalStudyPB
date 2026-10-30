@@ -63,7 +63,8 @@ function criarServicos(
   return { estudos, protocolo: servicoProtocolo };
 }
 
-function renderizar(servicos: ReturnType<typeof criarServicos>, caminho = '/estudos/1') {
+// A maior parte dos testes trabalha na aba Critérios
+function renderizar(servicos: ReturnType<typeof criarServicos>, caminho = '/estudos/1?aba=criterios') {
   render(
     <MemoryRouter initialEntries={[caminho]}>
       <Routes>
@@ -84,42 +85,79 @@ function renderizar(servicos: ReturnType<typeof criarServicos>, caminho = '/estu
 
 const cartao = (nome: 'inclusão' | 'exclusão') => screen.getByRole('region', { name: `Critérios de ${nome}` });
 
-const quadro = () => screen.getByRole('complementary', { name: 'Para abrir o recrutamento' });
+const quadro = () => screen.getByRole('complementary', { name: 'Para iniciar o recrutamento' });
+
+const aba = (nome: 'Resumo' | 'Critérios' | 'Visitas') => screen.getByRole('tab', { name: nome });
 
 describe('ProtocoloEstudo', () => {
-  it('mostra o estudo, os critérios e o que falta para abrir o recrutamento', async () => {
-    renderizar(criarServicos());
+  it('abre no Resumo com os dados do estudo e o que falta para iniciar o recrutamento', async () => {
+    renderizar(criarServicos(), '/estudos/1');
 
     expect(await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' })).toBeInTheDocument();
     expect(screen.getByText('Planejamento')).toHaveClass('etiqueta-planejamento');
-    expect(screen.getByText('03/11/2026 – 28/02/2027')).toBeInTheDocument();
-    expect(screen.getByText('Limite de 45 participantes')).toBeInTheDocument();
+    expect(screen.getByText('Responsável: você • 03/11/2026 – 28/02/2027 • 45 vagas')).toBeInTheDocument();
+    // A abertura do recrutamento é da T47
+    expect(screen.getByRole('button', { name: 'Iniciar recrutamento' })).toBeDisabled();
 
+    expect(aba('Resumo')).toHaveAttribute('aria-selected', 'true');
+    const resumo = screen.getByRole('tabpanel', { name: 'Resumo' });
+    expect(within(resumo).getByText('Objetivo.')).toBeInTheDocument();
+    expect(within(resumo).getByText('45 vagas')).toBeInTheDocument();
+    expect(within(resumo).getByText('Paula Pesquisadora (você)')).toBeInTheDocument();
+    expect(within(resumo).getByText('Coordenador atribuído ao estudo.')).toBeInTheDocument();
+
+    expect(within(quadro()).getByText('2 pendentes')).toBeInTheDocument();
+    const [incl, excl, visita, coordenador] = within(quadro()).getAllByRole('listitem');
+    expect(incl).toHaveTextContent('Atendido: Pelo menos um critério de inclusão2 critérios cadastrados');
+    expect(excl).toHaveTextContent('Pendente: Critérios de exclusão definidosCadastre ou indique que não há');
+    expect(visita).toHaveTextContent('Pendente: Visitas com pelo menos uma atividade cadaNenhuma visita cadastrada');
+    expect(coordenador).toHaveTextContent('Atendido: Coordenador atribuído');
+    expect(screen.queryByRole('region', { name: 'Critérios de inclusão' })).not.toBeInTheDocument();
+  });
+
+  it('mostra os critérios na aba Critérios, com o aviso de que o protocolo ainda pode mudar', async () => {
+    renderizar(criarServicos(), '/estudos/1');
+    await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' });
+
+    await userEvent.click(aba('Critérios'));
+
+    expect(aba('Critérios')).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText(/O protocolo pode ser alterado enquanto o estudo estiver em Planejamento/)).toBeInTheDocument();
     const inclusao = within(cartao('inclusão')).getAllByRole('listitem');
     expect(inclusao.map((item) => item.textContent)).toEqual([
       'Estudantes de graduação.',
       'Idade entre 18 e 30 anos.',
     ]);
+    expect(within(cartao('inclusão')).getByText('O candidato precisa atender a todos para ser elegível.')).toBeInTheDocument();
     expect(within(cartao('exclusão')).getByText('Nenhum critério de exclusão cadastrado.')).toBeInTheDocument();
+    expect(within(cartao('exclusão')).getByText('Se algum estiver presente, o candidato é inelegível.')).toBeInTheDocument();
+  });
 
-    expect(within(quadro()).getByText('Faltam 2 itens.')).toBeInTheDocument();
-    const [coordenador, incl, excl, visita] = within(quadro()).getAllByRole('listitem');
-    expect(coordenador).toHaveTextContent('Coordenador atribuídoAtendido');
-    expect(incl).toHaveTextContent('Pelo menos 1 critério de inclusãoAtendido');
-    expect(excl).toHaveTextContent('Critérios de exclusão definidos ou indicação de que não háPendente');
-    expect(visita).toHaveTextContent(
-      'Pelo menos 1 visita prevista, com atividade em cada visitaPendente: cadastro de visitas em breve',
-    );
+  it('troca de aba pelas setas do teclado e mostra as visitas ainda vazias', async () => {
+    renderizar(criarServicos(), '/estudos/1');
+    await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' });
+    const usuario = userEvent.setup();
+
+    aba('Resumo').focus();
+    await usuario.keyboard('{ArrowLeft}');
+
+    expect(aba('Visitas')).toHaveAttribute('aria-selected', 'true');
+    expect(aba('Visitas')).toHaveFocus();
+    expect(screen.getByRole('tabpanel', { name: 'Visitas' })).toHaveTextContent('Nenhuma visita cadastrada.');
+
+    await usuario.keyboard('{ArrowRight}');
+    expect(aba('Resumo')).toHaveAttribute('aria-selected', 'true');
   });
 
   it('aponta o coordenador como pendente quando o estudo ainda não tem um', async () => {
-    renderizar(criarServicos({ ...ESTUDO, coordenadorId: null }));
+    renderizar(criarServicos({ ...ESTUDO, coordenadorId: null }), '/estudos/1');
     await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' });
 
-    expect(within(quadro()).getByText('Faltam 3 itens.')).toBeInTheDocument();
-    const [coordenador] = within(quadro()).getAllByRole('listitem');
-    expect(coordenador).toHaveTextContent('Coordenador atribuídoPendente');
+    expect(within(quadro()).getByText('3 pendentes')).toBeInTheDocument();
+    const coordenador = within(quadro()).getAllByRole('listitem')[3];
+    expect(coordenador).toHaveTextContent('Pendente: Coordenador atribuídoAtribua na seção Coordenador');
     expect(coordenador).toHaveClass('protocolo-requisito-pendente');
+    expect(screen.getByText(/Nenhum coordenador atribuído/)).toBeInTheDocument();
   });
 
   it('adiciona um critério com contador de caracteres e notificação', async () => {
@@ -132,14 +170,15 @@ describe('ProtocoloEstudo', () => {
     const campo = screen.getByLabelText('Novo critério de exclusão');
     expect(campo).toHaveFocus();
     await usuario.type(campo, 'Gestantes.');
-    expect(within(cartao('exclusão')).getByText('10/1000')).toBeInTheDocument();
+    expect(within(cartao('exclusão')).getByText('10/1.000')).toBeInTheDocument();
     await usuario.click(within(cartao('exclusão')).getByRole('button', { name: 'Adicionar' }));
 
     expect(servicos.protocolo.adicionarCriterio).toHaveBeenCalledWith(1, { tipo: 'EXCLUSAO', descricao: 'Gestantes.' });
     expect(await screen.findByRole('status')).toHaveTextContent('Critério adicionado.');
     expect(within(cartao('exclusão')).getByRole('listitem')).toHaveTextContent('Gestantes.');
     expect(screen.queryByLabelText('Novo critério de exclusão')).not.toBeInTheDocument();
-    expect(within(quadro()).getByText('Falta 1 item.')).toBeInTheDocument();
+    await usuario.click(aba('Resumo'));
+    expect(within(quadro()).getByText('1 pendente')).toBeInTheDocument();
   });
 
   it('valida a descrição na tela sem chamar o serviço e cancela o formulário', async () => {
@@ -259,9 +298,14 @@ describe('ProtocoloEstudo', () => {
     await usuario.click(opcao);
 
     expect(servicos.protocolo.definirSemExclusao).toHaveBeenCalledWith(1, true);
-    expect(await within(quadro()).findByText('Falta 1 item.')).toBeInTheDocument();
-    expect(opcao).toBeChecked();
+    await vi.waitFor(() => expect(opcao).toBeChecked());
     expect(within(cartao('exclusão')).getByText('Este estudo não possui critérios de exclusão.')).toBeInTheDocument();
+
+    await usuario.click(aba('Resumo'));
+    expect(within(quadro()).getByText('1 pendente')).toBeInTheDocument();
+    expect(within(quadro()).getAllByRole('listitem')[1]).toHaveTextContent(
+      'Atendido: Critérios de exclusão definidosO estudo não possui critérios de exclusão',
+    );
   });
 
   it('desativa a adição de exclusões com a opção marcada e libera ao desmarcar', async () => {
@@ -312,7 +356,8 @@ describe('ProtocoloEstudo', () => {
     const opcao = screen.getByRole('checkbox', { name: 'Este estudo não possui critérios de exclusão' });
     expect(opcao).toBeDisabled();
     expect(opcao).toHaveAccessibleDescription('Para marcar esta opção, remova os critérios de exclusão cadastrados.');
-    expect(within(quadro()).getByText('Falta 1 item.')).toBeInTheDocument();
+    await userEvent.click(aba('Resumo'));
+    expect(within(quadro()).getByText('1 pendente')).toBeInTheDocument();
   });
 
   it('mostra a falha ao salvar a indicação "sem exclusão"', async () => {
@@ -348,7 +393,11 @@ describe('ProtocoloEstudo', () => {
     expect(screen.queryByRole('button', { name: /^Editar critério/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Remover critério/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Para abrir o recrutamento' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Iniciar recrutamento' })).not.toBeInTheDocument();
+
+    await userEvent.click(aba('Resumo'));
+    expect(screen.getByRole('heading', { name: 'Dados do estudo' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Para iniciar o recrutamento' })).not.toBeInTheDocument();
   });
 
   it('mostra o erro de carregamento e tenta de novo', async () => {
