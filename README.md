@@ -65,7 +65,30 @@ As pastas ainda sem implementação contêm apenas `.gitkeep`, um marcador vazio
 
 ## Executar o projeto
 
-Cada componente terá suas próprias instruções de instalação e execução. Por enquanto, o procedimento disponível é o da base do backend.
+Para executar **banco, backend e web juntos**, use Docker com Compose. Na raiz do
+repositório, com o motor Docker iniciado:
+
+```bash
+docker compose --profile web up -d --build --wait
+```
+
+Abra a web em <http://localhost:5173> e o Swagger em
+<http://localhost:8080/swagger-ui.html>. O Compose fornece as variáveis de ambiente
+automaticamente; não é necessário instalar Java ou Node localmente para esse fluxo.
+As portas e credenciais padrão estão em `.env.example`; o `.env` é opcional e pode
+personalizá-las. Se o banco já existe, mantenha as credenciais usadas na criação.
+
+Para executar **somente banco e backend**, utilize
+`docker compose up -d --build --wait`. O Expo permanece opcional, em outro terminal,
+com `cd mobile`, `npm ci` e `npx expo start --go`.
+
+O [guia de execução com Docker](docs/execucao-docker.md) reúne instruções para
+Windows/Linux/macOS, contas de demonstração, logs, atualização de código e encerramento.
+A web usa a API real nesse fluxo. Esta configuração é para desenvolvimento local;
+as alterações de código entram nas imagens ao repetir o comando com `--build`.
+
+As seções seguintes explicam a execução dos componentes **fora do Docker**, usando
+o banco em container. No Linux, acrescente `sudo` aos comandos Docker se necessário.
 
 ### Backend
 
@@ -161,17 +184,14 @@ npm run lint     # ESLint
 npm run build    # build de produção
 ```
 
-Em desenvolvimento, as chamadas para `/api` são encaminhadas ao backend em `http://localhost:8080` pelo proxy do Vite, que remove o prefixo antes do envio (`/api/usuarios` chega ao backend como `/usuarios`). O prefixo existe só na web, para separar as chamadas à API das rotas de tela com o mesmo nome, como `/usuarios` e `/estudos`. O endereço do backend fica no `target` do proxy, em `web/vite.config.ts`. Já `VITE_API_URL` (ver `web/.env.example`) define o caminho base das chamadas feitas pela web, que por padrão é `/api`.
+Em desenvolvimento, as chamadas para `/api` são encaminhadas ao backend em `http://localhost:8080` pelo proxy do Vite, que remove o prefixo antes do envio (`/api/usuarios` chega ao backend como `/usuarios`). O prefixo existe só na web, para separar as chamadas à API das rotas de tela com o mesmo nome, como `/usuarios` e `/estudos`. O endereço do backend pode ser configurado por `API_PROXY_TARGET`; o padrão em `web/vite.config.ts` é `http://localhost:8080`. No Compose, ele passa a ser `http://backend:8080`. Já `VITE_API_URL` (ver `web/.env.example`) define o caminho base das chamadas feitas pela web, que por padrão é `/api`.
 
-Todas as telas pedem login, então rodar `npm run dev` sem o backend mostra só "Não foi possível verificar sua sessão". Para usar a web, suba o banco (`docker compose up -d db`) e o backend, conforme as seções [Banco de dados](#banco-de-dados-postgresql-com-docker-compose) e [Backend](#backend), e crie uma conta de teste no banco. Por exemplo, pelo terminal SQL do contêiner (`docker compose exec db psql -U clinicalstudypb -d clinicalstudypb`):
-
-```sql
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-INSERT INTO usuarios (nome, email, senha_hash, perfil)
-VALUES ('Paula Pesquisadora', 'paula@exemplo.com', crypt('Senha123', gen_salt('bf', 10)), 'PESQUISADOR');
-```
-
-Depois, entre na web com `paula@exemplo.com` e a senha `Senha123`. O [guia de autenticação](docs/autenticacao.md) traz mais detalhes sobre os dados de teste.
+Todas as telas pedem login, então iniciar a web sem o backend impede verificar a
+sessão. Inicie o banco e o backend antes de utilizar as telas. A migração V4 cria
+contas fictícias de demonstração, como `pesquisador@clinicalstudypb.test`, com senha
+`Demo@123`; não é necessário inserir usuários manualmente para esse primeiro acesso.
+Veja as demais contas no [guia Docker](docs/execucao-docker.md#3-abrir-e-testar-o-sistema)
+e os detalhes do acesso no [guia de autenticação](docs/autenticacao.md).
 
 
 O login sempre usa o backend, mas as telas de estudos podem usar dados simulados ou a API de estudos. Isso é definido por `VITE_ESTUDOS_API` no `web/.env`:
@@ -280,19 +300,14 @@ npm test -- --ci
 
 Resultado esperado: 1 suíte e 6 testes passando. O segundo comando é a execução no modo de integração contínua.
 
-### Aplicação web, aplicativo e banco de dados
+### Testes e integração com o banco
 
-As instruções de execução serão acrescentadas conforme as bases forem disponibilizadas:
+As instruções de web e mobile estão nas seções acima. O
+[guia Docker](docs/execucao-docker.md) também mostra os comandos de testes da web
+executados no container. A construção da imagem do backend executa `mvnw verify`.
 
-| Componente | Informações que serão documentadas |
-|---|---|
-| Web | Instalação das dependências, execução com Vite, endereço da API e testes |
-| Mobile | Instalação das dependências, execução com Expo, configuração do Android e testes |
-
-O backend já utiliza PostgreSQL, JPA e Flyway.
-Os testes de segurança usam um repositório simulado e não exigem o banco, mas isso
+Os testes de segurança usam repositórios simulados e não exigem banco, mas isso
 não substitui a validação das migrações e da persistência no ambiente real.
-
 
 ### Banco de dados (PostgreSQL com Docker Compose)
 
@@ -303,12 +318,13 @@ O banco local roda em um contêiner **PostgreSQL 17.11**, definido no `docker-co
 A partir da raiz do repositório:
 
 ```bash
+# Se ainda não existe .env e você deseja personalizar os valores
 cp .env.example .env
 docker compose up -d db
 docker compose ps
 ```
 
-No PowerShell, utilize `Copy-Item .env.example .env` no lugar de `cp`. Antes de subir pela primeira vez, defina a senha em `SPRING_DATASOURCE_PASSWORD` no `.env`: o PostgreSQL só lê a senha ao criar o volume. Sem o arquivo `.env`, o Compose usa `clinicalstudypb_dev`.
+No PowerShell, utilize `Copy-Item .env.example .env` no lugar de `cp`. O exemplo usa credenciais fictícias de desenvolvimento. Para personalizar, ajuste `SPRING_DATASOURCE_PASSWORD` no `.env` antes de criar o volume: o PostgreSQL só lê essa senha na criação inicial. Sem o arquivo `.env`, o Compose usa `clinicalstudypb_dev`.
 
 O serviço está pronto quando `docker compose ps` mostra o estado `healthy`. Os dados ficam no volume `clinicalstudypb-pgdata` e continuam disponíveis depois de reiniciar o contêiner.
 
@@ -326,7 +342,7 @@ docker compose exec db psql -U clinicalstudypb -d clinicalstudypb
 
 #### Executar o backend com o banco
 
-O Spring Boot não lê o `.env` automaticamente. Exporte as variáveis no terminal antes de iniciar o backend. O Flyway aplica as migrações na primeira execução.
+Para executar Java fora do Docker, o Spring Boot não lê o `.env` automaticamente. Exporte as variáveis no terminal antes de iniciar o backend. No fluxo completo com Docker, o Compose já faz esse repasse. O Flyway aplica as migrações na primeira execução.
 
 ```bash
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/clinicalstudypb
@@ -353,21 +369,24 @@ Os testes de integração e o E2E usam um segundo banco, descartável, para não
 docker compose --profile test up -d db-test
 ```
 
-Ele usa `localhost:5433` e o banco `clinicalstudypb_test`, com os mesmos usuário e senha. Os dados ficam apenas em memória: ao parar o contêiner (`docker compose --profile test down`), tudo é apagado.
+Ele usa `localhost:5433` e o banco `clinicalstudypb_test`, com os mesmos usuário e senha. Os dados ficam apenas em memória: ao parar o contêiner (`docker compose --profile test stop db-test`), tudo é apagado.
 
-#### Parar e recomeçar do zero
+#### Parar o ambiente
 
 ```bash
-docker compose down        # para os contêineres e mantém os dados
-docker compose down -v     # para e apaga o volume do banco de desenvolvimento
+docker compose --profile web stop   # para os serviços e mantém os dados
+docker compose --profile web down   # remove os containers e mantém o volume
 ```
+
+O volume existente é preservado. Adicionar `-v` ao `down` apaga o volume e não é
+necessário para atualizar as aplicações.
 
 #### Problemas comuns
 
 - **Erro ao conectar na API do Docker (`dockerDesktopLinuxEngine`):** o Docker Desktop não está em execução. Abra-o e aguarde o motor iniciar antes de repetir o comando.
-- **Porta 5432 em uso:** já existe outro PostgreSQL na máquina. Defina `POSTGRES_PORT` no `.env` (por exemplo, `5434`) e ajuste a porta em `SPRING_DATASOURCE_URL`.
-- **Erro de autenticação depois de trocar a senha:** o PostgreSQL só lê a senha na criação do volume. Execute `docker compose down -v` e suba o banco novamente.
-- **Backend não conecta:** confirme que `docker compose ps` mostra `healthy` e que as três variáveis `SPRING_DATASOURCE_*` estão exportadas no mesmo terminal do backend.
+- **Porta 5432 em uso:** já existe outro PostgreSQL na máquina. Defina `POSTGRES_PORT` no `.env` (por exemplo, `5434`). Ajuste `SPRING_DATASOURCE_URL` somente se executar Java fora do Docker; dentro dele, o banco permanece em `db:5432`.
+- **Erro de autenticação depois de trocar a senha:** o PostgreSQL só lê a senha na criação do volume. Reutilize a senha definida na criação do banco ou altere-a de forma controlada no PostgreSQL; não apague o volume para resolver isso.
+- **Backend não conecta:** confirme que `docker compose ps` mostra `healthy` e consulte os logs. Fora do Docker, confira também se as três variáveis `SPRING_DATASOURCE_*` estão configuradas no terminal/IDE.
 
 
 ## Autores
