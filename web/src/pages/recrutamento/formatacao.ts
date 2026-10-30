@@ -15,18 +15,21 @@ export const NOMES_CONSENTIMENTO: Record<Consentimento, string> = {
   RECUSOU: 'Recusou',
 };
 
-/** Ação que o coordenador faz em seguida com o candidato (coluna "Próxima etapa"). */
-export type ProximaEtapa = { texto: string; principal?: boolean };
+/**
+ * Ação que o coordenador faz em seguida com o candidato (coluna "Próxima etapa").
+ * "elegibilidade" indica que a etapa abre a avaliação; as demais telas chegam nas próximas tasks.
+ */
+export type ProximaEtapa = { texto: string; principal?: boolean; tela?: 'elegibilidade' };
 
 export function proximaEtapa(candidato: Candidato): ProximaEtapa | null {
   if (candidato.dataInclusao) return null;
   switch (candidato.elegibilidade) {
     case 'NAO_AVALIADO':
-      return { texto: 'Avaliar' };
+      return { texto: 'Avaliar', tela: 'elegibilidade' };
     case 'INCOMPLETA':
-      return { texto: 'Continuar avaliação' };
+      return { texto: 'Continuar avaliação', tela: 'elegibilidade' };
     case 'INELEGIVEL':
-      return { texto: 'Rever avaliação' };
+      return { texto: 'Rever avaliação', tela: 'elegibilidade' };
     case 'ELEGIVEL':
       if (candidato.consentimento === 'ACEITOU') return { texto: 'Incluir', principal: true };
       if (candidato.consentimento === 'RECUSOU') return { texto: 'Ver bloqueio' };

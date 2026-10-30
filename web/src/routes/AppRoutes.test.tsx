@@ -125,6 +125,17 @@ describe('AppRoutes', () => {
     expect(await screen.findByRole('heading', { name: 'Novo estudo' })).toBeInTheDocument();
   });
 
+  it('abre a avaliação de elegibilidade só para o coordenador', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue({ ...PAULA, perfil: 'COORDENADOR' });
+    renderizarEm('/estudos/1/candidatos/6/elegibilidade');
+    expect(await screen.findByRole('heading', { name: 'Avaliação de elegibilidade' })).toBeInTheDocument();
+  });
+
+  it('leva a pesquisadora ao acesso negado na avaliação de elegibilidade', async () => {
+    renderizarEm('/estudos/1/candidatos/6/elegibilidade');
+    expect(await screen.findByRole('heading', { name: 'Acesso negado' })).toBeInTheDocument();
+  });
+
   it('leva o coordenador ao acesso negado no protocolo do estudo (consulta prevista para a T51)', async () => {
     vi.mocked(sessaoAtual).mockResolvedValue({ ...PAULA, perfil: 'COORDENADOR' });
     renderizarEm('/estudos/1');

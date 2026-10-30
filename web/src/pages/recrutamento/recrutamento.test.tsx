@@ -62,6 +62,8 @@ function criarServicos(estudo: Estudo = ESTUDO, candidatos: Partial<ServicoCandi
   const servicoCandidatos: ServicoCandidatos = {
     listar: vi.fn().mockResolvedValue(CANDIDATOS),
     cadastrar: vi.fn().mockResolvedValue(candidato({ id: 9, nome: 'Gabriel Rocha', email: 'gabriel@exemplo.com' })),
+    obterElegibilidade: vi.fn(),
+    avaliarElegibilidade: vi.fn(),
     ...candidatos,
   };
   return { estudos, candidatos: servicoCandidatos };
@@ -99,7 +101,11 @@ describe('Recrutamento', () => {
     expect(within(camila).getByRole('button', { name: 'Ver bloqueio' })).toBeInTheDocument();
     const felipe = screen.getByText('Felipe Souza').closest('tr')!;
     expect(within(felipe).getByText('Não avaliado')).toBeInTheDocument();
-    expect(within(felipe).getByRole('button', { name: 'Avaliar' })).toBeInTheDocument();
+    // A avaliação de elegibilidade já abre (Task 3390); consentimento e inclusão ainda não
+    expect(within(felipe).getByRole('link', { name: 'Avaliar' })).toHaveAttribute(
+      'href',
+      '/estudos/3/candidatos/4/elegibilidade',
+    );
 
     expect(screen.getByText('Mostrando 4 candidatos')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Novo candidato' })).toHaveAttribute(

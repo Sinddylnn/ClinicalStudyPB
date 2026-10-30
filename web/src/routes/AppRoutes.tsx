@@ -9,6 +9,7 @@ import NovoEstudo from '../pages/estudos/NovoEstudo';
 import ProtocoloEstudo from '../pages/protocolo/ProtocoloEstudo';
 import Recrutamento from '../pages/recrutamento/Recrutamento';
 import NovoCandidato from '../pages/recrutamento/NovoCandidato';
+import ElegibilidadeCandidato from '../pages/recrutamento/ElegibilidadeCandidato';
 import ListaUsuarios from '../pages/usuarios/ListaUsuarios';
 import NovoUsuario from '../pages/usuarios/NovoUsuario';
 import EditarUsuario from '../pages/usuarios/EditarUsuario';
@@ -49,6 +50,8 @@ export default function AppRoutes() {
       <Route element={<RotaProtegida perfis={['COORDENADOR']} />}>
         <Route path="/estudos/:id/recrutamento" element={<Recrutamento />} />
         <Route path="/estudos/:id/candidatos/novo" element={<NovoCandidato />} />
+        {/* Avaliação de elegibilidade do candidato (RF09) */}
+        <Route path="/estudos/:id/candidatos/:candidatoId/elegibilidade" element={<ElegibilidadeCandidato />} />
       </Route>
 
       {/* <-------------------ROTA NÃO ENCONTRADA-------------------> */}
