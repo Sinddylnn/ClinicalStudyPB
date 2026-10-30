@@ -21,9 +21,10 @@
     <properties>
         <java.version>21</java.version>
         <springdoc.version>3.1.1</springdoc.version>
-        <!-- Cobertura de testes. O mínimo começa em 0 só para medir; a meta da Release 1 é 0.80 -->
+
+        <!-- Cobertura de testes: mínimo de 80% das linhas do código de negócio (pacotes *.service), conforme a professora -->
         <jacoco.version>0.8.13</jacoco.version>
-        <jacoco.minimum>0.00</jacoco.minimum>
+        <jacoco.minimum>0.80</jacoco.minimum>
     </properties>
 
     <!-- Base HTTP, conversão JSON e validação dos dados recebidos -->
@@ -94,6 +95,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
             <!-- Mede a cobertura dos testes e gera o relatório em target/site/jacoco -->
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -126,6 +128,11 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <!-- A regra de 80% vale só para o código de negócio: classes dos pacotes *.service.
+                                 O relatório (report) continua mostrando todas as classes. -->
+                            <includes>
+                                <include>**/service/**/*.class</include>
+                            </includes>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
