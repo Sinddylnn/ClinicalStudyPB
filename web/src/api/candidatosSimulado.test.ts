@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ServicoCandidatos } from './candidatos';
-import { CANDIDATOS_INICIAIS, criarServicoCandidatosSimulado } from './candidatosSimulado';
+import { AVALIACOES_INICIAIS, CANDIDATOS_INICIAIS, criarServicoCandidatosSimulado } from './candidatosSimulado';
 import { reiniciarEstudosSimulados, servicoEstudosSimulado } from './estudosSimulado';
+import { criarServicoProtocoloSimulado, PROTOCOLOS_INICIAIS } from './protocoloSimulado';
 
 // <-------------------TESTES DO SERVIÇO SIMULADO DE CANDIDATOS------------------->
 const RECRUTAMENTO = 3;
@@ -83,6 +84,95 @@ describe('servicoCandidatosSimulado', () => {
       servicoCandidatosSimulado.cadastrar(PLANEJAMENTO, { nome: 'Ana Costa', email: 'ana@exemplo.com' }),
     ).catch((e: unknown) => e);
     expect(erro).toMatchObject({ status: 400, codigo: 'ESTADO_INVALIDO' });
+  });
+
+  // <-------------------ELEGIBILIDADE------------------->
+  describe('elegibilidade', () => {
+    const DIEGO = 4;
+    const FELIPE = 6;
+    const MARIA = 1;
+    const INCLUSAO = 3;
+    const EXCLUSAO = 4;
+
+    beforeEach(() => {
+      servicoCandidatosSimulado = criarServicoCandidatosSimulado(
+        servicoEstudosSimulado,
+        CANDIDATOS_INICIAIS,
+        criarServicoProtocoloSimulado(servicoEstudosSimulado, PROTOCOLOS_INICIAIS),
+        AVALIACOES_INICIAIS,
+      );
+    });
+
+    it('devolve os critérios do protocolo com as respostas salvas e quem avaliou', async () => {
+      const avaliacao = await executar(servicoCandidatosSimulado.obterElegibilidade(RECRUTAMENTO, DIEGO));
+      expect(avaliacao.situacao).toBe('INELEGIVEL');
+      expect(avaliacao.itens).toEqual([
+        { criterioId: INCLUSAO, tipo: 'INCLUSAO', descricao: 'Adultos com idade entre 18 e 60 anos.', resposta: 'ATENDIDO' },
+        { criterioId: EXCLUSAO, tipo: 'EXCLUSAO', descricao: 'Gestantes ou lactantes.', resposta: 'PRESENTE' },
+      ]);
+      expect(avaliacao.avaliadoPor).toBe('Carlos Coordenador');
+    });
+
+    it('começa sem respostas para o candidato ainda não avaliado', async () => {
+      const avaliacao = await executar(servicoCandidatosSimulado.obterElegibilidade(RECRUTAMENTO, FELIPE));
+      expect(avaliacao.situacao).toBe('NAO_AVALIADO');
+      expect(avaliacao.itens.map((i) => i.resposta)).toEqual([null, null]);
+      expect(avaliacao.avaliadoPor).toBeNull();
+    });
+
+    it('salva, calcula a situação e atualiza o candidato na lista', async () => {
+      const salva = await executar(
+        servicoCandidatosSimulado.avaliarElegibilidade(RECRUTAMENTO, FELIPE, {
+          respostas: [
+            { criterioId: INCLUSAO, resposta: 'ATENDIDO' },
+            { criterioId: EXCLUSAO, resposta: 'AUSENTE' },
+          ],
+        }),
+      );
+      expect(salva.situacao).toBe('ELEGIVEL');
+      expect(salva.avaliadoEm).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/);
+      const felipe = (await executar(servicoCandidatosSimulado.listar(RECRUTAMENTO))).find((c) => c.id === FELIPE);
+      expect(felipe?.elegibilidade).toBe('ELEGIVEL');
+    });
+
+    it('aceita salvar incompleta', async () => {
+      const salva = await executar(
+        servicoCandidatosSimulado.avaliarElegibilidade(RECRUTAMENTO, FELIPE, {
+          respostas: [{ criterioId: INCLUSAO, resposta: 'ATENDIDO' }],
+        }),
+      );
+      expect(salva.situacao).toBe('INCOMPLETA');
+      expect(salva.itens.map((i) => i.resposta)).toEqual(['ATENDIDO', null]);
+    });
+
+    it('recusa avaliação sem resposta e resposta de outro tipo ou de outro protocolo', async () => {
+      for (const respostas of [
+        [],
+        [{ criterioId: EXCLUSAO, resposta: 'ATENDIDO' as const }],
+        [{ criterioId: 1, resposta: 'ATENDIDO' as const }],
+      ]) {
+        const erro = await executar(
+          servicoCandidatosSimulado.avaliarElegibilidade(RECRUTAMENTO, FELIPE, { respostas }),
+        ).catch((e: unknown) => e);
+        expect(erro).toMatchObject({ status: 400, codigo: 'VALIDACAO_INVALIDA' });
+      }
+    });
+
+    it('recusa corrigir depois da inclusão (a avaliação fica no histórico)', async () => {
+      const erro = await executar(
+        servicoCandidatosSimulado.avaliarElegibilidade(RECRUTAMENTO, MARIA, {
+          respostas: [{ criterioId: INCLUSAO, resposta: 'NAO_ATENDIDO' }],
+        }),
+      ).catch((e: unknown) => e);
+      expect(erro).toMatchObject({ status: 400, codigo: 'CANDIDATO_JA_INCLUIDO' });
+    });
+
+    it('responde 404 para candidato de outro estudo', async () => {
+      const erro = await executar(servicoCandidatosSimulado.obterElegibilidade(PLANEJAMENTO, DIEGO)).catch(
+        (e: unknown) => e,
+      );
+      expect(erro).toMatchObject({ status: 404, codigo: 'RECURSO_NAO_ENCONTRADO' });
+    });
   });
 
   it('procura o estudo na fonte de estudos recebida, sem misturar com os simulados', async () => {

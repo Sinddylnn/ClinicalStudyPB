@@ -1,13 +1,25 @@
-import type { Candidato, CandidatoCadastroEntrada, ServicoCandidatos } from './candidatos';
+import type {
+  AvaliacaoElegibilidade,
+  AvaliacaoEntrada,
+  Candidato,
+  CandidatoCadastroEntrada,
+  ItemAvaliacao,
+  RespostaCriterio,
+  ServicoCandidatos,
+} from './candidatos';
 import { ErroRequisicao } from './erros';
 import { servicoEstudos, type ServicoEstudos } from './estudos';
 import { servicoEstudosSimulado } from './estudosSimulado';
+import { servicoProtocolo, type ServicoProtocolo } from './protocolo';
+import { calcularElegibilidade, respostaValida } from '../pages/recrutamento/elegibilidade';
 import { validarCandidato } from '../pages/recrutamento/validacao';
 
 // <-------------------SERVIÇO SIMULADO------------------->
-// Guarda os candidatos em memória e responde como o backend deve responder:
-// 404 para estudo fora da lista da sessão, 400 para campos inválidos ou estudo fora de Recrutamento
-// (regra de negócio) e 409 para e-mail repetido no estudo (conflito).
+// Guarda os candidatos e as avaliações em memória e responde como o backend deve responder:
+// 404 para estudo fora da lista da sessão ou candidato de outro estudo, 400 para campos inválidos,
+// estudo fora de Recrutamento ou avaliação depois da inclusão (regras de negócio)
+// e 409 para e-mail repetido no estudo (conflito).
+// Os critérios da avaliação vêm do protocolo do estudo (serviço de protocolo em uso).
 // Os dados são fictícios e voltam ao estado inicial ao recarregar a página.
 const ATRASO_MS = 300;
 
@@ -71,6 +83,37 @@ export const CANDIDATOS_INICIAIS: Candidato[] = [
   },
 ];
 
+/** Avaliação como fica guardada: a resposta de cada critério e quem salvou por último. */
+export type AvaliacaoSimulada = {
+  candidatoId: number;
+  respostas: Record<number, RespostaCriterio | null>;
+  avaliadoPor: string;
+  avaliadoEm: string;
+};
+
+// Critérios 3 (inclusão) e 4 (exclusão) do protocolo simulado do estudo 3, coerentes com a
+// situação de cada candidato acima; Felipe ainda não foi avaliado
+export const AVALIACOES_INICIAIS: AvaliacaoSimulada[] = [
+  { candidatoId: 1, respostas: { 3: 'ATENDIDO', 4: 'AUSENTE' }, avaliadoPor: 'Carlos Coordenador', avaliadoEm: '2026-10-27T09:10:00' },
+  { candidatoId: 2, respostas: { 3: 'ATENDIDO', 4: 'AUSENTE' }, avaliadoPor: 'Carlos Coordenador', avaliadoEm: '2026-10-27T09:40:00' },
+  { candidatoId: 3, respostas: { 3: 'ATENDIDO', 4: 'AUSENTE' }, avaliadoPor: 'Carlos Coordenador', avaliadoEm: '2026-10-27T10:15:00' },
+  { candidatoId: 4, respostas: { 3: 'ATENDIDO', 4: 'PRESENTE' }, avaliadoPor: 'Carlos Coordenador', avaliadoEm: '2026-10-27T11:20:00' },
+  { candidatoId: 5, respostas: { 3: 'ATENDIDO', 4: null }, avaliadoPor: 'Carlos Coordenador', avaliadoEm: '2026-10-27T14:32:00' },
+];
+
+// Sem a sessão no simulado, o salvamento fica em nome do coordenador do protótipo
+const AVALIADOR_SIMULADO = 'Carlos Coordenador';
+
+/** Data e hora local no formato ISO, sem fuso (como o LocalDateTime do backend). */
+function agoraIso(): string {
+  const agora = new Date();
+  const doisDigitos = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${agora.getFullYear()}-${doisDigitos(agora.getMonth() + 1)}-${doisDigitos(agora.getDate())}` +
+    `T${doisDigitos(agora.getHours())}:${doisDigitos(agora.getMinutes())}:${doisDigitos(agora.getSeconds())}`
+  );
+}
+
 const aguardar = () => new Promise((resolver) => setTimeout(resolver, ATRASO_MS));
 
 // O e-mail é comparado sem diferença de maiúsculas, como o cadastro de usuários
@@ -83,8 +126,11 @@ const normalizarEmail = (email: string) => email.trim().toLowerCase();
 export function criarServicoCandidatosSimulado(
   estudos: ServicoEstudos,
   iniciais: Candidato[],
+  protocolo: ServicoProtocolo = servicoProtocolo,
+  avaliacoesIniciais: AvaliacaoSimulada[] = [],
 ): ServicoCandidatos {
   let candidatos = [...iniciais];
+  let avaliacoes = avaliacoesIniciais.map((a) => ({ ...a, respostas: { ...a.respostas } }));
 
   async function buscarEstudo(estudoId: number) {
     const estudo = (await estudos.listar()).find((e) => e.id === estudoId);
@@ -95,6 +141,35 @@ export function criarServicoCandidatosSimulado(
       });
     }
     return estudo;
+  }
+
+  async function buscarCandidato(estudoId: number, candidatoId: number) {
+    const estudo = await buscarEstudo(estudoId);
+    const candidato = candidatos.find((c) => c.estudoId === estudoId && c.id === candidatoId);
+    if (!candidato) {
+      throw new ErroRequisicao(404, {
+        codigo: 'RECURSO_NAO_ENCONTRADO',
+        mensagem: 'Candidato não encontrado.',
+      });
+    }
+    return { estudo, candidato };
+  }
+
+  // Monta a resposta com os critérios atuais do protocolo do estudo (RF05)
+  async function avaliacaoDe(candidato: Candidato): Promise<AvaliacaoElegibilidade> {
+    const { criteriosInclusao, criteriosExclusao } = await protocolo.obter(candidato.estudoId);
+    const salva = avaliacoes.find((a) => a.candidatoId === candidato.id);
+    const itens: ItemAvaliacao[] = [
+      ...criteriosInclusao.map((c) => ({ criterioId: c.id, tipo: 'INCLUSAO' as const, descricao: c.descricao })),
+      ...criteriosExclusao.map((c) => ({ criterioId: c.id, tipo: 'EXCLUSAO' as const, descricao: c.descricao })),
+    ].map((item) => ({ ...item, resposta: salva?.respostas[item.criterioId] ?? null }));
+    return {
+      candidato: { ...candidato },
+      situacao: candidato.elegibilidade,
+      itens,
+      avaliadoPor: salva?.avaliadoPor ?? null,
+      avaliadoEm: salva?.avaliadoEm ?? null,
+    };
   }
 
   return {
@@ -143,11 +218,69 @@ export function criarServicoCandidatosSimulado(
       candidatos = [...candidatos, novo];
       return novo;
     },
+
+    async obterElegibilidade(estudoId, candidatoId) {
+      const { candidato } = await buscarCandidato(estudoId, candidatoId);
+      await aguardar();
+      return avaliacaoDe(candidato);
+    },
+
+    async avaliarElegibilidade(estudoId, candidatoId, entrada: AvaliacaoEntrada) {
+      const { estudo, candidato } = await buscarCandidato(estudoId, candidatoId);
+      const atual = await avaliacaoDe(candidato);
+      await aguardar();
+
+      // Campos primeiro: cada resposta precisa ser de um critério deste protocolo e do tipo certo
+      const respostas: Record<number, RespostaCriterio | null> = {};
+      for (const { criterioId, resposta } of entrada.respostas) {
+        const item = atual.itens.find((i) => i.criterioId === criterioId);
+        if (!item || !respostaValida(item.tipo, resposta)) {
+          throw new ErroRequisicao(400, {
+            codigo: 'VALIDACAO_INVALIDA',
+            mensagem: 'Há resposta para um critério que não é deste protocolo.',
+          });
+        }
+        respostas[criterioId] = resposta;
+      }
+      const itens = atual.itens.map((i) => ({ ...i, resposta: respostas[i.criterioId] ?? null }));
+      const situacao = calcularElegibilidade(itens);
+      if (situacao === 'NAO_AVALIADO') {
+        throw new ErroRequisicao(400, {
+          codigo: 'VALIDACAO_INVALIDA',
+          mensagem: 'Marque pelo menos um critério antes de salvar a avaliação.',
+        });
+      }
+
+      // Depois as regras: só em Recrutamento e só antes da inclusão (a avaliação vira histórico)
+      if (estudo.estado !== 'RECRUTAMENTO') {
+        throw new ErroRequisicao(400, {
+          codigo: 'ESTADO_INVALIDO',
+          mensagem: 'Só é possível avaliar candidatos em estudos em Recrutamento.',
+        });
+      }
+      if (candidato.dataInclusao) {
+        throw new ErroRequisicao(400, {
+          codigo: 'CANDIDATO_JA_INCLUIDO',
+          mensagem: 'O candidato já foi incluído: a avaliação não pode mais ser corrigida.',
+        });
+      }
+
+      avaliacoes = [
+        ...avaliacoes.filter((a) => a.candidatoId !== candidatoId),
+        { candidatoId, respostas, avaliadoPor: AVALIADOR_SIMULADO, avaliadoEm: agoraIso() },
+      ];
+      const avaliado = { ...candidato, elegibilidade: situacao };
+      candidatos = candidatos.map((c) => (c.id === candidatoId ? avaliado : c));
+      return avaliacaoDe(avaliado);
+    },
   };
 }
 
 // Com estudos reais, os candidatos fictícios cairiam em estudos reais de mesmo id: começa vazio
+const simulados = servicoEstudos === servicoEstudosSimulado;
 export const servicoCandidatosSimulado = criarServicoCandidatosSimulado(
   servicoEstudos,
-  servicoEstudos === servicoEstudosSimulado ? CANDIDATOS_INICIAIS : [],
+  simulados ? CANDIDATOS_INICIAIS : [],
+  servicoProtocolo,
+  simulados ? AVALIACOES_INICIAIS : [],
 );

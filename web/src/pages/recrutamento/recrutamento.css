@@ -125,7 +125,247 @@
   background: #f3f4f6;
 }
 
+/* <-------------------AVALIAÇÃO DE ELEGIBILIDADE-------------------> */
+/* Quadros "Coordenador / Elegibilidade – ...": critérios à esquerda, resultado à direita */
+.elegibilidade-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 24px;
+  align-items: start;
+}
+
+.elegibilidade-coluna {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.elegibilidade-criterios {
+  padding: 8px 0;
+}
+
+.elegibilidade-criterios section + section {
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.elegibilidade-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 24px 12px;
+}
+
+.elegibilidade-grupo h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.elegibilidade-grupo p,
+.elegibilidade-sem-criterios {
+  margin: 0;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--texto-suave);
+}
+
+.elegibilidade-sem-criterios {
+  padding: 24px;
+  font-size: 14px;
+}
+
+.elegibilidade-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.elegibilidade-item {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 62px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--borda-cartao);
+}
+
+/* Critério sem resposta numa avaliação já começada: fundo e contorno âmbar */
+.elegibilidade-item-pendente {
+  background: #fffbeb;
+}
+
+.elegibilidade-texto {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 17px;
+  overflow-wrap: anywhere;
+}
+
+.elegibilidade-sem-resposta {
+  font-size: 12px;
+  line-height: 15px;
+  color: #b45309;
+}
+
+/* Par de opções do protótipo; os rádios nativos dão o teclado (setas) e o leitor de tela */
+.elegibilidade-opcoes {
+  display: inline-grid;
+  flex: none;
+  grid-template-columns: repeat(2, 132px);
+  gap: 4px;
+  padding: 3px;
+  background: #f3f4f6;
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+
+.elegibilidade-item-pendente .elegibilidade-opcoes {
+  border-color: #fcd34d;
+}
+
+.elegibilidade-opcao {
+  position: relative;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--texto-tabela);
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.pagina-interna .elegibilidade-opcao input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.elegibilidade-opcao:has(input:focus-visible) {
+  outline: 2px solid var(--primaria);
+  outline-offset: 1px;
+}
+
+.elegibilidade-opcao:has(input:disabled) {
+  cursor: default;
+}
+
+.elegibilidade-opcao-ok {
+  font-weight: 600;
+  color: #047857;
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+}
+
+.elegibilidade-opcao-perigo {
+  font-weight: 600;
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+}
+
+/* Botões à esquerda, abaixo dos critérios, como no protótipo */
+.pagina-interna .elegibilidade-acoes {
+  justify-content: flex-start;
+}
+
+.elegibilidade-resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 24px;
+}
+
+.elegibilidade-resultado h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.elegibilidade-explicacao {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--texto-suave);
+}
+
+.elegibilidade-contagens {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: stretch;
+  margin: 0;
+  padding: 16px 0 0;
+  list-style: none;
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.elegibilidade-contagens li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--texto-tabela);
+}
+
+.elegibilidade-contagem-ok .icone {
+  color: #047857;
+}
+
+.elegibilidade-contagem-atencao .icone {
+  color: #b45309;
+}
+
+.elegibilidade-contagem-perigo .icone {
+  color: #b91c1c;
+}
+
+.elegibilidade-registro {
+  align-self: stretch;
+  padding-top: 16px;
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.elegibilidade-registro h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.elegibilidade-registro p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--texto-suave);
+}
+
 /* <-------------------TELAS ESTREITAS-------------------> */
+@media (max-width: 1100px) {
+  .elegibilidade-grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 900px) {
   .recrutamento-indicadores {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -137,5 +377,20 @@
 
   .pagina-interna .recrutamento-etapa {
     width: 100%;
+  }
+
+  .elegibilidade-item {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 16px;
+  }
+
+  .elegibilidade-grupo {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .elegibilidade-opcoes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
