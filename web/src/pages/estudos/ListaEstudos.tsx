@@ -38,7 +38,7 @@ function textoContagem(quantidade: number): string {
 }
 
 // <-------------------LISTA DE ESTUDOS------------------->
-// Pesquisador: "Meus estudos", com cadastro. Coordenador: estudos vinculados a ele (D02), com acesso ao recrutamento.
+// Pesquisador: "Meus estudos", com cadastro e acesso ao protocolo. Coordenador: estudos vinculados a ele (D02), com acesso ao recrutamento.
 export default function ListaEstudos({ servico = servicoEstudos, usuario: usuarioProp }: Props) {
   const usuario = useUsuarioLogado(usuarioProp);
   const location = useLocation();
@@ -241,7 +241,10 @@ export default function ListaEstudos({ servico = servicoEstudos, usuario: usuari
                       >
                         <td>
                           {pesquisador ? (
-                            <span className="estudos-titulo">{estudo.titulo}</span>
+                            // O pesquisador abre o protocolo do estudo (RF05)
+                            <Link className="estudos-titulo estudos-titulo-link" to={`/estudos/${estudo.id}`}>
+                              {estudo.titulo}
+                            </Link>
                           ) : (
                             // O coordenador abre o recrutamento do estudo (RF08 a RF11)
                             <Link

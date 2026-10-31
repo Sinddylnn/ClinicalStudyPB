@@ -127,6 +127,14 @@ describe('ListaEstudos', () => {
     expect(within(linha).queryByText('?')).not.toBeInTheDocument();
   });
 
+  it('mostra à pesquisadora o título como link para o protocolo do estudo', async () => {
+    renderizar(criarServico());
+    await screen.findByText('Hábitos alimentares');
+    expect(screen.getByRole('link', { name: 'Hábitos alimentares' })).toHaveAttribute('href', '/estudos/1');
+    expect(screen.getByRole('link', { name: 'Qualidade do sono' })).toHaveAttribute('href', '/estudos/2');
+    expect(screen.getByRole('link', { name: 'Hábitos alimentares' })).toHaveClass('estudos-titulo-link');
+  });
+
   it('mostra à pesquisadora o subtítulo dos próprios estudos', async () => {
     renderizar(criarServico());
     await screen.findByText('Hábitos alimentares');

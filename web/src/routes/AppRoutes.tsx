@@ -6,6 +6,7 @@ import NaoEncontrada from '../pages/NaoEncontrada';
 import Login from '../pages/login/Login';
 import ListaEstudos from '../pages/estudos/ListaEstudos';
 import NovoEstudo from '../pages/estudos/NovoEstudo';
+import ProtocoloEstudo from '../pages/protocolo/ProtocoloEstudo';
 import Recrutamento from '../pages/recrutamento/Recrutamento';
 import NovoCandidato from '../pages/recrutamento/NovoCandidato';
 import ListaUsuarios from '../pages/usuarios/ListaUsuarios';
@@ -39,6 +40,8 @@ export default function AppRoutes() {
       </Route>
       <Route element={<RotaProtegida perfis={['PESQUISADOR']} />}>
         <Route path="/estudos/novo" element={<NovoEstudo />} />
+        {/* Protocolo do estudo: critérios de inclusão e exclusão (RF05). A consulta pelo coordenador entra com a T51 */}
+        <Route path="/estudos/:id" element={<ProtocoloEstudo />} />
       </Route>
 
       {/* <-------------------RECRUTAMENTO-------------------> */}
