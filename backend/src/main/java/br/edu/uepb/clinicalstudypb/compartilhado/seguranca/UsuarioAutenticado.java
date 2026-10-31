@@ -40,32 +40,14 @@ public class UsuarioAutenticado extends User {
         this.perfil = usuario.getPerfil();
     }
 
-    /**
-     * Identifica a conta mesmo se seu e-mail for alterado.
-     *
-     * @return identificador persistido do usuário
-     * @since 1.0
-     */
     public Long getId() {
         return id;
     }
 
-    /**
-     * Disponibiliza o nome para a apresentação da sessão na interface.
-     *
-     * @return nome do usuário
-     * @since 1.0
-     */
     public String getNome() {
         return nome;
     }
 
-    /**
-     * Identifica o perfil usado nas decisões de acesso.
-     *
-     * @return perfil atual da conta
-     * @since 1.0
-     */
     public PerfilUsuario getPerfil() {
         return perfil;
     }

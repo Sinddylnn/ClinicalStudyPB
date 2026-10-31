@@ -18,6 +18,7 @@ import java.time.LocalDate;
  * @param dataFim data prevista de término
  * @param limiteParticipantes quantidade máxima de participantes
  * @param estado estado atual do estudo
+ * @param justificativaEncerramento motivo do encerramento, quando informado
  * @author Luiz
  * @version 1.0
  * @since 25/10/2026
@@ -32,7 +33,8 @@ public record EstudoResposta(
         LocalDate dataInicio,
         LocalDate dataFim,
         Integer limiteParticipantes,
-        EstadoEstudo estado
+        EstadoEstudo estado,
+        String justificativaEncerramento
 ) {
 
     /**
@@ -53,7 +55,8 @@ public record EstudoResposta(
                 estudo.getDataInicio(),
                 estudo.getDataFim(),
                 estudo.getLimiteParticipantes(),
-                estudo.getEstado()
+                estudo.getEstado(),
+                estudo.getJustificativaEncerramento()
         );
     }
 }

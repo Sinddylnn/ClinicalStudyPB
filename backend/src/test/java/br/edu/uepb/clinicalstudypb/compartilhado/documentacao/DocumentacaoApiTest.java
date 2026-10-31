@@ -1,6 +1,10 @@
 package br.edu.uepb.clinicalstudypb.compartilhado.documentacao;
 
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ProtocoloRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.CriterioRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaPrevistaRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +39,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         + "org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration")
 @AutoConfigureMockMvc
 class DocumentacaoApiTest {
+
+    @MockitoBean private ProtocoloRepository protocoloRepository;
+    @MockitoBean private CriterioRepository criterioRepository;
+    @MockitoBean private VisitaPrevistaRepository visitaPrevistaRepository;
+    @MockitoBean private ParticipacaoRepository participacaoRepository;
 
     @Autowired
     private MockMvc mvc;
@@ -198,7 +207,8 @@ class DocumentacaoApiTest {
             {"/estudos", "post", "201", "400", "404"},
             {"/estudos", "get", "200"},
             {"/estudos/coordenadores", "get", "200"},
-            {"/estudos/{id}/coordenador", "put", "200", "400", "404"}
+            {"/estudos/{id}/coordenador", "put", "200", "400", "404"},
+            {"/estudos/{id}/estado", "patch", "200", "400", "404"}
         };
         for (String[] item : operacoes) {
             JsonNode operacao = rotas.path(item[0]).path(item[1]);
@@ -226,6 +236,10 @@ class DocumentacaoApiTest {
         }
         assertThat(schemas.path("CoordenadorEntrada").path("required").toString()).contains("coordenadorId");
         assertThat(schemas.path("EstudoResposta").path("properties").has("coordenadorId")).isTrue();
+        assertThat(schemas.path("EstudoResposta").path("properties").has("justificativaEncerramento")).isTrue();
+        assertThat(schemas.path("AlteracaoEstadoEntrada").path("required").toString()).contains("estado");
+        assertThat(schemas.path("AlteracaoEstadoEntrada").path("properties")
+                .path("justificativaEncerramento").path("maxLength").asInt()).isEqualTo(500);
         JsonNode opcao = schemas.path("CoordenadorResposta").path("properties");
         assertThat(opcao.size()).isEqualTo(2);
         assertThat(opcao.has("id")).isTrue();

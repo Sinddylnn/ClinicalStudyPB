@@ -68,3 +68,15 @@ A coleção cria usuários e estudos de teste com e-mails únicos (timestamp), e
 | `403 CSRF_INVALIDO` em várias requisições | Token CSRF não atualizado | Rodar a coleção pelo Runner, na ordem padrão |
 | `401` no login admin | Conta inicial inexistente | Criar a conta de administrador no banco |
 | `409` ao cadastrar usuário | E-mail já existente | Reexecutar a coleção; o e-mail é gerado a cada execução |
+
+
+## Verificação das mudanças de estado
+
+O grupo **5. Estados do estudo (como Pesquisador)** usa o `estudoId` criado antes
+pela coleção. Primeiro confere bloqueios por protocolo ausente, salto de estado e
+falta de justificativa. Depois encerra o estudo e verifica que reabertura e troca
+de coordenador são recusadas. O logout agora está no grupo 6.
+
+O fluxo completo até execução exige protocolo e participação persistidos. Como
+os endpoints desses cadastros ainda não existem, essa parte é exercitada pelos
+testes PostgreSQL descritos em [mudança de estado](../estados-estudo.md).

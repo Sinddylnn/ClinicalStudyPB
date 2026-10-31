@@ -3,10 +3,18 @@ package br.edu.uepb.clinicalstudypb.estudos.service;
 import br.edu.uepb.clinicalstudypb.compartilhado.erro.RegraNegocioException;
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
 import br.edu.uepb.clinicalstudypb.estudos.Estudo;
+import br.edu.uepb.clinicalstudypb.estudos.EstadoEstudo;
+import br.edu.uepb.clinicalstudypb.estudos.Protocolo;
+import br.edu.uepb.clinicalstudypb.estudos.TipoCriterio;
+import br.edu.uepb.clinicalstudypb.estudos.api.AlteracaoEstadoEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.api.EstudoCadastroEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.api.EstudoResposta;
 import br.edu.uepb.clinicalstudypb.estudos.api.CoordenadorResposta;
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ProtocoloRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.CriterioRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaPrevistaRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
@@ -35,18 +43,34 @@ public class EstudoService {
 
     private final EstudoRepository estudos;
     private final UsuarioRepository usuarios;
+    private final ProtocoloRepository protocolos;
+    private final CriterioRepository criterios;
+    private final VisitaPrevistaRepository visitas;
+    private final ParticipacaoRepository participacoes;
 
     /**
      * Recebe os repositórios utilizados na gestão dos estudos.
      *
      * @param estudos repositório utilizado para acessar os estudos
      * @param usuarios repositório utilizado para localizar o pesquisador responsável
+     * @param protocolos configuração persistida de cada estudo
+     * @param criterios critérios de inclusão e exclusão do protocolo
+     * @param visitas modelos de visita e suas pendências de configuração
+     * @param participacoes inclusões históricas do estudo
      */
     public EstudoService(
             EstudoRepository estudos,
-            UsuarioRepository usuarios) {
+            UsuarioRepository usuarios,
+            ProtocoloRepository protocolos,
+            CriterioRepository criterios,
+            VisitaPrevistaRepository visitas,
+            ParticipacaoRepository participacoes) {
         this.estudos = estudos;
         this.usuarios = usuarios;
+        this.protocolos = protocolos;
+        this.criterios = criterios;
+        this.visitas = visitas;
+        this.participacoes = participacoes;
     }
 
     // <-------------------CADASTRO------------------->
@@ -142,20 +166,140 @@ public class EstudoService {
      * @param usuarioAutenticado identidade do pesquisador conectado
      * @return estudo com o vínculo atualizado
      * @throws ResponseStatusException quando o estudo é inexistente, alheio ou a conta não existe
-     * @throws RegraNegocioException quando a conta escolhida não é coordenador ativo
+     * @throws RegraNegocioException quando o estudo está encerrado ou o coordenador é inválido
      * @throws AccessDeniedException quando o responsável não é pesquisador ativo
      * @since 1.0
      */
     @Transactional
     public EstudoResposta atribuirCoordenador(Long estudoId, Long coordenadorId,
             UsuarioAutenticado usuarioAutenticado) {
-        Estudo estudo = estudos.findByIdAndResponsavelId(estudoId, usuarioAutenticado.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Estudo não encontrado."));
+        // Bloqueia primeiro as contas e depois o estudo, sempre na mesma ordem
         List<Usuario> contas = bloquearContas(usuarioAutenticado, coordenadorId);
         validarPesquisador(localizarConta(contas, usuarioAutenticado.getId()));
+        Estudo estudo = bloquearEstudoProprio(estudoId, usuarioAutenticado);
         estudo.atribuirCoordenador(validarCoordenador(contas, coordenadorId));
         return EstudoResposta.de(estudo);
+    }
+
+    // <-------------------MUDANÇAS DE ESTADO DO ESTUDO------------------->
+
+    /**
+     * Confere as condições atuais e grava a transição dentro da mesma transação.
+     *
+     * <p>Os serviços futuros de configuração e inclusão devem bloquear este mesmo
+     * estudo antes de validar seu estado e gravar. A participação é histórica:
+     * uma retirada não deverá removê-la da contagem.</p>
+     *
+     * @param estudoId identificador do estudo próprio
+     * @param entrada estado solicitado e justificativa de encerramento
+     * @param usuarioAutenticado pesquisador responsável conectado
+     * @return estudo com estado e justificativa atualizados
+     * @throws AccessDeniedException quando a conta não é pesquisador ativo
+     * @throws ResponseStatusException quando o estudo não existe ou pertence a outro pesquisador
+     * @throws RegraNegocioException quando a transição ou alguma condição não é atendida
+     * @since 1.0
+     */
+    @Transactional
+    public EstudoResposta alterarEstado(Long estudoId, AlteracaoEstadoEntrada entrada,
+            UsuarioAutenticado usuarioAutenticado) {
+        // Mantém o perfil do responsável e o estado do estudo estáveis até terminar a operação
+        List<Usuario> contas = bloquearContas(usuarioAutenticado, null);
+        validarPesquisador(localizarConta(contas, usuarioAutenticado.getId()));
+        Estudo estudo = bloquearEstudoProprio(estudoId, usuarioAutenticado);
+        EstadoEstudo destino = entrada.estado();
+        if (!estudo.getEstado().permiteTransicaoPara(destino)) {
+            throw new RegraNegocioException("TRANSICAO_ESTADO_INVALIDA",
+                    "Não é permitido mudar de " + estudo.getEstado() + " para " + destino + ".");
+        }
+
+        // O caminho pode ser permitido, mas ainda precisa atender às condições no banco
+        switch (destino) {
+            case RECRUTAMENTO -> validarAberturaRecrutamento(estudo);
+            case EXECUCAO -> {
+                if (!participacoes.existsByEstudoId(estudoId)) {
+                    throw new RegraNegocioException("ESTUDO_SEM_PARTICIPANTES",
+                            "Inclua pelo menos um participante antes de iniciar a execução.");
+                }
+            }
+            case ENCERRADO -> validarEncerramento(estudo);
+            default -> throw new RegraNegocioException("TRANSICAO_ESTADO_INVALIDA",
+                    "Não é permitido retornar ao planejamento.");
+        }
+
+        estudo.alterarEstado(destino, entrada.justificativaEncerramento());
+        // O JPA salva a entidade ao concluir a transação, sem precisar chamar save novamente
+        return EstudoResposta.de(estudo);
+    }
+
+    /**
+     * Localiza e bloqueia somente o estudo do responsável autenticado.
+     *
+     * @param estudoId identificador solicitado
+     * @param autenticado pesquisador conectado
+     * @return entidade gerenciada com bloqueio até o fim da transação
+     * @throws ResponseStatusException quando não há estudo próprio correspondente
+     */
+    private Estudo bloquearEstudoProprio(Long estudoId, UsuarioAutenticado autenticado) {
+        return estudos.bloquearPorIdEResponsavelId(estudoId, autenticado.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Estudo não encontrado."));
+    }
+
+    /**
+     * Verifica o protocolo completo, incluindo atividade em todas as visitas previstas.
+     *
+     * @param estudo estudo já bloqueado na transação
+     * @throws RegraNegocioException quando faltar coordenador ou configuração válida
+     */
+    private void validarAberturaRecrutamento(Estudo estudo) {
+        if (estudo.getCoordenador() == null) {
+            throw new RegraNegocioException("COORDENADOR_OBRIGATORIO",
+                    "Atribua um coordenador ao estudo antes de iniciar o recrutamento.");
+        }
+        Protocolo protocolo = protocolos.findByEstudoId(estudo.getId())
+                .orElseThrow(() -> new RegraNegocioException("PROTOCOLO_INCOMPLETO",
+                        "Cadastre o protocolo antes de iniciar o recrutamento."));
+        if (!criterios.existsByProtocoloIdAndTipo(protocolo.getId(), TipoCriterio.INCLUSAO)) {
+            throw new RegraNegocioException("PROTOCOLO_INCOMPLETO",
+                    "Cadastre pelo menos um critério de inclusão para iniciar o recrutamento.");
+        }
+        // Uma lista vazia só vale como ausência de exclusões quando isso foi confirmado
+        boolean possuiExclusao = criterios.existsByProtocoloIdAndTipo(protocolo.getId(), TipoCriterio.EXCLUSAO);
+        if (possuiExclusao && protocolo.isSemCriteriosExclusao()) {
+            throw new RegraNegocioException("CRITERIOS_EXCLUSAO_INCONSISTENTES",
+                    "Há critérios de exclusão cadastrados e a opção de ausência de exclusões está marcada.");
+        }
+        if (!possuiExclusao && !protocolo.isSemCriteriosExclusao()) {
+            throw new RegraNegocioException("PROTOCOLO_INCOMPLETO",
+                    "Cadastre os critérios de exclusão ou confirme que não existem exclusões.");
+        }
+        if (!visitas.existsByProtocoloId(protocolo.getId())) {
+            throw new RegraNegocioException("PROTOCOLO_INCOMPLETO",
+                    "Cadastre pelo menos uma visita prevista para iniciar o recrutamento.");
+        }
+        // Todas as visitas precisam de atividade, não apenas a primeira
+        List<String> incompletas = visitas.buscarNomesSemAtividades(protocolo.getId());
+        if (!incompletas.isEmpty()) {
+            throw new RegraNegocioException("PROTOCOLO_INCOMPLETO",
+                    "Cadastre pelo menos uma atividade na visita: " + incompletas.getFirst() + ".");
+        }
+    }
+
+    /**
+     * Impede o encerramento antecipado de estudos que já tiveram inclusões.
+     *
+     * <p>Na Release 1 ainda não há visitas agendadas nem solicitações. Ao introduzir
+     * esses módulos na Release 2, verificar suas pendências reais neste método para
+     * EXECUCAO -> ENCERRADO, dentro do mesmo bloqueio. Visitas previstas não são pendências.</p>
+     *
+     * @param estudo estudo já bloqueado na transação
+     * @throws RegraNegocioException quando houver inclusão antes do encerramento antecipado
+     */
+    private void validarEncerramento(Estudo estudo) {
+        // Considera todo o histórico de inclusões, mesmo se houver retirada depois
+        if (estudo.getEstado() != EstadoEstudo.EXECUCAO && participacoes.existsByEstudoId(estudo.getId())) {
+            throw new RegraNegocioException("ESTUDO_COM_PARTICIPANTES",
+                    "O estudo já possui inclusões e não pode ser encerrado antes da execução.");
+        }
     }
 
     // <-------------------REGRAS AUXILIARES------------------->
@@ -171,7 +315,7 @@ public class EstudoService {
      */
     private List<Usuario> bloquearContas(UsuarioAutenticado autenticado, Long coordenadorId) {
         if (autenticado.getPerfil() != PerfilUsuario.PESQUISADOR) {
-            throw new AccessDeniedException("Somente pesquisadores atribuem responsáveis e coordenadores.");
+            throw new AccessDeniedException("Somente pesquisadores podem alterar seus estudos.");
         }
         List<Long> ids = new ArrayList<>();
         ids.add(autenticado.getId());
