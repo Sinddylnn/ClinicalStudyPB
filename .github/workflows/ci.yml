@@ -1,0 +1,124 @@
+# Pipeline de integração contínua do ClinicalStudyPB.
+# Roda em todo pull request e em todo push na main: compila o backend,
+# executa os testes contra um PostgreSQL descartável e gera a cobertura (JaCoCo).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (build, testes e cobertura)
+    runs-on: ubuntu-24.04
+
+    # Banco de testes isolado, criado do zero a cada execução (mesma imagem do Compose).
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_DB: clinicalstudypb_test
+          POSTGRES_USER: clinicalstudypb
+          POSTGRES_PASSWORD: clinicalstudypb_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U clinicalstudypb -d clinicalstudypb_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/clinicalstudypb_test
+      SPRING_DATASOURCE_USERNAME: clinicalstudypb
+      SPRING_DATASOURCE_PASSWORD: clinicalstudypb_ci
+      # Variáveis lidas pelo teste de persistência (EstudoPersistenciaIT), que só roda se existirem
+      CLINICALSTUDYPB_TEST_DB_URL: jdbc:postgresql://localhost:5432/clinicalstudypb_test
+      CLINICALSTUDYPB_TEST_DB_USER: clinicalstudypb
+      CLINICALSTUDYPB_TEST_DB_PASSWORD: clinicalstudypb_ci
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Instalar o JDK 21 (Temurin)
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      # O arquivo pode ter sido versionado no Windows sem permissão de execução.
+      - name: Liberar execução do Maven Wrapper
+        run: chmod +x mvnw
+
+      # O teste de persistência (*IT) não entra na execução padrão do Maven: roda explicitamente,
+      # contra o PostgreSQL do job. A cobertura dele é somada à dos demais testes.
+      - name: Testes de persistência (PostgreSQL real)
+        run: ./mvnw -B test -Dtest=EstudoPersistenciaIT
+
+      - name: Build, testes e cobertura
+        run: ./mvnw -B verify
+
+      - name: Resumo da cobertura
+        if: always()
+        run: |
+          if [ -f target/site/jacoco/jacoco.csv ]; then
+            awk -F, 'NR>1 {m+=$8; c+=$9} END {printf "### Cobertura de linhas do backend (total): %.1f%% (%d de %d)\n", 100*c/(m+c), c, m+c}' target/site/jacoco/jacoco.csv >> "$GITHUB_STEP_SUMMARY"
+            awk -F, 'NR>1 && $2 ~ /\.service$/ {m+=$8; c+=$9} END {t=m+c; if (t>0) printf "### Cobertura do código de negócio (pacotes service, meta 80%%): %.1f%% (%d de %d)\n", 100*c/t, c, t}' target/site/jacoco/jacoco.csv >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Relatório de cobertura não gerado" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Guardar relatórios de testes e cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-relatorios
+          path: |
+            backend/target/surefire-reports
+            backend/target/site/jacoco
+          if-no-files-found: warn
+
+  web:
+    name: Web (testes, cobertura e build)
+    runs-on: ubuntu-24.04
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Instalar o Node.js 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Instalar as dependências
+        run: npm ci
+
+      - name: Testes com cobertura
+        run: npm run test:coverage
+
+      - name: Build
+        run: npm run build
+
+      - name: Guardar relatório de cobertura da web
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-cobertura
+          path: web/coverage
+          if-no-files-found: warn
+
+  # O job do mobile entra aqui quando a base tiver testes automatizados no pipeline.

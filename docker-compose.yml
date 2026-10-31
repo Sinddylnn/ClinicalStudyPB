@@ -1,16 +1,19 @@
-# <-------------------AMBIENTE LOCAL: POSTGRESQL------------------->
-# Banco local do ClinicalStudyPB (PostgreSQL 17).
-# Lê automaticamente o arquivo .env da raiz; sem ele, usa os valores padrão abaixo.
-# Usuário e senha reaproveitam SPRI NG_DATASOURCE_USERNAME e SPRING_DATASOURCE_PASSWORD,
-# para o backend e o banco usarem sempre os mesmos valores.
+# <-------------------AMBIENTE LOCAL DO CLINICALSTUDYPB------------------->
+# Lê o .env da raiz e entrega as variáveis necessárias a cada serviço
+# Banco e backend são a base; o profile web acrescenta a interface
+# O Expo continua sendo executado em outro terminal, fora do Docker
 #
-#   Banco de desenvolvimento:  docker compose up -d db
-#   Banco de testes:           docker compose --profile test up -d db-test
+#   Banco + backend + web:  docker compose --profile web up -d --build --wait
+#   Banco + backend:        docker compose up -d --build --wait
+#   Somente banco:          docker compose up -d db
+#   Banco de testes:       docker compose --profile test up -d db-test
+
+name: clinicalstudypb
 
 services:
+  # <-------------------BANCO DE DESENVOLVIMENTO------------------->
   db:
     image: postgres:17.11
-    container_name: clinicalstudypb-db
     environment:
       POSTGRES_DB: clinicalstudypb
       POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-clinicalstudypb}
@@ -25,12 +28,60 @@ services:
       timeout: 3s
       retries: 10
 
+  # <-------------------API SPRING BOOT------------------->
+  backend:
+    build:
+      context: ./backend
+    environment:
+      # Portas internas permanecem fixas; SERVER_PORT escolhe a porta no computador
+      SERVER_PORT: "8080"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/clinicalstudypb
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-clinicalstudypb}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-clinicalstudypb_dev}
+      WEB_ORIGINS: ${WEB_ORIGINS:-http://localhost:${WEB_PORT:-5173}}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      SESSION_TIMEOUT: ${SESSION_TIMEOUT:-30m}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # Confere o servidor HTTP sem autenticar nem criar sessões a cada consulta
+      test: ["CMD", "curl", "--fail", "--silent", "--output", "/dev/null", "http://localhost:8080/swagger-ui/index.html"]
+      interval: 10s
+      timeout: 3s
+      start_period: 60s
+      retries: 12
+
+  # <-------------------WEB OPCIONAL COM API REAL------------------->
+  web:
+    profiles: ["web"]
+    build:
+      context: ./web
+    environment:
+      VITE_API_URL: /api
+      VITE_ESTUDOS_API: real
+      # Este endereço é usado pelo proxy do Vite, nunca pelo navegador
+      API_PROXY_TARGET: http://backend:8080
+    ports:
+      - "${WEB_PORT:-5173}:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      start_period: 20s
+      retries: 6
+
+  # <-------------------BANCO EXCLUSIVO DE TESTES------------------->
   # Banco descartável para testes de integração e E2E.
   # Fica em um perfil à parte e guarda os dados apenas em memória (tmpfs):
   # ao parar o contêiner, tudo é apagado e o próximo teste começa do zero.
   db-test:
     image: postgres:17.11
-    container_name: clinicalstudypb-db-test
     profiles: ["test"]
     environment:
       POSTGRES_DB: clinicalstudypb_test

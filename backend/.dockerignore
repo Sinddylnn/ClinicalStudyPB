@@ -1,0 +1,9 @@
+# <-------------------ARQUIVOS QUE NÃO ENTRAM NA IMAGEM------------------->
+target/
+.git/
+.idea/
+.vscode/
+*.iml
+*.log
+.env
+.env.*
