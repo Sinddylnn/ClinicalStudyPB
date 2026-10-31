@@ -2,7 +2,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { ErroRequisicao } from '../../api/erros';
 import type { Criterio, TipoCriterio } from '../../api/protocolo';
 import Icone from '../../components/icones';
-import { NOMES_TIPO_CRITERIO } from './formatacao';
+import { AJUDA_TIPO_CRITERIO, NOMES_TIPO_CRITERIO } from './formatacao';
 import { LIMITE_DESCRICAO_CRITERIO, validarCriterio } from './validacao';
 
 type Props = {
@@ -54,26 +54,33 @@ export default function ListaCriterios({
   return (
     <section className="estudos-cartao protocolo-cartao" aria-labelledby={idTitulo}>
       <header className="protocolo-cartao-cabecalho">
-        <h3 id={idTitulo}>Critérios de {nome}</h3>
-        {editavel && edicao !== 'novo' && (
-          <button
-            type="button"
-            className="botao botao-secundario"
-            disabled={Boolean(bloqueioAdicao)}
-            aria-describedby={bloqueioAdicao ? idBloqueio : undefined}
-            onClick={() => setEdicao('novo')}
-          >
-            <Icone nome="mais" />
-            Adicionar critério
-          </button>
+        <div className="protocolo-cartao-linha">
+          <div className="protocolo-cartao-titulo">
+            <h3 id={idTitulo}>Critérios de {nome}</h3>
+            <span className="etiqueta protocolo-contagem" aria-hidden="true">
+              {criterios.length}
+            </span>
+          </div>
+          {editavel && edicao !== 'novo' && (
+            <button
+              type="button"
+              className="botao botao-secundario protocolo-botao-pequeno"
+              disabled={Boolean(bloqueioAdicao)}
+              aria-describedby={bloqueioAdicao ? idBloqueio : undefined}
+              onClick={() => setEdicao('novo')}
+            >
+              <Icone nome="mais" tamanho={16} />
+              Adicionar critério
+            </button>
+          )}
+        </div>
+        <p className="protocolo-cartao-ajuda">{AJUDA_TIPO_CRITERIO[tipo]}</p>
+        {editavel && bloqueioAdicao && (
+          <p id={idBloqueio} className="protocolo-cartao-ajuda">
+            {bloqueioAdicao}
+          </p>
         )}
       </header>
-
-      {editavel && bloqueioAdicao && (
-        <p id={idBloqueio} className="campo-ajuda protocolo-bloqueio">
-          {bloqueioAdicao}
-        </p>
-      )}
 
       {criterios.length === 0 && edicao !== 'novo' && <p className="protocolo-vazio">{textoVazio}</p>}
 
@@ -213,7 +220,7 @@ function FormularioCriterio({ id, rotulo, inicial, textoSalvar, aoSalvar, aoCanc
             </span>
           )}
           <span className="campo-contador">
-            {descricao.length}/{LIMITE_DESCRICAO_CRITERIO}
+            {descricao.length}/{LIMITE_DESCRICAO_CRITERIO.toLocaleString('pt-BR')}
           </span>
         </span>
       </div>

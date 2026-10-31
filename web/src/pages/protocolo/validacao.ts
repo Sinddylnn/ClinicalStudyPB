@@ -19,7 +19,7 @@ export function validarCriterio(descricao: string): string | undefined {
 // inclusão, exclusões definidas ou declaradas ausentes e ao menos 1 visita prevista, com atividade em cada uma
 type CriteriosProtocolo = Pick<Protocolo, 'criteriosInclusao' | 'criteriosExclusao' | 'semCriteriosExclusao'>;
 
-/** Ordem em que os requisitos aparecem no quadro e nas pendências. */
+/** Ordem das pendências devolvidas pelo serviço; o quadro da tela usa ORDEM_QUADRO. */
 export const ORDEM_REQUISITOS: PendenciaRecrutamento[] = [
   'COORDENADOR',
   'CRITERIO_INCLUSAO',

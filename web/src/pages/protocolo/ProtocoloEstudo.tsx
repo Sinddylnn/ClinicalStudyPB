@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { useCallback, useEffect, useState, type KeyboardEvent } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router';
 import { ErroRequisicao } from '../../api/erros';
 import { servicoEstudos, type Estudo, type ServicoEstudos } from '../../api/estudos';
 import {
@@ -18,6 +18,7 @@ import { formatarPeriodo, NOMES_ESTADO } from '../estudos/formatacao';
 import { NOMES_TIPO_CRITERIO } from './formatacao';
 import ListaCriterios from './ListaCriterios';
 import QuadroRecrutamento from './QuadroRecrutamento';
+import ResumoEstudo from './ResumoEstudo';
 import '../../estilos/comum.css';
 import '../estudos/estudos.css';
 import '../recrutamento/recrutamento.css';
@@ -50,6 +51,19 @@ const LISTAS: Record<TipoCriterio, 'criteriosInclusao' | 'criteriosExclusao'> = 
   EXCLUSAO: 'criteriosExclusao',
 };
 
+// Abas do protótipo; a aberta fica no endereço (?aba=criterios) para sobreviver ao recarregar
+type Aba = 'resumo' | 'criterios' | 'visitas';
+
+const ABAS: [Aba, string][] = [
+  ['resumo', 'Resumo'],
+  ['criterios', 'Critérios'],
+  ['visitas', 'Visitas'],
+];
+
+function lerAba(valor: string | null): Aba {
+  return ABAS.some(([chave]) => chave === valor) ? (valor as Aba) : 'resumo';
+}
+
 /**
  * Busca o estudo entre os que a sessão pode ver: o backend já filtra a lista
  * (pesquisador só recebe os próprios), então fora dela é "não encontrado".
@@ -61,7 +75,8 @@ async function carregar(estudoId: number, estudos: ServicoEstudos, protocolo: Se
 }
 
 // <-------------------PROTOCOLO DO ESTUDO------------------->
-// Pesquisador responsável: dados do estudo e critérios de inclusão e exclusão (RF05).
+// Pesquisador responsável, em abas como no protótipo: Resumo (dados, coordenador e o que falta
+// para iniciar o recrutamento), Critérios de inclusão e exclusão (RF05) e Visitas (T46).
 // Só se edita com o estudo em Planejamento; depois, o protocolo fica para consulta (kickoff 8.1)
 export default function ProtocoloEstudo({
   servicoEstudos: estudosProp = servicoEstudos,
@@ -79,6 +94,22 @@ export default function ProtocoloEstudo({
   const [erroRemocao, setErroRemocao] = useState<string>();
   const [salvandoSemExclusao, setSalvandoSemExclusao] = useState(false);
   const [erroSemExclusao, setErroSemExclusao] = useState<string>();
+  const [parametros, setParametros] = useSearchParams();
+  const aba = lerAba(parametros.get('aba'));
+
+  const trocarAba = (nova: Aba) => {
+    setParametros(nova === 'resumo' ? {} : { aba: nova }, { replace: true });
+    document.getElementById(`aba-${nova}`)?.focus();
+  };
+
+  // Setas trocam de aba, como no padrão de abas do WAI-ARIA
+  const moverEntreAbas = (evento: KeyboardEvent<HTMLButtonElement>) => {
+    if (evento.key !== 'ArrowRight' && evento.key !== 'ArrowLeft') return;
+    evento.preventDefault();
+    const atual = ABAS.findIndex(([chave]) => chave === aba);
+    const passo = evento.key === 'ArrowRight' ? 1 : -1;
+    trocarAba(ABAS[(atual + passo + ABAS.length) % ABAS.length][0]);
+  };
 
   useEffect(() => {
     if (!notificacao) return;
@@ -240,78 +271,121 @@ export default function ProtocoloEstudo({
                     {NOMES_ESTADO[estudo.estado]}
                   </span>
                 </div>
-                <p className="estudos-subtitulo recrutamento-dados">
-                  <span className="estudos-periodo">
-                    <Icone nome="calendario" tamanho={16} />
-                    {formatarPeriodo(estudo.dataInicio, estudo.dataFim)}
-                  </span>
-                  <span>Limite de {estudo.limiteParticipantes} participantes</span>
+                <p className="estudos-subtitulo">
+                  Responsável: você • {formatarPeriodo(estudo.dataInicio, estudo.dataFim)} •{' '}
+                  {estudo.limiteParticipantes} vagas
                 </p>
               </div>
+              {/* A abertura do recrutamento é da T47; até lá o botão aparece desativado, como no protótipo */}
+              {editavel && (
+                <button type="button" className="botao botao-secundario protocolo-acao-futura" disabled>
+                  <Icone nome="atividade" />
+                  Iniciar recrutamento
+                </button>
+              )}
             </header>
 
-            {!editavel && (
-              <p className="aviso aviso-informacao">
-                <Icone nome="info" />
-                O protocolo fica só para consulta depois que o recrutamento é aberto: os critérios não podem
-                mais ser alterados.
-              </p>
+            <div className="protocolo-abas" role="tablist" aria-label="Seções do estudo">
+              {ABAS.map(([chave, rotulo]) => (
+                <button
+                  key={chave}
+                  type="button"
+                  role="tab"
+                  id={`aba-${chave}`}
+                  aria-selected={aba === chave}
+                  aria-controls={`painel-${chave}`}
+                  tabIndex={aba === chave ? 0 : -1}
+                  onClick={() => trocarAba(chave)}
+                  onKeyDown={moverEntreAbas}
+                >
+                  {rotulo}
+                </button>
+              ))}
+            </div>
+
+            {aba === 'resumo' && (
+              <div className="protocolo-painel" role="tabpanel" id="painel-resumo" aria-labelledby="aba-resumo">
+                <div className={`protocolo-grade ${editavel ? '' : 'protocolo-grade-unica'}`}>
+                  <ResumoEstudo estudo={estudo} nomeResponsavel={usuario.nome} />
+                  {/* Com o recrutamento aberto, não há o que conferir para iniciá-lo */}
+                  {editavel && <QuadroRecrutamento protocolo={tela.protocolo} coordenadorId={estudo.coordenadorId} />}
+                </div>
+              </div>
             )}
 
-            <div className={`protocolo-grade ${editavel ? '' : 'protocolo-grade-unica'}`}>
-              <section className="protocolo-criterios" aria-labelledby="secao-criterios">
+            {aba === 'visitas' && (
+              <div className="protocolo-painel" role="tabpanel" id="painel-visitas" aria-labelledby="aba-visitas">
                 <div className="protocolo-secao-texto">
-                  <h2 id="secao-criterios">Critérios de inclusão e exclusão</h2>
+                  <h2>Visitas previstas</h2>
+                  <p>Modelos de visita do protocolo. As datas são marcadas depois, para cada participante.</p>
+                </div>
+                {/* O cadastro das visitas previstas é da T46 */}
+                <p className="estudos-cartao protocolo-vazio-cartao">
+                  Nenhuma visita cadastrada. O cadastro de visitas previstas chega em breve.
+                </p>
+              </div>
+            )}
+
+            {aba === 'criterios' && (
+              <div className="protocolo-painel" role="tabpanel" id="painel-criterios" aria-labelledby="aba-criterios">
+                <div className="protocolo-secao-texto">
+                  <h2>Critérios de inclusão e exclusão</h2>
                   <p>
-                    Os critérios são avaliados pelo coordenador na elegibilidade de cada candidato; o sistema
-                    não decide sozinho.
+                    O coordenador avalia os critérios na elegibilidade de cada candidato; o sistema não decide
+                    sozinho.
                   </p>
                 </div>
 
-                <ListaCriterios
-                  tipo="INCLUSAO"
-                  criterios={tela.protocolo.criteriosInclusao}
-                  editavel={editavel}
-                  textoVazio="Nenhum critério de inclusão cadastrado."
-                  aoAdicionar={adicionar('INCLUSAO')}
-                  aoEditar={editar('INCLUSAO')}
-                  aoPedirRemocao={pedirRemocao('INCLUSAO')}
-                />
+                <p className="aviso aviso-informacao">
+                  <Icone nome="info" />
+                  {editavel
+                    ? 'O protocolo pode ser alterado enquanto o estudo estiver em Planejamento. Depois de iniciar o recrutamento, fica somente para consulta.'
+                    : 'O protocolo fica só para consulta depois que o recrutamento é aberto: os critérios não podem mais ser alterados.'}
+                </p>
 
-                <ListaCriterios
-                  tipo="EXCLUSAO"
-                  criterios={tela.protocolo.criteriosExclusao}
-                  editavel={editavel}
-                  textoVazio={
-                    tela.protocolo.semCriteriosExclusao
-                      ? 'Este estudo não possui critérios de exclusão.'
-                      : 'Nenhum critério de exclusão cadastrado.'
-                  }
-                  // Com a declaração marcada, a exclusão seria recusada (SEM_EXCLUSAO_DECLARADA)
-                  bloqueioAdicao={
-                    tela.protocolo.semCriteriosExclusao
-                      ? 'Para cadastrar um critério de exclusão, desmarque a opção abaixo.'
-                      : undefined
-                  }
-                  aoAdicionar={adicionar('EXCLUSAO')}
-                  aoEditar={editar('EXCLUSAO')}
-                  aoPedirRemocao={pedirRemocao('EXCLUSAO')}
-                >
-                  {editavel && (
-                    <OpcaoSemExclusao
-                      marcado={tela.protocolo.semCriteriosExclusao}
-                      temExclusoes={tela.protocolo.criteriosExclusao.length > 0}
-                      salvando={salvandoSemExclusao}
-                      erro={erroSemExclusao}
-                      aoAlterar={definirSemExclusao}
-                    />
-                  )}
-                </ListaCriterios>
-              </section>
+                <div className="protocolo-criterios">
+                  <ListaCriterios
+                    tipo="INCLUSAO"
+                    criterios={tela.protocolo.criteriosInclusao}
+                    editavel={editavel}
+                    textoVazio="Nenhum critério de inclusão cadastrado."
+                    aoAdicionar={adicionar('INCLUSAO')}
+                    aoEditar={editar('INCLUSAO')}
+                    aoPedirRemocao={pedirRemocao('INCLUSAO')}
+                  />
 
-              {/* Com o recrutamento aberto, não há o que conferir para abri-lo */}
-              {editavel && <QuadroRecrutamento protocolo={tela.protocolo} coordenadorId={estudo.coordenadorId} />}
-            </div>
+                  <ListaCriterios
+                    tipo="EXCLUSAO"
+                    criterios={tela.protocolo.criteriosExclusao}
+                    editavel={editavel}
+                    textoVazio={
+                      tela.protocolo.semCriteriosExclusao
+                        ? 'Este estudo não possui critérios de exclusão.'
+                        : 'Nenhum critério de exclusão cadastrado.'
+                    }
+                    // Com a declaração marcada, a exclusão seria recusada (SEM_EXCLUSAO_DECLARADA)
+                    bloqueioAdicao={
+                      tela.protocolo.semCriteriosExclusao
+                        ? 'Para cadastrar um critério de exclusão, desmarque a opção abaixo.'
+                        : undefined
+                    }
+                    aoAdicionar={adicionar('EXCLUSAO')}
+                    aoEditar={editar('EXCLUSAO')}
+                    aoPedirRemocao={pedirRemocao('EXCLUSAO')}
+                  >
+                    {editavel && (
+                      <OpcaoSemExclusao
+                        marcado={tela.protocolo.semCriteriosExclusao}
+                        temExclusoes={tela.protocolo.criteriosExclusao.length > 0}
+                        salvando={salvandoSemExclusao}
+                        erro={erroSemExclusao}
+                        aoAlterar={definirSemExclusao}
+                      />
+                    )}
+                  </ListaCriterios>
+                </div>
+              </div>
+            )}
           </>
         )}
       </main>

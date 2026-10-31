@@ -1,12 +1,80 @@
 /* <-------------------PROTOCOLO DO ESTUDO-------------------> */
-/* Sem protótipo ainda (o Figma vem depois): segue a base das telas de estudos e de
-   recrutamento (estudos.css e recrutamento.css); aqui ficam só os acréscimos. */
+/* Quadros "Pesquisador / Estudo – ..." do protótipo (Sprint 2). Segue a base das telas de
+   estudos e de recrutamento (estudos.css e recrutamento.css); aqui ficam só os acréscimos. */
 
-/* <-------------------GRADE-------------------> */
-/* Critérios à esquerda e o quadro "Para abrir o recrutamento" à direita */
+/* Texto só para leitores de tela */
+.protocolo-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Ação de uma task futura: desativada, sem o cursor de espera dos botões salvando */
+.pagina-interna .protocolo-acao-futura:disabled {
+  color: var(--icone-suave);
+  cursor: not-allowed;
+}
+
+/* <-------------------ABAS-------------------> */
+.protocolo-abas {
+  display: flex;
+  gap: 28px;
+  border-bottom: 1px solid var(--borda-cartao);
+}
+
+.pagina-interna .protocolo-abas button {
+  margin-bottom: -1px;
+  padding: 0 2px 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 17px;
+  color: var(--texto-suave);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+}
+
+.pagina-interna .protocolo-abas button[aria-selected='true'] {
+  font-weight: 600;
+  color: #0a5a61;
+  border-bottom-color: #0a5a61;
+}
+
+.pagina-interna .protocolo-abas button:focus-visible {
+  outline: 2px solid var(--primaria);
+  outline-offset: 2px;
+}
+
+.protocolo-painel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.protocolo-secao-texto h2 {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 21px;
+}
+
+.protocolo-secao-texto p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--texto-suave);
+}
+
+/* <-------------------RESUMO-------------------> */
+/* Dados e coordenador à esquerda; "Para iniciar o recrutamento" à direita */
 .protocolo-grade {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 420px;
   gap: 24px;
   align-items: start;
 }
@@ -15,70 +83,244 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
-.protocolo-criterios {
+.protocolo-coluna {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
-.protocolo-secao-texto h2 {
-  margin: 0 0 6px;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 22px;
-}
-
-.protocolo-secao-texto p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 19px;
-  color: var(--texto-suave);
-}
-
-/* <-------------------CARTÃO DE CRITÉRIOS-------------------> */
-.protocolo-cartao {
+.protocolo-bloco,
+.protocolo-quadro {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px;
+  gap: 14px;
+  padding: 24px;
 }
 
-.protocolo-cartao-cabecalho {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 38px;
-}
-
-.protocolo-cartao-cabecalho h3 {
+.protocolo-bloco h2,
+.protocolo-quadro h2 {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
   line-height: 18px;
 }
 
-.protocolo-bloqueio {
-  margin: -8px 0 0;
+.protocolo-dados {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+}
+
+.protocolo-dados div {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.protocolo-dados dt {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--texto-suave);
+}
+
+.protocolo-dados dd {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.protocolo-coordenador {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--texto-suave);
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.protocolo-coordenador .icone {
+  color: var(--icone-suave);
+}
+
+.protocolo-quadro-cabecalho {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--borda-cartao);
+}
+
+.etiqueta-pendencias {
+  color: #b45309;
+  background: #fffbeb;
+}
+
+.etiqueta-pronto {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.etiqueta-pendencias::before,
+.etiqueta-pronto::before {
+  width: 6px;
+  height: 6px;
+  content: '';
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.etiqueta-pendencias::before {
+  background: #f59e0b;
+}
+
+.protocolo-requisitos {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.protocolo-requisitos li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.protocolo-requisito-situacao {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.protocolo-requisito-ok .protocolo-requisito-situacao {
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.protocolo-requisito-pendente .protocolo-requisito-situacao {
+  color: var(--texto-suave);
+  background: #f3f4f6;
+}
+
+.protocolo-requisito-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 17px;
+}
+
+.protocolo-requisito-detalhe {
   font-size: 12px;
+  font-weight: 400;
+  line-height: 15px;
+  color: var(--texto-suave);
+}
+
+/* <-------------------VISITAS-------------------> */
+.protocolo-vazio-cartao {
+  padding: 24px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--texto-suave);
+}
+
+/* <-------------------CARTÕES DE CRITÉRIOS-------------------> */
+/* Inclusão e exclusão lado a lado */
+.protocolo-criterios {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.protocolo-cartao {
+  display: flex;
+  flex-direction: column;
+}
+
+.protocolo-cartao-cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 24px 16px;
+}
+
+.protocolo-cartao-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 30px;
+}
+
+.protocolo-cartao-titulo {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.protocolo-cartao-titulo h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.protocolo-contagem {
+  color: var(--texto-tabela);
+  background: #f3f4f6;
+}
+
+.protocolo-cartao-ajuda {
+  margin: 0;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--texto-suave);
+}
+
+.protocolo-cartao-ajuda + .protocolo-cartao-ajuda {
+  font-size: 12px;
+}
+
+.pagina-interna .protocolo-botao-pequeno {
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
   line-height: 16px;
 }
 
 /* Botão desativado pelo bloqueio da adição (não está aguardando: não usa o cursor de espera) */
 .pagina-interna .protocolo-cartao-cabecalho .botao:disabled {
+  color: var(--icone-suave);
   cursor: not-allowed;
-  opacity: 0.6;
+  background: #f9fafb;
+  border-color: var(--borda-cartao);
 }
 
 .protocolo-vazio {
   margin: 0;
-  padding: 14px 16px;
+  padding: 16px 24px;
   font-size: 14px;
   line-height: 20px;
   color: var(--texto-suave);
-  background: #f9fafb;
-  border-radius: 10px;
+  border-top: 1px solid var(--borda-cartao);
 }
 
 .protocolo-lista {
@@ -88,36 +330,44 @@
   padding: 0;
   list-style: none;
   counter-reset: criterio;
-  border: 1px solid var(--borda-cartao);
-  border-radius: 10px;
 }
 
 .protocolo-item {
   display: flex;
   gap: 12px;
-  align-items: flex-start;
-  padding: 12px 16px;
+  align-items: center;
+  min-height: 58px;
+  padding: 12px 16px 12px 24px;
   font-size: 14px;
-  line-height: 20px;
-  color: var(--texto-tabela);
+  font-weight: 500;
+  line-height: 17px;
   counter-increment: criterio;
-}
-
-.protocolo-item + .protocolo-item {
   border-top: 1px solid var(--borda-cartao);
 }
 
-/* Número do critério, como nos protocolos de pesquisa */
+/* Número do critério em círculo, como no protótipo */
 .protocolo-item::before {
+  display: inline-flex;
   flex: none;
-  min-width: 20px;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--texto-suave);
-  content: counter(criterio) '.';
+  color: var(--texto-tabela);
+  content: counter(criterio);
+  background: #f3f4f6;
+  border-radius: 50%;
+}
+
+/* Em edição, o campo ocupa a linha inteira */
+.protocolo-item-edicao {
+  padding: 16px 24px 20px;
 }
 
 .protocolo-item-edicao::before {
-  padding-top: 2px;
+  display: none;
 }
 
 .protocolo-descricao {
@@ -131,7 +381,7 @@
   gap: 8px;
 }
 
-/* Mesmo botão de ícone das ações da lista de usuários */
+/* Botão de ícone do protótipo: borda cinza para editar, vermelha para remover */
 .pagina-interna .protocolo-botao-icone {
   display: inline-flex;
   align-items: center;
@@ -152,6 +402,11 @@
 
 .pagina-interna .protocolo-botao-remover {
   color: var(--erro);
+  border-color: #fecaca;
+}
+
+.pagina-interna .protocolo-botao-remover:hover {
+  background: #fef2f2;
 }
 
 .pagina-interna .protocolo-botao-icone:focus-visible {
@@ -167,6 +422,22 @@
   gap: 12px;
 }
 
+/* Formulário de adição, no fim do cartão */
+.protocolo-cartao > .protocolo-formulario {
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.protocolo-formulario .estudos-acoes {
+  justify-content: flex-end;
+}
+
+.protocolo-formulario .botao {
+  padding: 6px 12px;
+  font-size: 13px;
+  line-height: 16px;
+}
+
 .protocolo-formulario .botao:disabled {
   opacity: 0.6;
   cursor: wait;
@@ -176,8 +447,8 @@
 .protocolo-sem-exclusao {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-top: 16px;
+  gap: 6px;
+  padding: 14px 24px;
   border-top: 1px solid var(--borda-cartao);
 }
 
@@ -187,13 +458,14 @@
   align-items: center;
   font-size: 14px;
   font-weight: 500;
-  line-height: 20px;
+  line-height: 17px;
   cursor: pointer;
 }
 
 .pagina-interna .protocolo-opcao input {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
+  margin: 0;
   padding: 0;
   accent-color: var(--primaria);
   cursor: pointer;
@@ -204,75 +476,43 @@
 }
 
 .protocolo-opcao:has(input:disabled) {
-  color: var(--texto-suave);
+  color: var(--icone-suave);
   cursor: not-allowed;
 }
 
-/* <-------------------PARA ABRIR O RECRUTAMENTO-------------------> */
-.protocolo-quadro {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px;
-}
-
-.protocolo-quadro h2 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 18px;
-}
-
-.protocolo-quadro-resumo {
-  margin: -6px 0 0;
-  font-size: 13px;
-  line-height: 16px;
-  color: var(--texto-suave);
-}
-
-.protocolo-requisitos {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.protocolo-requisitos li {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  font-size: 13px;
-  line-height: 18px;
-}
-
-.protocolo-requisitos .icone {
-  margin-top: 1px;
-}
-
-.protocolo-requisito-ok .icone {
-  color: #16a34a;
-}
-
-.protocolo-requisito-pendente .icone {
-  color: #b45309;
-}
-
-.protocolo-requisito-situacao {
-  display: block;
+.protocolo-sem-exclusao .campo-ajuda {
   font-size: 12px;
-  line-height: 16px;
-  color: var(--texto-suave);
+  line-height: 15px;
 }
 
 /* <-------------------TELAS ESTREITAS-------------------> */
-@media (max-width: 900px) {
-  .protocolo-grade {
+@media (max-width: 1100px) {
+  .protocolo-grade,
+  .protocolo-criterios {
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
-  .protocolo-cartao {
-    padding: 16px;
+@media (max-width: 900px) {
+  .protocolo-abas {
+    gap: 20px;
+  }
+
+  .protocolo-dados div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .protocolo-cartao-cabecalho,
+  .protocolo-cartao > .protocolo-formulario,
+  .protocolo-sem-exclusao,
+  .protocolo-vazio,
+  .protocolo-item-edicao {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .protocolo-item {
+    padding-left: 16px;
   }
 }
