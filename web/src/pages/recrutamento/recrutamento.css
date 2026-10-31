@@ -79,12 +79,6 @@
   max-width: 100%;
 }
 
-/* As etapas abrem telas das próximas tasks; até lá ficam desativadas */
-.pagina-interna .recrutamento-etapa:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
 .recrutamento-incluido {
   display: inline-flex;
   gap: 6px;
@@ -359,9 +353,207 @@
   color: var(--texto-suave);
 }
 
+/* <-------------------CONSENTIMENTO-------------------> */
+/* Quadros "Coordenador / Consentimento – ...": duas opções em cartão */
+.consentimento-rotulo {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--texto-tabela);
+}
+
+.consentimento-opcoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pagina-interna .campo label.consentimento-opcao {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--borda-cartao);
+  border-radius: 12px;
+}
+
+.pagina-interna .consentimento-opcao input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--primaria);
+  cursor: inherit;
+}
+
+.pagina-interna .campo label.consentimento-opcao:has(input:focus-visible) {
+  outline: 2px solid var(--primaria);
+  outline-offset: 1px;
+}
+
+.pagina-interna .campo label.consentimento-opcao:has(input:disabled) {
+  cursor: default;
+}
+
+.pagina-interna .campo label.consentimento-opcao-marcada {
+  background: #ecfeff;
+  border-color: var(--primaria);
+  box-shadow: inset 0 0 0 1px var(--primaria);
+}
+
+.pagina-interna .campo label.consentimento-opcao-erro {
+  border-color: var(--erro);
+}
+
+.consentimento-opcao-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 19px;
+  color: var(--texto-suave);
+}
+
+.consentimento-opcao-titulo {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 17px;
+  color: var(--texto);
+}
+
+.consentimento-icone-ok {
+  color: #047857;
+}
+
+.consentimento-icone-perigo {
+  color: #b91c1c;
+}
+
+/* <-------------------INCLUSÃO-------------------> */
+/* Quadros "Coordenador / Inclusão – ...": conta à esquerda, condições à direita */
+.inclusao-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 24px;
+  align-items: start;
+}
+
+.inclusao-conta {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.inclusao-conta h2,
+.inclusao-condicoes h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.inclusao-conta > p:not(.aviso) {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--texto-suave);
+}
+
+.inclusao-condicoes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+}
+
+.inclusao-condicoes header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--borda-cartao);
+}
+
+.inclusao-condicoes ul {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.inclusao-condicoes li {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 17px;
+}
+
+.inclusao-situacao {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: #047857;
+  background: #ecfdf5;
+  border-radius: 50%;
+}
+
+.inclusao-condicao-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+
+.inclusao-condicao-texto small {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 15px;
+  color: var(--texto-suave);
+}
+
+.inclusao-condicao-falha {
+  color: #b91c1c;
+}
+
+.inclusao-condicao-falha .inclusao-situacao {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.inclusao-atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding-top: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.inclusao-atalhos a {
+  color: var(--primaria);
+}
+
 /* <-------------------TELAS ESTREITAS-------------------> */
 @media (max-width: 1100px) {
-  .elegibilidade-grade {
+  .elegibilidade-grade,
+  .inclusao-grade {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -392,5 +584,9 @@
 
   .elegibilidade-opcoes {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .consentimento-opcoes {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

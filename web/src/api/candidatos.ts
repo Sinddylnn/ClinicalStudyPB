@@ -58,6 +58,52 @@ export type AvaliacaoEntrada = {
   respostas: { criterioId: number; resposta: RespostaCriterio | null }[];
 };
 
+// <-------------------CONSENTIMENTO SIMULADO (RF10)------------------->
+/** Só ACEITOU permite a inclusão; RECUSOU é uma resposta registrada que a bloqueia. */
+export type RespostaConsentimento = Exclude<Consentimento, 'PENDENTE'>;
+
+/** Devolvido em GET e PUT /estudos/{estudoId}/candidatos/{candidatoId}/consentimento. */
+export type RegistroConsentimento = {
+  candidato: Candidato;
+  /** Observação opcional de até 500 caracteres; null quando não foi informada. */
+  observacao: string | null;
+  /** Nome do coordenador que registrou por último; null enquanto está pendente. */
+  registradoPor: string | null;
+  /** Data e hora do último registro (ISO 8601); null enquanto está pendente. */
+  registradoEm: string | null;
+};
+
+/** Dados enviados em PUT .../consentimento. */
+export type ConsentimentoEntrada = {
+  resposta: RespostaConsentimento;
+  observacao: string | null;
+};
+
+// <-------------------INCLUSÃO DO PARTICIPANTE (RF11)------------------->
+/** Conta ativa com perfil participante que o coordenador pode vincular ao candidato. */
+export type ContaParticipante = {
+  id: number;
+  nome: string;
+  email: string;
+};
+
+/** Devolvida em GET /estudos/{estudoId}/candidatos/{candidatoId}/inclusao: o que a tela confere antes de incluir. */
+export type DadosInclusao = {
+  candidato: Candidato;
+  /** Data e hora da avaliação (ISO 8601); null enquanto não foi avaliado. */
+  avaliadoEm: string | null;
+  /** Data e hora do consentimento (ISO 8601); null enquanto está pendente. */
+  consentimentoEm: string | null;
+  /** Total histórico de inclusões do estudo: uma retirada não libera a vaga. */
+  incluidos: number;
+  contas: ContaParticipante[];
+};
+
+/** Dados enviados em POST .../inclusao. */
+export type InclusaoEntrada = {
+  contaId: number;
+};
+
 export type ServicoCandidatos = {
   listar(estudoId: number): Promise<Candidato[]>;
   cadastrar(estudoId: number, entrada: CandidatoCadastroEntrada): Promise<Candidato>;
@@ -67,6 +113,14 @@ export type ServicoCandidatos = {
     candidatoId: number,
     entrada: AvaliacaoEntrada,
   ): Promise<AvaliacaoElegibilidade>;
+  obterConsentimento(estudoId: number, candidatoId: number): Promise<RegistroConsentimento>;
+  registrarConsentimento(
+    estudoId: number,
+    candidatoId: number,
+    entrada: ConsentimentoEntrada,
+  ): Promise<RegistroConsentimento>;
+  obterInclusao(estudoId: number, candidatoId: number): Promise<DadosInclusao>;
+  incluir(estudoId: number, candidatoId: number, entrada: InclusaoEntrada): Promise<Candidato>;
 };
 
 // <-------------------SERVIÇO REAL------------------->
@@ -74,7 +128,11 @@ export type ServicoCandidatos = {
 // de Recrutamento (regra de negócio) e 409 para e-mail repetido no mesmo estudo (conflito).
 // Na elegibilidade, 404 para candidato de outro estudo, 400 VALIDACAO_INVALIDA para critério
 // de outro protocolo ou avaliação sem nenhuma resposta e 400 CANDIDATO_JA_INCLUIDO para
-// corrigir depois da inclusão (a avaliação fica no histórico)
+// corrigir depois da inclusão (a avaliação fica no histórico).
+// No consentimento, 400 VALIDACAO_INVALIDA para resposta ausente ou observação longa e
+// 400 AVALIACAO_PENDENTE para candidato sem avaliação registrada. Na inclusão, a API confere
+// tudo de novo: 400 para regra não atendida (ELEGIBILIDADE_INVALIDA, CONSENTIMENTO_NAO_ACEITO,
+// CONTA_INVALIDA) e 409 para INCLUSAO_DUPLICADA ou LIMITE_ATINGIDO (disputa pela última vaga)
 export const servicoCandidatosApi: ServicoCandidatos = {
   async listar(estudoId) {
     const { data } = await api.get<Candidato[]>(`/estudos/${estudoId}/candidatos`);
@@ -95,6 +153,27 @@ export const servicoCandidatosApi: ServicoCandidatos = {
       `/estudos/${estudoId}/candidatos/${candidatoId}/elegibilidade`,
       entrada,
     );
+    return data;
+  },
+  async obterConsentimento(estudoId, candidatoId) {
+    const { data } = await api.get<RegistroConsentimento>(
+      `/estudos/${estudoId}/candidatos/${candidatoId}/consentimento`,
+    );
+    return data;
+  },
+  async registrarConsentimento(estudoId, candidatoId, entrada) {
+    const { data } = await api.put<RegistroConsentimento>(
+      `/estudos/${estudoId}/candidatos/${candidatoId}/consentimento`,
+      entrada,
+    );
+    return data;
+  },
+  async obterInclusao(estudoId, candidatoId) {
+    const { data } = await api.get<DadosInclusao>(`/estudos/${estudoId}/candidatos/${candidatoId}/inclusao`);
+    return data;
+  },
+  async incluir(estudoId, candidatoId, entrada) {
+    const { data } = await api.post<Candidato>(`/estudos/${estudoId}/candidatos/${candidatoId}/inclusao`, entrada);
     return data;
   },
 };

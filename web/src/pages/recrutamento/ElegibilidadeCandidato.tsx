@@ -14,7 +14,6 @@ import type { UsuarioSessao } from '../../api/autenticacao';
 import { useUsuarioLogado } from '../../autenticacao/contextoAutenticacao';
 import BarraNavegacao from '../../components/BarraNavegacao';
 import Icone, { type NomeIcone } from '../../components/icones';
-import { formatarData } from '../estudos/formatacao';
 import type { AvisoCadastro } from '../estudos/ListaEstudos';
 import {
   calcularElegibilidade,
@@ -23,7 +22,7 @@ import {
   resumirAvaliacao,
   type ResumoAvaliacao,
 } from './elegibilidade';
-import { NOMES_ELEGIBILIDADE } from './formatacao';
+import { formatarDataHora, NOMES_ELEGIBILIDADE } from './formatacao';
 import '../../estilos/comum.css';
 import '../estudos/estudos.css';
 import './recrutamento.css';
@@ -45,8 +44,14 @@ type Respostas = Record<number, RespostaCriterio | null>;
 
 // Textos dos quadros "Coordenador / Elegibilidade – ..." do protótipo
 const CABECALHOS: Record<TipoCriterio, { titulo: string; ajuda: string }> = {
-  INCLUSAO: { titulo: 'Critérios de inclusão', ajuda: 'Marque se o candidato atende a cada critério.' },
-  EXCLUSAO: { titulo: 'Critérios de exclusão', ajuda: 'Marque se alguma condição de exclusão está presente.' },
+  INCLUSAO: {
+    titulo: 'Critérios de inclusão',
+    ajuda: 'Marque se o candidato atende a cada critério. Clique de novo na opção para limpar a resposta.',
+  },
+  EXCLUSAO: {
+    titulo: 'Critérios de exclusão',
+    ajuda: 'Marque se alguma condição de exclusão está presente. Clique de novo na opção para limpar a resposta.',
+  },
 };
 
 const MENSAGEM_VAZIA = 'Marque pelo menos um critério antes de salvar a avaliação.';
@@ -63,12 +68,6 @@ async function carregar(estudoId: number, candidatoId: number, estudos: ServicoE
 
 function respostasDe(avaliacao: AvaliacaoElegibilidade): Respostas {
   return Object.fromEntries(avaliacao.itens.map((i) => [i.criterioId, i.resposta]));
-}
-
-/** "27/10/2026 às 14:32" a partir de "2026-10-27T14:32:00", sem passar por Date (fuso). */
-function formatarDataHora(iso: string): string {
-  const [data, hora = ''] = iso.split('T');
-  return `${formatarData(data)} às ${hora.slice(0, 5)}`;
 }
 
 // <-------------------AVALIAÇÃO DE ELEGIBILIDADE------------------->
@@ -131,7 +130,7 @@ export default function ElegibilidadeCandidato({
   const incluido = Boolean(avaliacao?.candidato.dataInclusao);
   const editavel = estudo?.estado === 'RECRUTAMENTO' && !incluido;
 
-  const marcar = (criterioId: number, resposta: RespostaCriterio) => {
+  const marcar = (criterioId: number, resposta: RespostaCriterio | null) => {
     setRespostas((atual) => ({ ...atual, [criterioId]: resposta }));
     setErroGeral(undefined);
   };
@@ -290,6 +289,8 @@ export default function ElegibilidadeCandidato({
                                         checked={marcada}
                                         disabled={!editavel || enviando}
                                         onChange={() => marcar(item.criterioId, opcao)}
+                                        // Rádio marcado não dispara onChange: o clique nele volta a "sem resposta"
+                                        onClick={() => marcada && marcar(item.criterioId, null)}
                                       />
                                       {marcada && <Icone nome={favoravel ? 'sucesso' : 'fechar'} tamanho={14} />}
                                       {NOMES_RESPOSTA[opcao]}
@@ -405,10 +406,9 @@ function QuadroResultado({ situacao, resumo, avaliacao }: PropsResultado) {
     });
   }
 
-  // Incompleta fica "salva"; as demais, "avaliadas" (textos do protótipo)
   const registro =
     avaliacao.avaliadoPor && avaliacao.avaliadoEm
-      ? `${avaliacao.situacao === 'INCOMPLETA' ? 'Salva' : 'Avaliado'} por ${avaliacao.avaliadoPor} em ${formatarDataHora(avaliacao.avaliadoEm)}.`
+      ? `Avaliada por ${avaliacao.avaliadoPor} em ${formatarDataHora(avaliacao.avaliadoEm)}.`
       : 'Ainda não há avaliação salva.';
 
   return (

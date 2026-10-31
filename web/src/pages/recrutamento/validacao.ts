@@ -22,3 +22,20 @@ export function validarCandidato(dados: DadosCandidato): Partial<Record<CampoCan
   }
   return erros;
 }
+
+// <-------------------VALIDAÇÃO DO CONSENTIMENTO------------------->
+export type CampoConsentimento = 'resposta' | 'observacao';
+
+export const LIMITE_OBSERVACAO = 500;
+
+export function validarConsentimento(dados: {
+  resposta: string | null;
+  observacao: string | null;
+}): Partial<Record<CampoConsentimento, string>> {
+  const erros: Partial<Record<CampoConsentimento, string>> = {};
+  if (!dados.resposta) erros.resposta = 'Escolha a resposta do candidato.';
+  if ((dados.observacao ?? '').trim().length > LIMITE_OBSERVACAO) {
+    erros.observacao = 'A observação deve ter no máximo 500 caracteres.';
+  }
+  return erros;
+}

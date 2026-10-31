@@ -23,6 +23,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
+    // Os testes que digitam nos formulários passam de 5 s em máquinas mais lentas ou ocupadas
+    testTimeout: 15000,
     // Cobertura com Istanbul (kickoff): npm run test:coverage gera o resumo no terminal
     // e o relatório em coverage/index.html (pasta ignorada pelo Git)
     coverage: {

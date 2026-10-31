@@ -29,9 +29,6 @@ type EstadoTela =
 
 const DURACAO_NOTIFICACAO_MS = 6000;
 
-// As telas de consentimento e inclusão (3391) ainda não existem; a avaliação (3390) já abre
-const AVISO_ETAPA = 'Disponível nas próximas entregas da Sprint 2.';
-
 function textoContagem(quantidade: number): string {
   return quantidade === 1 ? 'Mostrando 1 candidato' : `Mostrando ${quantidade} candidatos`;
 }
@@ -338,24 +335,14 @@ function LinhaCandidato({ candidato, nova, podeRecrutar }: PropsLinha) {
           </span>
         ) : (
           etapa &&
-          podeRecrutar &&
-          (etapa.tela === 'elegibilidade' ? (
+          podeRecrutar && (
             <Link
-              className="botao botao-secundario recrutamento-etapa"
-              to={`/estudos/${candidato.estudoId}/candidatos/${candidato.id}/elegibilidade`}
+              className={`botao recrutamento-etapa ${etapa.principal ? 'botao-primario' : 'botao-secundario'}`}
+              to={`/estudos/${candidato.estudoId}/candidatos/${candidato.id}/${etapa.tela}`}
             >
               {etapa.texto}
             </Link>
-          ) : (
-            <button
-              type="button"
-              className={`botao recrutamento-etapa ${etapa.principal ? 'botao-primario' : 'botao-secundario'}`}
-              disabled
-              title={AVISO_ETAPA}
-            >
-              {etapa.texto}
-            </button>
-          ))
+          )
         )}
       </td>
     </tr>

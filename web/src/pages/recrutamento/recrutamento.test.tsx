@@ -64,6 +64,10 @@ function criarServicos(estudo: Estudo = ESTUDO, candidatos: Partial<ServicoCandi
     cadastrar: vi.fn().mockResolvedValue(candidato({ id: 9, nome: 'Gabriel Rocha', email: 'gabriel@exemplo.com' })),
     obterElegibilidade: vi.fn(),
     avaliarElegibilidade: vi.fn(),
+    obterConsentimento: vi.fn(),
+    registrarConsentimento: vi.fn(),
+    obterInclusao: vi.fn(),
+    incluir: vi.fn(),
     ...candidatos,
   };
   return { estudos, candidatos: servicoCandidatos };
@@ -95,13 +99,18 @@ describe('Recrutamento', () => {
     const maria = screen.getByText('Maria Souza').closest('tr')!;
     expect(within(maria).getByText('Incluído em 28/10/2026')).toBeInTheDocument();
     const bruno = screen.getByText('Bruno Martins').closest('tr')!;
-    expect(within(bruno).getByRole('button', { name: 'Incluir' })).toBeDisabled();
+    expect(within(bruno).getByRole('link', { name: 'Incluir' })).toHaveAttribute(
+      'href',
+      '/estudos/3/candidatos/2/inclusao',
+    );
     const camila = screen.getByText('Camila Ferreira').closest('tr')!;
     expect(within(camila).getByText('Recusou')).toBeInTheDocument();
-    expect(within(camila).getByRole('button', { name: 'Ver bloqueio' })).toBeInTheDocument();
+    expect(within(camila).getByRole('link', { name: 'Ver bloqueio' })).toHaveAttribute(
+      'href',
+      '/estudos/3/candidatos/3/inclusao',
+    );
     const felipe = screen.getByText('Felipe Souza').closest('tr')!;
     expect(within(felipe).getByText('Não avaliado')).toBeInTheDocument();
-    // A avaliação de elegibilidade já abre (Task 3390); consentimento e inclusão ainda não
     expect(within(felipe).getByRole('link', { name: 'Avaliar' })).toHaveAttribute(
       'href',
       '/estudos/3/candidatos/4/elegibilidade',
