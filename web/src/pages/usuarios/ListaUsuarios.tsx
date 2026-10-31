@@ -6,8 +6,8 @@ import { servicoUsuarios, type ServicoUsuarios, type Usuario } from '../../api/u
 import { useAutenticacao, useUsuarioLogado } from '../../autenticacao/contextoAutenticacao';
 import Avatar from '../../components/Avatar';
 import BarraNavegacao from '../../components/BarraNavegacao';
+import DialogoConfirmacao, { type ItemConsequencia } from '../../components/DialogoConfirmacao';
 import Icone from '../../components/icones';
-import DialogoConfirmacao, { type ItemConsequencia } from './DialogoConfirmacao';
 import { NOMES_PERFIL, PERFIS } from './formatacao';
 import '../../estilos/comum.css';
 import './usuarios.css';

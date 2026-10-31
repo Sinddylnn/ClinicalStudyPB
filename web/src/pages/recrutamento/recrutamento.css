@@ -1,0 +1,592 @@
+/* <-------------------TELAS DE RECRUTAMENTO-------------------> */
+/* Quadros "Coordenador / Recrutamento – ..." do protótipo (Sprint 2).
+   Reaproveita a base das telas de estudos (estudos.css); aqui ficam só os acréscimos. */
+
+/* <-------------------CABEÇALHO-------------------> */
+.recrutamento-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.recrutamento-dados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: center;
+}
+
+.recrutamento-dados .icone {
+  color: var(--icone-suave);
+}
+
+/* <-------------------INDICADORES-------------------> */
+.recrutamento-indicadores {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recrutamento-indicador {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 20px;
+}
+
+.recrutamento-indicador-rotulo {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--texto-suave);
+}
+
+.recrutamento-indicador-valor {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 29px;
+}
+
+/* <-------------------LISTA-------------------> */
+.recrutamento-filtros {
+  min-height: 74px;
+}
+
+/* Larguras das colunas do protótipo: 360, 180, 180, 160 e 240 */
+.recrutamento-tabela th:nth-child(1) {
+  width: 32%;
+}
+
+.recrutamento-tabela th:nth-child(2),
+.recrutamento-tabela th:nth-child(3) {
+  width: 16%;
+}
+
+.recrutamento-tabela th:nth-child(4) {
+  width: 14.5%;
+}
+
+.recrutamento-tabela td {
+  height: 64px;
+}
+
+.pagina-interna .recrutamento-etapa {
+  width: 196px;
+  max-width: 100%;
+}
+
+.recrutamento-incluido {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+  line-height: 16px;
+  color: #6d28d9;
+}
+
+/* <-------------------ETIQUETAS DO CANDIDATO-------------------> */
+/* Cores confirmadas no protótipo: verde, âmbar, vermelho, roxo e cinza */
+.etiqueta-elegivel,
+.etiqueta-aceitou {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.etiqueta-incompleta {
+  color: #b45309;
+  background: #fffbeb;
+}
+
+.etiqueta-inelegivel,
+.etiqueta-recusou {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.etiqueta-incluido {
+  color: #6d28d9;
+  background: #f5f3ff;
+}
+
+.etiqueta-nao_avaliado,
+.etiqueta-pendente,
+.etiqueta-candidato {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+/* <-------------------AVALIAÇÃO DE ELEGIBILIDADE-------------------> */
+/* Quadros "Coordenador / Elegibilidade – ...": critérios à esquerda, resultado à direita */
+.elegibilidade-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 24px;
+  align-items: start;
+}
+
+.elegibilidade-coluna {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.elegibilidade-criterios {
+  padding: 8px 0;
+}
+
+.elegibilidade-criterios section + section {
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.elegibilidade-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 24px 12px;
+}
+
+.elegibilidade-grupo h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.elegibilidade-grupo p,
+.elegibilidade-sem-criterios {
+  margin: 0;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--texto-suave);
+}
+
+.elegibilidade-sem-criterios {
+  padding: 24px;
+  font-size: 14px;
+}
+
+.elegibilidade-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.elegibilidade-item {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 62px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--borda-cartao);
+}
+
+/* Critério sem resposta numa avaliação já começada: fundo e contorno âmbar */
+.elegibilidade-item-pendente {
+  background: #fffbeb;
+}
+
+.elegibilidade-texto {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 17px;
+  overflow-wrap: anywhere;
+}
+
+.elegibilidade-sem-resposta {
+  font-size: 12px;
+  line-height: 15px;
+  color: #b45309;
+}
+
+/* Par de opções do protótipo; os rádios nativos dão o teclado (setas) e o leitor de tela */
+.elegibilidade-opcoes {
+  display: inline-grid;
+  flex: none;
+  grid-template-columns: repeat(2, 132px);
+  gap: 4px;
+  padding: 3px;
+  background: #f3f4f6;
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+
+.elegibilidade-item-pendente .elegibilidade-opcoes {
+  border-color: #fcd34d;
+}
+
+.elegibilidade-opcao {
+  position: relative;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--texto-tabela);
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.pagina-interna .elegibilidade-opcao input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.elegibilidade-opcao:has(input:focus-visible) {
+  outline: 2px solid var(--primaria);
+  outline-offset: 1px;
+}
+
+.elegibilidade-opcao:has(input:disabled) {
+  cursor: default;
+}
+
+.elegibilidade-opcao-ok {
+  font-weight: 600;
+  color: #047857;
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+}
+
+.elegibilidade-opcao-perigo {
+  font-weight: 600;
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+}
+
+/* Botões à esquerda, abaixo dos critérios, como no protótipo */
+.pagina-interna .elegibilidade-acoes {
+  justify-content: flex-start;
+}
+
+.elegibilidade-resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 24px;
+}
+
+.elegibilidade-resultado h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.elegibilidade-explicacao {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--texto-suave);
+}
+
+.elegibilidade-contagens {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: stretch;
+  margin: 0;
+  padding: 16px 0 0;
+  list-style: none;
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.elegibilidade-contagens li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--texto-tabela);
+}
+
+.elegibilidade-contagem-ok .icone {
+  color: #047857;
+}
+
+.elegibilidade-contagem-atencao .icone {
+  color: #b45309;
+}
+
+.elegibilidade-contagem-perigo .icone {
+  color: #b91c1c;
+}
+
+.elegibilidade-registro {
+  align-self: stretch;
+  padding-top: 16px;
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.elegibilidade-registro h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.elegibilidade-registro p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--texto-suave);
+}
+
+/* <-------------------CONSENTIMENTO-------------------> */
+/* Quadros "Coordenador / Consentimento – ...": duas opções em cartão */
+.consentimento-rotulo {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--texto-tabela);
+}
+
+.consentimento-opcoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pagina-interna .campo label.consentimento-opcao {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--borda-cartao);
+  border-radius: 12px;
+}
+
+.pagina-interna .consentimento-opcao input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--primaria);
+  cursor: inherit;
+}
+
+.pagina-interna .campo label.consentimento-opcao:has(input:focus-visible) {
+  outline: 2px solid var(--primaria);
+  outline-offset: 1px;
+}
+
+.pagina-interna .campo label.consentimento-opcao:has(input:disabled) {
+  cursor: default;
+}
+
+.pagina-interna .campo label.consentimento-opcao-marcada {
+  background: #ecfeff;
+  border-color: var(--primaria);
+  box-shadow: inset 0 0 0 1px var(--primaria);
+}
+
+.pagina-interna .campo label.consentimento-opcao-erro {
+  border-color: var(--erro);
+}
+
+.consentimento-opcao-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 19px;
+  color: var(--texto-suave);
+}
+
+.consentimento-opcao-titulo {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 17px;
+  color: var(--texto);
+}
+
+.consentimento-icone-ok {
+  color: #047857;
+}
+
+.consentimento-icone-perigo {
+  color: #b91c1c;
+}
+
+/* <-------------------INCLUSÃO-------------------> */
+/* Quadros "Coordenador / Inclusão – ...": conta à esquerda, condições à direita */
+.inclusao-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 24px;
+  align-items: start;
+}
+
+.inclusao-conta {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.inclusao-conta h2,
+.inclusao-condicoes h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.inclusao-conta > p:not(.aviso) {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--texto-suave);
+}
+
+.inclusao-condicoes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+}
+
+.inclusao-condicoes header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--borda-cartao);
+}
+
+.inclusao-condicoes ul {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.inclusao-condicoes li {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 17px;
+}
+
+.inclusao-situacao {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: #047857;
+  background: #ecfdf5;
+  border-radius: 50%;
+}
+
+.inclusao-condicao-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+
+.inclusao-condicao-texto small {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 15px;
+  color: var(--texto-suave);
+}
+
+.inclusao-condicao-falha {
+  color: #b91c1c;
+}
+
+.inclusao-condicao-falha .inclusao-situacao {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.inclusao-atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding-top: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.inclusao-atalhos a {
+  color: var(--primaria);
+}
+
+/* <-------------------TELAS ESTREITAS-------------------> */
+@media (max-width: 1100px) {
+  .elegibilidade-grade,
+  .inclusao-grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .recrutamento-indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recrutamento-tabela td {
+    height: auto;
+  }
+
+  .pagina-interna .recrutamento-etapa {
+    width: 100%;
+  }
+
+  .elegibilidade-item {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 16px;
+  }
+
+  .elegibilidade-grupo {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .elegibilidade-opcoes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .consentimento-opcoes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

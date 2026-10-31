@@ -83,7 +83,7 @@
 }
 
 /* <-------------------ETIQUETAS DE ESTADO-------------------> */
-/* Ponto colorido antes do estado ("Somente leitura" não tem ponto) */
+/* Ponto colorido antes do estado */
 .etiqueta-planejamento::before,
 .etiqueta-recrutamento::before,
 .etiqueta-execucao::before,
@@ -119,11 +119,6 @@
 .etiqueta-encerrado {
   --ponto: #9ca3af;
 
-  color: #374151;
-  background: #f3f4f6;
-}
-
-.etiqueta-leitura {
   color: #374151;
   background: #f3f4f6;
 }
@@ -236,6 +231,15 @@
   color: var(--texto);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.estudos-titulo-link {
+  text-decoration: none;
+}
+
+.estudos-titulo-link:hover {
+  color: var(--primaria);
+  text-decoration: underline;
 }
 
 .estudos-objetivo {

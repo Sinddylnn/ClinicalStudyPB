@@ -98,7 +98,7 @@ describe('ListaEstudos', () => {
     expect(screen.getByRole('link', { name: 'Novo estudo' })).toHaveAttribute('href', '/estudos/novo');
   });
 
-  it('mostra ao coordenador os estudos vinculados, somente leitura', async () => {
+  it('mostra ao coordenador os estudos vinculados, com link para o recrutamento', async () => {
     render(
       <MemoryRouter initialEntries={['/estudos']}>
         <ListaEstudos servico={criarServico()} usuario={COORDENADOR} />
@@ -107,7 +107,7 @@ describe('ListaEstudos', () => {
     const linha = (await screen.findByText('Hábitos alimentares')).closest('tr')!;
     expect(screen.getByRole('heading', { name: 'Estudos' })).toBeInTheDocument();
     expect(screen.getByText('Estudos vinculados a você como coordenador.')).toBeInTheDocument();
-    expect(screen.getByText('Somente leitura')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Hábitos alimentares' })).toHaveAttribute('href', '/estudos/1/recrutamento');
     expect(screen.queryByRole('link', { name: 'Novo estudo' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Filtrar por estado')).not.toBeInTheDocument();
     expect(within(linha).getByText('Paula Pesquisadora')).toBeInTheDocument();
@@ -125,6 +125,14 @@ describe('ListaEstudos', () => {
     expect(within(linha).getByText('Pesquisador nº 2')).toBeInTheDocument();
     // Sem o nome não há iniciais, então não aparece avatar com "?"
     expect(within(linha).queryByText('?')).not.toBeInTheDocument();
+  });
+
+  it('mostra à pesquisadora o título como link para o protocolo do estudo', async () => {
+    renderizar(criarServico());
+    await screen.findByText('Hábitos alimentares');
+    expect(screen.getByRole('link', { name: 'Hábitos alimentares' })).toHaveAttribute('href', '/estudos/1');
+    expect(screen.getByRole('link', { name: 'Qualidade do sono' })).toHaveAttribute('href', '/estudos/2');
+    expect(screen.getByRole('link', { name: 'Hábitos alimentares' })).toHaveClass('estudos-titulo-link');
   });
 
   it('mostra à pesquisadora o subtítulo dos próprios estudos', async () => {

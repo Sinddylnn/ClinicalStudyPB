@@ -1,0 +1,111 @@
+/* <-------------------DIÁLOGO DE CONFIRMAÇÃO-------------------> */
+/* Usado nas telas de usuários (desativar e reativar) e do protocolo (remover critério) */
+.dialogo-sobreposicao {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(17 24 39 / 45%);
+}
+
+.dialogo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 480px;
+  max-width: 100%;
+  padding: 28px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 24px 48px rgb(0 0 0 / 24%);
+}
+
+.dialogo:focus {
+  outline: none;
+}
+
+.dialogo h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.dialogo-descricao {
+  margin: -10px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--texto-suave);
+}
+
+.dialogo-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+.dialogo-perigo {
+  color: var(--erro);
+  background: #fef2f2;
+}
+
+.dialogo-positivo {
+  color: #16a34a;
+  background: #f0fdf4;
+}
+
+.dialogo-consequencias {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 16px;
+  list-style: none;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.dialogo-consequencias li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.dialogo-consequencia-perde .icone {
+  color: var(--erro);
+}
+
+.dialogo-consequencia-mantem .icone {
+  color: #16a34a;
+}
+
+.dialogo-acoes {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Mais específico que .pagina-interna .botao: o resultado não depende da ordem de carga do CSS */
+.pagina-interna .dialogo-acoes .botao-perigo {
+  min-height: 38px;
+  color: #fff;
+  background: var(--erro);
+  border: 0;
+}
+
+.pagina-interna .dialogo-acoes .botao-perigo:hover {
+  background: #b91c1c;
+}
+
+.dialogo-acoes .botao:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
