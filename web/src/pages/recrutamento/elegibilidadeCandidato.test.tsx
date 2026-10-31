@@ -63,6 +63,10 @@ function criarServicos(
     avaliarElegibilidade: vi.fn().mockImplementation((_e, _c, { respostas }) =>
       Promise.resolve({ ...avaliacao, situacao: 'ELEGIVEL', itens: avaliacao.itens.map((i, n) => ({ ...i, resposta: respostas[n].resposta })) }),
     ),
+    obterConsentimento: vi.fn(),
+    registrarConsentimento: vi.fn(),
+    obterInclusao: vi.fn(),
+    incluir: vi.fn(),
     ...parcial,
   };
   return { estudos, candidatos };
@@ -183,6 +187,28 @@ describe('ElegibilidadeCandidato', () => {
     });
   });
 
+  it('volta a "sem resposta" ao clicar de novo na opção marcada', async () => {
+    const servicos = criarServicos();
+    renderizar(servicos);
+    await screen.findByRole('heading', { name: 'Avaliação de elegibilidade' });
+
+    await marcar('Ter 18 anos ou mais', 'Atendido');
+    await marcar('Ter celular para usar o aplicativo', 'Atendido');
+    await marcar('Ter celular para usar o aplicativo', 'Atendido');
+
+    expect(within(opcoes('Ter celular para usar o aplicativo')).getByRole('radio', { name: 'Atendido' })).not.toBeChecked();
+    expect(within(resultado()).getByText('2 critérios sem resposta')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar avaliação' }));
+    expect(servicos.candidatos.avaliarElegibilidade).toHaveBeenCalledWith(3, 6, {
+      respostas: [
+        { criterioId: 1, resposta: 'ATENDIDO' },
+        { criterioId: 2, resposta: null },
+        { criterioId: 3, resposta: null },
+      ],
+    });
+  });
+
   it('não envia a avaliação sem nenhuma resposta', async () => {
     const servicos = criarServicos();
     renderizar(servicos);
@@ -207,7 +233,7 @@ describe('ElegibilidadeCandidato', () => {
     await screen.findByRole('heading', { name: 'Avaliação de elegibilidade' });
 
     expect(within(opcoes('Ter 18 anos ou mais')).getByRole('radio', { name: 'Atendido' })).toBeChecked();
-    expect(within(resultado()).getByText('Salva por Carlos Coordenador em 27/10/2026 às 10:05.')).toBeInTheDocument();
+    expect(within(resultado()).getByText('Avaliada por Carlos Coordenador em 27/10/2026 às 10:05.')).toBeInTheDocument();
     expect(within(resultado()).getByText('1 critério sem resposta')).toBeInTheDocument();
   });
 

@@ -3,7 +3,11 @@ import type {
   AvaliacaoEntrada,
   Candidato,
   CandidatoCadastroEntrada,
+  ConsentimentoEntrada,
+  ContaParticipante,
+  InclusaoEntrada,
   ItemAvaliacao,
+  RegistroConsentimento,
   RespostaCriterio,
   ServicoCandidatos,
 } from './candidatos';
@@ -12,13 +16,14 @@ import { servicoEstudos, type ServicoEstudos } from './estudos';
 import { servicoEstudosSimulado } from './estudosSimulado';
 import { servicoProtocolo, type ServicoProtocolo } from './protocolo';
 import { calcularElegibilidade, respostaValida } from '../pages/recrutamento/elegibilidade';
-import { validarCandidato } from '../pages/recrutamento/validacao';
+import { mesmoEmail } from '../pages/recrutamento/inclusao';
+import { validarCandidato, validarConsentimento } from '../pages/recrutamento/validacao';
 
 // <-------------------SERVIÇO SIMULADO------------------->
-// Guarda os candidatos e as avaliações em memória e responde como o backend deve responder:
-// 404 para estudo fora da lista da sessão ou candidato de outro estudo, 400 para campos inválidos,
-// estudo fora de Recrutamento ou avaliação depois da inclusão (regras de negócio)
-// e 409 para e-mail repetido no estudo (conflito).
+// Guarda os candidatos, as avaliações e os consentimentos em memória e responde como o backend
+// deve responder: 404 para estudo fora da lista da sessão ou candidato de outro estudo,
+// 400 para campos inválidos, estudo fora de Recrutamento ou alteração depois da inclusão
+// (regras de negócio) e 409 para e-mail repetido, inclusão duplicada ou limite atingido (conflito).
 // Os critérios da avaliação vêm do protocolo do estudo (serviço de protocolo em uso).
 // Os dados são fictícios e voltam ao estado inicial ao recarregar a página.
 const ATRASO_MS = 300;
@@ -101,6 +106,33 @@ export const AVALIACOES_INICIAIS: AvaliacaoSimulada[] = [
   { candidatoId: 5, respostas: { 3: 'ATENDIDO', 4: null }, avaliadoPor: 'Carlos Coordenador', avaliadoEm: '2026-10-27T14:32:00' },
 ];
 
+/** Consentimento como fica guardado; a resposta em si fica no candidato. */
+export type ConsentimentoSimulado = {
+  candidatoId: number;
+  observacao: string | null;
+  registradoPor: string;
+  registradoEm: string;
+};
+
+export const CONSENTIMENTOS_INICIAIS: ConsentimentoSimulado[] = [
+  { candidatoId: 1, observacao: null, registradoPor: 'Carlos Coordenador', registradoEm: '2026-10-27T09:30:00' },
+  { candidatoId: 2, observacao: null, registradoPor: 'Carlos Coordenador', registradoEm: '2026-10-27T14:40:00' },
+  {
+    candidatoId: 3,
+    observacao: 'Candidata preferiu não participar.',
+    registradoPor: 'Carlos Coordenador',
+    registradoEm: '2026-10-27T15:02:00',
+  },
+];
+
+// Contas ativas de participante. "Bruno M." existe para mostrar o bloqueio de e-mail diferente
+export const CONTAS_INICIAIS: ContaParticipante[] = [
+  { id: 11, nome: 'Bruno M.', email: 'bruno.m@exemplo.com' },
+  { id: 12, nome: 'Bruno Martins', email: 'bruno.martins@exemplo.com' },
+  { id: 13, nome: 'Camila Ferreira', email: 'camila.ferreira@exemplo.com' },
+  { id: 14, nome: 'Maria Souza', email: 'maria.souza@exemplo.com' },
+];
+
 // Sem a sessão no simulado, o salvamento fica em nome do coordenador do protótipo
 const AVALIADOR_SIMULADO = 'Carlos Coordenador';
 
@@ -128,9 +160,12 @@ export function criarServicoCandidatosSimulado(
   iniciais: Candidato[],
   protocolo: ServicoProtocolo = servicoProtocolo,
   avaliacoesIniciais: AvaliacaoSimulada[] = [],
+  consentimentosIniciais: ConsentimentoSimulado[] = [],
+  contas: ContaParticipante[] = [],
 ): ServicoCandidatos {
   let candidatos = [...iniciais];
   let avaliacoes = avaliacoesIniciais.map((a) => ({ ...a, respostas: { ...a.respostas } }));
+  let consentimentos = [...consentimentosIniciais];
 
   async function buscarEstudo(estudoId: number) {
     const estudo = (await estudos.listar()).find((e) => e.id === estudoId);
@@ -171,6 +206,19 @@ export function criarServicoCandidatosSimulado(
       avaliadoEm: salva?.avaliadoEm ?? null,
     };
   }
+
+  function consentimentoDe(candidato: Candidato): RegistroConsentimento {
+    const salvo = consentimentos.find((c) => c.candidatoId === candidato.id);
+    return {
+      candidato: { ...candidato },
+      observacao: salvo?.observacao ?? null,
+      registradoPor: salvo?.registradoPor ?? null,
+      registradoEm: salvo?.registradoEm ?? null,
+    };
+  }
+
+  const incluidosNo = (estudoId: number) =>
+    candidatos.filter((c) => c.estudoId === estudoId && c.dataInclusao).length;
 
   return {
     async listar(estudoId) {
@@ -273,6 +321,124 @@ export function criarServicoCandidatosSimulado(
       candidatos = candidatos.map((c) => (c.id === candidatoId ? avaliado : c));
       return avaliacaoDe(avaliado);
     },
+
+    async obterConsentimento(estudoId, candidatoId) {
+      const { candidato } = await buscarCandidato(estudoId, candidatoId);
+      await aguardar();
+      return consentimentoDe(candidato);
+    },
+
+    async registrarConsentimento(estudoId, candidatoId, entrada: ConsentimentoEntrada) {
+      const { estudo, candidato } = await buscarCandidato(estudoId, candidatoId);
+      await aguardar();
+
+      const errosCampos = validarConsentimento(entrada);
+      if (Object.keys(errosCampos).length > 0) {
+        throw new ErroRequisicao(400, {
+          codigo: 'VALIDACAO_INVALIDA',
+          mensagem: 'Confira os campos informados.',
+          errosCampos,
+        });
+      }
+      if (estudo.estado !== 'RECRUTAMENTO') {
+        throw new ErroRequisicao(400, {
+          codigo: 'ESTADO_INVALIDO',
+          mensagem: 'Só é possível registrar o consentimento em estudos em Recrutamento.',
+        });
+      }
+      if (candidato.dataInclusao) {
+        throw new ErroRequisicao(400, {
+          codigo: 'CANDIDATO_JA_INCLUIDO',
+          mensagem: 'O candidato já foi incluído: o consentimento não pode mais ser corrigido.',
+        });
+      }
+      if (candidato.elegibilidade === 'NAO_AVALIADO') {
+        throw new ErroRequisicao(400, {
+          codigo: 'AVALIACAO_PENDENTE',
+          mensagem: 'Avalie a elegibilidade do candidato antes de registrar o consentimento.',
+        });
+      }
+
+      consentimentos = [
+        ...consentimentos.filter((c) => c.candidatoId !== candidatoId),
+        {
+          candidatoId,
+          observacao: entrada.observacao?.trim() || null,
+          registradoPor: AVALIADOR_SIMULADO,
+          registradoEm: agoraIso(),
+        },
+      ];
+      const registrado = { ...candidato, consentimento: entrada.resposta };
+      candidatos = candidatos.map((c) => (c.id === candidatoId ? registrado : c));
+      return consentimentoDe(registrado);
+    },
+
+    async obterInclusao(estudoId, candidatoId) {
+      const { candidato } = await buscarCandidato(estudoId, candidatoId);
+      await aguardar();
+      return {
+        candidato: { ...candidato },
+        avaliadoEm: avaliacoes.find((a) => a.candidatoId === candidatoId)?.avaliadoEm ?? null,
+        consentimentoEm: consentimentos.find((c) => c.candidatoId === candidatoId)?.registradoEm ?? null,
+        incluidos: incluidosNo(estudoId),
+        contas: [...contas],
+      };
+    },
+
+    async incluir(estudoId, candidatoId, entrada: InclusaoEntrada) {
+      const { estudo, candidato } = await buscarCandidato(estudoId, candidatoId);
+      await aguardar();
+
+      // A API confere tudo de novo, mesmo que a tela já tenha bloqueado (RF11)
+      const conta = contas.find((c) => c.id === entrada.contaId);
+      if (!conta) {
+        throw new ErroRequisicao(400, {
+          codigo: 'VALIDACAO_INVALIDA',
+          mensagem: 'Confira os campos informados.',
+          errosCampos: { contaId: 'Escolha uma conta ativa de participante.' },
+        });
+      }
+      if (estudo.estado !== 'RECRUTAMENTO') {
+        throw new ErroRequisicao(400, {
+          codigo: 'ESTADO_INVALIDO',
+          mensagem: 'Só é possível incluir participantes em estudos em Recrutamento.',
+        });
+      }
+      if (candidato.dataInclusao) {
+        throw new ErroRequisicao(409, {
+          codigo: 'INCLUSAO_DUPLICADA',
+          mensagem: 'Esta pessoa já foi incluída neste estudo.',
+        });
+      }
+      if (candidato.elegibilidade !== 'ELEGIVEL') {
+        throw new ErroRequisicao(400, {
+          codigo: 'ELEGIBILIDADE_INVALIDA',
+          mensagem: 'Só é possível incluir candidatos com avaliação completa e elegível.',
+        });
+      }
+      if (candidato.consentimento !== 'ACEITOU') {
+        throw new ErroRequisicao(400, {
+          codigo: 'CONSENTIMENTO_NAO_ACEITO',
+          mensagem: 'Só é possível incluir candidatos que aceitaram o consentimento.',
+        });
+      }
+      if (!mesmoEmail(conta.email, candidato.email)) {
+        throw new ErroRequisicao(400, {
+          codigo: 'CONTA_INVALIDA',
+          mensagem: 'O e-mail desta conta é diferente do e-mail do candidato.',
+        });
+      }
+      if (incluidosNo(estudoId) >= estudo.limiteParticipantes) {
+        throw new ErroRequisicao(409, {
+          codigo: 'LIMITE_ATINGIDO',
+          mensagem: `Não foi possível incluir: as ${estudo.limiteParticipantes} vagas do estudo já foram preenchidas.`,
+        });
+      }
+
+      const incluido = { ...candidato, dataInclusao: agoraIso().split('T')[0] };
+      candidatos = candidatos.map((c) => (c.id === candidatoId ? incluido : c));
+      return incluido;
+    },
   };
 }
 
@@ -283,4 +449,6 @@ export const servicoCandidatosSimulado = criarServicoCandidatosSimulado(
   simulados ? CANDIDATOS_INICIAIS : [],
   servicoProtocolo,
   simulados ? AVALIACOES_INICIAIS : [],
+  simulados ? CONSENTIMENTOS_INICIAIS : [],
+  simulados ? CONTAS_INICIAIS : [],
 );

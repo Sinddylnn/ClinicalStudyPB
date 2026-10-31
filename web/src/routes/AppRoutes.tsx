@@ -10,6 +10,8 @@ import ProtocoloEstudo from '../pages/protocolo/ProtocoloEstudo';
 import Recrutamento from '../pages/recrutamento/Recrutamento';
 import NovoCandidato from '../pages/recrutamento/NovoCandidato';
 import ElegibilidadeCandidato from '../pages/recrutamento/ElegibilidadeCandidato';
+import ConsentimentoCandidato from '../pages/recrutamento/ConsentimentoCandidato';
+import InclusaoCandidato from '../pages/recrutamento/InclusaoCandidato';
 import ListaUsuarios from '../pages/usuarios/ListaUsuarios';
 import NovoUsuario from '../pages/usuarios/NovoUsuario';
 import EditarUsuario from '../pages/usuarios/EditarUsuario';
@@ -52,6 +54,9 @@ export default function AppRoutes() {
         <Route path="/estudos/:id/candidatos/novo" element={<NovoCandidato />} />
         {/* Avaliação de elegibilidade do candidato (RF09) */}
         <Route path="/estudos/:id/candidatos/:candidatoId/elegibilidade" element={<ElegibilidadeCandidato />} />
+        {/* Consentimento simulado (RF10) e inclusão como participante (RF11) */}
+        <Route path="/estudos/:id/candidatos/:candidatoId/consentimento" element={<ConsentimentoCandidato />} />
+        <Route path="/estudos/:id/candidatos/:candidatoId/inclusao" element={<InclusaoCandidato />} />
       </Route>
 
       {/* <-------------------ROTA NÃO ENCONTRADA-------------------> */}
