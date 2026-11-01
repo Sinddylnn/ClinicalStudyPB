@@ -58,6 +58,7 @@ function criarServicos(estudo: Estudo = ESTUDO, candidatos: Partial<ServicoCandi
   const estudos: ServicoEstudos = {
     listar: vi.fn().mockResolvedValue([estudo]),
     cadastrar: vi.fn(),
+    alterarEstado: vi.fn(),
   };
   const servicoCandidatos: ServicoCandidatos = {
     listar: vi.fn().mockResolvedValue(CANDIDATOS),

@@ -307,6 +307,7 @@ describe('servicoCandidatosSimulado', () => {
       const estudos = {
         listar: vi.fn().mockResolvedValue([{ ...modelo, id: RECRUTAMENTO, estado: 'RECRUTAMENTO', limiteParticipantes: 1 }]),
         cadastrar: vi.fn(),
+        alterarEstado: vi.fn(),
       };
       servicoCandidatosSimulado = criar(CANDIDATOS_INICIAIS, estudos);
       const erro = await executar(
@@ -325,6 +326,7 @@ describe('servicoCandidatosSimulado', () => {
     const estudosReais = {
       listar: vi.fn().mockResolvedValue([{ ...modelo, id: 10, estado: 'RECRUTAMENTO' }]),
       cadastrar: vi.fn(),
+      alterarEstado: vi.fn(),
     };
     const servico = criarServicoCandidatosSimulado(estudosReais, []);
 

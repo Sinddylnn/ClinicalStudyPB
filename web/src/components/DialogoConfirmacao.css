@@ -1,5 +1,5 @@
 /* <-------------------DIÁLOGO DE CONFIRMAÇÃO-------------------> */
-/* Usado nas telas de usuários (desativar e reativar) e do protocolo (remover critério) */
+/* Usado nas telas de usuários (desativar e reativar) e do estudo (remover critério, mudar o estado) */
 .dialogo-sobreposicao {
   position: fixed;
   inset: 0;
@@ -17,6 +17,9 @@
   gap: 16px;
   width: 480px;
   max-width: 100%;
+  /* Com o campo de justificativa, o conteúdo pode passar da altura de telas baixas */
+  max-height: 100%;
+  overflow-y: auto;
   padding: 28px;
   background: #fff;
   border-radius: 14px;

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { ErroRequisicao } from '../../api/erros';
-import { servicoEstudos, type Estudo, type ServicoEstudos } from '../../api/estudos';
+import { servicoEstudos, type AlteracaoEstadoEntrada, type Estudo, type ServicoEstudos } from '../../api/estudos';
 import {
   servicoProtocolo,
   type Criterio,
@@ -13,12 +13,16 @@ import type { UsuarioSessao } from '../../api/autenticacao';
 import { useUsuarioLogado } from '../../autenticacao/contextoAutenticacao';
 import BarraNavegacao from '../../components/BarraNavegacao';
 import DialogoConfirmacao, { type ItemConsequencia } from '../../components/DialogoConfirmacao';
-import Icone from '../../components/icones';
+import Icone, { type NomeIcone } from '../../components/icones';
 import { formatarPeriodo, NOMES_ESTADO } from '../estudos/formatacao';
-import { NOMES_TIPO_CRITERIO } from './formatacao';
+import { TRANSICOES } from '../estudos/transicoes';
+import DialogoMudancaEstado, { type DestinoEstado } from './DialogoMudancaEstado';
+import { ACOES_ESTADO, NOMES_TIPO_CRITERIO, ORDEM_QUADRO, TEXTOS_REQUISITO } from './formatacao';
 import ListaCriterios from './ListaCriterios';
 import QuadroRecrutamento from './QuadroRecrutamento';
 import ResumoEstudo from './ResumoEstudo';
+import SecaoEstado from './SecaoEstado';
+import { requisitosRecrutamento } from './validacao';
 import '../../estilos/comum.css';
 import '../estudos/estudos.css';
 import '../recrutamento/recrutamento.css';
@@ -45,6 +49,32 @@ const CONSEQUENCIAS_REMOCAO: ItemConsequencia[] = [
   { texto: 'O critério sai do protocolo do estudo.', tipo: 'perde' },
   { texto: 'Os demais critérios continuam como estão.', tipo: 'mantem' },
 ];
+
+const NOTIFICACOES_ESTADO: Record<DestinoEstado, string> = {
+  RECRUTAMENTO: 'Recrutamento iniciado.',
+  EXECUCAO: 'Execução iniciada.',
+  ENCERRADO: 'Estudo encerrado.',
+};
+
+const ICONES_ACAO: Record<DestinoEstado, NomeIcone> = {
+  RECRUTAMENTO: 'usuarioMais',
+  EXECUCAO: 'atividade',
+  ENCERRADO: 'cadeado',
+};
+
+/**
+ * O que falta para iniciar o recrutamento, com os textos do quadro da aba Resumo.
+ * As visitas chegam na T46: até lá, o item avisa que o cadastro ainda não existe.
+ */
+function explicarPendencias(protocolo: Protocolo, coordenadorId: number | null): string | undefined {
+  const atendidos = requisitosRecrutamento(protocolo, coordenadorId);
+  const faltam = ORDEM_QUADRO.filter((codigo) => !atendidos[codigo]).map((codigo) =>
+    codigo === 'VISITA_PREVISTA'
+      ? `${TEXTOS_REQUISITO[codigo]} (o cadastro de visitas chega em breve)`
+      : TEXTOS_REQUISITO[codigo],
+  );
+  return faltam.length > 0 ? `Para iniciar o recrutamento, falta: ${faltam.join('; ')}.` : undefined;
+}
 
 const LISTAS: Record<TipoCriterio, 'criteriosInclusao' | 'criteriosExclusao'> = {
   INCLUSAO: 'criteriosInclusao',
@@ -77,7 +107,8 @@ async function carregar(estudoId: number, estudos: ServicoEstudos, protocolo: Se
 // <-------------------PROTOCOLO DO ESTUDO------------------->
 // Pesquisador responsável, em abas como no protótipo: Resumo (dados, coordenador e o que falta
 // para iniciar o recrutamento), Critérios de inclusão e exclusão (RF05) e Visitas (T46).
-// Só se edita com o estudo em Planejamento; depois, o protocolo fica para consulta (kickoff 8.1)
+// Só se edita com o estudo em Planejamento; depois, o protocolo fica para consulta (kickoff 8.1).
+// O cabeçalho traz só as mudanças de estado permitidas a partir do estado atual (T47)
 export default function ProtocoloEstudo({
   servicoEstudos: estudosProp = servicoEstudos,
   servicoProtocolo: protocoloProp = servicoProtocolo,
@@ -94,6 +125,9 @@ export default function ProtocoloEstudo({
   const [erroRemocao, setErroRemocao] = useState<string>();
   const [salvandoSemExclusao, setSalvandoSemExclusao] = useState(false);
   const [erroSemExclusao, setErroSemExclusao] = useState<string>();
+  const [destino, setDestino] = useState<DestinoEstado>();
+  const notificacaoRef = useRef<HTMLParagraphElement>(null);
+  const focarNotificacao = useRef(false);
   const [parametros, setParametros] = useSearchParams();
   const aba = lerAba(parametros.get('aba'));
 
@@ -110,6 +144,14 @@ export default function ProtocoloEstudo({
     const passo = evento.key === 'ArrowRight' ? 1 : -1;
     trocarAba(ABAS[(atual + passo + ABAS.length) % ABAS.length][0]);
   };
+
+  // Depois de mudar o estado, o botão que abriu o diálogo some: o foco vai para a notificação.
+  // Roda depois de o diálogo fechar, que devolve o foco ao botão de origem
+  useEffect(() => {
+    if (!notificacao || !focarNotificacao.current) return;
+    focarNotificacao.current = false;
+    notificacaoRef.current?.focus();
+  }, [notificacao]);
 
   useEffect(() => {
     if (!notificacao) return;
@@ -196,6 +238,17 @@ export default function ProtocoloEstudo({
     }
   };
 
+  const fecharMudanca = useCallback(() => setDestino(undefined), []);
+
+  // O estado exibido só muda com a resposta do backend; o erro fica no diálogo
+  const alterarEstado = async (entrada: AlteracaoEstadoEntrada) => {
+    const atualizado = await estudosProp.alterarEstado(estudoId, entrada);
+    setTela((atual) => (atual.tipo === 'pronto' ? { ...atual, estudo: atualizado } : atual));
+    setDestino(undefined);
+    focarNotificacao.current = true;
+    setNotificacao(NOTIFICACOES_ESTADO[entrada.estado as DestinoEstado]);
+  };
+
   const tentarNovamente = () => {
     setTela({ tipo: 'carregando' });
     setTentativa((n) => n + 1);
@@ -234,13 +287,16 @@ export default function ProtocoloEstudo({
 
   const estudo = tela.tipo === 'pronto' ? tela.estudo : undefined;
   const editavel = estudo?.estado === 'PLANEJAMENTO';
+  const acoes = (estudo ? TRANSICOES[estudo.estado] : []) as DestinoEstado[];
+  const faltaParaRecrutar =
+    tela.tipo === 'pronto' && estudo ? explicarPendencias(tela.protocolo, estudo.coordenadorId) : undefined;
 
   return (
     <div className="pagina-interna estudos-pagina">
       <BarraNavegacao usuario={usuario} />
 
       {notificacao && (
-        <p className="notificacao" role="status">
+        <p ref={notificacaoRef} className="notificacao" role="status" tabIndex={-1}>
           <Icone nome="sucesso" />
           {notificacao}
         </p>
@@ -276,12 +332,34 @@ export default function ProtocoloEstudo({
                   {estudo.limiteParticipantes} vagas
                 </p>
               </div>
-              {/* A abertura do recrutamento é da T47; até lá o botão aparece desativado, como no protótipo */}
-              {editavel && (
-                <button type="button" className="botao botao-secundario protocolo-acao-futura" disabled>
-                  <Icone nome="atividade" />
-                  Iniciar recrutamento
-                </button>
+              {/* Só as mudanças permitidas a partir do estado atual; a web orienta e o backend decide (seção 4.5) */}
+              {acoes.length > 0 && (
+                <div className="protocolo-acoes-estado">
+                  <div className="protocolo-acoes-estado-botoes">
+                    {acoes.map((acao) => {
+                      const bloqueada = acao === 'RECRUTAMENTO' && faltaParaRecrutar !== undefined;
+                      // A chave pelo destino evita reaproveitar o botão de outra ação ao mudar de estado
+                      return (
+                        <button
+                          key={acao}
+                          type="button"
+                          className={`botao ${acao === 'ENCERRADO' ? 'botao-secundario' : 'botao-primario'}`}
+                          disabled={bloqueada}
+                          aria-describedby={bloqueada ? 'explicacao-recrutamento' : undefined}
+                          onClick={() => setDestino(acao)}
+                        >
+                          <Icone nome={ICONES_ACAO[acao]} />
+                          {ACOES_ESTADO[acao]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {acoes.includes('RECRUTAMENTO') && faltaParaRecrutar && (
+                    <p id="explicacao-recrutamento" className="campo-ajuda protocolo-acoes-estado-nota">
+                      {faltaParaRecrutar}
+                    </p>
+                  )}
+                </div>
               )}
             </header>
 
@@ -305,6 +383,7 @@ export default function ProtocoloEstudo({
 
             {aba === 'resumo' && (
               <div className="protocolo-painel" role="tabpanel" id="painel-resumo" aria-labelledby="aba-resumo">
+                <SecaoEstado estudo={estudo} />
                 <div className={`protocolo-grade ${editavel ? '' : 'protocolo-grade-unica'}`}>
                   <ResumoEstudo estudo={estudo} nomeResponsavel={usuario.nome} />
                   {/* Com o recrutamento aberto, não há o que conferir para iniciá-lo */}
@@ -389,6 +468,10 @@ export default function ProtocoloEstudo({
           </>
         )}
       </main>
+
+      {destino && estudo && (
+        <DialogoMudancaEstado estudo={estudo} destino={destino} aoAlterar={alterarEstado} aoCancelar={fecharMudanca} />
+      )}
 
       {remocao && (
         <DialogoConfirmacao

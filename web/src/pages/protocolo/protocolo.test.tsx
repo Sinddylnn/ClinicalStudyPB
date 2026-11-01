@@ -47,6 +47,7 @@ function criarServicos(
   const estudos: ServicoEstudos = {
     listar: vi.fn().mockResolvedValue([estudo]),
     cadastrar: vi.fn(),
+    alterarEstado: vi.fn(),
   };
   const servicoProtocolo: ServicoProtocolo = {
     obter: vi.fn().mockResolvedValue({ ...PROTOCOLO, ...protocolo }),
@@ -89,14 +90,17 @@ const quadro = () => screen.getByRole('complementary', { name: 'Para iniciar o r
 
 const aba = (nome: 'Resumo' | 'Critérios' | 'Visitas') => screen.getByRole('tab', { name: nome });
 
+// Cabeçalho do estudo: título, etiqueta do estado e as ações de mudança de estado
+const cabecalho = () => screen.getByRole('heading', { level: 1 }).closest('header') as HTMLElement;
+
 describe('ProtocoloEstudo', () => {
   it('abre no Resumo com os dados do estudo e o que falta para iniciar o recrutamento', async () => {
     renderizar(criarServicos(), '/estudos/1');
 
     expect(await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' })).toBeInTheDocument();
-    expect(screen.getByText('Planejamento')).toHaveClass('etiqueta-planejamento');
+    expect(within(cabecalho()).getByText('Planejamento')).toHaveClass('etiqueta-planejamento');
     expect(screen.getByText('Responsável: você • 03/11/2026 – 28/02/2027 • 45 vagas')).toBeInTheDocument();
-    // A abertura do recrutamento é da T47
+    // Com pendências no quadro, a abertura do recrutamento fica desativada (T47)
     expect(screen.getByRole('button', { name: 'Iniciar recrutamento' })).toBeDisabled();
 
     expect(aba('Resumo')).toHaveAttribute('aria-selected', 'true');

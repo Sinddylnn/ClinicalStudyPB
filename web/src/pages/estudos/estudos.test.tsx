@@ -54,6 +54,7 @@ function criarServico(parcial: Partial<ServicoEstudos> = {}): ServicoEstudos {
   return {
     listar: vi.fn().mockResolvedValue(ESTUDOS),
     cadastrar: vi.fn().mockResolvedValue(ESTUDOS[0]),
+    alterarEstado: vi.fn(),
     ...parcial,
   };
 }

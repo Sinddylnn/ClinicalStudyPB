@@ -13,6 +13,8 @@ type Props = {
   consequencias: ItemConsequencia[];
   /** Aviso extra abaixo das consequências (ex.: a própria conta). */
   aviso?: ReactNode;
+  /** Campos pedidos junto com a confirmação (ex.: a justificativa do encerramento). */
+  children?: ReactNode;
   textoConfirmar: string;
   erro?: string;
   enviando: boolean;
@@ -33,6 +35,7 @@ export default function DialogoConfirmacao({
   tom,
   consequencias,
   aviso,
+  children,
   textoConfirmar,
   erro,
   enviando,
@@ -102,6 +105,8 @@ export default function DialogoConfirmacao({
         </ul>
 
         {aviso}
+
+        {children}
 
         {erro && (
           <p className="aviso aviso-erro" role="alert">

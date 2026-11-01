@@ -26,7 +26,8 @@ function detalhe(codigo: PendenciaRecrutamento, ok: boolean, props: Props): stri
 }
 
 // <-------------------PARA INICIAR O RECRUTAMENTO------------------->
-// Checklist da aba Resumo, calculada na tela a partir do estudo e dos critérios; a abertura em si é da T47.
+// Checklist da aba Resumo, calculada na tela a partir do estudo e dos critérios. Com algum item pendente,
+// o "Iniciar recrutamento" do cabeçalho fica desativado (T47); quem decide é o backend.
 // As visitas chegam na T46: até lá, o item fica sempre pendente.
 export default function QuadroRecrutamento(props: Props) {
   const atendidos = requisitosRecrutamento(props.protocolo, props.coordenadorId);

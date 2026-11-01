@@ -1,3 +1,4 @@
+import type { EstadoEstudo } from '../../api/estudos';
 import type { PendenciaRecrutamento, TipoCriterio } from '../../api/protocolo';
 
 // <-------------------EXIBIÇÃO DO PROTOCOLO------------------->
@@ -32,3 +33,21 @@ export const ORDEM_QUADRO: PendenciaRecrutamento[] = [
 export function contarCriterios(quantidade: number): string {
   return quantidade === 1 ? '1 critério cadastrado' : `${quantidade} critérios cadastrados`;
 }
+
+// <-------------------ESTADO DO ESTUDO------------------->
+/** O que cada estado permite, no cartão "Estado do estudo" (modelagem, seção 6). */
+export const FRASES_ESTADO: Record<EstadoEstudo, string> = {
+  PLANEJAMENTO:
+    'O protocolo pode ser configurado. Com o protocolo completo e um coordenador atribuído, o recrutamento pode ser iniciado.',
+  RECRUTAMENTO:
+    'O coordenador cadastra e avalia candidatos e inclui participantes. O protocolo fica somente para consulta.',
+  EXECUCAO: 'Novas inclusões estão bloqueadas. Os participantes já incluídos continuam no estudo.',
+  ENCERRADO: 'O estudo foi encerrado e fica disponível somente para consulta.',
+};
+
+/** Botão de cada destino no cabeçalho do estudo; PLANEJAMENTO nunca é destino. */
+export const ACOES_ESTADO: Record<Exclude<EstadoEstudo, 'PLANEJAMENTO'>, string> = {
+  RECRUTAMENTO: 'Iniciar recrutamento',
+  EXECUCAO: 'Iniciar execução',
+  ENCERRADO: 'Encerrar estudo',
+};
