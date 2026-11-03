@@ -14,14 +14,14 @@ apresentadas como se todos os seus detalhes estivessem expressos no enunciado.
 | Web React e app React Native usam a API; somente o backend acessa PostgreSQL | As interfaces enviam e recebem JSON; controllers usam DTOs, serviços aplicam regras e repositories acessam o banco |
 | D01: administrador cria, lista, edita, desativa e reativa usuários; e-mail único, sem exclusão física | Entidade, restrições, endpoints de gestão e bloqueio de conta inativa implementados; contrato publicado no OpenAPI |
 | D02: responsável pelo estudo é o pesquisador autenticado | Implementado no cadastro: o ID vem da sessão e não é escolhido no formulário |
-| D03: estudo e protocolo são separados; protocolo antecede o recrutamento | Modelagem inicial de estudo existe; protocolo e transições ainda dependem das próximas funcionalidades |
+| D03: estudo e protocolo são separados; protocolo antecede o recrutamento | Base de protocolo, critérios, visitas e atividades persistida. A mudança de estado consulta essa base; os endpoints de configuração seguem nas próximas tasks |
 | D04: pesquisador vê seus estudos; coordenador vê os estudos em que foi vinculado; participante vê seus vínculos | `GET /estudos` filtra pelo responsável ou coordenador autenticado; sem vínculos retorna lista vazia. Os fluxos do participante continuam previstos para suas próximas tasks |
-| D04 e detalhamento: pesquisador responsável atribui o coordenador; um por estudo e vários estudos por coordenador | Associação implementada em `Estudo`, com coluna opcional na V3. Pode ser informada no cadastro ou atribuída/substituída depois pelo responsável. A exigência antes do recrutamento deverá ser aplicada na futura transição de estado, que ainda não existe |
+| D04 e detalhamento: pesquisador responsável atribui o coordenador; um por estudo e vários estudos por coordenador | Associação implementada em `Estudo`, opcional no cadastro e exigida ao abrir recrutamento. Estudos encerrados não permitem atribuição ou substituição |
 | D05: Spring Security, sessão no servidor, 30 minutos sem uso, logout e BCrypt | Implementado com cookie HttpOnly, CSRF e CORS; fluxo local de autenticação e usuários conferido com PostgreSQL 17.11 em 23/10/2026 |
 | D06: execução local, banco com Docker Compose, sem hospedagem paga | Compose disponível; não implica que o banco esteja instalado ou validado em toda máquina |
 | D07: versões de referência fixadas no Kickoff | Conferir manifests e locks antes de integrar mudanças de dependências |
 | D08: detalhar campos e respostas do cadastro | Autenticação, usuários, cadastro/listagem de estudos e atribuição de coordenador têm contrato publicado no OpenAPI |
-| D09: coordenador registra avaliação, consentimento e inclusão; API verifica elegibilidade, aceite e vagas | Previsto para recrutamento; não entregue por esta task |
+| D09: coordenador registra avaliação, consentimento e inclusão; API verifica elegibilidade, aceite e vagas | Fluxos ainda pendentes. A base `Participacao` já permite consultar inclusões históricas nas transições; não há endpoint de inclusão nesta entrega |
 | D10: coordenador registra visitas, avaliações e retirada e responde às solicitações do app | Previsto para acompanhamento; confirmação de presença não comprova comparecimento |
 | D11: relatório filtrado por estudo e exportado em PDF | Sem decisão de CSV nesta versão; implementação futura |
 | D12: registrar alterações e permitir consulta pelo administrador, sem editar/apagar o log pela interface | Auditoria permanece no backlog; não foi adicionada à task de autenticação ou à publicação OpenAPI |
@@ -61,7 +61,7 @@ Estes detalhes implementam as decisões acima e permanecem sujeitos à revisão 
 - `PUT /estudos/{id}/coordenador` atribui ou substitui o coordenador de um estudo
   próprio. Exige sessão de pesquisador, CSRF e ID de coordenador ativo; retorna `200`.
   Estudo inexistente ou de outro pesquisador retorna `404`. Não há operação de
-  remoção do vínculo nem de transição de estado nesta entrega.
+  remoção do vínculo. Estudo encerrado retorna `400 ESTUDO_ENCERRADO`.
 - Conta escolhida inexistente retorna `404`; conta inativa ou de outro perfil
   retorna `400 COORDENADOR_INVALIDO`. A resposta de estudo inclui `coordenadorId`,
   que pode ser `null`. Nenhum coordenador é escolhido automaticamente.
@@ -76,6 +76,27 @@ Estes detalhes implementam as decisões acima e permanecem sujeitos à revisão 
 
 As escolhas da publicação OpenAPI nesta task não alteram o Kickoff, não ampliam o
 escopo funcional e não resolvem, sozinhas, as pendências de integração da task 3171.
+
+## Mudanças de estado — 29/10/2026
+
+`PATCH /estudos/{id}/estado` implementa as cinco transições do Kickoff, verificando
+pesquisador responsável, protocolo, coordenador e inclusões no banco. O encerramento
+antecipado exige justificativa de até 500 caracteres. Retornos, saltos, repetição e
+reabertura são bloqueados. A resposta inclui o estado e a justificativa persistidos.
+
+As migrações V5 e V6 acrescentam a justificativa e a base persistida necessária às
+verificações, sem alterar V1 a V4. Essa base foi autorizada por Georis; os endpoints
+de configuração e inclusão continuam nas respectivas tasks. Não há avaliação de
+elegibilidade nem consentimento implementados por esta alteração.
+
+Mudança de estado e atribuição de coordenador usam a mesma ordem de bloqueios:
+contas e depois estudo. Os futuros serviços de protocolo e inclusão devem adotar
+o mesmo bloqueio e conferir o estado antes da gravação. Visitas agendadas e
+solicitações pertencem à Release 2 e deverão integrar a validação de encerramento
+quando seus módulos existirem.
+
+O contrato, as limitações e os comandos de teste estão em
+[mudança de estado do estudo](estados-estudo.md).
 
 ## Ajustes aprovados na revisão de integração — 26/10/2026
 

@@ -1,6 +1,6 @@
 # <-------------------AMBIENTE LOCAL DO CLINICALSTUDYPB------------------->
 # Lê o .env da raiz e entrega as variáveis necessárias a cada serviço
-# Banco e backend são a base; o profile web acrescenta a interface
+# Banco e backend são a base e o profile web acrescenta a interface
 # O Expo continua sendo executado em outro terminal, fora do Docker
 #
 #   Banco + backend + web:  docker compose --profile web up -d --build --wait
@@ -85,7 +85,7 @@ services:
     profiles: ["test"]
     environment:
       POSTGRES_DB: clinicalstudypb_test
-      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-clinicalstudypb}
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-clinicalstudypb} # alternativa caso eu não forneça no .env
       POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-clinicalstudypb_dev}
     ports:
       - "${POSTGRES_TEST_PORT:-5433}:5432"

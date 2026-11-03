@@ -314,3 +314,13 @@ Referências: [springdoc](https://springdoc.org/),
 [propriedades do springdoc](https://springdoc.org/properties.html),
 [autenticação por cookie no OpenAPI/Swagger](https://swagger.io/docs/specification/v3_0/authentication/cookie-authentication/)
 e [CSRF no Spring Security](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html).
+
+
+## Mudança de estado do estudo
+
+O Swagger inclui `PATCH /estudos/{id}/estado`, o DTO `AlteracaoEstadoEntrada` e as
+respostas `200`, `400`, `401`, `403` e `404`. A rota exige pesquisador responsável,
+sessão e CSRF. `EstudoResposta` inclui `justificativaEncerramento`, e a atribuição
+de coordenador documenta o bloqueio para estudos encerrados.
+
+Consulte [as regras e os exemplos de mudança de estado](estados-estudo.md).

@@ -27,12 +27,6 @@ public class RegraNegocioException extends RuntimeException {
         this.codigo = codigo;
     }
 
-    /**
-     * Retorna o identificador utilizado na resposta da API.
-     *
-     * @return código da regra de negócio não atendida
-     * @since 1.0
-     */
     public String getCodigo() {
         return codigo;
     }

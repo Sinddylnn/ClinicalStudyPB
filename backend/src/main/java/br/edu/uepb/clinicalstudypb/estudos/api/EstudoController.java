@@ -18,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -153,11 +154,12 @@ public class EstudoController {
     @Operation(summary = "Atribuir coordenador ao estudo",
             description = "Exige pesquisador responsável pelo estudo e CSRF válido. "
                     + "Atribui ou substitui um único coordenador ativo. "
+                    + "Estudos encerrados não podem ter seu coordenador alterado. "
                     + "Não remove o vínculo e não altera o responsável ou o estado do estudo.",
             parameters = @Parameter(ref = "#/components/parameters/TokenCsrf"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Coordenador atribuído; retorna o estudo atualizado."),
-        @ApiResponse(responseCode = "400", description = "Dados inválidos ou COORDENADOR_INVALIDO.",
+        @ApiResponse(responseCode = "400", description = "Dados inválidos, COORDENADOR_INVALIDO ou ESTUDO_ENCERRADO.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class))),
         @ApiResponse(responseCode = "404", description = "Estudo inexistente ou de outro pesquisador; conta inexistente.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class)))
@@ -166,5 +168,38 @@ public class EstudoController {
             @Valid @RequestBody CoordenadorEntrada entrada,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
         return estudos.atribuirCoordenador(id, entrada.coordenadorId(), usuarioAutenticado);
+    }
+
+    // <-------------------TRANSIÇÕES DE ESTADO------------------->
+
+    /**
+     * Altera o estado de um estudo próprio após validar as condições persistidas.
+     *
+     * @param id identificador do estudo
+     * @param entrada estado desejado e justificativa de encerramento
+     * @param usuarioAutenticado pesquisador responsável conectado
+     * @return estudo atualizado, incluindo estado e justificativa
+     * @since 1.0
+     */
+    @PatchMapping("/{id}/estado")
+    @Operation(summary = "Alterar estado do estudo",
+            description = "Exige pesquisador responsável e CSRF válido. Planejamento permite recrutamento "
+                    + "com coordenador e protocolo completo. Recrutamento permite execução com pelo menos uma inclusão. "
+                    + "Planejamento e recrutamento permitem encerramento sem inclusões e com justificativa. "
+                    + "Execução permite encerramento; as pendências de visitas agendadas e solicitações serão "
+                    + "incorporadas com seus módulos na Release 2. Não permite retorno, repetição ou reabertura.",
+            parameters = @Parameter(ref = "#/components/parameters/TokenCsrf"))
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Estado persistido; retorna o estudo atualizado."),
+        @ApiResponse(responseCode = "400", description = "Transição inválida, justificativa inválida ou condição "
+                + "não atendida: coordenador, protocolo ou inclusões.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404", description = "Estudo inexistente ou de outro pesquisador.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
+    })
+    public EstudoResposta alterarEstado(@PathVariable Long id,
+            @Valid @RequestBody AlteracaoEstadoEntrada entrada,
+            @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
+        return estudos.alterarEstado(id, entrada, usuarioAutenticado);
     }
 }

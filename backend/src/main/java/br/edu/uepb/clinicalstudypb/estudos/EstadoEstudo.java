@@ -10,10 +10,31 @@ package br.edu.uepb.clinicalstudypb.estudos;
  * @version 1.0
  * @since 21/10/2026
  */
-public enum EstadoEstudo {
+public enum     EstadoEstudo {
 
     PLANEJAMENTO,
     RECRUTAMENTO,
     EXECUCAO,
-    ENCERRADO
+    ENCERRADO;
+
+    // <-------------------CAMINHOS PERMITIDOS ENTRE ESTADOS------------------->
+
+    /**
+     * Confere o caminho da transição, sem substituir as condições de negócio do serviço.
+     *
+     * @param destino estado solicitado
+     * @return {@code true} somente para os cinco caminhos definidos no Kickoff
+     * @since 1.0
+     */
+    public boolean permiteTransicaoPara(EstadoEstudo destino) {
+        if (destino == null) {
+            return false;
+        }
+        return switch (this) {
+            case PLANEJAMENTO -> destino == RECRUTAMENTO || destino == ENCERRADO;
+            case RECRUTAMENTO -> destino == EXECUCAO || destino == ENCERRADO;
+            case EXECUCAO -> destino == ENCERRADO;
+            case ENCERRADO -> false;
+        };
+    }
 }
