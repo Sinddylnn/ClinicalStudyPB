@@ -36,7 +36,7 @@ const PROTOCOLO: Protocolo = {
   ],
   criteriosExclusao: [],
   semCriteriosExclusao: false,
-  pendenciasRecrutamento: ['CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA'],
+  visitas: [],
 };
 
 function criarServicos(
@@ -50,15 +50,21 @@ function criarServicos(
     alterarEstado: vi.fn(),
   };
   const servicoProtocolo: ServicoProtocolo = {
+    recursos: { editarRemover: true },
     obter: vi.fn().mockResolvedValue({ ...PROTOCOLO, ...protocolo }),
     adicionarCriterio: vi.fn().mockImplementation((_id, { descricao }) => Promise.resolve({ id: 9, descricao })),
     editarCriterio: vi.fn().mockImplementation((_id, criterioId, descricao) =>
       Promise.resolve({ id: criterioId, descricao }),
     ),
     removerCriterio: vi.fn().mockResolvedValue(undefined),
-    definirSemExclusao: vi.fn().mockImplementation((_id, semCriteriosExclusao) =>
-      Promise.resolve({ ...PROTOCOLO, ...protocolo, semCriteriosExclusao }),
-    ),
+    // O backend devolve só o valor gravado da declaração
+    definirSemExclusao: vi.fn().mockImplementation((_id, semCriteriosExclusao) => Promise.resolve(semCriteriosExclusao)),
+    adicionarVisita: vi.fn(),
+    editarVisita: vi.fn(),
+    removerVisita: vi.fn(),
+    adicionarAtividade: vi.fn(),
+    editarAtividade: vi.fn(),
+    removerAtividade: vi.fn(),
     ...parcial,
   };
   return { estudos, protocolo: servicoProtocolo };
@@ -216,8 +222,8 @@ describe('ProtocoloEstudo', () => {
       )
       .mockRejectedValueOnce(
         new ErroRequisicao(400, {
-          codigo: 'ESTUDO_FORA_DE_PLANEJAMENTO',
-          mensagem: 'O protocolo só pode ser alterado com o estudo em Planejamento.',
+          codigo: 'ESTUDO_FORA_PLANEJAMENTO',
+          mensagem: 'Os critérios só podem ser alterados enquanto o estudo estiver em planejamento.',
         }),
       );
     renderizar(criarServicos(ESTUDO, {}, { adicionarCriterio }));
@@ -231,7 +237,7 @@ describe('ProtocoloEstudo', () => {
 
     await usuario.click(within(cartao('inclusão')).getByRole('button', { name: 'Adicionar' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'O protocolo só pode ser alterado com o estudo em Planejamento.',
+      'Os critérios só podem ser alterados enquanto o estudo estiver em planejamento.',
     );
   });
 
@@ -367,8 +373,8 @@ describe('ProtocoloEstudo', () => {
   it('mostra a falha ao salvar a indicação "sem exclusão"', async () => {
     const definirSemExclusao = vi.fn().mockRejectedValue(
       new ErroRequisicao(400, {
-        codigo: 'EXCLUSAO_JA_DEFINIDA',
-        mensagem: 'Remova os critérios de exclusão antes de indicar que o estudo não possui nenhum.',
+        codigo: 'CRITERIOS_EXCLUSAO_INCONSISTENTES',
+        mensagem: 'O estudo possui critérios de exclusão cadastrados.',
       }),
     );
     renderizar(criarServicos(ESTUDO, {}, { definirSemExclusao }));
@@ -376,7 +382,7 @@ describe('ProtocoloEstudo', () => {
 
     await userEvent.click(screen.getByRole('checkbox'));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Remova os critérios de exclusão antes');
+    expect(await screen.findByRole('alert')).toHaveTextContent('O estudo possui critérios de exclusão cadastrados.');
     expect(screen.getByRole('checkbox')).not.toBeChecked();
   });
 
@@ -384,7 +390,7 @@ describe('ProtocoloEstudo', () => {
     renderizar(
       criarServicos(
         { ...ESTUDO, estado: 'RECRUTAMENTO' },
-        { criteriosExclusao: [], semCriteriosExclusao: true, pendenciasRecrutamento: [] },
+        { criteriosExclusao: [], semCriteriosExclusao: true },
       ),
     );
     await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' });

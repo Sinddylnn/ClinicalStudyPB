@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ErroRequisicao } from '../../api/erros';
 import type { AlteracaoEstadoEntrada, Estudo, ServicoEstudos } from '../../api/estudos';
 import { criarServicoEstudosSimulado } from '../../api/estudosSimulado';
@@ -9,22 +9,6 @@ import type { Protocolo, ServicoProtocolo } from '../../api/protocolo';
 import type { UsuarioSessao } from '../../api/autenticacao';
 import ListaEstudos from '../estudos/ListaEstudos';
 import ProtocoloEstudo from './ProtocoloEstudo';
-
-// <-------------------VISITAS PREVISTAS (T46)------------------->
-// Sem o cadastro de visitas, o requisito VISITA_PREVISTA nunca é atendido e o recrutamento não
-// abre. Para testar a abertura, os testes podem marcar as visitas como cadastradas
-const visitas = vi.hoisted(() => ({ cadastradas: false }));
-
-vi.mock('./validacao', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./validacao')>();
-  return {
-    ...original,
-    requisitosRecrutamento: (...args: Parameters<typeof original.requisitosRecrutamento>) => ({
-      ...original.requisitosRecrutamento(...args),
-      VISITA_PREVISTA: visitas.cadastradas,
-    }),
-  };
-});
 
 // <-------------------TESTES DA MUDANÇA DE ESTADO NA TELA DO ESTUDO------------------->
 const PESQUISADORA: UsuarioSessao = {
@@ -52,11 +36,14 @@ const PROTOCOLO: Protocolo = {
   criteriosInclusao: [{ id: 1, descricao: 'Estudantes de graduação.' }],
   criteriosExclusao: [],
   semCriteriosExclusao: false,
-  pendenciasRecrutamento: ['CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA'],
+  visitas: [],
 };
 
-// Protocolo completo, exceto pelas visitas, que dependem da T46
-const PROTOCOLO_COMPLETO: Partial<Protocolo> = { semCriteriosExclusao: true, pendenciasRecrutamento: [] };
+// Protocolo completo: exclusões declaradas ausentes e uma visita com atividade
+const PROTOCOLO_COMPLETO: Partial<Protocolo> = {
+  semCriteriosExclusao: true,
+  visitas: [{ id: 1, nome: 'Visita inicial', descricao: null, ordem: 1, atividades: [{ id: 1, descricao: 'Questionário.' }] }],
+};
 
 // Por padrão, o "backend" aceita a mudança e devolve o estudo com o novo estado
 function criarServicos(estudo: Estudo = ESTUDO, protocolo: Partial<Protocolo> = {}) {
@@ -72,11 +59,18 @@ function criarServicos(estudo: Estudo = ESTUDO, protocolo: Partial<Protocolo> = 
     ),
   };
   const servicoProtocolo: ServicoProtocolo = {
+    recursos: { editarRemover: true },
     obter: vi.fn().mockResolvedValue({ ...PROTOCOLO, ...protocolo }),
     adicionarCriterio: vi.fn(),
     editarCriterio: vi.fn(),
     removerCriterio: vi.fn(),
     definirSemExclusao: vi.fn(),
+    adicionarVisita: vi.fn(),
+    editarVisita: vi.fn(),
+    removerVisita: vi.fn(),
+    adicionarAtividade: vi.fn(),
+    editarAtividade: vi.fn(),
+    removerAtividade: vi.fn(),
   };
   return { estudos, protocolo: servicoProtocolo };
 }
@@ -111,18 +105,14 @@ const acoes = () => within(cabecalho()).queryAllByRole('button').map((botao) => 
 const dialogo = () => screen.getByRole('dialog');
 
 describe('ProtocoloEstudo: mudança de estado', () => {
-  beforeEach(() => {
-    visitas.cadastradas = false;
-  });
-
-  it('em Planejamento, desativa "Iniciar recrutamento" e explica o que falta, inclusive as visitas', async () => {
+  it('em Planejamento, desativa "Iniciar recrutamento" e explica o que falta', async () => {
     await renderizar(criarServicos());
 
     expect(acoes()).toEqual(['Iniciar recrutamento', 'Encerrar estudo']);
     const iniciar = within(cabecalho()).getByRole('button', { name: 'Iniciar recrutamento' });
     expect(iniciar).toBeDisabled();
     expect(iniciar).toHaveAccessibleDescription(
-      'Para iniciar o recrutamento, falta: Critérios de exclusão definidos; Visitas com pelo menos uma atividade cada (o cadastro de visitas chega em breve).',
+      'Para iniciar o recrutamento, falta: Critérios de exclusão definidos; Visitas com pelo menos uma atividade cada.',
     );
     expect(within(cabecalho()).getByRole('button', { name: 'Encerrar estudo' })).toBeEnabled();
 
@@ -137,7 +127,6 @@ describe('ProtocoloEstudo: mudança de estado', () => {
   });
 
   it('lista o coordenador entre as pendências do recrutamento', async () => {
-    visitas.cadastradas = true;
     await renderizar(criarServicos({ ...ESTUDO, coordenadorId: null }, PROTOCOLO_COMPLETO));
 
     expect(within(cabecalho()).getByRole('button', { name: 'Iniciar recrutamento' })).toHaveAccessibleDescription(
@@ -146,7 +135,6 @@ describe('ProtocoloEstudo: mudança de estado', () => {
   });
 
   it('inicia o recrutamento depois da confirmação e deixa o protocolo só para consulta', async () => {
-    visitas.cadastradas = true;
     const servicos = criarServicos(ESTUDO, PROTOCOLO_COMPLETO);
     await renderizar(servicos);
     const usuario = userEvent.setup();
@@ -181,7 +169,6 @@ describe('ProtocoloEstudo: mudança de estado', () => {
   });
 
   it('mostra no diálogo a recusa do backend e mantém o estado exibido', async () => {
-    visitas.cadastradas = true;
     const servicos = criarServicos(ESTUDO, PROTOCOLO_COMPLETO);
     vi.mocked(servicos.estudos.alterarEstado).mockRejectedValue(
       new ErroRequisicao(400, {
@@ -375,7 +362,7 @@ describe('ProtocoloEstudo: mudança de estado', () => {
   it('reflete o novo estado na lista "Meus estudos" ao voltar', async () => {
     // Mesma instância do simulado na tela do estudo e na lista, sem inclusões no estudo
     const estudos = criarServicoEstudosSimulado([ESTUDO], {
-      pendencias: vi.fn().mockResolvedValue([]),
+      protocolo: vi.fn().mockResolvedValue({ ...PROTOCOLO, ...PROTOCOLO_COMPLETO }),
       possuiInclusoes: vi.fn().mockResolvedValue(false),
     });
     const servicos = { ...criarServicos(), estudos };

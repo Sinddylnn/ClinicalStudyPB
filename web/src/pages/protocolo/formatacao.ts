@@ -34,6 +34,16 @@ export function contarCriterios(quantidade: number): string {
   return quantidade === 1 ? '1 critério cadastrado' : `${quantidade} critérios cadastrados`;
 }
 
+/** "1 visita cadastrada", "3 visitas cadastradas". */
+export function contarVisitas(quantidade: number): string {
+  return quantidade === 1 ? '1 visita cadastrada' : `${quantidade} visitas cadastradas`;
+}
+
+/** "1 · Visita inicial", como no protótipo. */
+export function tituloVisita(visita: { ordem: number; nome: string }): string {
+  return `${visita.ordem} · ${visita.nome}`;
+}
+
 // <-------------------ESTADO DO ESTUDO------------------->
 /** O que cada estado permite, no cartão "Estado do estudo" (modelagem, seção 6). */
 export const FRASES_ESTADO: Record<EstadoEstudo, string> = {

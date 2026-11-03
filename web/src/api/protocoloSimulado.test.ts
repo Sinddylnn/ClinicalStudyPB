@@ -22,7 +22,19 @@ async function executar<T>(promessa: Promise<T>): Promise<T> {
 
 const falha = (promessa: Promise<unknown>) => executar(promessa).catch((e: unknown) => e);
 
-describe('servicoProtocoloSimulado', () => {
+const FORA_PLANEJAMENTO_CRITERIOS = {
+  status: 400,
+  codigo: 'ESTUDO_FORA_PLANEJAMENTO',
+  message: 'Os critérios só podem ser alterados enquanto o estudo estiver em planejamento.',
+};
+
+const FORA_PLANEJAMENTO_VISITAS = {
+  status: 400,
+  codigo: 'ESTUDO_FORA_PLANEJAMENTO',
+  message: 'As visitas previstas só podem ser alteradas enquanto o estudo estiver em planejamento.',
+};
+
+describe('servicoProtocoloSimulado: critérios', () => {
   let servico: ServicoProtocolo;
 
   beforeEach(() => {
@@ -35,12 +47,19 @@ describe('servicoProtocoloSimulado', () => {
     vi.useRealTimers();
   });
 
-  it('devolve o protocolo do estudo com as pendências para o recrutamento', async () => {
+  it('oferece edição e remoção, como as rotas propostas ao backend', () => {
+    expect(servico.recursos).toEqual({ editarRemover: true });
+  });
+
+  it('devolve o protocolo do estudo com critérios e visitas', async () => {
     const protocolo = await executar(servico.obter(PLANEJAMENTO));
     expect(protocolo.criteriosInclusao).toHaveLength(2);
     expect(protocolo.criteriosExclusao).toEqual([]);
     expect(protocolo.semCriteriosExclusao).toBe(false);
-    expect(protocolo.pendenciasRecrutamento).toEqual(['CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA']);
+    expect(protocolo.visitas.map((v) => [v.ordem, v.nome, v.atividades.length])).toEqual([
+      [1, 'Visita inicial', 2],
+      [2, 'Acompanhamento', 0],
+    ]);
   });
 
   it('responde com listas vazias quando o estudo ainda não tem protocolo', async () => {
@@ -49,8 +68,7 @@ describe('servicoProtocoloSimulado', () => {
       criteriosInclusao: [],
       criteriosExclusao: [],
       semCriteriosExclusao: false,
-      // O estudo 2 também não tem coordenador atribuído
-      pendenciasRecrutamento: ['COORDENADOR', 'CRITERIO_INCLUSAO', 'CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA'],
+      visitas: [],
     });
   });
 
@@ -69,19 +87,18 @@ describe('servicoProtocoloSimulado', () => {
 
     const protocolo = await executar(servico.obter(SEM_PROTOCOLO));
     expect(protocolo.criteriosInclusao).toEqual([novo]);
-    expect(protocolo.pendenciasRecrutamento).toEqual(['COORDENADOR', 'CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA']);
   });
 
-  it('responde VALIDACAO_INVALIDA para descrição vazia ou acima de 1.000 caracteres', async () => {
+  it('responde VALIDACAO_INVALIDA com as mensagens do backend', async () => {
     expect(await falha(servico.adicionarCriterio(PLANEJAMENTO, { tipo: 'INCLUSAO', descricao: '   ' }))).toMatchObject({
       status: 400,
       codigo: 'VALIDACAO_INVALIDA',
-      errosCampos: { descricao: 'Descreva o critério.' },
+      errosCampos: { descricao: 'Informe a descrição do critério.' },
     });
     expect(await falha(servico.editarCriterio(PLANEJAMENTO, 1, 'a'.repeat(1001)))).toMatchObject({
       status: 400,
       codigo: 'VALIDACAO_INVALIDA',
-      errosCampos: { descricao: 'Use até 1.000 caracteres.' },
+      errosCampos: { descricao: 'A descrição deve ter no máximo 1000 caracteres.' },
     });
   });
 
@@ -107,23 +124,21 @@ describe('servicoProtocoloSimulado', () => {
     expect(await falha(servico.removerCriterio(PLANEJAMENTO, 99))).toMatchObject({ status: 404 });
   });
 
-  it('responde ESTUDO_FORA_DE_PLANEJAMENTO para qualquer alteração fora de Planejamento', async () => {
-    const esperado = { status: 400, codigo: 'ESTUDO_FORA_DE_PLANEJAMENTO' };
+  it('responde ESTUDO_FORA_PLANEJAMENTO para qualquer alteração de critério fora de Planejamento', async () => {
     expect(await falha(servico.adicionarCriterio(RECRUTAMENTO, { tipo: 'INCLUSAO', descricao: 'Novo.' }))).toMatchObject(
-      esperado,
+      FORA_PLANEJAMENTO_CRITERIOS,
     );
-    expect(await falha(servico.editarCriterio(RECRUTAMENTO, 3, 'Outro.'))).toMatchObject(esperado);
-    expect(await falha(servico.removerCriterio(RECRUTAMENTO, 3))).toMatchObject(esperado);
-    expect(await falha(servico.definirSemExclusao(RECRUTAMENTO, false))).toMatchObject(esperado);
+    expect(await falha(servico.editarCriterio(RECRUTAMENTO, 3, 'Outro.'))).toMatchObject(FORA_PLANEJAMENTO_CRITERIOS);
+    expect(await falha(servico.removerCriterio(RECRUTAMENTO, 3))).toMatchObject(FORA_PLANEJAMENTO_CRITERIOS);
+    expect(await falha(servico.definirSemExclusao(RECRUTAMENTO, false))).toMatchObject(FORA_PLANEJAMENTO_CRITERIOS);
 
     // A consulta continua liberada
     expect((await executar(servico.obter(RECRUTAMENTO))).criteriosInclusao).toHaveLength(1);
   });
 
-  it('marca "sem exclusão" e passa a considerar as exclusões definidas', async () => {
-    const marcado = await executar(servico.definirSemExclusao(PLANEJAMENTO, true));
-    expect(marcado.semCriteriosExclusao).toBe(true);
-    expect(marcado.pendenciasRecrutamento).toEqual(['VISITA_PREVISTA']);
+  it('marca "sem exclusão" e devolve o valor gravado', async () => {
+    expect(await executar(servico.definirSemExclusao(PLANEJAMENTO, true))).toBe(true);
+    expect((await executar(servico.obter(PLANEJAMENTO))).semCriteriosExclusao).toBe(true);
   });
 
   it('responde SEM_EXCLUSAO_DECLARADA ao cadastrar exclusão com a declaração marcada, sem desmarcá-la', async () => {
@@ -148,22 +163,32 @@ describe('servicoProtocoloSimulado', () => {
     expect(depois.semCriteriosExclusao).toBe(false);
   });
 
-  it('confere campos e estado do estudo antes da declaração "sem exclusão"', async () => {
-    const declarado = { estudoId: RECRUTAMENTO, criteriosInclusao: [], criteriosExclusao: [], semCriteriosExclusao: true };
+  it('confere campos, estudo e estado nesta ordem, como o backend', async () => {
+    const declarado = {
+      estudoId: RECRUTAMENTO,
+      criteriosInclusao: [],
+      criteriosExclusao: [],
+      semCriteriosExclusao: true,
+      visitas: [],
+    };
     const comDeclaracao = criarServicoProtocoloSimulado(servicoEstudosSimulado, [
       { ...declarado, estudoId: PLANEJAMENTO },
       declarado,
     ]);
 
+    // Campo inválido vem antes do 404, como o @Valid
+    expect(await falha(comDeclaracao.adicionarCriterio(99, { tipo: 'EXCLUSAO', descricao: ' ' }))).toMatchObject({
+      codigo: 'VALIDACAO_INVALIDA',
+    });
     expect(
-      await falha(comDeclaracao.adicionarCriterio(PLANEJAMENTO, { tipo: 'EXCLUSAO', descricao: ' ' })),
-    ).toMatchObject({ codigo: 'VALIDACAO_INVALIDA' });
+      await falha(comDeclaracao.adicionarCriterio(99, { tipo: 'EXCLUSAO', descricao: 'Gestantes.' })),
+    ).toMatchObject({ status: 404 });
     expect(
       await falha(comDeclaracao.adicionarCriterio(RECRUTAMENTO, { tipo: 'EXCLUSAO', descricao: 'Gestantes.' })),
-    ).toMatchObject({ codigo: 'ESTUDO_FORA_DE_PLANEJAMENTO' });
-    expect(await falha(comDeclaracao.adicionarCriterio(99, { tipo: 'EXCLUSAO', descricao: ' ' }))).toMatchObject({
-      status: 404,
-    });
+    ).toMatchObject({ codigo: 'ESTUDO_FORA_PLANEJAMENTO' });
+    expect(
+      await falha(comDeclaracao.adicionarCriterio(PLANEJAMENTO, { tipo: 'EXCLUSAO', descricao: 'Gestantes.' })),
+    ).toMatchObject({ codigo: 'SEM_EXCLUSAO_DECLARADA' });
   });
 
   it('deixa as exclusões pendentes ao remover a última, sem declarar ausência sozinho', async () => {
@@ -173,8 +198,8 @@ describe('servicoProtocoloSimulado', () => {
 
     // Seção 3: a definição volta a ficar pendente, sem declarar ausência sozinha
     const protocolo = await executar(servico.obter(PLANEJAMENTO));
+    expect(protocolo.criteriosExclusao).toEqual([]);
     expect(protocolo.semCriteriosExclusao).toBe(false);
-    expect(protocolo.pendenciasRecrutamento).toEqual(['CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA']);
   });
 
   it('mantém "sem exclusão" ao adicionar um critério de inclusão', async () => {
@@ -183,37 +208,30 @@ describe('servicoProtocoloSimulado', () => {
     expect((await executar(servico.obter(PLANEJAMENTO))).semCriteriosExclusao).toBe(true);
   });
 
-  it('responde EXCLUSAO_JA_DEFINIDA ao marcar "sem exclusão" com exclusões cadastradas', async () => {
+  it('responde CRITERIOS_EXCLUSAO_INCONSISTENTES ao marcar "sem exclusão" com exclusões cadastradas', async () => {
     await executar(servico.adicionarCriterio(PLANEJAMENTO, { tipo: 'EXCLUSAO', descricao: 'Trabalho noturno.' }));
     expect(await falha(servico.definirSemExclusao(PLANEJAMENTO, true))).toMatchObject({
       status: 400,
-      codigo: 'EXCLUSAO_JA_DEFINIDA',
+      codigo: 'CRITERIOS_EXCLUSAO_INCONSISTENTES',
+      message: 'O estudo possui critérios de exclusão cadastrados.',
     });
     // Desmarcar não conflita com as exclusões
-    expect((await executar(servico.definirSemExclusao(PLANEJAMENTO, false))).semCriteriosExclusao).toBe(false);
+    expect(await executar(servico.definirSemExclusao(PLANEJAMENTO, false))).toBe(false);
   });
 
   it('não altera os dados iniciais recebidos', async () => {
     await executar(servico.removerCriterio(PLANEJAMENTO, 1));
+    await executar(servico.removerVisita(PLANEJAMENTO, 1));
     const outro = criarServicoProtocoloSimulado(servicoEstudosSimulado, PROTOCOLOS_INICIAIS);
-    expect((await executar(outro.obter(PLANEJAMENTO))).criteriosInclusao).toHaveLength(2);
+    const protocolo = await executar(outro.obter(PLANEJAMENTO));
+    expect(protocolo.criteriosInclusao).toHaveLength(2);
+    expect(protocolo.visitas).toHaveLength(2);
   });
 
-  it('aponta o coordenador como pendência conforme o estudo recebido', async () => {
-    const [modelo] = await executar(servicoEstudosSimulado.listar());
-    const estudos = {
-      listar: vi.fn().mockResolvedValue([{ ...modelo, id: 10, coordenadorId: null }]),
-      cadastrar: vi.fn(),
-      alterarEstado: vi.fn(),
-    };
-    const semCoordenador = criarServicoProtocoloSimulado(estudos, []);
-    expect((await executar(semCoordenador.obter(10))).pendenciasRecrutamento[0]).toBe('COORDENADOR');
-
-    estudos.listar.mockResolvedValue([{ ...modelo, id: 10, coordenadorId: 3 }]);
-    expect((await executar(semCoordenador.definirSemExclusao(10, true))).pendenciasRecrutamento).toEqual([
-      'CRITERIO_INCLUSAO',
-      'VISITA_PREVISTA',
-    ]);
+  it('não deixa quem recebe o protocolo alterar o que está guardado', async () => {
+    const protocolo = await executar(servico.obter(PLANEJAMENTO));
+    protocolo.visitas[0].atividades.push({ id: 99, descricao: 'Alterada por fora.' });
+    expect((await executar(servico.obter(PLANEJAMENTO))).visitas[0].atividades).toHaveLength(2);
   });
 
   it('procura o estudo na fonte de estudos recebida, sem misturar com os simulados', async () => {
@@ -227,5 +245,156 @@ describe('servicoProtocoloSimulado', () => {
 
     expect((await executar(servicoReal.obter(10))).criteriosInclusao).toEqual([]);
     expect(await falha(servicoReal.obter(PLANEJAMENTO))).toMatchObject({ status: 404 });
+  });
+});
+
+describe('servicoProtocoloSimulado: visitas e atividades', () => {
+  let servico: ServicoProtocolo;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    reiniciarEstudosSimulados();
+    servico = criarServicoProtocoloSimulado(servicoEstudosSimulado, PROTOCOLOS_INICIAIS);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const visitasDo = async (estudoId: number) => (await executar(servico.obter(estudoId))).visitas;
+
+  it('adiciona a visita com textos aparados, descrição em branco como null e lista em ordem', async () => {
+    const nova = await executar(
+      servico.adicionarVisita(PLANEJAMENTO, { nome: '  Visita extra ', descricao: '   ', ordem: 5 }),
+    );
+    expect(nova).toEqual({ id: 6, nome: 'Visita extra', descricao: null, ordem: 5, atividades: [] });
+
+    // Ordens com intervalo são válidas; a lista segue a ordem, não a data de cadastro
+    await executar(servico.adicionarVisita(PLANEJAMENTO, { nome: 'Intermediária', descricao: 'Revisão.', ordem: 3 }));
+    expect((await visitasDo(PLANEJAMENTO)).map((v) => v.ordem)).toEqual([1, 2, 3, 5]);
+  });
+
+  it('cria o protocolo na primeira visita', async () => {
+    await executar(servico.adicionarVisita(SEM_PROTOCOLO, { nome: 'Visita inicial', descricao: null, ordem: 1 }));
+    expect(await visitasDo(SEM_PROTOCOLO)).toHaveLength(1);
+  });
+
+  it('responde VALIDACAO_INVALIDA com as mensagens do backend, por campo', async () => {
+    expect(
+      await falha(servico.adicionarVisita(PLANEJAMENTO, { nome: ' ', descricao: 'a'.repeat(1001), ordem: 0 })),
+    ).toMatchObject({
+      status: 400,
+      codigo: 'VALIDACAO_INVALIDA',
+      errosCampos: {
+        nome: 'Informe o nome da visita.',
+        descricao: 'A descrição deve ter no máximo 1000 caracteres.',
+        ordem: 'A ordem da visita deve ser maior que zero.',
+      },
+    });
+    expect(
+      await falha(servico.adicionarVisita(PLANEJAMENTO, { nome: 'a'.repeat(151), descricao: null, ordem: 9 })),
+    ).toMatchObject({ errosCampos: { nome: 'O nome deve ter no máximo 150 caracteres.' } });
+    // 150 caracteres depois de aparar são aceitos
+    await executar(servico.adicionarVisita(PLANEJAMENTO, { nome: ` ${'a'.repeat(150)} `, descricao: null, ordem: 9 }));
+  });
+
+  it('responde ORDEM_VISITA_DUPLICADA ao repetir a ordem, sem gravar', async () => {
+    expect(
+      await falha(servico.adicionarVisita(PLANEJAMENTO, { nome: 'Repetida', descricao: null, ordem: 2 })),
+    ).toMatchObject({
+      status: 400,
+      codigo: 'ORDEM_VISITA_DUPLICADA',
+      message: 'Já existe uma visita prevista com essa ordem.',
+    });
+    expect(await visitasDo(PLANEJAMENTO)).toHaveLength(2);
+  });
+
+  it('edita a visita mantendo a própria ordem e as atividades, e recusa a ordem de outra', async () => {
+    const editada = await executar(
+      servico.editarVisita(PLANEJAMENTO, 1, { nome: 'Visita de abertura', descricao: null, ordem: 1 }),
+    );
+    expect(editada).toMatchObject({ id: 1, nome: 'Visita de abertura', descricao: null, ordem: 1 });
+    expect(editada.atividades).toHaveLength(2);
+
+    expect(
+      await falha(servico.editarVisita(PLANEJAMENTO, 1, { nome: 'Visita de abertura', descricao: null, ordem: 2 })),
+    ).toMatchObject({ codigo: 'ORDEM_VISITA_DUPLICADA' });
+
+    // Trocar para uma ordem livre reordena a lista
+    await executar(servico.editarVisita(PLANEJAMENTO, 1, { nome: 'Visita de abertura', descricao: null, ordem: 4 }));
+    expect((await visitasDo(PLANEJAMENTO)).map((v) => v.id)).toEqual([2, 1]);
+  });
+
+  it('remove a visita junto com as atividades', async () => {
+    await executar(servico.removerVisita(PLANEJAMENTO, 1));
+    const visitas = await visitasDo(PLANEJAMENTO);
+    expect(visitas.map((v) => v.id)).toEqual([2]);
+    expect(visitas.flatMap((v) => v.atividades)).toEqual([]);
+    // As atividades não ficam acessíveis por outro caminho
+    expect(await falha(servico.editarAtividade(PLANEJAMENTO, 1, 1, 'Outra.'))).toMatchObject({ status: 404 });
+  });
+
+  it('adiciona, edita e remove atividades na visita', async () => {
+    const nova = await executar(servico.adicionarAtividade(PLANEJAMENTO, 2, '  Revisar o diário de sono. '));
+    expect(nova).toEqual({ id: 6, descricao: 'Revisar o diário de sono.' });
+
+    expect(await executar(servico.editarAtividade(PLANEJAMENTO, 2, 6, ' Revisar o diário. '))).toEqual({
+      id: 6,
+      descricao: 'Revisar o diário.',
+    });
+    expect((await visitasDo(PLANEJAMENTO))[1].atividades).toEqual([{ id: 6, descricao: 'Revisar o diário.' }]);
+
+    await executar(servico.removerAtividade(PLANEJAMENTO, 1, 2));
+    expect((await visitasDo(PLANEJAMENTO))[0].atividades.map((a) => a.id)).toEqual([1]);
+  });
+
+  it('responde VALIDACAO_INVALIDA para a atividade com as mensagens do backend', async () => {
+    expect(await falha(servico.adicionarAtividade(PLANEJAMENTO, 2, '  '))).toMatchObject({
+      status: 400,
+      codigo: 'VALIDACAO_INVALIDA',
+      errosCampos: { descricao: 'Informe a descrição da atividade.' },
+    });
+    expect(await falha(servico.editarAtividade(PLANEJAMENTO, 1, 1, 'a'.repeat(1001)))).toMatchObject({
+      errosCampos: { descricao: 'A descrição deve ter no máximo 1000 caracteres.' },
+    });
+  });
+
+  it('responde 404 para visita de outro estudo e atividade de outra visita', async () => {
+    // A visita 3 é do estudo 3
+    expect(await falha(servico.adicionarAtividade(PLANEJAMENTO, 3, 'Atividade.'))).toMatchObject({
+      status: 404,
+      message: 'Visita prevista não encontrada.',
+    });
+    expect(await falha(servico.removerVisita(PLANEJAMENTO, 99))).toMatchObject({ status: 404 });
+    // A atividade 1 é da visita 1, não da 2
+    expect(await falha(servico.removerAtividade(PLANEJAMENTO, 2, 1))).toMatchObject({ status: 404 });
+    expect(await falha(servico.adicionarVisita(99, { nome: 'Visita', descricao: null, ordem: 1 }))).toMatchObject({
+      status: 404,
+    });
+  });
+
+  it('responde ESTUDO_FORA_PLANEJAMENTO para qualquer alteração de visita fora de Planejamento', async () => {
+    const entrada = { nome: 'Nova', descricao: null, ordem: 9 };
+    expect(await falha(servico.adicionarVisita(RECRUTAMENTO, entrada))).toMatchObject(FORA_PLANEJAMENTO_VISITAS);
+    expect(await falha(servico.editarVisita(RECRUTAMENTO, 3, entrada))).toMatchObject(FORA_PLANEJAMENTO_VISITAS);
+    expect(await falha(servico.removerVisita(RECRUTAMENTO, 3))).toMatchObject(FORA_PLANEJAMENTO_VISITAS);
+    expect(await falha(servico.adicionarAtividade(RECRUTAMENTO, 3, 'Nova.'))).toMatchObject(FORA_PLANEJAMENTO_VISITAS);
+    expect(await falha(servico.editarAtividade(RECRUTAMENTO, 3, 3, 'Nova.'))).toMatchObject(FORA_PLANEJAMENTO_VISITAS);
+    expect(await falha(servico.removerAtividade(RECRUTAMENTO, 3, 3))).toMatchObject(FORA_PLANEJAMENTO_VISITAS);
+    // Fora de Planejamento, a ordem repetida nem chega a ser conferida
+    expect(await falha(servico.adicionarVisita(RECRUTAMENTO, { ...entrada, ordem: 1 }))).toMatchObject({
+      codigo: 'ESTUDO_FORA_PLANEJAMENTO',
+    });
+    expect(await visitasDo(RECRUTAMENTO)).toHaveLength(3);
+  });
+
+  it('confere os campos da visita antes do estudo, como o @Valid do backend', async () => {
+    expect(await falha(servico.adicionarVisita(99, { nome: '', descricao: null, ordem: 1 }))).toMatchObject({
+      status: 400,
+      codigo: 'VALIDACAO_INVALIDA',
+    });
+    expect(await falha(servico.adicionarVisita(RECRUTAMENTO, { nome: '', descricao: null, ordem: 1 }))).toMatchObject({
+      codigo: 'VALIDACAO_INVALIDA',
+    });
   });
 });
