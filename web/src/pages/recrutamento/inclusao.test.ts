@@ -133,4 +133,17 @@ describe('proximaEtapa', () => {
     expect(proximaEtapa({ ...CANDIDATO, consentimento: 'RECUSOU' })).toEqual({ texto: 'Ver bloqueio', tela: 'inclusao' });
     expect(proximaEtapa({ ...CANDIDATO, dataInclusao: '2026-10-28' })).toBeNull();
   });
+
+  it('volta à elegibilidade enquanto a avaliação não aprova o candidato', () => {
+    expect(proximaEtapa({ ...CANDIDATO, elegibilidade: 'NAO_AVALIADO' })).toEqual({ texto: 'Avaliar', tela: 'elegibilidade' });
+    expect(proximaEtapa({ ...CANDIDATO, elegibilidade: 'INCOMPLETA' })).toEqual({
+      texto: 'Continuar avaliação',
+      tela: 'elegibilidade',
+    });
+    // Inelegível com consentimento aceito: o consentimento não pula a avaliação
+    expect(proximaEtapa({ ...CANDIDATO, elegibilidade: 'INELEGIVEL' })).toEqual({
+      texto: 'Rever avaliação',
+      tela: 'elegibilidade',
+    });
+  });
 });

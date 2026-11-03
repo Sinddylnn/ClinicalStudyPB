@@ -300,6 +300,8 @@ describe('ProtocoloEstudo: mudança de estado', () => {
     const campo = within(dialogo()).getByLabelText('Justificativa (opcional)');
     expect(campo).not.toBeRequired();
     expect(campo).toHaveAccessibleDescription('Até 500 caracteres.');
+    // Já há participantes: o exemplo não fala em cancelamento antes da inclusão
+    expect(campo).toHaveAttribute('placeholder', 'Ex.: acompanhamento dos participantes concluído.');
     await usuario.click(within(dialogo()).getByRole('button', { name: 'Encerrar estudo' }));
 
     expect(servicos.estudos.alterarEstado).toHaveBeenCalledWith(1, {
@@ -334,6 +336,8 @@ describe('ProtocoloEstudo: mudança de estado', () => {
       expect(campo).toHaveAccessibleDescription('A justificativa deve ter no máximo 500 caracteres.'),
     );
     expect(within(dialogo()).queryByRole('alert')).not.toBeInTheDocument();
+    // O foco volta ao campo depois de ele ser reativado
+    await vi.waitFor(() => expect(campo).toHaveFocus());
 
     // Editar o texto limpa o erro do campo
     await usuario.type(campo, ' ');

@@ -25,6 +25,12 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     // Os testes que digitam nos formulários passam de 5 s em máquinas mais lentas ou ocupadas
     testTimeout: 15000,
+    // Os testes usam sempre os serviços simulados, mesmo que o web/.env de quem roda aponte para o backend
+    env: {
+      VITE_ESTUDOS_API: 'simulado',
+      VITE_CANDIDATOS_API: 'simulado',
+      VITE_PROTOCOLO_API: 'simulado',
+    },
     // Cobertura com Istanbul (kickoff): npm run test:coverage gera o resumo no terminal
     // e o relatório em coverage/index.html (pasta ignorada pelo Git)
     coverage: {

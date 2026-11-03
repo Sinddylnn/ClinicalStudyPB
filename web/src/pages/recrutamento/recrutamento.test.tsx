@@ -262,4 +262,60 @@ describe('NovoCandidato', () => {
     );
     expect(screen.getByRole('button', { name: 'Cadastrar candidato' })).toBeEnabled();
   });
+
+  it('mostra nos campos a validação do backend e ignora campos que a tela não tem', async () => {
+    const cadastrar = vi.fn().mockRejectedValue(
+      new ErroRequisicao(400, {
+        codigo: 'VALIDACAO_INVALIDA',
+        mensagem: 'Confira os campos informados.',
+        errosCampos: { nome: 'O nome deve ter no máximo 150 caracteres.', estudoId: 'Inválido.' },
+      }),
+    );
+    renderizar(criarServicos(ESTUDO, { cadastrar }), '/estudos/3/candidatos/novo');
+
+    await userEvent.type(await screen.findByLabelText('Nome completo'), 'Ana Costa');
+    await userEvent.type(screen.getByLabelText('E-mail'), 'ana@exemplo.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Cadastrar candidato' }));
+
+    expect(await screen.findByText('O nome deve ter no máximo 150 caracteres.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nome completo')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('E-mail')).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByText('Revise os campos destacados antes de cadastrar.')).toBeInTheDocument();
+    expect(screen.queryByText('Inválido.')).not.toBeInTheDocument();
+
+    // Corrigir o campo limpa o erro dele
+    await userEvent.type(screen.getByLabelText('Nome completo'), 'a');
+    expect(screen.getByLabelText('Nome completo')).toHaveAttribute('aria-invalid', 'false');
+  });
+
+  it('mostra a falha sem resposta do servidor e permite tentar de novo', async () => {
+    const cadastrar = vi.fn().mockRejectedValue(new Error('rede'));
+    renderizar(criarServicos(ESTUDO, { cadastrar }), '/estudos/3/candidatos/novo');
+
+    await userEvent.type(await screen.findByLabelText('Nome completo'), 'Ana Costa');
+    await userEvent.type(screen.getByLabelText('E-mail'), 'ana@exemplo.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Cadastrar candidato' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível cadastrar o candidato.');
+    expect(screen.getByLabelText('Nome completo')).toHaveValue('Ana Costa');
+    expect(screen.getByRole('button', { name: 'Cadastrar candidato' })).toBeEnabled();
+  });
+
+  it('mostra o erro ao carregar o estudo e tenta de novo', async () => {
+    const servicos = criarServicos();
+    vi.mocked(servicos.estudos.listar)
+      .mockRejectedValueOnce(new ErroRequisicao(0, { codigo: 'SEM_CONEXAO', mensagem: 'Não foi possível conectar.' }))
+      .mockRejectedValueOnce(new Error('rede'));
+    renderizar(servicos, '/estudos/3/candidatos/novo');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível conectar.');
+    expect(screen.queryByLabelText('Nome completo')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar o estudo.');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+    expect(await screen.findByLabelText('Nome completo')).toBeInTheDocument();
+    expect(servicos.estudos.listar).toHaveBeenCalledTimes(3);
+  });
 });
