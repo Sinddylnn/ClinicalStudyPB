@@ -193,3 +193,15 @@ data; classes novas desta revisão usam `@author Georis`, `@version 1.0` e
 `@since 25/10/2026`. A revisão ainda integra a entrega inicial `1.0-SNAPSHOT`.
 
 
+
+### 03/11/2026 — Revisão da configuração do protocolo (AB#3392 e AB#3395)
+
+A configuração recebeu edição e remoção de critérios, visitas previstas e
+atividades, além da consulta da declaração de ausência de exclusões. As leituras
+permitem o pesquisador responsável e o coordenador vinculado; as alterações
+continuam exclusivas do responsável durante o planejamento.
+
+O cadastro ou a edição para EXCLUSAO exige desmarcar a declaração previamente,
+conforme a modelagem. A exclusão de uma visita aproveita a cascata já definida
+na V6, sem modificar migrações. As rotas e os cuidados para a integração da web
+estão em [Configuração do protocolo](configuracao-protocolo.md).

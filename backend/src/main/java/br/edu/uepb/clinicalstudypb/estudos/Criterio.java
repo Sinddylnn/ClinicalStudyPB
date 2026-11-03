@@ -16,8 +16,8 @@ import jakarta.persistence.Table;
 /**
  * Identifica um critério que poderá receber uma resposta na avaliação de elegibilidade.
  *
- * <p>Os cadastros serão implementados nos serviços próprios. Eles deverão bloquear o
- * estudo e conferir PLANEJAMENTO antes de alterar o protocolo ou seus itens.</p>
+ * <p>Os serviços de configuração bloqueiam o
+ * estudo e conferem PLANEJAMENTO antes de alterar o protocolo ou seus itens.</p>
  * @author Georis
  * @version 1.0
  * @since 29/10/2026
@@ -74,5 +74,13 @@ public class Criterio {
 
     public String getDescricao() {
         return descricao;
+    }
+
+    // <-------------------EDIÇÃO DOS DADOS------------------->
+
+    /** Atualiza os dados já validados, preservando o identificador e o vínculo. */
+    public void editar(TipoCriterio tipo, String descricao) {
+        this.tipo = tipo;
+        this.descricao = descricao.strip();
     }
 }

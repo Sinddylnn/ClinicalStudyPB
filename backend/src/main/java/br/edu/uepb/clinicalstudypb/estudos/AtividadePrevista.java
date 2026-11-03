@@ -14,8 +14,8 @@ import jakarta.persistence.Table;
 /**
  * Descreve uma atividade do modelo de visita; não armazena resultados ou comparecimento.
  *
- * <p>Os cadastros serão implementados nos serviços próprios. Eles deverão bloquear o
- * estudo e conferir PLANEJAMENTO antes de alterar o protocolo ou seus itens.</p>
+ * <p>Os serviços de configuração bloqueiam o
+ * estudo e conferem PLANEJAMENTO antes de alterar o protocolo ou seus itens.</p>
  * @author Georis
  * @version 1.0
  * @since 29/10/2026
@@ -62,5 +62,12 @@ public class AtividadePrevista {
 
     public String getDescricao() {
         return descricao;
+    }
+
+    // <-------------------EDIÇÃO DOS DADOS------------------->
+
+    /** Atualiza os dados já validados, preservando o identificador e o vínculo. */
+    public void editar(String descricao) {
+        this.descricao = descricao.strip();
     }
 }

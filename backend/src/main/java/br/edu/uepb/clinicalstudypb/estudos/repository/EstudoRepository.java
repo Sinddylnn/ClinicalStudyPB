@@ -85,4 +85,7 @@ public interface EstudoRepository extends JpaRepository<Estudo, Long> {
      * @since 1.0
      */
     boolean existsByCoordenadorId(Long coordenadorId);
+
+    /** Localiza o estudo apenas quando o coordenador está vinculado a ele. */
+    Optional<Estudo> findByIdAndCoordenadorId(Long id, Long coordenadorId);
 }
