@@ -14,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import br.edu.uepb.clinicalstudypb.estudos.repository.AtividadePrevistaRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -44,6 +45,7 @@ class DocumentacaoApiTest {
     @MockitoBean private CriterioRepository criterioRepository;
     @MockitoBean private VisitaPrevistaRepository visitaPrevistaRepository;
     @MockitoBean private ParticipacaoRepository participacaoRepository;
+    @MockitoBean private AtividadePrevistaRepository atividadePrevistaRepository;
 
     @Autowired
     private MockMvc mvc;

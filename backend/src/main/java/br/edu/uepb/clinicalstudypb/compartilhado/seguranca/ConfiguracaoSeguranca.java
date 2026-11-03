@@ -146,46 +146,133 @@ public class ConfiguracaoSeguranca {
      * @since 1.0
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, RespostaErroSeguranca erros,
-            SecurityContextRepository contextos, CsrfTokenRepository tokens,
-            UrlBasedCorsConfigurationSource cors, UsuarioRepository usuarios) throws Exception {
-        http
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .requestCache(AbstractHttpConfigurer::disable)
-                .cors(config -> config.configurationSource(cors))
-                .csrf(config -> config.csrfTokenRepository(tokens))
-                .securityContext(config -> config.securityContextRepository(contextos).requireExplicitSave(true))
-                .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .exceptionHandling(config -> config.authenticationEntryPoint(erros).accessDeniedHandler(erros))
-                .authorizeHttpRequests(config -> config
-                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                        // A consulta da documentação é pública; as operações mantêm suas proteções
-                        .requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs.yaml",
-                                "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
-                        .permitAll()
-                        .requestMatchers(HttpMethod.GET, "/auth/csrf").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/auth/sessao").authenticated()
-                        .requestMatchers("/usuarios", "/usuarios/**").hasRole("ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.POST, "/estudos").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.PUT, "/estudos/*/coordenador").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.PATCH, "/estudos/*/estado").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.POST, "/estudos").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.PUT, "/estudos/*/coordenador").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.PATCH, "/estudos/*/estado").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.POST, "/estudos/*/criterios").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.GET, "/estudos/*/criterios").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.GET, "/estudos/coordenadores").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.GET, "/estudos/coordenadores").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.GET, "/estudos", "/estudos/*")
-                        .hasAnyRole("PESQUISADOR", "COORDENADOR")
-                        .anyRequest().denyAll())
-                .logout(config -> config.logoutUrl("/auth/logout")
-                        .invalidateHttpSession(true).clearAuthentication(true).deleteCookies("JSESSIONID")
-                        .logoutSuccessHandler((request, response, autenticacao) -> response.setStatus(204)))
-                // Registro somente nesta cadeia evita executar o filtro duas vezes
-                .addFilterBefore(new FiltroUsuarioAtivo(usuarios, contextos, erros), AuthorizationFilter.class);
-        return http.build();
-    }
+public SecurityFilterChain securityFilterChain(
+        HttpSecurity http,
+        RespostaErroSeguranca erros,
+        SecurityContextRepository contextos,
+        CsrfTokenRepository tokens,
+        UrlBasedCorsConfigurationSource cors,
+        UsuarioRepository usuarios) throws Exception {
+
+    http
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .requestCache(AbstractHttpConfigurer::disable)
+
+            .cors(config -> config.configurationSource(cors))
+
+            .csrf(config -> config
+                    .csrfTokenRepository(tokens))
+
+            .securityContext(config -> config
+                    .securityContextRepository(contextos)
+                    .requireExplicitSave(true))
+
+            .sessionManagement(config -> config
+                    .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+
+            .exceptionHandling(config -> config
+                    .authenticationEntryPoint(erros)
+                    .accessDeniedHandler(erros))
+
+            .authorizeHttpRequests(config -> config
+
+                    .dispatcherTypeMatchers(DispatcherType.ERROR)
+                    .permitAll()
+
+                    // Documentação pública
+                    .requestMatchers(
+                            HttpMethod.GET,
+                            "/v3/api-docs",
+                            "/v3/api-docs.yaml",
+                            "/v3/api-docs/**",
+                            "/swagger-ui.html",
+                            "/swagger-ui/**"
+                    )
+                    .permitAll()
+
+                    // Autenticação
+                    .requestMatchers(HttpMethod.GET, "/auth/csrf")
+                    .permitAll()
+
+                    .requestMatchers(HttpMethod.POST, "/auth/login")
+                    .permitAll()
+
+                    .requestMatchers(HttpMethod.GET, "/auth/sessao")
+                    .authenticated()
+
+                    // Usuários
+                    .requestMatchers("/usuarios", "/usuarios/**")
+                    .hasRole("ADMINISTRADOR")
+
+                    // Estudos
+                    .requestMatchers(HttpMethod.POST, "/estudos")
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(HttpMethod.PUT, "/estudos/*/coordenador")
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(HttpMethod.PATCH, "/estudos/*/estado")
+                    .hasRole("PESQUISADOR")
+
+                    // Critérios
+                    .requestMatchers(HttpMethod.POST, "/estudos/*/criterios")
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(HttpMethod.GET, "/estudos/*/criterios")
+                    .hasRole("PESQUISADOR")
+
+                    // Visitas previstas
+                    .requestMatchers(HttpMethod.POST, "/estudos/*/visitas")
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(
+                            HttpMethod.POST,
+                            "/estudos/*/visitas/*/atividades"
+                    )
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(HttpMethod.GET, "/estudos/*/visitas")
+                    .hasRole("PESQUISADOR")
+
+                    // Coordenadores disponíveis
+                    .requestMatchers(HttpMethod.GET, "/estudos/coordenadores")
+                    .hasRole("PESQUISADOR")
+
+                    // Consulta de estudos
+                    .requestMatchers(
+                            HttpMethod.GET,
+                            "/estudos",
+                            "/estudos/*"
+                    )
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+
+                    // Tudo que não foi declarado acima fica bloqueado
+                    .anyRequest()
+                    .denyAll()
+            )
+
+            .logout(config -> config
+                    .logoutUrl("/auth/logout")
+                    .invalidateHttpSession(true)
+                    .clearAuthentication(true)
+                    .deleteCookies("JSESSIONID")
+                    .logoutSuccessHandler(
+                            (request, response, autenticacao) ->
+                                    response.setStatus(204)
+                    )
+            )
+
+            // Registro somente nesta cadeia evita executar o filtro duas vezes
+            .addFilterBefore(
+                    new FiltroUsuarioAtivo(
+                            usuarios,
+                            contextos,
+                            erros
+                    ),
+                    AuthorizationFilter.class
+            );
+
+    return http.build();
+}
 }

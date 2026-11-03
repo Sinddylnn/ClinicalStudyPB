@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import br.edu.uepb.clinicalstudypb.estudos.repository.AtividadePrevistaRepository;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -56,6 +57,7 @@ class TratadorErrosApiTest {
     @MockitoBean private ProtocoloRepository protocoloRepository;
     @MockitoBean private CriterioRepository criterioRepository;
     @MockitoBean private VisitaPrevistaRepository visitaPrevistaRepository;
+    @MockitoBean private AtividadePrevistaRepository atividadePrevistaRepository;
     @MockitoBean private ParticipacaoRepository participacaoRepository;
 
     @Autowired

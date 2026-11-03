@@ -5,10 +5,12 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.util.Optional;
 
 // <-------------------COMPLETUDE DAS VISITAS PREVISTAS------------------->
 /**
- * Verifica modelos de visita sem confundi-los com visitas agendadas de participantes.
+ * Verifica modelos de visita sem confundi-los com visitas agendadas de
+ * participantes.
  *
  * @author Georis
  * @version 1.0
@@ -33,4 +35,11 @@ public interface VisitaPrevistaRepository extends JpaRepository<VisitaPrevista, 
             + "and not exists (select a.id from AtividadePrevista a where a.visitaPrevista.id = v.id) "
             + "order by v.ordem")
     List<String> buscarNomesSemAtividades(@Param("protocoloId") Long protocoloId);
+
+    List<VisitaPrevista> findByProtocoloIdOrderByOrdemAsc(Long protocoloId);
+
+    boolean existsByProtocoloIdAndOrdem(Long protocoloId, Integer ordem);
+
+    java.util.Optional<VisitaPrevista> findByIdAndProtocoloId(Long id, Long protocoloId);
+
 }
