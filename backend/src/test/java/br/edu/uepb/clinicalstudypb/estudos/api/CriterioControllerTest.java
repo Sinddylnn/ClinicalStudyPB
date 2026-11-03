@@ -32,6 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import tools.jackson.databind.ObjectMapper;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
@@ -41,6 +42,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -188,6 +190,85 @@ class CriterioControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(criterios, never()).save(any());
+    }
+
+    @Test
+    void permiteDeclararAusenciaDeCriteriosDeExclusao() throws Exception {
+        Protocolo protocolo = new Protocolo(registros.get(10L), false);
+        ReflectionTestUtils.setField(protocolo, "id", 20L);
+
+        when(protocolos.findByEstudoId(10L))
+                .thenReturn(Optional.of(protocolo));
+
+        when(criterios.existsByProtocoloIdAndTipo(
+                20L,
+                TipoCriterio.EXCLUSAO
+        )).thenReturn(false);
+
+        var entrada = new CriterioExclusaoConfiguracaoEntrada(true);
+
+        mvc.perform(como(1, put("/estudos/10/criterios/exclusao"))
+                        .content(json.writeValueAsString(entrada)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.semCriteriosExclusao")
+                        .value(true));
+    }
+
+    @Test
+    void recusaDeclararAusenciaQuandoExistemCriteriosDeExclusao()
+            throws Exception {
+
+        Protocolo protocolo = new Protocolo(registros.get(10L), false);
+        ReflectionTestUtils.setField(protocolo, "id", 20L);
+
+        when(protocolos.findByEstudoId(10L))
+                .thenReturn(Optional.of(protocolo));
+
+        when(criterios.existsByProtocoloIdAndTipo(
+                20L,
+                TipoCriterio.EXCLUSAO
+        )).thenReturn(true);
+
+        var entrada = new CriterioExclusaoConfiguracaoEntrada(true);
+
+        mvc.perform(como(1, put("/estudos/10/criterios/exclusao"))
+                        .content(json.writeValueAsString(entrada)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo")
+                        .value("CRITERIOS_EXCLUSAO_INCONSISTENTES"));
+    }
+
+    @Test
+    void cadastroDeExclusaoDesmarcaAusenciaDeCriterios()
+            throws Exception {
+
+        Protocolo protocolo = new Protocolo(registros.get(10L), true);
+        ReflectionTestUtils.setField(protocolo, "id", 20L);
+
+        when(protocolos.findByEstudoId(10L))
+                .thenReturn(Optional.of(protocolo));
+
+        var entrada = new CriterioCadastroEntrada(
+                TipoCriterio.EXCLUSAO,
+                "Não participar de outro estudo clínico."
+        );
+
+        mvc.perform(como(1, post("/estudos/10/criterios"))
+                        .content(json.writeValueAsString(entrada)))
+                .andExpect(status().isCreated());
+
+        assertFalse(protocolo.isSemCriteriosExclusao());
+    }
+
+    @Test
+    void bloqueiaCoordenadorNaConfiguracaoDeExclusao()
+            throws Exception {
+
+        var entrada = new CriterioExclusaoConfiguracaoEntrada(true);
+
+        mvc.perform(como(3, put("/estudos/10/criterios/exclusao"))
+                        .content(json.writeValueAsString(entrada)))
+                .andExpect(status().isForbidden());
     }
 
     @Test

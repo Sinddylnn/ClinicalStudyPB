@@ -18,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -75,6 +76,38 @@ public class CriterioController {
             @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
 
         return criterios.cadastrar(estudoId, entrada, usuarioAutenticado);
+    }
+
+    // <-------------------CONFIGURAÇÃO DE EXCLUSÃO------------------->
+
+    @PutMapping("/exclusao")
+    @Operation(
+            summary = "Configurar critérios de exclusão",
+            description = "Define se o protocolo do estudo não possui critérios de exclusão. "
+                    + "A configuração só pode ser alterada enquanto o estudo estiver em planejamento.",
+            parameters = @Parameter(ref = "#/components/parameters/TokenCsrf")
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200",
+                description = "Configuração atualizada com sucesso."),
+        @ApiResponse(responseCode = "400",
+                description = "Configuração inconsistente ou estudo fora do estado de planejamento.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404",
+                description = "Estudo inexistente ou pertencente a outro pesquisador.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
+    })
+    public CriterioExclusaoConfiguracaoResposta configurarExclusao(
+            @PathVariable Long estudoId,
+            @Valid @RequestBody CriterioExclusaoConfiguracaoEntrada entrada,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
+
+        return criterios.configurarExclusao(
+                estudoId,
+                entrada,
+                usuarioAutenticado
+        );
     }
 
     // <-------------------LISTAGEM------------------->

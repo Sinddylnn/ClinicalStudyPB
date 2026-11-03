@@ -6,7 +6,10 @@ import br.edu.uepb.clinicalstudypb.estudos.Criterio;
 import br.edu.uepb.clinicalstudypb.estudos.EstadoEstudo;
 import br.edu.uepb.clinicalstudypb.estudos.Estudo;
 import br.edu.uepb.clinicalstudypb.estudos.Protocolo;
+import br.edu.uepb.clinicalstudypb.estudos.TipoCriterio;
 import br.edu.uepb.clinicalstudypb.estudos.api.CriterioCadastroEntrada;
+import br.edu.uepb.clinicalstudypb.estudos.api.CriterioExclusaoConfiguracaoEntrada;
+import br.edu.uepb.clinicalstudypb.estudos.api.CriterioExclusaoConfiguracaoResposta;
 import br.edu.uepb.clinicalstudypb.estudos.api.CriterioResposta;
 import br.edu.uepb.clinicalstudypb.estudos.repository.CriterioRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
@@ -63,6 +66,18 @@ public class CriterioService {
         Protocolo protocolo = protocolos.findByEstudoId(estudoId)
                 .orElseGet(() -> protocolos.save(new Protocolo(estudo, false)));
 
+        /*
+         * Caso o pesquisador tenha declarado anteriormente que o estudo
+         * não possui critérios de exclusão, o cadastro de uma exclusão
+         * torna essa declaração inválida.
+         */
+        if (entrada.tipo() == TipoCriterio.EXCLUSAO
+                && protocolo.isSemCriteriosExclusao()) {
+
+            protocolo.definirSemCriteriosExclusao(false);
+            protocolos.save(protocolo);
+        }
+
         Criterio criterio = new Criterio(
                 protocolo,
                 entrada.tipo(),
@@ -70,6 +85,51 @@ public class CriterioService {
         );
 
         return CriterioResposta.de(criterios.save(criterio));
+    }
+
+    // <-------------------CONFIGURAÇÃO DE EXCLUSÃO------------------->
+
+    /**
+     * Define se o protocolo não possui critérios de exclusão.
+     *
+     * @param estudoId identificador do estudo
+     * @param entrada configuração informada
+     * @param autenticado pesquisador conectado
+     * @return configuração atualizada
+     */
+    @Transactional
+    public CriterioExclusaoConfiguracaoResposta configurarExclusao(
+            Long estudoId,
+            CriterioExclusaoConfiguracaoEntrada entrada,
+            UsuarioAutenticado autenticado) {
+
+        Estudo estudo = bloquearEstudoProprio(estudoId, autenticado);
+        validarPlanejamento(estudo);
+
+        Protocolo protocolo = protocolos.findByEstudoId(estudoId)
+                .orElseGet(() -> protocolos.save(new Protocolo(estudo, false)));
+
+        boolean possuiExclusoes = criterios.existsByProtocoloIdAndTipo(
+                protocolo.getId(),
+                TipoCriterio.EXCLUSAO
+        );
+
+        if (entrada.semCriteriosExclusao() && possuiExclusoes) {
+            throw new RegraNegocioException(
+                    "CRITERIOS_EXCLUSAO_INCONSISTENTES",
+                    "O estudo possui critérios de exclusão cadastrados."
+            );
+        }
+
+        protocolo.definirSemCriteriosExclusao(
+                entrada.semCriteriosExclusao()
+        );
+
+        protocolos.save(protocolo);
+
+        return new CriterioExclusaoConfiguracaoResposta(
+                protocolo.isSemCriteriosExclusao()
+        );
     }
 
     // <-------------------LISTAGEM------------------->

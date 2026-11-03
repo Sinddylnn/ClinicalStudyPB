@@ -219,6 +219,9 @@ public SecurityFilterChain securityFilterChain(
                     .requestMatchers(HttpMethod.POST, "/estudos/*/criterios")
                     .hasRole("PESQUISADOR")
 
+                    .requestMatchers(HttpMethod.PUT, "/estudos/*/criterios/exclusao")
+                    .hasRole("PESQUISADOR")
+
                     .requestMatchers(HttpMethod.GET, "/estudos/*/criterios")
                     .hasRole("PESQUISADOR")
 

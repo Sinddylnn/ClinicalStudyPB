@@ -63,4 +63,8 @@ public class Protocolo {
     public boolean isSemCriteriosExclusao() {
         return semCriteriosExclusao;
     }
+
+    public void definirSemCriteriosExclusao(boolean semCriteriosExclusao) {
+        this.semCriteriosExclusao = semCriteriosExclusao;
+    }
 }
