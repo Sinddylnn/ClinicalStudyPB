@@ -34,7 +34,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 // <-------------------POLÍTICA DE ACESSO DA API------------------->
 /**
- * Configura autenticação por sessão, proteção de alterações e permissões da Sprint 1.
+ * Configura autenticação por sessão, proteção de alterações e permissões da
+ * Sprint 1.
  *
  * @author Georis
  * @version 1.0
@@ -60,7 +61,7 @@ public class ConfiguracaoSeguranca {
      * Delega a conferência de senha e conta ativa ao Spring Security.
      *
      * @param usuarios serviço que localiza a conta pelo e-mail
-     * @param senhas algoritmo usado para verificar o hash
+     * @param senhas   algoritmo usado para verificar o hash
      * @return gerenciador da autenticação
      * @since 1.0
      */
@@ -131,14 +132,15 @@ public class ConfiguracaoSeguranca {
 
     // <-------------------ROTAS E PERMISSÕES------------------->
     /**
-     * Protege a API sem páginas de login, autenticação Basic ou permissões implícitas.
+     * Protege a API sem páginas de login, autenticação Basic ou permissões
+     * implícitas.
      *
-     * @param http configuração da cadeia de filtros
-     * @param erros respostas JSON de segurança
+     * @param http      configuração da cadeia de filtros
+     * @param erros     respostas JSON de segurança
      * @param contextos armazenamento da autenticação
-     * @param tokens armazenamento dos tokens CSRF
-     * @param cors origens permitidas para a web
-     * @param usuarios acesso ao estado atual da conta
+     * @param tokens    armazenamento dos tokens CSRF
+     * @param cors      origens permitidas para a web
+     * @param usuarios  acesso ao estado atual da conta
      * @return cadeia que protege as requisições HTTP
      * @throws Exception se não for possível construir a configuração de segurança
      * @since 1.0
@@ -160,7 +162,8 @@ public class ConfiguracaoSeguranca {
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         // A consulta da documentação é pública; as operações mantêm suas proteções
                         .requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs.yaml",
-                                "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+                                "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
+                        .permitAll()
                         .requestMatchers(HttpMethod.GET, "/auth/csrf").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/auth/sessao").authenticated()
@@ -168,9 +171,15 @@ public class ConfiguracaoSeguranca {
                         .requestMatchers(HttpMethod.POST, "/estudos").hasRole("PESQUISADOR")
                         .requestMatchers(HttpMethod.PUT, "/estudos/*/coordenador").hasRole("PESQUISADOR")
                         .requestMatchers(HttpMethod.PATCH, "/estudos/*/estado").hasRole("PESQUISADOR")
+                        .requestMatchers(HttpMethod.POST, "/estudos").hasRole("PESQUISADOR")
+                        .requestMatchers(HttpMethod.PUT, "/estudos/*/coordenador").hasRole("PESQUISADOR")
+                        .requestMatchers(HttpMethod.PATCH, "/estudos/*/estado").hasRole("PESQUISADOR")
+                        .requestMatchers(HttpMethod.POST, "/estudos/*/criterios").hasRole("PESQUISADOR")
+                        .requestMatchers(HttpMethod.GET, "/estudos/*/criterios").hasRole("PESQUISADOR")
+                        .requestMatchers(HttpMethod.GET, "/estudos/coordenadores").hasRole("PESQUISADOR")
                         .requestMatchers(HttpMethod.GET, "/estudos/coordenadores").hasRole("PESQUISADOR")
                         .requestMatchers(HttpMethod.GET, "/estudos", "/estudos/*")
-                                .hasAnyRole("PESQUISADOR", "COORDENADOR")
+                        .hasAnyRole("PESQUISADOR", "COORDENADOR")
                         .anyRequest().denyAll())
                 .logout(config -> config.logoutUrl("/auth/logout")
                         .invalidateHttpSession(true).clearAuthentication(true).deleteCookies("JSESSIONID")
