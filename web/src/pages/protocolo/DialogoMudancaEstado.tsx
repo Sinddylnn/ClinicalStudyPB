@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ErroRequisicao } from '../../api/erros';
 import type { AlteracaoEstadoEntrada, EstadoEstudo, Estudo } from '../../api/estudos';
 import DialogoConfirmacao, { type ItemConsequencia } from '../../components/DialogoConfirmacao';
@@ -77,6 +77,14 @@ export default function DialogoMudancaEstado({ estudo, destino, aoAlterar, aoCan
   const [erro, setErro] = useState<string>();
   const [enviando, setEnviando] = useState(false);
   const campo = useRef<HTMLTextAreaElement>(null);
+  const focarCampo = useRef(false);
+
+  // O campo fica desativado durante o envio: o foco só volta a ele depois de reativado
+  useEffect(() => {
+    if (enviando || !focarCampo.current) return;
+    focarCampo.current = false;
+    campo.current?.focus();
+  }, [enviando]);
 
   const confirmar = async () => {
     setErro(undefined);
@@ -98,7 +106,7 @@ export default function DialogoMudancaEstado({ estudo, destino, aoAlterar, aoCan
       const doCampo = falha instanceof ErroRequisicao ? falha.errosCampos[CAMPO_JUSTIFICATIVA] : undefined;
       if (doCampo && pedeJustificativa) {
         setErroCampo(doCampo);
-        campo.current?.focus();
+        focarCampo.current = true;
       } else {
         setErro(falha instanceof ErroRequisicao ? falha.message : 'Não foi possível alterar o estado do estudo.');
       }
@@ -138,7 +146,11 @@ export default function DialogoMudancaEstado({ estudo, destino, aoAlterar, aoCan
             aria-describedby={erroCampo ? 'erro-justificativa' : 'ajuda-justificativa'}
             disabled={enviando}
             onChange={(e) => alterarJustificativa(e.target.value)}
-            placeholder="Ex.: estudo cancelado antes da inclusão de participantes."
+            placeholder={
+              obrigatoria
+                ? 'Ex.: estudo cancelado antes da inclusão de participantes.'
+                : 'Ex.: acompanhamento dos participantes concluído.'
+            }
           />
           <span className="campo-rodape">
             {erroCampo ? (
