@@ -12,10 +12,47 @@
   white-space: nowrap;
 }
 
-/* Ação de uma task futura: desativada, sem o cursor de espera dos botões salvando */
-.pagina-interna .protocolo-acao-futura:disabled {
-  color: var(--icone-suave);
+/* <-------------------MUDANÇA DE ESTADO-------------------> */
+/* Ações do cabeçalho: só as permitidas a partir do estado atual */
+.protocolo-acoes-estado {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  max-width: 420px;
+}
+
+.protocolo-acoes-estado-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Bloqueada por pendências: sem o cursor de espera dos botões salvando */
+.pagina-interna .protocolo-acoes-estado .botao:disabled {
   cursor: not-allowed;
+}
+
+.protocolo-acoes-estado-nota {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: right;
+}
+
+.protocolo-estado-cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.protocolo-estado-frase {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--texto-suave);
 }
 
 /* <-------------------ABAS-------------------> */
@@ -496,6 +533,19 @@
 @media (max-width: 900px) {
   .protocolo-abas {
     gap: 20px;
+  }
+
+  /* O cabeçalho quebra a linha: as ações passam para baixo do título, alinhadas à esquerda */
+  .protocolo-acoes-estado {
+    align-items: flex-start;
+  }
+
+  .protocolo-acoes-estado-botoes {
+    justify-content: flex-start;
+  }
+
+  .protocolo-acoes-estado-nota {
+    text-align: left;
   }
 
   .protocolo-dados div {

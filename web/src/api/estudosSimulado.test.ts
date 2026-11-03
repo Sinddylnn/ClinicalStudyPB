@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ErroRequisicao } from './erros';
-import type { EstudoCadastroEntrada } from './estudos';
-import { reiniciarEstudosSimulados, servicoEstudosSimulado } from './estudosSimulado';
+import type { Estudo, EstudoCadastroEntrada } from './estudos';
+import {
+  criarServicoEstudosSimulado,
+  reiniciarEstudosSimulados,
+  servicoEstudosSimulado,
+  type ConsultasEstado,
+} from './estudosSimulado';
 
 // <-------------------TESTES DO SERVIÇO SIMULADO------------------->
 const ENTRADA: EstudoCadastroEntrada = {
@@ -74,5 +79,149 @@ describe('servicoEstudosSimulado', () => {
     await executar(servicoEstudosSimulado.cadastrar({ ...ENTRADA, titulo: '' })).catch(() => {});
     const estudos = await executar(servicoEstudosSimulado.listar());
     expect(estudos).toHaveLength(3);
+  });
+});
+
+// <-------------------MUDANÇA DE ESTADO------------------->
+const MODELO: Estudo = {
+  id: 1,
+  titulo: 'Estudo fictício',
+  objetivo: 'Objetivo.',
+  dataInicio: '2026-11-03',
+  dataFim: '2027-02-28',
+  limiteParticipantes: 10,
+  estado: 'PLANEJAMENTO',
+  responsavelId: 2,
+  coordenadorId: 3,
+  justificativaEncerramento: null,
+};
+
+function criarConsultas(parcial: Partial<ConsultasEstado> = {}): ConsultasEstado {
+  return {
+    pendencias: vi.fn().mockResolvedValue([]),
+    possuiInclusoes: vi.fn().mockResolvedValue(false),
+    ...parcial,
+  };
+}
+
+describe('servicoEstudosSimulado: alterarEstado', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('grava o novo estado e devolve o estudo atualizado', async () => {
+    const consultas = criarConsultas();
+    const servico = criarServicoEstudosSimulado([MODELO], consultas);
+
+    const atualizado = await executar(servico.alterarEstado(1, { estado: 'RECRUTAMENTO' }));
+
+    expect(atualizado).toMatchObject({ id: 1, estado: 'RECRUTAMENTO', justificativaEncerramento: null });
+    expect((await executar(servico.listar()))[0].estado).toBe('RECRUTAMENTO');
+    // Para o recrutamento só importam as pendências do protocolo
+    expect(consultas.pendencias).toHaveBeenCalledWith(1);
+    expect(consultas.possuiInclusoes).not.toHaveBeenCalled();
+  });
+
+  it('guarda a justificativa aparada no encerramento antecipado', async () => {
+    const servico = criarServicoEstudosSimulado([MODELO], criarConsultas());
+
+    const encerrado = await executar(
+      servico.alterarEstado(1, { estado: 'ENCERRADO', justificativaEncerramento: '  Cancelado.  ' }),
+    );
+
+    expect(encerrado).toMatchObject({ estado: 'ENCERRADO', justificativaEncerramento: 'Cancelado.' });
+  });
+
+  it('encerra a partir da execução sem consultar as inclusões', async () => {
+    const consultas = criarConsultas({ possuiInclusoes: vi.fn().mockResolvedValue(true) });
+    const servico = criarServicoEstudosSimulado([{ ...MODELO, estado: 'EXECUCAO' }], consultas);
+
+    const encerrado = await executar(servico.alterarEstado(1, { estado: 'ENCERRADO', justificativaEncerramento: ' ' }));
+
+    expect(encerrado).toMatchObject({ estado: 'ENCERRADO', justificativaEncerramento: null });
+    expect(consultas.possuiInclusoes).not.toHaveBeenCalled();
+  });
+
+  it('recusa com o código do backend e mantém o estado anterior', async () => {
+    const consultas = criarConsultas({ pendencias: vi.fn().mockResolvedValue(['COORDENADOR']) });
+    const servico = criarServicoEstudosSimulado([MODELO], consultas);
+
+    const erro = await executar(servico.alterarEstado(1, { estado: 'RECRUTAMENTO' })).catch((e: unknown) => e);
+
+    expect(erro).toBeInstanceOf(ErroRequisicao);
+    expect(erro).toMatchObject({ status: 400, codigo: 'COORDENADOR_OBRIGATORIO' });
+    expect((await executar(servico.listar()))[0].estado).toBe('PLANEJAMENTO');
+  });
+
+  it('conta o histórico de inclusões para iniciar a execução e para o encerramento antecipado', async () => {
+    const semInclusao = criarServicoEstudosSimulado([{ ...MODELO, estado: 'RECRUTAMENTO' }], criarConsultas());
+    await expect(executar(semInclusao.alterarEstado(1, { estado: 'EXECUCAO' }))).rejects.toMatchObject({
+      codigo: 'ESTUDO_SEM_PARTICIPANTES',
+    });
+
+    const comInclusao = criarServicoEstudosSimulado(
+      [{ ...MODELO, estado: 'RECRUTAMENTO' }],
+      criarConsultas({ possuiInclusoes: vi.fn().mockResolvedValue(true) }),
+    );
+    await expect(
+      executar(comInclusao.alterarEstado(1, { estado: 'ENCERRADO', justificativaEncerramento: 'Motivo.' })),
+    ).rejects.toMatchObject({ codigo: 'ESTUDO_COM_PARTICIPANTES' });
+    await expect(executar(comInclusao.alterarEstado(1, { estado: 'EXECUCAO' }))).resolves.toMatchObject({
+      estado: 'EXECUCAO',
+    });
+  });
+
+  it('confere os campos antes do estudo e recusa caminhos proibidos sem consultar nada', async () => {
+    const consultas = criarConsultas();
+    const servico = criarServicoEstudosSimulado([{ ...MODELO, estado: 'ENCERRADO' }], consultas);
+
+    // Campo inválido vem antes do 404, como o @Valid do backend
+    await expect(
+      executar(servico.alterarEstado(99, { estado: 'ENCERRADO', justificativaEncerramento: 'a'.repeat(501) })),
+    ).rejects.toMatchObject({ status: 400, codigo: 'VALIDACAO_INVALIDA' });
+    await expect(executar(servico.alterarEstado(99, { estado: 'ENCERRADO' }))).rejects.toMatchObject({
+      status: 404,
+      codigo: 'RECURSO_NAO_ENCONTRADO',
+    });
+    // Reabrir um estudo encerrado
+    await expect(executar(servico.alterarEstado(1, { estado: 'RECRUTAMENTO' }))).rejects.toMatchObject({
+      status: 400,
+      codigo: 'TRANSICAO_ESTADO_INVALIDA',
+      message: 'Não é permitido mudar de ENCERRADO para RECRUTAMENTO.',
+    });
+    expect(consultas.pendencias).not.toHaveBeenCalled();
+    expect(consultas.possuiInclusoes).not.toHaveBeenCalled();
+  });
+});
+
+// <-------------------CONSULTAS PADRÃO------------------->
+// O serviço em uso consulta os simulados de protocolo e candidatos por import dinâmico.
+// Com timers reais: o import dinâmico não termina dentro do avanço dos timers falsos
+describe('servicoEstudosSimulado: consultas aos outros simulados', () => {
+  beforeEach(() => {
+    reiniciarEstudosSimulados();
+  });
+
+  it('usa o protocolo e os candidatos simulados para decidir a mudança', async () => {
+    // Estudo 2: sem coordenador
+    await expect(servicoEstudosSimulado.alterarEstado(2, { estado: 'RECRUTAMENTO' })).rejects.toMatchObject({
+      codigo: 'COORDENADOR_OBRIGATORIO',
+    });
+    // Estudo 1: falta definir as exclusões
+    await expect(servicoEstudosSimulado.alterarEstado(1, { estado: 'RECRUTAMENTO' })).rejects.toMatchObject({
+      codigo: 'PROTOCOLO_INCOMPLETO',
+      message: 'Cadastre os critérios de exclusão ou confirme que não existem exclusões.',
+    });
+    // Estudo 3: já tem uma inclusão (Maria Souza)
+    await expect(
+      servicoEstudosSimulado.alterarEstado(3, { estado: 'ENCERRADO', justificativaEncerramento: 'Motivo.' }),
+    ).rejects.toMatchObject({ codigo: 'ESTUDO_COM_PARTICIPANTES' });
+    await expect(servicoEstudosSimulado.alterarEstado(3, { estado: 'EXECUCAO' })).resolves.toMatchObject({
+      estado: 'EXECUCAO',
+    });
   });
 });

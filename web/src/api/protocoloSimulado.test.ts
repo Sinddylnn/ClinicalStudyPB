@@ -204,6 +204,7 @@ describe('servicoProtocoloSimulado', () => {
     const estudos = {
       listar: vi.fn().mockResolvedValue([{ ...modelo, id: 10, coordenadorId: null }]),
       cadastrar: vi.fn(),
+      alterarEstado: vi.fn(),
     };
     const semCoordenador = criarServicoProtocoloSimulado(estudos, []);
     expect((await executar(semCoordenador.obter(10))).pendenciasRecrutamento[0]).toBe('COORDENADOR');
@@ -220,6 +221,7 @@ describe('servicoProtocoloSimulado', () => {
     const estudosReais = {
       listar: vi.fn().mockResolvedValue([{ ...modelo, id: 10, estado: 'PLANEJAMENTO' }]),
       cadastrar: vi.fn(),
+      alterarEstado: vi.fn(),
     };
     const servicoReal = criarServicoProtocoloSimulado(estudosReais, []);
 
