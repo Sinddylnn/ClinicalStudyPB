@@ -1,5 +1,6 @@
 package br.edu.uepb.clinicalstudypb.estudos;
 
+import br.edu.uepb.clinicalstudypb.compartilhado.erro.RegraNegocioException;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -73,6 +74,9 @@ public class Estudo {
     @Column(nullable = false)
     private EstadoEstudo estado = EstadoEstudo.PLANEJAMENTO;
 
+    @Column(name = "justificativa_encerramento", length = 500)
+    private String justificativaEncerramento;
+
     /**
      * Construtor protegido exigido pelo JPA.
      */
@@ -108,52 +112,22 @@ public class Estudo {
 
     // <-------------------Métodos de acesso------------------->
 
-    /**
-     * Consulta a identificação do estudo no banco.
-     *
-     * @return identificador gerado ao persistir o estudo, ou {@code null} antes disso
-     * @since 1.0
-     */
     public Long getId() {
         return id;
     }
 
-    /**
-     * Consulta o título usado para identificar o estudo.
-     *
-     * @return título cadastrado
-     * @since 1.0
-     */
     public String getTitulo() {
         return titulo;
     }
 
-    /**
-     * Consulta a finalidade registrada para o estudo.
-     *
-     * @return descrição do objetivo
-     * @since 1.0
-     */
     public String getObjetivo() {
         return objetivo;
     }
 
-    /**
-     * Consulta o usuário vinculado como responsável pelo estudo.
-     *
-     * @return pesquisador responsável
-     * @since 1.0
-     */
     public Usuario getResponsavel() {
         return responsavel;
     }
 
-    /**
-     * Consulta o coordenador atribuído pelo pesquisador responsável.
-     *
-     * @return coordenador do estudo, ou {@code null} enquanto não houver atribuição
-     * @since 1.0
-     */
     public Usuario getCoordenador() {
         return coordenador;
     }
@@ -165,46 +139,69 @@ public class Estudo {
      * @since 1.0
      */
     public void atribuirCoordenador(Usuario coordenador) {
+        if (estado == EstadoEstudo.ENCERRADO) {
+            throw new RegraNegocioException("ESTUDO_ENCERRADO",
+                    "Não é permitido alterar o coordenador de um estudo encerrado.");
+        }
         this.coordenador = java.util.Objects.requireNonNull(coordenador);
     }
 
-    /**
-     * Consulta o início previsto para o estudo.
-     *
-     * @return data prevista de início
-     * @since 1.0
-     */
     public LocalDate getDataInicio() {
         return dataInicio;
     }
 
-    /**
-     * Consulta o término previsto para o estudo.
-     *
-     * @return data prevista de término
-     * @since 1.0
-     */
     public LocalDate getDataFim() {
         return dataFim;
     }
 
-    /**
-     * Consulta a capacidade de participantes definida para o estudo.
-     *
-     * @return quantidade máxima de participantes
-     * @since 1.0
-     */
     public Integer getLimiteParticipantes() {
         return limiteParticipantes;
     }
 
-    /**
-     * Consulta a etapa atual do estudo.
-     *
-     * @return estado do estudo, inicialmente {@link EstadoEstudo#PLANEJAMENTO}
-     * @since 1.0
-     */
     public EstadoEstudo getEstado() {
         return estado;
+    }
+
+    // <-------------------MUDANÇA DE ESTADO E JUSTIFICATIVA------------------->
+
+    /**
+     * Registra a mudança após o serviço conferir protocolo, inclusões e permissões.
+     *
+     * <p>Valida o caminho e a justificativa antes de modificar qualquer campo.
+     * Não oferece um setter genérico que permita voltar ou reabrir o estudo.</p>
+     *
+     * @param destino próximo estado
+     * @param justificativa motivo do encerramento, obrigatório se antecipado
+     * @throws RegraNegocioException quando a transição ou a justificativa é inválida
+     * @since 1.0
+     */
+    public void alterarEstado(EstadoEstudo destino, String justificativa) {
+        if (!estado.permiteTransicaoPara(destino)) {
+            throw new RegraNegocioException("TRANSICAO_ESTADO_INVALIDA",
+                    "Não é permitido mudar de " + estado + " para " + destino + ".");
+        }
+        String motivo = justificativa == null ? null : justificativa.strip();
+        if (motivo != null && motivo.isEmpty()) {
+            motivo = null;
+        }
+        if (motivo != null && motivo.length() > 500) {
+            throw new RegraNegocioException("JUSTIFICATIVA_INVALIDA",
+                    "A justificativa deve ter no máximo 500 caracteres.");
+        }
+        if (destino == EstadoEstudo.ENCERRADO && estado != EstadoEstudo.EXECUCAO && motivo == null) {
+            throw new RegraNegocioException("JUSTIFICATIVA_OBRIGATORIA",
+                    "Informe a justificativa para encerrar o estudo antes da execução.");
+        }
+        if (destino != EstadoEstudo.ENCERRADO && motivo != null) {
+            throw new RegraNegocioException("JUSTIFICATIVA_INVALIDA",
+                    "A justificativa de encerramento só deve ser informada ao encerrar o estudo.");
+        }
+        // Só altera os campos depois que todas as validações passaram
+        this.estado = destino;
+        this.justificativaEncerramento = motivo;
+    }
+
+    public String getJustificativaEncerramento() {
+        return justificativaEncerramento;
     }
 }
