@@ -30,4 +30,6 @@ public interface CriterioRepository extends JpaRepository<Criterio, Long> {
      * @return critérios vinculados ao protocolo
      */
     List<Criterio> findByProtocoloIdOrderByIdAsc(Long protocoloId);
+
+    java.util.Optional<Criterio> findByIdAndProtocoloId(Long id, Long protocoloId);
 }

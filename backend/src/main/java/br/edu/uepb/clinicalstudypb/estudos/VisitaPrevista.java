@@ -14,8 +14,8 @@ import jakarta.persistence.Table;
 /**
  * Representa um modelo de visita do protocolo, sem participante ou agendamento.
  *
- * <p>Os cadastros serão implementados nos serviços próprios. Eles deverão bloquear o
- * estudo e conferir PLANEJAMENTO antes de alterar o protocolo ou seus itens.</p>
+ * <p>Os serviços de configuração bloqueiam o
+ * estudo e conferem PLANEJAMENTO antes de alterar o protocolo ou seus itens.</p>
  * @author Georis
  * @version 1.0
  * @since 29/10/2026
@@ -80,5 +80,14 @@ public class VisitaPrevista {
 
     public Integer getOrdem() {
         return ordem;
+    }
+
+    // <-------------------EDIÇÃO DOS DADOS------------------->
+
+    /** Atualiza os dados já validados, preservando o identificador e o vínculo. */
+    public void editar(String nome, String descricao, Integer ordem) {
+        this.nome = nome.strip();
+        this.descricao = descricao;
+        this.ordem = ordem;
     }
 }

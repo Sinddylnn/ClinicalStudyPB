@@ -126,7 +126,7 @@ public class VisitaPrevistaService {
             Long estudoId,
             UsuarioAutenticado autenticado) {
 
-        estudos.findByIdAndResponsavelId(estudoId, autenticado.getId())
+        consultaPermitida(estudoId, autenticado)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Estudo não encontrado."
@@ -169,5 +169,69 @@ public class VisitaPrevistaService {
                     "As visitas previstas só podem ser alteradas enquanto o estudo estiver em planejamento."
             );
         }
+    }
+
+    /** Restringe a consulta ao responsável ou ao coordenador vinculado. */
+    private java.util.Optional<Estudo> consultaPermitida(Long estudoId, UsuarioAutenticado autenticado) {
+        return switch (autenticado.getPerfil()) {
+            case PESQUISADOR -> estudos.findByIdAndResponsavelId(estudoId, autenticado.getId());
+            case COORDENADOR -> estudos.findByIdAndCoordenadorId(estudoId, autenticado.getId());
+            default -> java.util.Optional.empty();
+        };
+    }
+
+    // <-------------------EDIÇÃO E REMOÇÃO------------------->
+
+    /** Edita uma visita sem trocar seu vínculo ou suas atividades. */
+    @Transactional
+    public VisitaPrevistaResposta editarVisita(Long estudoId, Long visitaId,
+            VisitaPrevistaCadastroEntrada entrada, UsuarioAutenticado autenticado) {
+        validarPlanejamento(bloquearEstudoProprio(estudoId, autenticado));
+        VisitaPrevista visita = localizarVisita(estudoId, visitaId);
+        // A própria visita pode continuar usando a ordem atual
+        if (visitas.existsByProtocoloIdAndOrdemAndIdNot(visita.getProtocolo().getId(), entrada.ordem(), visitaId)) {
+            throw new RegraNegocioException("ORDEM_VISITA_DUPLICADA", "Já existe uma visita prevista com essa ordem.");
+        }
+        visita.editar(entrada.nome(), entrada.descricao(), entrada.ordem());
+        return VisitaPrevistaResposta.de(visita, atividades.findByVisitaPrevistaIdOrderByIdAsc(visitaId)
+                .stream().map(AtividadePrevistaResposta::de).toList());
+    }
+
+    /** Remove a visita e suas atividades na mesma transação. */
+    @Transactional
+    public void removerVisita(Long estudoId, Long visitaId, UsuarioAutenticado autenticado) {
+        validarPlanejamento(bloquearEstudoProprio(estudoId, autenticado));
+        // A chave estrangeira da V6 remove as atividades junto com a visita
+        visitas.delete(localizarVisita(estudoId, visitaId));
+    }
+
+    /** Edita a atividade apenas dentro da visita e do estudo informados. */
+    @Transactional
+    public AtividadePrevistaResposta editarAtividade(Long estudoId, Long visitaId, Long atividadeId,
+            AtividadePrevistaCadastroEntrada entrada, UsuarioAutenticado autenticado) {
+        validarPlanejamento(bloquearEstudoProprio(estudoId, autenticado));
+        localizarVisita(estudoId, visitaId);
+        AtividadePrevista atividade = localizarAtividade(visitaId, atividadeId);
+        atividade.editar(entrada.descricao());
+        return AtividadePrevistaResposta.de(atividade);
+    }
+
+    /** Remove a atividade após conferir toda a cadeia de vínculos. */
+    @Transactional
+    public void removerAtividade(Long estudoId, Long visitaId, Long atividadeId, UsuarioAutenticado autenticado) {
+        validarPlanejamento(bloquearEstudoProprio(estudoId, autenticado));
+        localizarVisita(estudoId, visitaId);
+        atividades.delete(localizarAtividade(visitaId, atividadeId));
+    }
+
+    private VisitaPrevista localizarVisita(Long estudoId, Long visitaId) {
+        return protocolos.findByEstudoId(estudoId)
+                .flatMap(p -> visitas.findByIdAndProtocoloId(visitaId, p.getId()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Visita prevista não encontrada."));
+    }
+
+    private AtividadePrevista localizarAtividade(Long visitaId, Long atividadeId) {
+        return atividades.findByIdAndVisitaPrevistaId(atividadeId, visitaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Atividade prevista não encontrada."));
     }
 }

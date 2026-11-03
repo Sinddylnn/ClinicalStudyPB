@@ -16,4 +16,6 @@ public interface AtividadePrevistaRepository
         extends JpaRepository<AtividadePrevista, Long> {
 
     List<AtividadePrevista> findByVisitaPrevistaIdOrderByIdAsc(Long visitaPrevistaId);
+
+    java.util.Optional<AtividadePrevista> findByIdAndVisitaPrevistaId(Long id, Long visitaPrevistaId);
 }

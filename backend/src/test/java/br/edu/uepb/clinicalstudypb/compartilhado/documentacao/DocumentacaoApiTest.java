@@ -289,4 +289,25 @@ class DocumentacaoApiTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.codigo").value("CSRF_INVALIDO"));
     }
+
+    /** Mantém o contrato das novas operações disponível para a integração da web. */
+    @Test
+    void documentaConfiguracaoCompletaDoProtocolo() throws Exception {
+        JsonNode rotas = json.readTree(mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString()).path("paths");
+        assertThat(rotas.path("/estudos/{estudoId}/criterios/exclusao").has("get")).isTrue();
+        for (String caminho : new String[]{
+                "/estudos/{estudoId}/criterios/{criterioId}",
+                "/estudos/{estudoId}/visitas/{visitaId}",
+                "/estudos/{estudoId}/visitas/{visitaId}/atividades/{atividadeId}"}) {
+            for (String metodo : new String[]{"put", "delete"}) {
+                JsonNode operacao = rotas.path(caminho).path(metodo);
+                assertThat(operacao.isMissingNode()).isFalse();
+                for (String codigo : new String[]{"400", "401", "403", "404"}) {
+                    assertThat(operacao.path("responses").has(codigo)).isTrue();
+                }
+                assertThat(operacao.path("parameters").toString()).contains("TokenCsrf");
+            }
+        }
+    }
 }

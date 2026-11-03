@@ -16,6 +16,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -116,7 +117,7 @@ public class CriterioController {
     @Operation(
             summary = "Listar critérios",
             description = "Lista os critérios cadastrados no protocolo de um estudo "
-                    + "do pesquisador autenticado."
+                    + "do pesquisador responsável ou do coordenador vinculado."
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200",
@@ -131,5 +132,49 @@ public class CriterioController {
             @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
 
         return criterios.listar(estudoId, usuarioAutenticado);
+    }
+
+    // <-------------------CONSULTA DA DECLARAÇÃO------------------->
+
+    @ApiResponse(responseCode = "404", description = "Estudo inexistente ou fora do vínculo permitido.",
+            content = @Content(schema = @Schema(implementation = ErroApi.class)))
+    @GetMapping("/exclusao")
+    @Operation(summary = "Consultar declaração de ausência de exclusões",
+            description = "Disponível ao pesquisador responsável e ao coordenador vinculado, inclusive após o planejamento.")
+    public CriterioExclusaoConfiguracaoResposta consultarExclusao(@PathVariable Long estudoId,
+            @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado autenticado) {
+        return criterios.consultarExclusao(estudoId, autenticado);
+    }
+
+    // <-------------------EDIÇÃO E REMOÇÃO------------------->
+
+    @ApiResponses({
+        @ApiResponse(responseCode = "400", description = "Dados inválidos, inconsistência ou estudo fora de planejamento.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404", description = "Registro inexistente ou fora do vínculo permitido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
+    })
+    @PutMapping("/{criterioId}")
+    @Operation(summary = "Editar critério", description = "Somente o responsável, durante o planejamento.",
+            parameters = @Parameter(ref = "#/components/parameters/TokenCsrf"))
+    public CriterioResposta editar(@PathVariable Long estudoId, @PathVariable Long criterioId,
+            @Valid @RequestBody CriterioCadastroEntrada entrada,
+            @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado autenticado) {
+        return criterios.editar(estudoId, criterioId, entrada, autenticado);
+    }
+
+    @ApiResponses({
+        @ApiResponse(responseCode = "400", description = "Dados inválidos, inconsistência ou estudo fora de planejamento.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404", description = "Registro inexistente ou fora do vínculo permitido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
+    })
+    @DeleteMapping("/{criterioId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Remover critério", description = "Somente o responsável, durante o planejamento.",
+            parameters = @Parameter(ref = "#/components/parameters/TokenCsrf"))
+    public void remover(@PathVariable Long estudoId, @PathVariable Long criterioId,
+            @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado autenticado) {
+        criterios.remover(estudoId, criterioId, autenticado);
     }
 }

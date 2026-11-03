@@ -41,6 +41,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -98,6 +100,11 @@ class VisitaPrevistaControllerTest {
                 .thenAnswer(i -> Optional.ofNullable(registros.get(i.getArgument(0)))
                         .filter(e -> e.getResponsavel().getId()
                                 .equals(i.getArgument(1))));
+
+        when(estudos.findByIdAndCoordenadorId(anyLong(), anyLong()))
+                .thenAnswer(i -> Optional.ofNullable(registros.get(i.getArgument(0)))
+                        .filter(e -> e.getCoordenador() != null
+                                && e.getCoordenador().getId().equals(i.getArgument(1))));
 
         when(protocolos.save(any(Protocolo.class)))
                 .thenAnswer(i -> {
@@ -286,7 +293,7 @@ class VisitaPrevistaControllerTest {
     @Test
     void bloqueiaCoordenadorNosEndpointsDeVisita() throws Exception {
         mvc.perform(como(3, get("/estudos/10/visitas")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
     }
 
     private Protocolo protocolo() {
@@ -353,5 +360,131 @@ class VisitaPrevistaControllerTest {
                 .with(user(new UsuarioAutenticado(contas.get(id))))
                 .with(csrf())
                 .contentType("application/json");
+    }
+
+    // <-------------------EDIÇÃO, REMOÇÃO E CONSULTA VINCULADA------------------->
+
+    @Test
+    void coordenadorVinculadoConsultaVisitasAposEncerramento() throws Exception {
+        ReflectionTestUtils.setField(registros.get(10L), "coordenador", contas.get(3L));
+        ReflectionTestUtils.setField(registros.get(10L), "estado", EstadoEstudo.ENCERRADO);
+        mvc.perform(como(3, get("/estudos/10/visitas"))).andExpect(status().isOk());
+        mvc.perform(como(2, get("/estudos/10/visitas"))).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void editaVisitaEAtividadePreservandoIds() throws Exception {
+        configurarVisita();
+        mvc.perform(como(1, put("/estudos/10/visitas/30"))
+                .content(json.writeValueAsString(new VisitaPrevistaCadastroEntrada("Revisão", null, 1))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(30))
+                .andExpect(jsonPath("$.nome").value("Revisão"));
+        mvc.perform(como(1, put("/estudos/10/visitas/30/atividades/40"))
+                .content(json.writeValueAsString(new AtividadePrevistaCadastroEntrada("Nova atividade"))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(40))
+                .andExpect(jsonPath("$.descricao").value("Nova atividade"));
+    }
+
+    @Test
+    void recusaOrdemDeOutraVisitaNaEdicao() throws Exception {
+        configurarVisita();
+        when(visitas.existsByProtocoloIdAndOrdemAndIdNot(20L, 2, 30L)).thenReturn(true);
+        mvc.perform(como(1, put("/estudos/10/visitas/30"))
+                .content(json.writeValueAsString(new VisitaPrevistaCadastroEntrada("Revisão", null, 2))))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.codigo").value("ORDEM_VISITA_DUPLICADA"));
+    }
+
+    @Test
+    void removeAtividadeEVisita() throws Exception {
+        configurarVisita();
+        mvc.perform(como(1, delete("/estudos/10/visitas/30/atividades/40"))).andExpect(status().isNoContent());
+        verify(atividades).delete(any(AtividadePrevista.class));
+        mvc.perform(como(1, delete("/estudos/10/visitas/30"))).andExpect(status().isNoContent());
+        verify(visitas).delete(any(VisitaPrevista.class));
+    }
+
+    @Test
+    void recusaIdsDeOutraVisitaOuAtividade() throws Exception {
+        configurarVisita();
+        mvc.perform(como(1, delete("/estudos/10/visitas/99"))).andExpect(status().isNotFound());
+        mvc.perform(como(1, delete("/estudos/10/visitas/30/atividades/99"))).andExpect(status().isNotFound());
+        mvc.perform(como(1, put("/estudos/10/visitas/99"))
+                .content(json.writeValueAsString(new VisitaPrevistaCadastroEntrada("Outra", null, 1))))
+                .andExpect(status().isNotFound());
+        mvc.perform(como(1, put("/estudos/10/visitas/30/atividades/99"))
+                .content(json.writeValueAsString(new AtividadePrevistaCadastroEntrada("Outra"))))
+                .andExpect(status().isNotFound());
+        verify(visitas, never()).delete(any(VisitaPrevista.class));
+        verify(atividades, never()).delete(any(AtividadePrevista.class));
+    }
+
+    private void configurarVisita() {
+        Protocolo protocolo = protocolo();
+        VisitaPrevista visita = visita(protocolo, 30L, 1);
+        AtividadePrevista atividade = new AtividadePrevista(visita, "Atividade");
+        ReflectionTestUtils.setField(atividade, "id", 40L);
+        when(protocolos.findByEstudoId(10L)).thenReturn(Optional.of(protocolo));
+        when(visitas.findByIdAndProtocoloId(30L, 20L)).thenReturn(Optional.of(visita));
+        when(atividades.findByIdAndVisitaPrevistaId(40L, 30L)).thenReturn(Optional.of(atividade));
+    }
+
+    @Test
+    void protegeNovaOperacao0() throws Exception {
+        mvc.perform(como(2, put("/estudos/10/visitas/30").content("{\"nome\":\"Visita\",\"ordem\":1}"))).andExpect(status().isNotFound());
+        mvc.perform(como(3, put("/estudos/10/visitas/30").content("{\"nome\":\"Visita\",\"ordem\":1}"))).andExpect(status().isForbidden());
+        mvc.perform(put("/estudos/10/visitas/30").content("{\"nome\":\"Visita\",\"ordem\":1}").with(user(new UsuarioAutenticado(contas.get(1L))))
+                .contentType("application/json")).andExpect(status().isForbidden());
+        mvc.perform(put("/estudos/10/visitas/30").content("{\"nome\":\"Visita\",\"ordem\":1}").with(csrf()).contentType("application/json"))
+                .andExpect(status().isUnauthorized());
+        for (EstadoEstudo estado : List.of(EstadoEstudo.RECRUTAMENTO, EstadoEstudo.EXECUCAO, EstadoEstudo.ENCERRADO)) {
+            ReflectionTestUtils.setField(registros.get(10L), "estado", estado);
+            mvc.perform(como(1, put("/estudos/10/visitas/30").content("{\"nome\":\"Visita\",\"ordem\":1}"))).andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.codigo").value("ESTUDO_FORA_PLANEJAMENTO"));
+        }
+    }
+
+    @Test
+    void protegeNovaOperacao1() throws Exception {
+        mvc.perform(como(2, delete("/estudos/10/visitas/30").content("{}"))).andExpect(status().isNotFound());
+        mvc.perform(como(3, delete("/estudos/10/visitas/30").content("{}"))).andExpect(status().isForbidden());
+        mvc.perform(delete("/estudos/10/visitas/30").content("{}").with(user(new UsuarioAutenticado(contas.get(1L))))
+                .contentType("application/json")).andExpect(status().isForbidden());
+        mvc.perform(delete("/estudos/10/visitas/30").content("{}").with(csrf()).contentType("application/json"))
+                .andExpect(status().isUnauthorized());
+        for (EstadoEstudo estado : List.of(EstadoEstudo.RECRUTAMENTO, EstadoEstudo.EXECUCAO, EstadoEstudo.ENCERRADO)) {
+            ReflectionTestUtils.setField(registros.get(10L), "estado", estado);
+            mvc.perform(como(1, delete("/estudos/10/visitas/30").content("{}"))).andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.codigo").value("ESTUDO_FORA_PLANEJAMENTO"));
+        }
+    }
+
+    @Test
+    void protegeNovaOperacao2() throws Exception {
+        mvc.perform(como(2, put("/estudos/10/visitas/30/atividades/40").content("{\"descricao\":\"Atividade\"}"))).andExpect(status().isNotFound());
+        mvc.perform(como(3, put("/estudos/10/visitas/30/atividades/40").content("{\"descricao\":\"Atividade\"}"))).andExpect(status().isForbidden());
+        mvc.perform(put("/estudos/10/visitas/30/atividades/40").content("{\"descricao\":\"Atividade\"}").with(user(new UsuarioAutenticado(contas.get(1L))))
+                .contentType("application/json")).andExpect(status().isForbidden());
+        mvc.perform(put("/estudos/10/visitas/30/atividades/40").content("{\"descricao\":\"Atividade\"}").with(csrf()).contentType("application/json"))
+                .andExpect(status().isUnauthorized());
+        for (EstadoEstudo estado : List.of(EstadoEstudo.RECRUTAMENTO, EstadoEstudo.EXECUCAO, EstadoEstudo.ENCERRADO)) {
+            ReflectionTestUtils.setField(registros.get(10L), "estado", estado);
+            mvc.perform(como(1, put("/estudos/10/visitas/30/atividades/40").content("{\"descricao\":\"Atividade\"}"))).andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.codigo").value("ESTUDO_FORA_PLANEJAMENTO"));
+        }
+    }
+
+    @Test
+    void protegeNovaOperacao3() throws Exception {
+        mvc.perform(como(2, delete("/estudos/10/visitas/30/atividades/40").content("{}"))).andExpect(status().isNotFound());
+        mvc.perform(como(3, delete("/estudos/10/visitas/30/atividades/40").content("{}"))).andExpect(status().isForbidden());
+        mvc.perform(delete("/estudos/10/visitas/30/atividades/40").content("{}").with(user(new UsuarioAutenticado(contas.get(1L))))
+                .contentType("application/json")).andExpect(status().isForbidden());
+        mvc.perform(delete("/estudos/10/visitas/30/atividades/40").content("{}").with(csrf()).contentType("application/json"))
+                .andExpect(status().isUnauthorized());
+        for (EstadoEstudo estado : List.of(EstadoEstudo.RECRUTAMENTO, EstadoEstudo.EXECUCAO, EstadoEstudo.ENCERRADO)) {
+            ReflectionTestUtils.setField(registros.get(10L), "estado", estado);
+            mvc.perform(como(1, delete("/estudos/10/visitas/30/atividades/40").content("{}"))).andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.codigo").value("ESTUDO_FORA_PLANEJAMENTO"));
+        }
     }
 }

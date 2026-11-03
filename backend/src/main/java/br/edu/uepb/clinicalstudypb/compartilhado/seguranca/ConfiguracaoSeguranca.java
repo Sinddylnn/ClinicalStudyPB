@@ -222,7 +222,15 @@ public SecurityFilterChain securityFilterChain(
                     .requestMatchers(HttpMethod.PUT, "/estudos/*/criterios/exclusao")
                     .hasRole("PESQUISADOR")
 
-                    .requestMatchers(HttpMethod.GET, "/estudos/*/criterios")
+                    .requestMatchers(HttpMethod.GET, "/estudos/*/criterios", "/estudos/*/criterios/exclusao")
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+
+                    .requestMatchers(HttpMethod.PUT, "/estudos/*/criterios/*", "/estudos/*/visitas/*",
+                            "/estudos/*/visitas/*/atividades/*")
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(HttpMethod.DELETE, "/estudos/*/criterios/*", "/estudos/*/visitas/*",
+                            "/estudos/*/visitas/*/atividades/*")
                     .hasRole("PESQUISADOR")
 
                     // Visitas previstas
@@ -236,7 +244,7 @@ public SecurityFilterChain securityFilterChain(
                     .hasRole("PESQUISADOR")
 
                     .requestMatchers(HttpMethod.GET, "/estudos/*/visitas")
-                    .hasRole("PESQUISADOR")
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
 
                     // Coordenadores disponíveis
                     .requestMatchers(HttpMethod.GET, "/estudos/coordenadores")

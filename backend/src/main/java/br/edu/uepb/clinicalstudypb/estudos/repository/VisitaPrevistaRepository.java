@@ -42,4 +42,6 @@ public interface VisitaPrevistaRepository extends JpaRepository<VisitaPrevista, 
 
     java.util.Optional<VisitaPrevista> findByIdAndProtocoloId(Long id, Long protocoloId);
 
+
+    boolean existsByProtocoloIdAndOrdemAndIdNot(Long protocoloId, Integer ordem, Long id);
 }

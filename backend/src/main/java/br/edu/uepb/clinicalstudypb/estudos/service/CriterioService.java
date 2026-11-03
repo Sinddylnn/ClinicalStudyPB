@@ -66,17 +66,7 @@ public class CriterioService {
         Protocolo protocolo = protocolos.findByEstudoId(estudoId)
                 .orElseGet(() -> protocolos.save(new Protocolo(estudo, false)));
 
-        /*
-         * Caso o pesquisador tenha declarado anteriormente que o estudo
-         * não possui critérios de exclusão, o cadastro de uma exclusão
-         * torna essa declaração inválida.
-         */
-        if (entrada.tipo() == TipoCriterio.EXCLUSAO
-                && protocolo.isSemCriteriosExclusao()) {
-
-            protocolo.definirSemCriteriosExclusao(false);
-            protocolos.save(protocolo);
-        }
+        validarExclusao(protocolo, entrada.tipo());
 
         Criterio criterio = new Criterio(
                 protocolo,
@@ -146,7 +136,7 @@ public class CriterioService {
             Long estudoId,
             UsuarioAutenticado autenticado) {
 
-        estudos.findByIdAndResponsavelId(estudoId, autenticado.getId())
+        consultaPermitida(estudoId, autenticado)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Estudo não encontrado."
@@ -181,6 +171,62 @@ public class CriterioService {
                     "ESTUDO_FORA_PLANEJAMENTO",
                     "Os critérios só podem ser alterados enquanto o estudo estiver em planejamento."
             );
+        }
+    }
+
+    /** Restringe a consulta ao responsável ou ao coordenador vinculado. */
+    private java.util.Optional<Estudo> consultaPermitida(Long estudoId, UsuarioAutenticado autenticado) {
+        return switch (autenticado.getPerfil()) {
+            case PESQUISADOR -> estudos.findByIdAndResponsavelId(estudoId, autenticado.getId());
+            case COORDENADOR -> estudos.findByIdAndCoordenadorId(estudoId, autenticado.getId());
+            default -> java.util.Optional.empty();
+        };
+    }
+
+    // <-------------------CONSULTA DA DECLARAÇÃO------------------->
+
+    /** Consulta a declaração sem criar um protocolo durante a leitura. */
+    @Transactional(readOnly = true)
+    public CriterioExclusaoConfiguracaoResposta consultarExclusao(Long estudoId, UsuarioAutenticado autenticado) {
+        consultaPermitida(estudoId, autenticado)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Estudo não encontrado."));
+        return new CriterioExclusaoConfiguracaoResposta(protocolos.findByEstudoId(estudoId)
+                .map(Protocolo::isSemCriteriosExclusao).orElse(false));
+    }
+
+    // <-------------------EDIÇÃO E REMOÇÃO------------------->
+
+    /** Edita o critério mantendo as mesmas regras de vínculo e planejamento do cadastro. */
+    @Transactional
+    public CriterioResposta editar(Long estudoId, Long criterioId, CriterioCadastroEntrada entrada,
+            UsuarioAutenticado autenticado) {
+        Estudo estudo = bloquearEstudoProprio(estudoId, autenticado);
+        validarPlanejamento(estudo);
+        Criterio criterio = localizarCriterio(estudoId, criterioId);
+        validarExclusao(criterio.getProtocolo(), entrada.tipo());
+        criterio.editar(entrada.tipo(), entrada.descricao());
+        return CriterioResposta.de(criterio);
+    }
+
+    /** Remove o critério sem transformar a lista vazia em uma declaração de ausência. */
+    @Transactional
+    public void remover(Long estudoId, Long criterioId, UsuarioAutenticado autenticado) {
+        Estudo estudo = bloquearEstudoProprio(estudoId, autenticado);
+        validarPlanejamento(estudo);
+        criterios.delete(localizarCriterio(estudoId, criterioId));
+    }
+
+    private Criterio localizarCriterio(Long estudoId, Long criterioId) {
+        return protocolos.findByEstudoId(estudoId)
+                .flatMap(p -> criterios.findByIdAndProtocoloId(criterioId, p.getId()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Critério não encontrado."));
+    }
+
+    private void validarExclusao(Protocolo protocolo, TipoCriterio tipo) {
+        // A declaração só muda por uma escolha explícita do pesquisador
+        if (tipo == TipoCriterio.EXCLUSAO && protocolo.isSemCriteriosExclusao()) {
+            throw new RegraNegocioException("CRITERIOS_EXCLUSAO_INCONSISTENTES",
+                    "Desmarque a ausência de critérios de exclusão antes de cadastrar ou editar uma exclusão.");
         }
     }
 }

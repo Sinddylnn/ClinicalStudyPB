@@ -16,6 +16,8 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -163,5 +165,71 @@ public class VisitaPrevistaController {
             @AuthenticationPrincipal UsuarioAutenticado usuarioAutenticado) {
 
         return visitas.listar(estudoId, usuarioAutenticado);
+    }
+
+    // <-------------------EDIÇÃO E REMOÇÃO DE VISITA------------------->
+
+    @ApiResponses({
+        @ApiResponse(responseCode = "400", description = "Dados inválidos, inconsistência ou estudo fora de planejamento.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404", description = "Registro inexistente ou fora do vínculo permitido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
+    })
+    @PutMapping("/{visitaId}")
+    @Operation(summary = "Editar visita prevista", description = "Somente o responsável, durante o planejamento.",
+            parameters = @Parameter(ref = "#/components/parameters/TokenCsrf"))
+    public VisitaPrevistaResposta editarVisita(@PathVariable Long estudoId, @PathVariable Long visitaId,
+            @Valid @RequestBody VisitaPrevistaCadastroEntrada entrada,
+            @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado autenticado) {
+        return visitas.editarVisita(estudoId, visitaId, entrada, autenticado);
+    }
+
+    @ApiResponses({
+        @ApiResponse(responseCode = "400", description = "Dados inválidos, inconsistência ou estudo fora de planejamento.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404", description = "Registro inexistente ou fora do vínculo permitido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
+    })
+    @DeleteMapping("/{visitaId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Remover visita prevista",
+            description = "Somente o responsável, durante o planejamento. A remoção da visita também remove suas atividades.",
+            parameters = @Parameter(ref = "#/components/parameters/TokenCsrf"))
+    public void removerVisita(@PathVariable Long estudoId, @PathVariable Long visitaId,
+            @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado autenticado) {
+        visitas.removerVisita(estudoId, visitaId, autenticado);
+    }
+
+    // <-------------------EDIÇÃO E REMOÇÃO DE ATIVIDADE------------------->
+
+    @ApiResponses({
+        @ApiResponse(responseCode = "400", description = "Dados inválidos, inconsistência ou estudo fora de planejamento.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404", description = "Registro inexistente ou fora do vínculo permitido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
+    })
+    @PutMapping("/{visitaId}/atividades/{atividadeId}")
+    @Operation(summary = "Editar atividade prevista", description = "Somente o responsável, durante o planejamento.",
+            parameters = @Parameter(ref = "#/components/parameters/TokenCsrf"))
+    public AtividadePrevistaResposta editarAtividade(@PathVariable Long estudoId, @PathVariable Long visitaId, @PathVariable Long atividadeId,
+            @Valid @RequestBody AtividadePrevistaCadastroEntrada entrada,
+            @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado autenticado) {
+        return visitas.editarAtividade(estudoId, visitaId, atividadeId, entrada, autenticado);
+    }
+
+    @ApiResponses({
+        @ApiResponse(responseCode = "400", description = "Dados inválidos, inconsistência ou estudo fora de planejamento.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404", description = "Registro inexistente ou fora do vínculo permitido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
+    })
+    @DeleteMapping("/{visitaId}/atividades/{atividadeId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Remover atividade prevista",
+            description = "Somente o responsável, durante o planejamento. A remoção da visita também remove suas atividades.",
+            parameters = @Parameter(ref = "#/components/parameters/TokenCsrf"))
+    public void removerAtividade(@PathVariable Long estudoId, @PathVariable Long visitaId, @PathVariable Long atividadeId,
+            @Parameter(hidden = true) @AuthenticationPrincipal UsuarioAutenticado autenticado) {
+        visitas.removerAtividade(estudoId, visitaId, atividadeId, autenticado);
     }
 }

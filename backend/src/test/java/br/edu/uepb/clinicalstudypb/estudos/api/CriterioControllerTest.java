@@ -32,7 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import tools.jackson.databind.ObjectMapper;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
@@ -41,6 +41,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -94,6 +95,11 @@ class CriterioControllerTest {
         when(estudos.findByIdAndResponsavelId(anyLong(), anyLong()))
                 .thenAnswer(i -> Optional.ofNullable(registros.get(i.getArgument(0)))
                         .filter(e -> e.getResponsavel().getId().equals(i.getArgument(1))));
+
+        when(estudos.findByIdAndCoordenadorId(anyLong(), anyLong()))
+                .thenAnswer(i -> Optional.ofNullable(registros.get(i.getArgument(0)))
+                        .filter(e -> e.getCoordenador() != null
+                                && e.getCoordenador().getId().equals(i.getArgument(1))));
 
         when(protocolos.save(any(Protocolo.class)))
                 .thenAnswer(i -> {
@@ -239,7 +245,7 @@ class CriterioControllerTest {
     }
 
     @Test
-    void cadastroDeExclusaoDesmarcaAusenciaDeCriterios()
+    void recusaExclusaoEnquantoDeclaracaoEstiverMarcada()
             throws Exception {
 
         Protocolo protocolo = new Protocolo(registros.get(10L), true);
@@ -255,9 +261,11 @@ class CriterioControllerTest {
 
         mvc.perform(como(1, post("/estudos/10/criterios"))
                         .content(json.writeValueAsString(entrada)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("CRITERIOS_EXCLUSAO_INCONSISTENTES"));
 
-        assertFalse(protocolo.isSemCriteriosExclusao());
+        org.junit.jupiter.api.Assertions.assertTrue(protocolo.isSemCriteriosExclusao());
+        verify(criterios, never()).save(any());
     }
 
     @Test
@@ -305,7 +313,7 @@ class CriterioControllerTest {
     @Test
     void bloqueiaCoordenadorNosEndpointsDeCriterio() throws Exception {
         mvc.perform(como(3, get("/estudos/10/criterios")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
     }
 
     private Usuario conta(long id, PerfilUsuario perfil) {
@@ -345,5 +353,100 @@ class CriterioControllerTest {
                 .with(user(new UsuarioAutenticado(contas.get(id))))
                 .with(csrf())
                 .contentType("application/json");
+    }
+
+    // <-------------------CONSULTAS E ALTERAÇÕES DO PROTOCOLO------------------->
+
+    @Test
+    void consultaDeclaracaoSemCriarProtocoloERecuperaValorSalvo() throws Exception {
+        mvc.perform(como(1, get("/estudos/10/criterios/exclusao")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.semCriteriosExclusao").value(false));
+        verify(protocolos, never()).save(any());
+        Protocolo protocolo = configurarCriterio();
+        protocolo.definirSemCriteriosExclusao(true);
+        mvc.perform(como(1, get("/estudos/10/criterios/exclusao")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.semCriteriosExclusao").value(true));
+    }
+
+    @Test
+    void coordenadorVinculadoConsultaMasNaoAlteraMesmoAposEncerramento() throws Exception {
+        ReflectionTestUtils.setField(registros.get(10L), "coordenador", contas.get(3L));
+        ReflectionTestUtils.setField(registros.get(10L), "estado", EstadoEstudo.ENCERRADO);
+        for (String caminho : List.of("/estudos/10/criterios", "/estudos/10/criterios/exclusao")) {
+            mvc.perform(como(3, get(caminho))).andExpect(status().isOk());
+            mvc.perform(como(2, get(caminho))).andExpect(status().isNotFound());
+        }
+        mvc.perform(como(3, delete("/estudos/10/criterios/30"))).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void editaERemoveCriterioPreservandoIdentidadeEDeclaracao() throws Exception {
+        Protocolo protocolo = configurarCriterio();
+        mvc.perform(como(1, put("/estudos/10/criterios/30"))
+                .content(json.writeValueAsString(new CriterioCadastroEntrada(TipoCriterio.EXCLUSAO, " Nova descrição "))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(30))
+                .andExpect(jsonPath("$.descricao").value("Nova descrição"));
+        mvc.perform(como(1, delete("/estudos/10/criterios/30"))).andExpect(status().isNoContent());
+        verify(criterios).delete(any(Criterio.class));
+        org.junit.jupiter.api.Assertions.assertFalse(protocolo.isSemCriteriosExclusao());
+    }
+
+    @Test
+    void rejeitaTrocaParaExclusaoComDeclaracaoMarcada() throws Exception {
+        configurarCriterio().definirSemCriteriosExclusao(true);
+        mvc.perform(como(1, put("/estudos/10/criterios/30"))
+                .content(json.writeValueAsString(new CriterioCadastroEntrada(TipoCriterio.EXCLUSAO, "Exclusão"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("CRITERIOS_EXCLUSAO_INCONSISTENTES"));
+    }
+
+    @Test
+    void naoAlteraCriterioDeOutroProtocolo() throws Exception {
+        configurarCriterio();
+        mvc.perform(como(1, delete("/estudos/10/criterios/99"))).andExpect(status().isNotFound());
+        mvc.perform(como(1, put("/estudos/10/criterios/99"))
+                .content(json.writeValueAsString(new CriterioCadastroEntrada(TipoCriterio.INCLUSAO, "Inclusão"))))
+                .andExpect(status().isNotFound());
+        verify(criterios, never()).delete(any(Criterio.class));
+    }
+
+    private Protocolo configurarCriterio() {
+        Protocolo protocolo = new Protocolo(registros.get(10L), false);
+        ReflectionTestUtils.setField(protocolo, "id", 20L);
+        Criterio criterio = new Criterio(protocolo, TipoCriterio.INCLUSAO, "Inclusão");
+        ReflectionTestUtils.setField(criterio, "id", 30L);
+        when(protocolos.findByEstudoId(10L)).thenReturn(Optional.of(protocolo));
+        when(criterios.findByIdAndProtocoloId(30L, 20L)).thenReturn(Optional.of(criterio));
+        return protocolo;
+    }
+
+    @Test
+    void protegeNovaOperacao0() throws Exception {
+        mvc.perform(como(2, put("/estudos/10/criterios/30").content("{\"tipo\":\"INCLUSAO\",\"descricao\":\"Inclusão\"}"))).andExpect(status().isNotFound());
+        mvc.perform(como(3, put("/estudos/10/criterios/30").content("{\"tipo\":\"INCLUSAO\",\"descricao\":\"Inclusão\"}"))).andExpect(status().isForbidden());
+        mvc.perform(put("/estudos/10/criterios/30").content("{\"tipo\":\"INCLUSAO\",\"descricao\":\"Inclusão\"}").with(user(new UsuarioAutenticado(contas.get(1L))))
+                .contentType("application/json")).andExpect(status().isForbidden());
+        mvc.perform(put("/estudos/10/criterios/30").content("{\"tipo\":\"INCLUSAO\",\"descricao\":\"Inclusão\"}").with(csrf()).contentType("application/json"))
+                .andExpect(status().isUnauthorized());
+        for (EstadoEstudo estado : List.of(EstadoEstudo.RECRUTAMENTO, EstadoEstudo.EXECUCAO, EstadoEstudo.ENCERRADO)) {
+            ReflectionTestUtils.setField(registros.get(10L), "estado", estado);
+            mvc.perform(como(1, put("/estudos/10/criterios/30").content("{\"tipo\":\"INCLUSAO\",\"descricao\":\"Inclusão\"}"))).andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.codigo").value("ESTUDO_FORA_PLANEJAMENTO"));
+        }
+    }
+
+    @Test
+    void protegeNovaOperacao1() throws Exception {
+        mvc.perform(como(2, delete("/estudos/10/criterios/30").content("{}"))).andExpect(status().isNotFound());
+        mvc.perform(como(3, delete("/estudos/10/criterios/30").content("{}"))).andExpect(status().isForbidden());
+        mvc.perform(delete("/estudos/10/criterios/30").content("{}").with(user(new UsuarioAutenticado(contas.get(1L))))
+                .contentType("application/json")).andExpect(status().isForbidden());
+        mvc.perform(delete("/estudos/10/criterios/30").content("{}").with(csrf()).contentType("application/json"))
+                .andExpect(status().isUnauthorized());
+        for (EstadoEstudo estado : List.of(EstadoEstudo.RECRUTAMENTO, EstadoEstudo.EXECUCAO, EstadoEstudo.ENCERRADO)) {
+            ReflectionTestUtils.setField(registros.get(10L), "estado", estado);
+            mvc.perform(como(1, delete("/estudos/10/criterios/30").content("{}"))).andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.codigo").value("ESTUDO_FORA_PLANEJAMENTO"));
+        }
     }
 }
