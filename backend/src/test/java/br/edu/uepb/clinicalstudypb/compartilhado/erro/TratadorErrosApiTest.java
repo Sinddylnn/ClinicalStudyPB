@@ -52,6 +52,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class TratadorErrosApiTest {
 
     @MockitoBean
+    private br.edu.uepb.clinicalstudypb.recrutamento.repository.ConsentimentoRepository consentimentoRepository;
+
+    @MockitoBean
     private UsuarioRepository usuarios;
 
     @MockitoBean

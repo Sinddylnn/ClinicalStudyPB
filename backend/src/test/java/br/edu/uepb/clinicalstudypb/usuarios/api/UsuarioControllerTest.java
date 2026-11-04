@@ -75,6 +75,9 @@ class UsuarioControllerTest {
     @Autowired
     private PasswordEncoder senhas;
     @MockitoBean
+    private br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository participacoes;
+
+    @MockitoBean
     private UsuarioRepository usuarios;
     @MockitoBean
     private EstudoRepository estudos;
@@ -588,5 +591,16 @@ class UsuarioControllerTest {
         Usuario conta = new Usuario("Pessoa fictícia", "pessoa" + id + "@example.test", "hash-ficticio", perfil);
         ReflectionTestUtils.setField(conta, "id", id);
         return conta;
+    }
+
+    /** Preserva o perfil necessário para consultar participações históricas. */
+    @Test
+    void impedeRetirarPerfilDeContaComParticipacao() throws Exception {
+        contas.put(2L, conta(2L, PerfilUsuario.PARTICIPANTE));
+        when(participacoes.existsByParticipanteId(2L)).thenReturn(true);
+        mvc.perform(comoAdmin(put("/usuarios/2")).content(json.writeValueAsString(
+                new UsuarioEdicaoEntrada("Nome alterado", contas.get(2L).getEmail(), PerfilUsuario.PESQUISADOR))))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.codigo").value("PERFIL_COM_VINCULOS"));
+        assertThat(contas.get(2L).getPerfil()).isEqualTo(PerfilUsuario.PARTICIPANTE);
     }
 }

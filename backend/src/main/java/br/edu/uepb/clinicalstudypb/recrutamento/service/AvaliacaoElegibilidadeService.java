@@ -429,4 +429,32 @@ public class AvaliacaoElegibilidadeService {
             default -> java.util.Optional.empty();
         };
     }
+
+    // <-------------------CONFERÊNCIA FINAL DA INCLUSÃO------------------->
+
+    /**
+     * Reconfere as respostas persistidas, sem confiar apenas no resumo do candidato.
+     * A inclusão chama este método depois de bloquear o estudo na mesma transação.
+     */
+    @Transactional(readOnly = true)
+    public void validarParaInclusao(Candidato candidato) {
+        List<Criterio> itens = listarCriterios(candidato.getEstudo().getId());
+        var avaliacao = avaliacoes.findByCandidatoId(candidato.getId());
+        Map<Long, RespostaCriterio> valores = new HashMap<>();
+        if (avaliacao.isPresent()) {
+            for (RespostaElegibilidade resposta : respostas.findByAvaliacaoId(avaliacao.get().getId())) {
+                valores.put(resposta.getCriterio().getId(), resposta.getResposta());
+            }
+        }
+        // Sem inclusão definida, respostas completas não comprovam elegibilidade
+        boolean possuiInclusao = itens.stream().anyMatch(c -> c.getTipo() == TipoCriterio.INCLUSAO);
+        boolean respostasValidas = itens.stream()
+                .allMatch(c -> respostaValida(c.getTipo(), valores.get(c.getId())));
+        if (avaliacao.isEmpty() || !possuiInclusao || !respostasValidas
+                || candidato.getElegibilidade() != SituacaoElegibilidade.ELEGIVEL
+                || calcularSituacao(itens, valores) != SituacaoElegibilidade.ELEGIVEL) {
+            throw new RegraNegocioException("ELEGIBILIDADE_INVALIDA",
+                    "Só é possível incluir candidatos com avaliação completa e elegível.");
+        }
+    }
 }

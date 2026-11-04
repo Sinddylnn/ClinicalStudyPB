@@ -97,6 +97,7 @@ public class Participacao {
     public Participacao(Candidato candidato, Usuario participante, Instant dataInclusao) {
         this(java.util.Objects.requireNonNull(candidato).getEstudo(), participante, dataInclusao);
         this.candidato = candidato;
+        candidato.registrarParticipacao(this);
     }
 
     public Candidato getCandidato() {
