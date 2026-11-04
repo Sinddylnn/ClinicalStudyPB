@@ -22,6 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import br.edu.uepb.clinicalstudypb.recrutamento.repository.CandidatoRepository;
 
 // <-------------------CONTRATO GERADO E ACESSO À DOCUMENTAÇÃO------------------->
 /**
@@ -55,6 +56,8 @@ class DocumentacaoApiTest {
     private UsuarioRepository usuarios;
     @MockitoBean
     private EstudoRepository estudos;
+    @MockitoBean
+    private CandidatoRepository candidatoRepository;
 
     /**
      * Confere rotas, DTOs e mecanismos de acesso publicados no contrato real.

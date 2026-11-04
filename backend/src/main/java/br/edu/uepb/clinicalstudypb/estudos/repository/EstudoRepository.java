@@ -88,4 +88,16 @@ public interface EstudoRepository extends JpaRepository<Estudo, Long> {
 
     /** Localiza o estudo apenas quando o coordenador está vinculado a ele. */
     Optional<Estudo> findByIdAndCoordenadorId(Long id, Long coordenadorId);
+
+    // Bloqueia o estudo vinculado ao coordenador durante o cadastro.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT e FROM Estudo e
+            WHERE e.id = :id
+            AND e.coordenador.id = :coordenadorId
+            """)
+    Optional<Estudo> bloquearPorIdECoordenadorId(
+            @Param("id") Long id,
+            @Param("coordenadorId") Long coordenadorId
+);
 }
