@@ -270,4 +270,96 @@ class AvaliacaoElegibilidadePersistenciaIT {
 
         assertThat(consulta.avaliadoEm()).isNotNull();
     }
+
+    // <-------------------HISTÓRICO DO PARTICIPANTE------------------->
+
+    @Autowired
+    private br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository participacoes;
+
+    @Autowired
+    private org.springframework.transaction.PlatformTransactionManager transacoes;
+
+    /** Impede sobrescrever respostas e metadados após uma inclusão já confirmada. */
+    @Test
+    @org.springframework.transaction.annotation.Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    void preservaAvaliacaoPersistidaAposInclusao() {
+        var tx = new org.springframework.transaction.support.TransactionTemplate(transacoes);
+        Long[] ids = tx.execute(status -> {
+            String email = UUID.randomUUID() + "@example.test";
+            Usuario pesquisador = usuarios.save(new Usuario("Pesquisador", UUID.randomUUID() + "@example.test",
+                    "hash", PerfilUsuario.PESQUISADOR));
+            Usuario coordenador = usuarios.save(new Usuario("Coordenador", UUID.randomUUID() + "@example.test",
+                    "hash", PerfilUsuario.COORDENADOR));
+            Usuario participante = usuarios.save(new Usuario("Participante", email, "hash", PerfilUsuario.PARTICIPANTE));
+            Estudo estudo = new Estudo("Histórico", "Objetivo", pesquisador,
+                    java.time.LocalDate.now(), java.time.LocalDate.now(), 5);
+            estudo.atribuirCoordenador(coordenador);
+            ReflectionTestUtils.setField(estudo, "estado", EstadoEstudo.RECRUTAMENTO);
+            estudos.save(estudo);
+            Protocolo protocolo = protocolos.save(new Protocolo(estudo, true));
+            Criterio criterio = criterios.save(new Criterio(protocolo, TipoCriterio.INCLUSAO, "Inclusão"));
+            Candidato candidato = candidatos.save(new Candidato(estudo, "Candidato", email));
+            return new Long[]{estudo.getId(), candidato.getId(), criterio.getId(), coordenador.getId(), participante.getId()};
+        });
+        UsuarioAutenticado autor = tx.execute(status -> new UsuarioAutenticado(usuarios.findById(ids[3]).orElseThrow()));
+        servico.salvar(ids[0], ids[1], new AvaliacaoElegibilidadeEntrada(List.of(
+                new RespostaCriterioEntrada(ids[2], RespostaCriterio.ATENDIDO))), autor);
+        var antes = servico.obter(ids[0], ids[1], autor);
+        tx.executeWithoutResult(status -> participacoes.save(
+                new br.edu.uepb.clinicalstudypb.estudos.Participacao(
+                        candidatos.findById(ids[1]).orElseThrow(), usuarios.findById(ids[4]).orElseThrow(),
+                        java.time.Instant.now())));
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> servico.salvar(ids[0], ids[1],
+                new AvaliacaoElegibilidadeEntrada(List.of(
+                        new RespostaCriterioEntrada(ids[2], RespostaCriterio.NAO_ATENDIDO))), autor))
+                .isInstanceOf(br.edu.uepb.clinicalstudypb.compartilhado.erro.RegraNegocioException.class)
+                .hasMessageContaining("já incluído");
+        // A consulta em outra transação comprova a preservação após o rollback
+        var depois = servico.obter(ids[0], ids[1], autor);
+        assertThat(depois.situacao()).isEqualTo(SituacaoElegibilidade.ELEGIVEL);
+        assertThat(depois.itens()).isEqualTo(antes.itens());
+        assertThat(depois.avaliadoPor()).isEqualTo(antes.avaliadoPor());
+        assertThat(depois.avaliadoEm()).isEqualTo(antes.avaliadoEm());
+    }
+
+    /** Aplica V9 sobre inclusões legadas sem apagar registros ou inventar candidatos. */
+    @Test
+    void migraV8PreservandoInclusoesLegadas() throws Exception {
+        String url = System.getenv("CLINICALSTUDYPB_TEST_DB_URL");
+        String usuario = System.getenv("CLINICALSTUDYPB_TEST_DB_USER");
+        String senha = System.getenv("CLINICALSTUDYPB_TEST_DB_PASSWORD");
+        String schema = "teste_candidato_" + UUID.randomUUID().toString().replace("-", "");
+        try (var conexao = java.sql.DriverManager.getConnection(url, usuario, senha);
+                var sql = conexao.createStatement()) {
+            try {
+                org.flywaydb.core.Flyway.configure().dataSource(url, usuario, senha)
+                        .schemas(schema).defaultSchema(schema).target("8").load().migrate();
+                sql.execute("SET search_path TO " + schema);
+                sql.execute("INSERT INTO usuarios (nome, email, senha_hash, perfil) VALUES "
+                        + "('Com candidato', 'LEGADO@example.test', 'hash', 'PARTICIPANTE'), "
+                        + "('Sem candidato', 'sem-candidato@example.test', 'hash', 'PARTICIPANTE')");
+                sql.execute("INSERT INTO candidatos (estudo_id, nome, email) "
+                        + "VALUES (1, 'Legado', 'legado@example.test')");
+                sql.execute("INSERT INTO participacoes (estudo_id, participante_id, data_inclusao) "
+                        + "SELECT 1, id, CURRENT_TIMESTAMP FROM usuarios "
+                        + "WHERE email IN ('LEGADO@example.test', 'sem-candidato@example.test')");
+                org.flywaydb.core.Flyway.configure().dataSource(url, usuario, senha)
+                        .schemas(schema).defaultSchema(schema).load().migrate();
+                try (var dados = sql.executeQuery("SELECT COUNT(*), COUNT(candidato_id) FROM participacoes")) {
+                    dados.next();
+                    assertThat(dados.getLong(1)).isEqualTo(2);
+                    assertThat(dados.getLong(2)).isEqualTo(1);
+                }
+                try (var dados = sql.executeQuery("SELECT COUNT(*) FROM participacoes p JOIN candidatos c "
+                        + "ON c.id = p.candidato_id WHERE c.email = 'legado@example.test' AND c.estudo_id = p.estudo_id")) {
+                    dados.next();
+                    assertThat(dados.getLong(1)).isEqualTo(1);
+                }
+            } finally {
+                sql.execute("SET search_path TO public");
+                sql.execute("DROP SCHEMA IF EXISTS " + schema + " CASCADE");
+            }
+        }
+    }
 }

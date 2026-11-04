@@ -88,7 +88,7 @@ public class CandidatoService {
             Long estudoId,
             UsuarioAutenticado autenticado) {
 
-        estudos.findByIdAndCoordenadorId(estudoId, autenticado.getId())
+        consultarEstudoPermitido(estudoId, autenticado)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Estudo não encontrado."
@@ -98,5 +98,16 @@ public class CandidatoService {
                 .stream()
                 .map(CandidatoResposta::de)
                 .toList();
+    }
+
+    // <-------------------PERMISSÃO DE CONSULTA------------------->
+
+    /** Permite leitura ao pesquisador responsável ou ao coordenador vinculado. */
+    private java.util.Optional<Estudo> consultarEstudoPermitido(Long estudoId, UsuarioAutenticado autenticado) {
+        return switch (autenticado.getPerfil()) {
+            case PESQUISADOR -> estudos.findByIdAndResponsavelId(estudoId, autenticado.getId());
+            case COORDENADOR -> estudos.findByIdAndCoordenadorId(estudoId, autenticado.getId());
+            default -> java.util.Optional.empty();
+        };
     }
 }

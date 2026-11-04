@@ -103,8 +103,7 @@ public class CandidatoController {
     @GetMapping
     @Operation(
             summary = "Listar candidatos",
-            description = "Lista os candidatos vinculados ao estudo "
-                    + "do coordenador autenticado."
+            description = "Lista os candidatos dos estudos do pesquisador responsável ou do coordenador vinculado."
     )
     @ApiResponses({
         @ApiResponse(
@@ -113,7 +112,7 @@ public class CandidatoController {
         ),
         @ApiResponse(
                 responseCode = "404",
-                description = "Estudo inexistente ou não vinculado ao coordenador.",
+                description = "Estudo inexistente ou fora do vínculo permitido.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class))
         )
     })

@@ -68,6 +68,9 @@ class AvaliacaoElegibilidadeControllerTest {
     private ObjectMapper json;
 
     @MockitoBean
+    private br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository participacoes;
+
+    @MockitoBean
     private UsuarioRepository usuarios;
 
     @MockitoBean
@@ -153,6 +156,10 @@ class AvaliacaoElegibilidadeControllerTest {
                 .thenAnswer(i -> Optional.ofNullable(
                         contas.get(i.getArgument(0))
                 ));
+
+        conta(4, PerfilUsuario.PESQUISADOR);
+        when(estudos.findByIdAndResponsavelId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
 
         when(estudos.findByIdAndCoordenadorId(anyLong(), anyLong()))
                 .thenAnswer(i ->
@@ -492,5 +499,37 @@ class AvaliacaoElegibilidadeControllerTest {
                 .with(user(new UsuarioAutenticado(contas.get(id))))
                 .with(csrf())
                 .contentType("application/json");
+    }
+
+    // <-------------------LEITURA DO PESQUISADOR------------------->
+
+    @Test
+    void pesquisadorConsultaSeuEstudoMesmoEncerrado() throws Exception {
+        ReflectionTestUtils.setField(estudo, "estado", EstadoEstudo.ENCERRADO);
+        mvc.perform(como(1, get(URL))).andExpect(status().isOk());
+    }
+
+    @Test
+    void pesquisadorNaoConsultaEstudoDeOutroResponsavel() throws Exception {
+        mvc.perform(como(4, get(URL))).andExpect(status().isNotFound());
+    }
+
+    // <-------------------AVALIAÇÃO PRESERVADA APÓS INCLUSÃO------------------->
+
+    @Test
+    void impedeEdicaoAposInclusaoSemGravarRespostasOuRegistro() throws Exception {
+        when(participacoes.existsByCandidatoId(40L)).thenReturn(true);
+        mvc.perform(como(2, put(URL)).content(json.writeValueAsString(
+                new AvaliacaoElegibilidadeEntrada(List.of(
+                        new RespostaCriterioEntrada(30L, RespostaCriterio.ATENDIDO))))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("CANDIDATO_JA_INCLUIDO"));
+        verify(avaliacoes, never()).save(any());
+        verify(respostas, never()).save(any());
+        verify(respostas, never()).delete(any());
+        assertThat(candidato.getElegibilidade()).isEqualTo(SituacaoElegibilidade.NAO_AVALIADO);
+        // A inclusão não retira a permissão para consultar
+        mvc.perform(como(2, get(URL))).andExpect(status().isOk());
+        mvc.perform(como(1, get(URL))).andExpect(status().isOk());
     }
 }

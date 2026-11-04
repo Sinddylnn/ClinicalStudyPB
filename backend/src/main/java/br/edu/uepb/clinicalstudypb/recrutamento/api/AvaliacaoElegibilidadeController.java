@@ -55,7 +55,8 @@ public class AvaliacaoElegibilidadeController {
     @Operation(
             summary = "Consultar avaliação de elegibilidade",
             description = "Consulta os critérios, as respostas e a situação "
-                    + "de elegibilidade de um candidato vinculado ao estudo."
+                    + "de elegibilidade de um candidato. Leitura permitida ao pesquisador responsável "
+                    + "ou ao coordenador vinculado, inclusive após a inclusão."
     )
     @ApiResponses({
         @ApiResponse(
@@ -85,7 +86,7 @@ public class AvaliacaoElegibilidadeController {
             description = "Registra as respostas dos critérios e calcula "
                     + "a situação de elegibilidade do candidato. "
                     + "Operação exclusiva do coordenador vinculado, "
-                    + "durante o recrutamento.",
+                    + "durante o recrutamento e antes da inclusão do candidato.",
             parameters = @Parameter(ref = "#/components/parameters/TokenCsrf")
     )
     @ApiResponses({
@@ -95,7 +96,7 @@ public class AvaliacaoElegibilidadeController {
         ),
         @ApiResponse(
                 responseCode = "400",
-                description = "Respostas inválidas ou estudo fora de recrutamento.",
+                description = "Respostas inválidas, estudo fora de recrutamento ou CANDIDATO_JA_INCLUIDO.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class))
         ),
         @ApiResponse(

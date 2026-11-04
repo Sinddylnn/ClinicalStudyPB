@@ -7,6 +7,7 @@ import br.edu.uepb.clinicalstudypb.estudos.EstadoEstudo;
 import br.edu.uepb.clinicalstudypb.estudos.Estudo;
 import br.edu.uepb.clinicalstudypb.estudos.TipoCriterio;
 import br.edu.uepb.clinicalstudypb.estudos.repository.CriterioRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ProtocoloRepository;
 import br.edu.uepb.clinicalstudypb.recrutamento.AvaliacaoElegibilidade;
@@ -46,6 +47,7 @@ public class AvaliacaoElegibilidadeService {
     private final AvaliacaoElegibilidadeRepository avaliacoes;
     private final RespostaElegibilidadeRepository respostas;
     private final UsuarioRepository usuarios;
+    private final ParticipacaoRepository participacoes;
 
     public AvaliacaoElegibilidadeService(
             EstudoRepository estudos,
@@ -54,7 +56,8 @@ public class AvaliacaoElegibilidadeService {
             CriterioRepository criterios,
             AvaliacaoElegibilidadeRepository avaliacoes,
             RespostaElegibilidadeRepository respostas,
-            UsuarioRepository usuarios) {
+            UsuarioRepository usuarios,
+            ParticipacaoRepository participacoes) {
 
         this.estudos = estudos;
         this.candidatos = candidatos;
@@ -63,6 +66,7 @@ public class AvaliacaoElegibilidadeService {
         this.avaliacoes = avaliacoes;
         this.respostas = respostas;
         this.usuarios = usuarios;
+        this.participacoes = participacoes;
     }
 
     // <-------------------CONSULTAR AVALIAÇÃO------------------->
@@ -73,7 +77,7 @@ public class AvaliacaoElegibilidadeService {
             Long candidatoId,
             UsuarioAutenticado autenticado) {
 
-        estudos.findByIdAndCoordenadorId(estudoId, autenticado.getId())
+        consultarEstudoPermitido(estudoId, autenticado)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Estudo não encontrado."
@@ -127,6 +131,16 @@ public class AvaliacaoElegibilidadeService {
                 ));
 
         Candidato candidato = buscarCandidato(estudoId, candidatoId);
+
+        // O mesmo bloqueio do estudo deve ser usado pelo serviço de inclusão
+        // A conferência vem antes de alterar respostas, situação, autor ou data
+        if (participacoes.existsByCandidatoId(candidatoId)) {
+            throw new RegraNegocioException(
+                    "CANDIDATO_JA_INCLUIDO",
+                    "A avaliação de um candidato já incluído não pode ser alterada."
+            );
+        }
+
         List<Criterio> itens = listarCriterios(estudoId);
 
         // Verifica se todas as respostas pertencem ao protocolo.
@@ -403,5 +417,16 @@ public class AvaliacaoElegibilidadeService {
                 avaliadoPor,
                 avaliadoEm
         );
+    }
+
+    // <-------------------PERMISSÃO DE CONSULTA------------------->
+
+    /** Permite leitura ao pesquisador responsável ou ao coordenador vinculado. */
+    private java.util.Optional<Estudo> consultarEstudoPermitido(Long estudoId, UsuarioAutenticado autenticado) {
+        return switch (autenticado.getPerfil()) {
+            case PESQUISADOR -> estudos.findByIdAndResponsavelId(estudoId, autenticado.getId());
+            case COORDENADOR -> estudos.findByIdAndCoordenadorId(estudoId, autenticado.getId());
+            default -> java.util.Optional.empty();
+        };
     }
 }

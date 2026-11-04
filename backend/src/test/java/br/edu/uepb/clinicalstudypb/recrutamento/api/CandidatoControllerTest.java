@@ -93,6 +93,10 @@ class CandidatoControllerTest {
                         && e.getCoordenador().getId()
                                 .equals(i.getArgument(1))));
 
+        conta(4, PerfilUsuario.PESQUISADOR);
+        when(estudos.findByIdAndResponsavelId(10L, 1L))
+                .thenReturn(Optional.of(registros.get(10L)));
+
         when(estudos.findByIdAndCoordenadorId(anyLong(), anyLong()))
                 .thenAnswer(i -> Optional.ofNullable(
                         registros.get(i.getArgument(0))
@@ -287,9 +291,9 @@ class CandidatoControllerTest {
     }
 
     @Test
-    void impedePesquisadorDeListarCandidatos() throws Exception {
+    void permitePesquisadorResponsavelListarCandidatos() throws Exception {
         mvc.perform(como(1, get("/estudos/10/candidatos")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
     }
 
     // <-------------------MÉTODOS AUXILIARES------------------->
@@ -332,5 +336,18 @@ class CandidatoControllerTest {
                 .with(user(new UsuarioAutenticado(contas.get(id))))
                 .with(csrf())
                 .contentType("application/json");
+    }
+
+    // <-------------------LEITURA DO PESQUISADOR------------------->
+
+    @Test
+    void pesquisadorConsultaSeuEstudoMesmoEncerrado() throws Exception {
+        ReflectionTestUtils.setField(registros.get(10L), "estado", EstadoEstudo.ENCERRADO);
+        mvc.perform(como(1, get("/estudos/10/candidatos"))).andExpect(status().isOk());
+    }
+
+    @Test
+    void pesquisadorNaoConsultaEstudoDeOutroResponsavel() throws Exception {
+        mvc.perform(como(4, get("/estudos/10/candidatos"))).andExpect(status().isNotFound());
     }
 }
