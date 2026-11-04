@@ -86,4 +86,9 @@ public class Candidato {
     public SituacaoConsentimento getConsentimento() {
         return consentimento;
     }
+
+    // Atualiza a situação após avaliar os critérios.
+    public void atualizarElegibilidade(SituacaoElegibilidade situacao) {
+        this.elegibilidade = java.util.Objects.requireNonNull(situacao);
+}
 }
