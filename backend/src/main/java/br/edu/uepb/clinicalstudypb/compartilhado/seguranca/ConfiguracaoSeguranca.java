@@ -246,9 +246,30 @@ public SecurityFilterChain securityFilterChain(
                     .requestMatchers(HttpMethod.GET, "/estudos/*/visitas")
                     .hasAnyRole("PESQUISADOR", "COORDENADOR")
 
+                    // <-------------------CANDIDATOS------------------->
+
+                    .requestMatchers(HttpMethod.POST, "/estudos/*/candidatos")
+                    .hasRole("COORDENADOR")
+                    .requestMatchers(HttpMethod.GET, "/estudos/*/candidatos")
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+
                     // Coordenadores disponíveis
                     .requestMatchers(HttpMethod.GET, "/estudos/coordenadores")
                     .hasRole("PESQUISADOR")
+
+                    // <-------------------ELEGIBILIDADE------------------->
+
+                    .requestMatchers(
+                            HttpMethod.GET,
+                            "/estudos/*/candidatos/*/elegibilidade"
+                    )
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+
+                    .requestMatchers(
+                            HttpMethod.PUT,
+                            "/estudos/*/candidatos/*/elegibilidade"
+                    )
+                    .hasRole("COORDENADOR")
 
                     // Consulta de estudos
                     .requestMatchers(

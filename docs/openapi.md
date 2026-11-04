@@ -331,3 +331,11 @@ As rotas de critérios, visitas previstas e atividades estão detalhadas em
 [Configuração do protocolo](configuracao-protocolo.md). A declaração de ausência
 de exclusões pode ser consultada por GET, e as operações de edição e remoção
 usam os mesmos campos e validações do cadastro.
+
+## Candidatos e elegibilidade
+
+As consultas permitem o pesquisador responsável e o coordenador vinculado.
+O PUT de elegibilidade é exclusivo do coordenador durante o recrutamento,
+antes da inclusão. Após incluir, retorna 400 com `CANDIDATO_JA_INCLUIDO`.
+O contrato e a integração com a inclusão estão em
+[Recrutamento e elegibilidade](recrutamento-e-elegibilidade.md).
