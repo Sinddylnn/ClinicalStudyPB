@@ -205,3 +205,14 @@ O cadastro ou a edição para EXCLUSAO exige desmarcar a declaração previament
 conforme a modelagem. A exclusão de uma visita aproveita a cascata já definida
 na V6, sem modificar migrações. As rotas e os cuidados para a integração da web
 estão em [Configuração do protocolo](configuracao-protocolo.md).
+
+### 04/11/2026 — Consultas e preservação da elegibilidade (AB#3396 e AB#3397)
+
+O pesquisador responsável pode consultar candidatos e elegibilidade dos próprios
+estudos. Cadastro e avaliação continuam exclusivos do coordenador vinculado.
+
+A participação passa a referenciar o candidato por uma nova migração V9.
+A avaliação não pode ser alterada após a inclusão, mesmo durante o recrutamento.
+A verificação usa o bloqueio do estudo compartilhado com a futura inclusão da
+task AB#3423. As regras de integração estão em
+[Recrutamento e elegibilidade](recrutamento-e-elegibilidade.md).
