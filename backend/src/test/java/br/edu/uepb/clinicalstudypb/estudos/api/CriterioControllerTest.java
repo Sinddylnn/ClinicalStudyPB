@@ -311,6 +311,19 @@ class CriterioControllerTest {
     }
 
     @Test
+    void listaVaziaQuandoEstudoNaoPossuiProtocolo() throws Exception {
+        when(protocolos.findByEstudoId(10L))
+                .thenReturn(Optional.empty());
+
+        mvc.perform(como(1, get("/estudos/10/criterios")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+
+        verify(criterios, never())
+                .findByProtocoloIdOrderByIdAsc(anyLong());
+    }
+
+    @Test
     void bloqueiaCoordenadorNosEndpointsDeCriterio() throws Exception {
         mvc.perform(como(3, get("/estudos/10/criterios")))
                 .andExpect(status().isNotFound());
