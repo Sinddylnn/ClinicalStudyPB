@@ -48,6 +48,9 @@ public class Candidato {
     @Column(nullable = false, length = 20)
     private SituacaoConsentimento consentimento;
 
+    @jakarta.persistence.OneToOne(mappedBy = "candidato", fetch = FetchType.LAZY)
+    private br.edu.uepb.clinicalstudypb.estudos.Participacao participacao;
+
     // <-------------------CONSTRUTORES------------------->
 
     protected Candidato() {
@@ -90,5 +93,21 @@ public class Candidato {
     // Atualiza a situação após avaliar os critérios.
     public void atualizarElegibilidade(SituacaoElegibilidade situacao) {
         this.elegibilidade = java.util.Objects.requireNonNull(situacao);
-}
+    }
+
+    // <-------------------CONSENTIMENTO E INCLUSÃO------------------->
+
+    /** Atualiza o resumo do candidato junto do registro histórico de consentimento. */
+    public void registrarConsentimento(RespostaConsentimento resposta) {
+        this.consentimento = SituacaoConsentimento.valueOf(resposta.name());
+    }
+
+    /** Mantém os dois lados do vínculo na memória após uma inclusão validada. */
+    public void registrarParticipacao(br.edu.uepb.clinicalstudypb.estudos.Participacao participacao) {
+        this.participacao = participacao;
+    }
+
+    public br.edu.uepb.clinicalstudypb.estudos.Participacao getParticipacao() {
+        return participacao;
+    }
 }

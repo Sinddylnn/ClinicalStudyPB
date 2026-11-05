@@ -21,7 +21,7 @@ apresentadas como se todos os seus detalhes estivessem expressos no enunciado.
 | D06: execução local, banco com Docker Compose, sem hospedagem paga | Compose disponível; não implica que o banco esteja instalado ou validado em toda máquina |
 | D07: versões de referência fixadas no Kickoff | Conferir manifests e locks antes de integrar mudanças de dependências |
 | D08: detalhar campos e respostas do cadastro | Autenticação, usuários, cadastro/listagem de estudos e atribuição de coordenador têm contrato publicado no OpenAPI |
-| D09: coordenador registra avaliação, consentimento e inclusão; API verifica elegibilidade, aceite e vagas | Fluxos ainda pendentes. A base `Participacao` já permite consultar inclusões históricas nas transições; não há endpoint de inclusão nesta entrega |
+| D09: coordenador registra avaliação, consentimento e inclusão; API verifica elegibilidade, aceite e vagas | Cadastro, avaliação, consentimento com histórico e inclusão implementados. O RF11 reconfere respostas, aceite, conta, duplicidade e limite na mesma transação |
 | D10: coordenador registra visitas, avaliações e retirada e responde às solicitações do app | Previsto para acompanhamento; confirmação de presença não comprova comparecimento |
 | D11: relatório filtrado por estudo e exportado em PDF | Sem decisão de CSV nesta versão; implementação futura |
 | D12: registrar alterações e permitir consulta pelo administrador, sem editar/apagar o log pela interface | Auditoria permanece no backlog; não foi adicionada à task de autenticação ou à publicação OpenAPI |
@@ -216,3 +216,21 @@ A avaliação não pode ser alterada após a inclusão, mesmo durante o recrutam
 A verificação usa o bloqueio do estudo compartilhado com a futura inclusão da
 task AB#3423. As regras de integração estão em
 [Recrutamento e elegibilidade](recrutamento-e-elegibilidade.md).
+
+
+### 04/11/2026 — Consentimento e inclusão (AB#3423)
+
+RF10 e RF11 passam a utilizar o candidato e a avaliação já existentes. A V10
+registra respostas e correções de consentimento sem sobrescrever o histórico.
+A inclusão usa o vínculo com candidato da V9, reconfere todas as condições e
+ocupa a vaga sob o mesmo bloqueio utilizado nas mudanças de estado.
+
+O contrato acompanha a web: consentimento após avaliação registrada, resposta
+ACEITOU ou RECUSOU, observação opcional de até 500 caracteres e inclusão por
+contaId. A data e o coordenador vêm do backend. Leituras permitem o pesquisador
+responsável e o coordenador vinculado; alterações permanecem exclusivas do
+coordenador durante o recrutamento.
+
+Contas com participações históricas não podem perder o perfil PARTICIPANTE.
+A CI executa todos os testes de integração PostgreSQL. As rotas, regras e
+exemplos estão em [Consentimento e inclusão](consentimento-inclusao.md).

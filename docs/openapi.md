@@ -339,3 +339,11 @@ O PUT de elegibilidade é exclusivo do coordenador durante o recrutamento,
 antes da inclusão. Após incluir, retorna 400 com `CANDIDATO_JA_INCLUIDO`.
 O contrato e a integração com a inclusão estão em
 [Recrutamento e elegibilidade](recrutamento-e-elegibilidade.md).
+
+
+## Consentimento e inclusão — RF10 e RF11
+
+Foram acrescentados GET/PUT de consentimento, GET do histórico e GET/POST de
+inclusão sob `/estudos/{estudoId}/candidatos/{candidatoId}`.
+Os contratos, os erros e os exemplos estão em
+[Consentimento e inclusão](consentimento-inclusao.md).

@@ -33,7 +33,7 @@ jobs:
       SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/clinicalstudypb_test
       SPRING_DATASOURCE_USERNAME: clinicalstudypb
       SPRING_DATASOURCE_PASSWORD: clinicalstudypb_ci
-      # Variáveis lidas pelo teste de persistência (EstudoPersistenciaIT), que só roda se existirem
+      # Variáveis lidas pelos testes de persistência (*IT), executados apenas em banco exclusivo
       CLINICALSTUDYPB_TEST_DB_URL: jdbc:postgresql://localhost:5432/clinicalstudypb_test
       CLINICALSTUDYPB_TEST_DB_USER: clinicalstudypb
       CLINICALSTUDYPB_TEST_DB_PASSWORD: clinicalstudypb_ci
@@ -57,10 +57,10 @@ jobs:
       - name: Liberar execução do Maven Wrapper
         run: chmod +x mvnw
 
-      # O teste de persistência (*IT) não entra na execução padrão do Maven: roda explicitamente,
+      # Os testes de persistência (*IT) não entram na execução padrão do Maven: rodam explicitamente,
       # contra o PostgreSQL do job. A cobertura dele é somada à dos demais testes.
       - name: Testes de persistência (PostgreSQL real)
-        run: ./mvnw -B test -Dtest=EstudoPersistenciaIT
+        run: ./mvnw -B test "-Dtest=*IT"
 
       - name: Build, testes e cobertura
         run: ./mvnw -B verify

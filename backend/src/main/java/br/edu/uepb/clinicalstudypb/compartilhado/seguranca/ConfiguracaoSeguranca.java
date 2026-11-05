@@ -271,6 +271,15 @@ public SecurityFilterChain securityFilterChain(
                     )
                     .hasRole("COORDENADOR")
 
+                    // <-------------------CONSENTIMENTO E INCLUSÃO------------------->
+                    .requestMatchers(HttpMethod.GET, "/estudos/*/candidatos/*/consentimento",
+                            "/estudos/*/candidatos/*/consentimento/historico", "/estudos/*/candidatos/*/inclusao")
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+                    .requestMatchers(HttpMethod.PUT, "/estudos/*/candidatos/*/consentimento")
+                    .hasRole("COORDENADOR")
+                    .requestMatchers(HttpMethod.POST, "/estudos/*/candidatos/*/inclusao")
+                    .hasRole("COORDENADOR")
+
                     // Consulta de estudos
                     .requestMatchers(
                             HttpMethod.GET,

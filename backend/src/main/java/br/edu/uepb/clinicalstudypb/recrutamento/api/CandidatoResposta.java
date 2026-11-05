@@ -24,7 +24,9 @@ public record CandidatoResposta(
                 candidato.getEmail(),
                 candidato.getElegibilidade(),
                 candidato.getConsentimento(),
-                null
+                candidato.getParticipacao() == null ? null
+                        : candidato.getParticipacao().getDataInclusao()
+                                .atZone(java.time.ZoneId.of("America/Recife")).toLocalDate()
         );
     }
 }

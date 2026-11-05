@@ -1,0 +1,444 @@
+{
+  "info": {
+    "name": "ClinicalStudyPB — Consentimento e inclusão (AB#3423)",
+    "description": "Preparar estudo em recrutamento, candidato elegível não incluído, conta de participante correspondente e vaga disponível. Preencher variáveis e executar em ordem. O fluxo inclui o candidato e preserva o histórico de consentimento.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "estudoId",
+      "value": ""
+    },
+    {
+      "key": "candidatoId",
+      "value": ""
+    },
+    {
+      "key": "contaId",
+      "value": ""
+    },
+    {
+      "key": "coordenadorEmail",
+      "value": ""
+    },
+    {
+      "key": "coordenadorSenha",
+      "value": ""
+    },
+    {
+      "key": "csrfToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Obter CSRF",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/auth/csrf"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set(\"csrfToken\", pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Entrar como coordenador",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{coordenadorEmail}}\",\n  \"senha\": \"{{coordenadorSenha}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Renovar CSRF após login",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/auth/csrf"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set(\"csrfToken\", pm.response.json().token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Consultar consentimento",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/estudos/{{estudoId}}/candidatos/{{candidatoId}}/consentimento"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Registrar recusa",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/estudos/{{estudoId}}/candidatos/{{candidatoId}}/consentimento",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resposta\": \"RECUSOU\",\n  \"observacao\": \"Recusa fictícia para testar o bloqueio.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Recusar inclusão sem aceite",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/estudos/{{estudoId}}/candidatos/{{candidatoId}}/inclusao",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"contaId\": {{contaId}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"Bloqueio por recusa\", () => pm.expect(pm.response.json().codigo).to.eql(\"CONSENTIMENTO_NAO_ACEITO\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 Corrigir para aceite",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/estudos/{{estudoId}}/candidatos/{{candidatoId}}/consentimento",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resposta\": \"ACEITOU\",\n  \"observacao\": \"Correção fictícia preservada no histórico.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 Consultar histórico",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/estudos/{{estudoId}}/candidatos/{{candidatoId}}/consentimento/historico"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Correção preservada\", () => { const itens = pm.response.json(); pm.expect(itens[0].resposta).to.eql(\"ACEITOU\"); pm.expect(itens[1].resposta).to.eql(\"RECUSOU\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 Conferir condições e conta",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/estudos/{{estudoId}}/candidatos/{{candidatoId}}/inclusao"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 Incluir candidato",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/estudos/{{estudoId}}/candidatos/{{candidatoId}}/inclusao",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"contaId\": {{contaId}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "pm.test(\"Data de inclusão retornada\", () => pm.expect(pm.response.json().dataInclusao).to.be.a(\"string\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 Recusar inclusão duplicada",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/estudos/{{estudoId}}/candidatos/{{candidatoId}}/inclusao",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"contaId\": {{contaId}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+              "pm.test(\"Duplicidade bloqueada\", () => pm.expect(pm.response.json().codigo).to.eql(\"INCLUSAO_DUPLICADA\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 Recusar correção após inclusão",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/estudos/{{estudoId}}/candidatos/{{candidatoId}}/consentimento",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resposta\": \"RECUSOU\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"Histórico preservado\", () => pm.expect(pm.response.json().codigo).to.eql(\"CANDIDATO_JA_INCLUIDO\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 Conferir aceite preservado",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/estudos/{{estudoId}}/candidatos/{{candidatoId}}/consentimento"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Aceite preservado\", () => pm.expect(pm.response.json().candidato.consentimento).to.eql(\"ACEITOU\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 Encerrar sessão",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/logout"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

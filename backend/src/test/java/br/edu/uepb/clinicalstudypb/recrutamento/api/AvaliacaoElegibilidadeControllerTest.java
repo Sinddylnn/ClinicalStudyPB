@@ -51,6 +51,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.inOrder;
 
 @WebMvcTest(AvaliacaoElegibilidadeController.class)
 @Import({
@@ -152,12 +154,23 @@ class AvaliacaoElegibilidadeControllerTest {
         );
         ReflectionTestUtils.setField(exclusao, "id", 31L);
 
+        // Simula o bloqueio das contas durante a avaliação.
+        when(usuarios.bloquearPorIds(anyList()))
+                .thenAnswer(i -> {
+                List<Long> ids = i.getArgument(0);
+
+                return ids.stream()
+                        .map(contas::get)
+                        .filter(conta -> conta != null)
+                        .toList();
+                });
+
+        conta(4, PerfilUsuario.PESQUISADOR);
+        // Simula a busca de usuários pelo filtro de autenticação.
         when(usuarios.findById(anyLong()))
                 .thenAnswer(i -> Optional.ofNullable(
                         contas.get(i.getArgument(0))
                 ));
-
-        conta(4, PerfilUsuario.PESQUISADOR);
         when(estudos.findByIdAndResponsavelId(10L, 1L))
                 .thenReturn(Optional.of(estudo));
 
@@ -473,6 +486,27 @@ class AvaliacaoElegibilidadeControllerTest {
                                 }
                                 """))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void bloqueiaCoordenadorAntesDoEstudo() throws Exception {
+        var entrada = new AvaliacaoElegibilidadeEntrada(List.of(
+                new RespostaCriterioEntrada(
+                        30L, RespostaCriterio.ATENDIDO
+                ),
+                new RespostaCriterioEntrada(
+                        31L, RespostaCriterio.AUSENTE
+                )
+        ));
+
+        mvc.perform(como(2, put(URL))
+                        .content(json.writeValueAsString(entrada)))
+                .andExpect(status().isOk());
+
+        var ordem = inOrder(usuarios, estudos);
+
+        ordem.verify(usuarios).bloquearPorIds(List.of(2L));
+        ordem.verify(estudos).bloquearPorIdECoordenadorId(10L, 2L);
     }
 
     // <-------------------MÉTODOS AUXILIARES------------------->

@@ -35,6 +35,7 @@ public class UsuarioService {
     private final UsuarioRepository usuarios;
     private final PasswordEncoder passwordEncoder;
     private final EstudoRepository estudos;
+    private final br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository participacoes;
 
     /**
      * Recebe as dependências utilizadas na gestão de usuários.
@@ -42,14 +43,17 @@ public class UsuarioService {
      * @param usuarios repositório utilizado para acessar as contas persistidas
      * @param passwordEncoder codificador utilizado para armazenar senhas com segurança
      * @param estudos consultas dos vínculos que precisam ser preservados na edição
+     * @param participacoes inclusões históricas que impedem retirar o perfil de participante
      */
     public UsuarioService(
             UsuarioRepository usuarios,
             PasswordEncoder passwordEncoder,
-            EstudoRepository estudos) {
+            EstudoRepository estudos,
+            br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository participacoes) {
         this.usuarios = usuarios;
         this.passwordEncoder = passwordEncoder;
         this.estudos = estudos;
+        this.participacoes = participacoes;
     }
 
     // <-------------------CADASTRO------------------->
@@ -192,7 +196,9 @@ public class UsuarioService {
                 && estudos.existsByResponsavelId(usuario.getId());
         boolean coordenadorIncompativel = novoPerfil != PerfilUsuario.COORDENADOR
                 && estudos.existsByCoordenadorId(usuario.getId());
-        if (responsavelIncompativel || coordenadorIncompativel) {
+        boolean participanteIncompativel = novoPerfil != PerfilUsuario.PARTICIPANTE
+                && participacoes.existsByParticipanteId(usuario.getId());
+        if (responsavelIncompativel || coordenadorIncompativel || participanteIncompativel) {
             throw new RegraNegocioException("PERFIL_COM_VINCULOS",
                     "Não é possível alterar o perfil enquanto houver vínculos incompatíveis com estudos.");
         }

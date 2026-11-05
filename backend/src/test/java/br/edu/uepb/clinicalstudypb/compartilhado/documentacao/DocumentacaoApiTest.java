@@ -44,6 +44,9 @@ import br.edu.uepb.clinicalstudypb.recrutamento.repository.CandidatoRepository;
 @AutoConfigureMockMvc
 class DocumentacaoApiTest {
 
+    @MockitoBean
+    private br.edu.uepb.clinicalstudypb.recrutamento.repository.ConsentimentoRepository consentimentoRepository;
+
     @MockitoBean private ProtocoloRepository protocoloRepository;
     @MockitoBean private CriterioRepository criterioRepository;
     @MockitoBean private VisitaPrevistaRepository visitaPrevistaRepository;
@@ -318,5 +321,26 @@ class DocumentacaoApiTest {
                 assertThat(operacao.path("parameters").toString()).contains("TokenCsrf");
             }
         }
+    }
+
+    /** Confere as operações e limites publicados para a integração da web. */
+    @Test
+    void documentaConsentimentoEInclusao() throws Exception {
+        JsonNode contrato = json.readTree(mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        JsonNode rotas = contrato.path("paths");
+        String base = "/estudos/{estudoId}/candidatos/{candidatoId}";
+        for (String[] item : new String[][]{
+                {"/consentimento", "get"}, {"/consentimento", "put"},
+                {"/consentimento/historico", "get"}, {"/inclusao", "get"}, {"/inclusao", "post"}}) {
+            JsonNode operacao = rotas.path(base + item[0]).path(item[1]);
+            assertThat(operacao.isMissingNode()).isFalse();
+            assertThat(operacao.path("security").toString()).contains("sessao");
+            assertThat(operacao.path("parameters").toString().contains("TokenCsrf")).isEqualTo(!item[1].equals("get"));
+        }
+        JsonNode campos = contrato.path("components").path("schemas").path("ConsentimentoEntrada").path("properties");
+        assertThat(campos.path("observacao").path("maxLength").asInt()).isEqualTo(500);
+        assertThat(campos.path("resposta").path("enum").toString()).contains("ACEITOU", "RECUSOU").doesNotContain("PENDENTE");
+        assertThat(rotas.path(base + "/inclusao").path("post").path("responses").has("409")).isTrue();
     }
 }

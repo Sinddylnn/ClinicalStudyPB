@@ -22,4 +22,11 @@ public interface ParticipacaoRepository extends JpaRepository<Participacao, Long
 
     /** Verifica a inclusão histórica do candidato, mesmo após uma futura retirada. */
     boolean existsByCandidatoId(Long candidatoId);
+
+    /** Conta inclusões históricas; uma retirada não libera a vaga. */
+    long countByEstudoId(Long estudoId);
+
+    boolean existsByEstudoIdAndParticipanteId(Long estudoId, Long participanteId);
+
+    boolean existsByParticipanteId(Long participanteId);
 }
