@@ -35,6 +35,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
+import org.springframework.security.access.AccessDeniedException;
 
 // <-------------------AVALIAÇÃO DE ELEGIBILIDADE------------------->
 @Service
@@ -122,7 +124,29 @@ public class AvaliacaoElegibilidadeService {
             AvaliacaoElegibilidadeEntrada entrada,
             UsuarioAutenticado autenticado) {
 
-        // Bloqueia o estudo para evitar alterações simultâneas.
+        // Bloqueia primeiro o coordenador e depois o estudo.
+        if (autenticado.getPerfil() != PerfilUsuario.COORDENADOR) {
+            throw new AccessDeniedException(
+                    "Somente coordenadores podem avaliar candidatos."
+            );
+        }
+
+        Usuario coordenador = usuarios
+                .bloquearPorIds(List.of(autenticado.getId()))
+                .stream()
+                .filter(u -> u.getId().equals(autenticado.getId()))
+                .findFirst()
+                .orElseThrow(() -> new AccessDeniedException(
+                        "Coordenador indisponível."
+                ));
+
+        if (!coordenador.isAtivo()
+                || coordenador.getPerfil() != PerfilUsuario.COORDENADOR) {
+            throw new AccessDeniedException(
+                    "A conta deve ser um coordenador ativo."
+            );
+        }
+
         Estudo estudo = estudos
                 .bloquearPorIdECoordenadorId(estudoId, autenticado.getId())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -156,12 +180,6 @@ public class AvaliacaoElegibilidadeService {
 
         SituacaoElegibilidade situacao =
                 calcularSituacao(itens, valores);
-
-        Usuario coordenador = usuarios.findById(autenticado.getId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Coordenador não encontrado."
-                ));
 
         AvaliacaoElegibilidade avaliacao = avaliacoes
                 .findByCandidatoId(candidatoId)

@@ -122,6 +122,83 @@ class ConsentimentoInclusaoPersistenciaIT {
     // <-------------------OPERAÇÕES SIMULTÂNEAS------------------->
 
     @Test
+    void avaliacaoEInclusaoSimultaneasPreservamConsistencia() throws Exception {
+        Cenario c = preparar(1, 1);
+        Pessoa p = c.pessoas().getFirst();
+
+        // Candidato começa elegível e com consentimento aceito.
+        avaliar(c, p, RespostaCriterio.ATENDIDO);
+        consentir(c, p, RespostaConsentimento.ACEITOU);
+
+        var prontas = new CountDownLatch(2);
+        var iniciar = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+
+        try {
+            Future<String> avaliacao = executor.submit(() -> {
+                prontas.countDown();
+                aguardar(iniciar);
+
+                try {
+                    avaliar(c, p, RespostaCriterio.NAO_ATENDIDO);
+                    return "AVALIACAO_ATUALIZADA";
+                } catch (RegraNegocioException erro) {
+                    return "AVALIACAO_BLOQUEADA";
+                }
+            });
+
+            Future<String> inclusao = executor.submit(() -> {
+                prontas.countDown();
+                aguardar(iniciar);
+
+                try {
+                    incluir(c, p);
+                    return "INCLUSAO_REALIZADA";
+                } catch (RegraNegocioException erro) {
+                    return "INCLUSAO_BLOQUEADA";
+                }
+            });
+
+            aguardar(prontas);
+            iniciar.countDown();
+
+            String resultadoAvaliacao = avaliacao.get(15, TimeUnit.SECONDS);
+            String resultadoInclusao = inclusao.get(15, TimeUnit.SECONDS);
+
+            // Apenas uma das operações pode ser concluída.
+            boolean avaliacaoPrimeiro =
+                    resultadoAvaliacao.equals("AVALIACAO_ATUALIZADA")
+                    && resultadoInclusao.equals("INCLUSAO_BLOQUEADA");
+
+            boolean inclusaoPrimeiro =
+                    resultadoAvaliacao.equals("AVALIACAO_BLOQUEADA")
+                    && resultadoInclusao.equals("INCLUSAO_REALIZADA");
+
+            assertThat(avaliacaoPrimeiro || inclusaoPrimeiro).isTrue();
+
+            // Confere o estado final no banco.
+            var situacao = elegibilidade.obter(
+                    c.estudoId(), p.candidatoId(), c.coordenador()
+            ).situacao();
+
+            if (inclusaoPrimeiro) {
+                assertThat(total(c)).isEqualTo(1);
+                assertThat(situacao)
+                        .isEqualTo(SituacaoElegibilidade.ELEGIVEL);
+            } else {
+                assertThat(total(c)).isZero();
+                assertThat(situacao)
+                        .isEqualTo(SituacaoElegibilidade.INELEGIVEL);
+            }
+
+        } finally {
+            iniciar.countDown();
+            executor.shutdownNow();
+            executor.awaitTermination(10, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     void duasInclusoesDisputamUltimaVagaSemUltrapassarLimite() throws Exception {
         Cenario c = preparar(1, 2);
         for (Pessoa p : c.pessoas()) {
