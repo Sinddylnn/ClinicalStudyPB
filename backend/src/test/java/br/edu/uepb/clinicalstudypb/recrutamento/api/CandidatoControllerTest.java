@@ -13,6 +13,8 @@ import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.service.AutenticacaoService;
+import br.edu.uepb.clinicalstudypb.recrutamento.RespostaConsentimento;
+import br.edu.uepb.clinicalstudypb.recrutamento.SituacaoElegibilidade;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -275,6 +277,26 @@ class CandidatoControllerTest {
                 .andExpect(jsonPath("$[0].nome").value("Maria Silva"))
                 .andExpect(jsonPath("$[0].elegibilidade")
                         .value("NAO_AVALIADO"));
+    }
+
+    @Test
+    void listaCandidatoComElegibilidadeEConsentimentoAtualizados()
+            throws Exception {
+        Candidato candidato = new Candidato(
+                registros.get(10L),
+                "Maria Silva",
+                "maria@example.com"
+        );
+        ReflectionTestUtils.setField(candidato, "id", 30L);
+        candidato.atualizarElegibilidade(SituacaoElegibilidade.ELEGIVEL);
+        candidato.registrarConsentimento(RespostaConsentimento.ACEITOU);
+        when(candidatos.findByEstudoIdOrderByIdAsc(10L))
+                .thenReturn(List.of(candidato));
+        mvc.perform(como(2, get("/estudos/10/candidatos")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(30))
+                .andExpect(jsonPath("$[0].elegibilidade").value("ELEGIVEL"))
+                .andExpect(jsonPath("$[0].consentimento").value("ACEITOU"));
     }
 
     @Test
