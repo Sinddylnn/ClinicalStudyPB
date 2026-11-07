@@ -2,7 +2,7 @@
  
 **Data de entrega:** 09/11/2026
 **Tag:** `release1`
-**Sprints abrangidas:** Sprint 1 (13/10 a 26/10) e Sprint 2 (27/10 a 09/11)
+**Sprints Cobertas:** Sprint 1 (13/10 a 26/10) e Sprint 2 (27/10 a 09/11)
  
 ## 1. Objetivo da entrega
  
@@ -82,28 +82,31 @@ Os diagramas representam o desenho do sistema completo; os fluxos de acompanhame
 - Testes de componentes (web e mobile): <resultado>
 - Cobertura de linhas do código de negócio do backend: <percentual> (mínimo exigido: 80%)
 <Linkar o relatório de testes e a evidência de cobertura.>
+
 ## 7. Problemas conhecidos e pendências
  
 - <Problema ou pendência, com o requisito afetado>
+
+
 ## 8. Processo de desenvolvimento
  
 ### Sprint 1 (13/10 a 26/10)
  
-<Resumo de uma ou duas linhas do que foi planejado e entregue.>
+\<Resumo de uma ou duas linhas do que foi planejado e entregue.\>
 - [Planning](sprints/sprint01/planning.md)
 - [Review](sprints/sprint01/review.md)
 - [Burndown](sprints/sprint01/burndown.png)
-### Sprint 2 (27/10 a 09/11)
  
-<Resumo de uma ou duas linhas do que foi planejado e entregue.>
+### Sprint 2 (27/10 a 09/11)
+\<Resumo de uma ou duas linhas do que foi planejado e entregue.\>
 - [Planning](sprints/sprint02/planning.md)
 - [Review](sprints/sprint02/review.md)
 - Burndown: <linkar quando exportado do Azure DevOps>
-### Organização da equipe
  
+### Organização da equipe
 | Integrante | Papel | Contribuições na release |
 |------------|-------|--------------------------|
-| <nome> | Líder técnico / Gerente | <...> |
+| <Georis Samuel> | Tech Leader / Gerente | <...> |
 | <nome> | Desenvolvedor Backend | <...> |
 | <nome> | Desenvolvedor Web | <...> |
 | <nome> | Desenvolvedor Web | <...> |
