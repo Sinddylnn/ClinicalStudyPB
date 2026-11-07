@@ -185,7 +185,8 @@ export default function ProtocoloEstudo({
   };
 
   const editar = (tipo: TipoCriterio) => async (criterio: Criterio, descricao: string) => {
-    const editado = await protocoloProp.editarCriterio(estudoId, criterio.id, descricao);
+    // O backend exige o tipo também na edição; a tela mantém o critério na mesma lista
+    const editado = await protocoloProp.editarCriterio(estudoId, criterio.id, { tipo, descricao });
     alterarProtocolo((p) => ({
       ...p,
       [LISTAS[tipo]]: p[LISTAS[tipo]].map((c) => (c.id === editado.id ? editado : c)),
@@ -453,7 +454,7 @@ export default function ProtocoloEstudo({
                         ? 'Este estudo não possui critérios de exclusão.'
                         : 'Nenhum critério de exclusão cadastrado.'
                     }
-                    // Com a declaração marcada, a exclusão seria recusada (SEM_EXCLUSAO_DECLARADA)
+                    // Com a declaração marcada, a exclusão seria recusada (CRITERIOS_EXCLUSAO_INCONSISTENTES)
                     bloqueioAdicao={
                       tela.protocolo.semCriteriosExclusao
                         ? 'Para cadastrar um critério de exclusão, desmarque a opção abaixo.'

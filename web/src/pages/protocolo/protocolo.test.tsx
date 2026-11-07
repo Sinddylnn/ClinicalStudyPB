@@ -53,7 +53,7 @@ function criarServicos(
     recursos: { editarRemover: true },
     obter: vi.fn().mockResolvedValue({ ...PROTOCOLO, ...protocolo }),
     adicionarCriterio: vi.fn().mockImplementation((_id, { descricao }) => Promise.resolve({ id: 9, descricao })),
-    editarCriterio: vi.fn().mockImplementation((_id, criterioId, descricao) =>
+    editarCriterio: vi.fn().mockImplementation((_id, criterioId, { descricao }) =>
       Promise.resolve({ id: criterioId, descricao }),
     ),
     removerCriterio: vi.fn().mockResolvedValue(undefined),
@@ -254,9 +254,33 @@ describe('ProtocoloEstudo', () => {
     await usuario.type(campo, ' Idade entre 18 e 25 anos. ');
     await usuario.click(screen.getByRole('button', { name: 'Salvar' }));
 
-    expect(servicos.protocolo.editarCriterio).toHaveBeenCalledWith(1, 2, 'Idade entre 18 e 25 anos.');
+    // O backend exige o tipo também na edição
+    expect(servicos.protocolo.editarCriterio).toHaveBeenCalledWith(1, 2, {
+      tipo: 'INCLUSAO',
+      descricao: 'Idade entre 18 e 25 anos.',
+    });
     expect(await screen.findByRole('status')).toHaveTextContent('Critério atualizado.');
     expect(within(cartao('inclusão')).getAllByRole('listitem')[1]).toHaveTextContent('Idade entre 18 e 25 anos.');
+  });
+
+  it('edita um critério de exclusão enviando o tipo EXCLUSAO', async () => {
+    const servicos = criarServicos(ESTUDO, { criteriosExclusao: [{ id: 5, descricao: 'Gestantes.' }] });
+    renderizar(servicos);
+    await screen.findByRole('heading', { name: 'Sono e rotina de estudantes' });
+    const usuario = userEvent.setup();
+
+    await usuario.click(screen.getByRole('button', { name: 'Editar critério: Gestantes.' }));
+    const campo = screen.getByLabelText('Editar critério de exclusão');
+    await usuario.clear(campo);
+    await usuario.type(campo, 'Gestantes ou lactantes.');
+    await usuario.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(servicos.protocolo.editarCriterio).toHaveBeenCalledWith(1, 5, {
+      tipo: 'EXCLUSAO',
+      descricao: 'Gestantes ou lactantes.',
+    });
+    expect(await screen.findByRole('status')).toHaveTextContent('Critério atualizado.');
+    expect(within(cartao('exclusão')).getByRole('listitem')).toHaveTextContent('Gestantes ou lactantes.');
   });
 
   it('remove um critério depois da confirmação', async () => {
@@ -338,12 +362,12 @@ describe('ProtocoloEstudo', () => {
     expect(screen.queryByText('Para cadastrar um critério de exclusão, desmarque a opção abaixo.')).not.toBeInTheDocument();
   });
 
-  it('mantém a opção marcada quando o backend recusa a exclusão (SEM_EXCLUSAO_DECLARADA)', async () => {
+  it('mantém a opção marcada quando o backend recusa a exclusão (CRITERIOS_EXCLUSAO_INCONSISTENTES)', async () => {
     // Ex.: a opção foi marcada em outra aba depois que esta tela carregou
     const adicionarCriterio = vi.fn().mockRejectedValue(
       new ErroRequisicao(400, {
-        codigo: 'SEM_EXCLUSAO_DECLARADA',
-        mensagem: 'Desmarque a opção de que o estudo não possui critérios de exclusão antes de cadastrar um.',
+        codigo: 'CRITERIOS_EXCLUSAO_INCONSISTENTES',
+        mensagem: 'Desmarque a ausência de critérios de exclusão antes de cadastrar ou editar uma exclusão.',
       }),
     );
     renderizar(criarServicos(ESTUDO, {}, { adicionarCriterio }));
@@ -354,7 +378,9 @@ describe('ProtocoloEstudo', () => {
     await usuario.type(screen.getByLabelText('Novo critério de exclusão'), 'Gestantes.');
     await usuario.click(within(cartao('exclusão')).getByRole('button', { name: 'Adicionar' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Desmarque a opção de que o estudo não possui');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Desmarque a ausência de critérios de exclusão antes de cadastrar ou editar uma exclusão.',
+    );
     expect(screen.getByLabelText('Novo critério de exclusão')).toHaveValue('Gestantes.');
     expect(within(cartao('exclusão')).queryByRole('listitem')).not.toBeInTheDocument();
   });

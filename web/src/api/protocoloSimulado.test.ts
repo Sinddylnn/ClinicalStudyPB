@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { reiniciarEstudosSimulados, servicoEstudosSimulado } from './estudosSimulado';
-import type { ServicoProtocolo } from './protocolo';
+import type { CriterioCadastroEntrada, ServicoProtocolo } from './protocolo';
 import { criarServicoProtocoloSimulado, PROTOCOLOS_INICIAIS } from './protocoloSimulado';
 
 // <-------------------TESTES DO SERVIÇO SIMULADO DO PROTOCOLO------------------->
@@ -47,7 +47,7 @@ describe('servicoProtocoloSimulado: critérios', () => {
     vi.useRealTimers();
   });
 
-  it('oferece edição e remoção, como as rotas propostas ao backend', () => {
+  it('oferece edição e remoção, como o backend', () => {
     expect(servico.recursos).toEqual({ editarRemover: true });
   });
 
@@ -95,20 +95,36 @@ describe('servicoProtocoloSimulado: critérios', () => {
       codigo: 'VALIDACAO_INVALIDA',
       errosCampos: { descricao: 'Informe a descrição do critério.' },
     });
-    expect(await falha(servico.editarCriterio(PLANEJAMENTO, 1, 'a'.repeat(1001)))).toMatchObject({
+    expect(await falha(servico.editarCriterio(PLANEJAMENTO, 1, { tipo: 'INCLUSAO', descricao: 'a'.repeat(1001) }))).toMatchObject({
       status: 400,
       codigo: 'VALIDACAO_INVALIDA',
       errosCampos: { descricao: 'A descrição deve ter no máximo 1000 caracteres.' },
     });
   });
 
+  it('responde VALIDACAO_INVALIDA sem o tipo do critério, junto com os outros campos', async () => {
+    const semTipo = { descricao: ' ' } as unknown as CriterioCadastroEntrada;
+    expect(await falha(servico.adicionarCriterio(PLANEJAMENTO, semTipo))).toMatchObject({
+      status: 400,
+      codigo: 'VALIDACAO_INVALIDA',
+      errosCampos: { tipo: 'Informe o tipo do critério.', descricao: 'Informe a descrição do critério.' },
+    });
+    expect(
+      await falha(servico.editarCriterio(PLANEJAMENTO, 1, { descricao: 'Adultos.' } as unknown as CriterioCadastroEntrada)),
+    ).toMatchObject({ codigo: 'VALIDACAO_INVALIDA', errosCampos: { tipo: 'Informe o tipo do critério.' } });
+    // Nada foi gravado
+    expect((await executar(servico.obter(PLANEJAMENTO))).criteriosInclusao[0].descricao).toBe(
+      'Estudantes de graduação matriculados, com idade entre 18 e 30 anos.',
+    );
+  });
+
   it('aceita descrição com 1.000 caracteres, contados sem os espaços das pontas', async () => {
     const descricao = 'a'.repeat(1000);
-    expect(await executar(servico.editarCriterio(PLANEJAMENTO, 1, `  ${descricao}  `))).toEqual({ id: 1, descricao });
+    expect(await executar(servico.editarCriterio(PLANEJAMENTO, 1, { tipo: 'INCLUSAO', descricao: `  ${descricao}  ` }))).toEqual({ id: 1, descricao });
   });
 
   it('edita e remove critérios de cada lista', async () => {
-    expect(await executar(servico.editarCriterio(PLANEJAMENTO, 1, ' Estudantes de 18 a 25 anos. '))).toEqual({
+    expect(await executar(servico.editarCriterio(PLANEJAMENTO, 1, { tipo: 'INCLUSAO', descricao: ' Estudantes de 18 a 25 anos. ' }))).toEqual({
       id: 1,
       descricao: 'Estudantes de 18 a 25 anos.',
     });
@@ -120,7 +136,7 @@ describe('servicoProtocoloSimulado: critérios', () => {
 
   it('responde 404 para critério de outro estudo ou inexistente', async () => {
     // O critério 4 é do estudo 3: não pode ser alterado pelo estudo 1
-    expect(await falha(servico.editarCriterio(PLANEJAMENTO, 4, 'Outro texto.'))).toMatchObject({ status: 404 });
+    expect(await falha(servico.editarCriterio(PLANEJAMENTO, 4, { tipo: 'EXCLUSAO', descricao: 'Outro texto.' }))).toMatchObject({ status: 404 });
     expect(await falha(servico.removerCriterio(PLANEJAMENTO, 99))).toMatchObject({ status: 404 });
   });
 
@@ -128,7 +144,7 @@ describe('servicoProtocoloSimulado: critérios', () => {
     expect(await falha(servico.adicionarCriterio(RECRUTAMENTO, { tipo: 'INCLUSAO', descricao: 'Novo.' }))).toMatchObject(
       FORA_PLANEJAMENTO_CRITERIOS,
     );
-    expect(await falha(servico.editarCriterio(RECRUTAMENTO, 3, 'Outro.'))).toMatchObject(FORA_PLANEJAMENTO_CRITERIOS);
+    expect(await falha(servico.editarCriterio(RECRUTAMENTO, 3, { tipo: 'INCLUSAO', descricao: 'Outro.' }))).toMatchObject(FORA_PLANEJAMENTO_CRITERIOS);
     expect(await falha(servico.removerCriterio(RECRUTAMENTO, 3))).toMatchObject(FORA_PLANEJAMENTO_CRITERIOS);
     expect(await falha(servico.definirSemExclusao(RECRUTAMENTO, false))).toMatchObject(FORA_PLANEJAMENTO_CRITERIOS);
 
@@ -141,15 +157,15 @@ describe('servicoProtocoloSimulado: critérios', () => {
     expect((await executar(servico.obter(PLANEJAMENTO))).semCriteriosExclusao).toBe(true);
   });
 
-  it('responde SEM_EXCLUSAO_DECLARADA ao cadastrar exclusão com a declaração marcada, sem desmarcá-la', async () => {
+  it('responde CRITERIOS_EXCLUSAO_INCONSISTENTES ao cadastrar exclusão com a declaração marcada, sem desmarcá-la', async () => {
     await executar(servico.definirSemExclusao(PLANEJAMENTO, true));
 
     expect(
       await falha(servico.adicionarCriterio(PLANEJAMENTO, { tipo: 'EXCLUSAO', descricao: 'Trabalho noturno.' })),
     ).toMatchObject({
       status: 400,
-      codigo: 'SEM_EXCLUSAO_DECLARADA',
-      message: 'Desmarque a opção de que o estudo não possui critérios de exclusão antes de cadastrar um.',
+      codigo: 'CRITERIOS_EXCLUSAO_INCONSISTENTES',
+      message: 'Desmarque a ausência de critérios de exclusão antes de cadastrar ou editar uma exclusão.',
     });
     const protocolo = await executar(servico.obter(PLANEJAMENTO));
     expect(protocolo.semCriteriosExclusao).toBe(true);
@@ -188,7 +204,69 @@ describe('servicoProtocoloSimulado: critérios', () => {
     ).toMatchObject({ codigo: 'ESTUDO_FORA_PLANEJAMENTO' });
     expect(
       await falha(comDeclaracao.adicionarCriterio(PLANEJAMENTO, { tipo: 'EXCLUSAO', descricao: 'Gestantes.' })),
-    ).toMatchObject({ codigo: 'SEM_EXCLUSAO_DECLARADA' });
+    ).toMatchObject({ codigo: 'CRITERIOS_EXCLUSAO_INCONSISTENTES' });
+  });
+
+  it('na edição, confere campos, estudo, estado, critério e exclusão nesta ordem, como o CriterioService', async () => {
+    const declarado = {
+      estudoId: RECRUTAMENTO,
+      criteriosInclusao: [{ id: 3, descricao: 'Adultos.' }],
+      criteriosExclusao: [],
+      semCriteriosExclusao: true,
+      visitas: [],
+    };
+    const comDeclaracao = criarServicoProtocoloSimulado(servicoEstudosSimulado, [
+      { ...declarado, estudoId: PLANEJAMENTO, criteriosInclusao: [{ id: 1, descricao: 'Estudantes.' }] },
+      declarado,
+    ]);
+    const exclusao = (descricao: string) => ({ tipo: 'EXCLUSAO' as const, descricao });
+
+    expect(await falha(comDeclaracao.editarCriterio(99, 99, exclusao(' ')))).toMatchObject({
+      codigo: 'VALIDACAO_INVALIDA',
+    });
+    expect(await falha(comDeclaracao.editarCriterio(99, 1, exclusao('Gestantes.')))).toMatchObject({
+      status: 404,
+      message: 'Estudo não encontrado.',
+    });
+    expect(await falha(comDeclaracao.editarCriterio(RECRUTAMENTO, 99, exclusao('Gestantes.')))).toMatchObject({
+      codigo: 'ESTUDO_FORA_PLANEJAMENTO',
+    });
+    expect(await falha(comDeclaracao.editarCriterio(PLANEJAMENTO, 99, exclusao('Gestantes.')))).toMatchObject({
+      status: 404,
+      message: 'Critério não encontrado.',
+    });
+    expect(await falha(comDeclaracao.editarCriterio(PLANEJAMENTO, 1, exclusao('Gestantes.')))).toMatchObject({
+      status: 400,
+      codigo: 'CRITERIOS_EXCLUSAO_INCONSISTENTES',
+      message: 'Desmarque a ausência de critérios de exclusão antes de cadastrar ou editar uma exclusão.',
+    });
+
+    // Nada mudou: o critério continua na inclusão e a declaração continua marcada
+    const protocolo = await executar(comDeclaracao.obter(PLANEJAMENTO));
+    expect(protocolo.criteriosInclusao).toEqual([{ id: 1, descricao: 'Estudantes.' }]);
+    expect(protocolo.criteriosExclusao).toEqual([]);
+    expect(protocolo.semCriteriosExclusao).toBe(true);
+
+    // Editar como inclusão segue permitido com a declaração marcada
+    expect(
+      await executar(comDeclaracao.editarCriterio(PLANEJAMENTO, 1, { tipo: 'INCLUSAO', descricao: 'Universitários.' })),
+    ).toEqual({ id: 1, descricao: 'Universitários.' });
+  });
+
+  it('grava o tipo enviado na edição: o critério passa para a outra lista, em ordem de id', async () => {
+    await executar(servico.adicionarCriterio(PLANEJAMENTO, { tipo: 'EXCLUSAO', descricao: 'Trabalho noturno.' }));
+
+    expect(await executar(servico.editarCriterio(PLANEJAMENTO, 1, { tipo: 'EXCLUSAO', descricao: 'Menores.' }))).toEqual({
+      id: 1,
+      descricao: 'Menores.',
+    });
+
+    const protocolo = await executar(servico.obter(PLANEJAMENTO));
+    expect(protocolo.criteriosInclusao.map((c) => c.id)).toEqual([2]);
+    expect(protocolo.criteriosExclusao).toEqual([
+      { id: 1, descricao: 'Menores.' },
+      { id: 5, descricao: 'Trabalho noturno.' },
+    ]);
   });
 
   it('deixa as exclusões pendentes ao remover a última, sem declarar ausência sozinho', async () => {
@@ -367,7 +445,23 @@ describe('servicoProtocoloSimulado: visitas e atividades', () => {
     });
     expect(await falha(servico.removerVisita(PLANEJAMENTO, 99))).toMatchObject({ status: 404 });
     // A atividade 1 é da visita 1, não da 2
-    expect(await falha(servico.removerAtividade(PLANEJAMENTO, 2, 1))).toMatchObject({ status: 404 });
+    expect(await falha(servico.removerAtividade(PLANEJAMENTO, 2, 1))).toMatchObject({
+      status: 404,
+      message: 'Atividade prevista não encontrada.',
+    });
+    expect(await falha(servico.editarAtividade(PLANEJAMENTO, 2, 1, 'Outra.'))).toMatchObject({
+      status: 404,
+      message: 'Atividade prevista não encontrada.',
+    });
+    // A visita é conferida antes da atividade
+    expect(await falha(servico.editarAtividade(PLANEJAMENTO, 99, 1, 'Outra.'))).toMatchObject({
+      status: 404,
+      message: 'Visita prevista não encontrada.',
+    });
+    expect(await falha(servico.editarVisita(PLANEJAMENTO, 3, { nome: 'Visita', descricao: null, ordem: 9 }))).toMatchObject({
+      status: 404,
+      message: 'Visita prevista não encontrada.',
+    });
     expect(await falha(servico.adicionarVisita(99, { nome: 'Visita', descricao: null, ordem: 1 }))).toMatchObject({
       status: 404,
     });

@@ -24,7 +24,7 @@ function simularBackend(rotas: Record<string, Resposta>) {
 
 const CSRF: Resposta = { status: 200, data: { token: 'abc', headerName: 'X-CSRF-TOKEN' } };
 
-// Formatos do PR #32: CriterioResposta traz o tipo; VisitaPrevistaResposta traz as atividades
+// Formatos do backend: CriterioResposta traz o tipo; VisitaPrevistaResposta traz as atividades
 const CRITERIOS = [
   { id: 1, tipo: 'INCLUSAO', descricao: 'Adultos.' },
   { id: 2, tipo: 'EXCLUSAO', descricao: 'Gestantes.' },
@@ -50,15 +50,16 @@ beforeEach(() => {
   registrarTratadoresSessao({ naoAutenticado: undefined, acessoNegado });
 });
 
-// <-------------------ROTAS DO PR #32------------------->
+// <-------------------ROTAS DO BACKEND------------------->
 describe('servicoProtocoloApi', () => {
-  it('não oferece editar e remover até o backend publicar as rotas', () => {
-    expect(servicoProtocoloApi.recursos).toEqual({ editarRemover: false });
+  it('oferece editar e remover, publicados pelo backend', () => {
+    expect(servicoProtocoloApi.recursos).toEqual({ editarRemover: true });
   });
 
-  it('obter: compõe GET /criterios e GET /visitas, separando inclusão e exclusão', async () => {
+  it('obter: compõe GET /criterios, GET /criterios/exclusao e GET /visitas, separando inclusão e exclusão', async () => {
     const chamadas = simularBackend({
       'GET /estudos/1/criterios': { status: 200, data: CRITERIOS },
+      'GET /estudos/1/criterios/exclusao': { status: 200, data: { semCriteriosExclusao: false } },
       'GET /estudos/1/visitas': { status: 200, data: VISITAS },
     });
 
@@ -69,21 +70,41 @@ describe('servicoProtocoloApi', () => {
         { id: 3, descricao: 'Moradores da Paraíba.' },
       ],
       criteriosExclusao: [{ id: 2, descricao: 'Gestantes.' }],
-      // Sem rota de consulta no PR #32, a declaração começa desmarcada
       semCriteriosExclusao: false,
       visitas: VISITAS,
     });
-    // Só as duas rotas publicadas, sem CSRF; nenhuma rota que o backend negaria com 403
+    // As três consultas, sem CSRF
     expect(chamadas.map((c) => `${c.method?.toUpperCase()} ${c.url}`).sort()).toEqual([
       'GET /estudos/1/criterios',
+      'GET /estudos/1/criterios/exclusao',
       'GET /estudos/1/visitas',
     ]);
     expect(chamadas.every((c) => c.headers.get('X-CSRF-TOKEN') === undefined)).toBe(true);
   });
 
+  it('obter: usa a declaração "sem exclusão" devolvida pelo backend', async () => {
+    simularBackend({
+      'GET /estudos/1/criterios': { status: 200, data: [CRITERIOS[0]] },
+      'GET /estudos/1/criterios/exclusao': { status: 200, data: { semCriteriosExclusao: true } },
+      'GET /estudos/1/visitas': { status: 200, data: [] },
+    });
+
+    expect(await servicoProtocoloApi.obter(1)).toEqual({
+      estudoId: 1,
+      criteriosInclusao: [{ id: 1, descricao: 'Adultos.' }],
+      criteriosExclusao: [],
+      semCriteriosExclusao: true,
+      visitas: [],
+    });
+  });
+
   it('obter: repassa o 404 de estudo de outro pesquisador', async () => {
     simularBackend({
       'GET /estudos/9/criterios': {
+        status: 404,
+        data: { codigo: 'RECURSO_NAO_ENCONTRADO', mensagem: 'O recurso solicitado não foi encontrado.' },
+      },
+      'GET /estudos/9/criterios/exclusao': {
         status: 404,
         data: { codigo: 'RECURSO_NAO_ENCONTRADO', mensagem: 'O recurso solicitado não foi encontrado.' },
       },
@@ -199,26 +220,54 @@ describe('servicoProtocoloApi', () => {
       .catch((e: unknown) => e);
     expect(erro).toMatchObject({ status: 400, codigo: 'ESTUDO_FORA_PLANEJAMENTO' });
   });
-});
 
-// <-------------------ROTAS PROPOSTAS (A CONFIRMAR COM O BACKEND)------------------->
-// A tela não as chama enquanto recursos.editarRemover for false; aqui só se confere o formato
-describe('servicoProtocoloApi: rotas propostas', () => {
-  it('editar e remover critério: PUT e DELETE /estudos/{id}/criterios/{criterioId}', async () => {
+  it('editar e remover critério: PUT com tipo e descrição e DELETE /estudos/{id}/criterios/{criterioId}', async () => {
     const chamadas = simularBackend({
       'GET /auth/csrf': CSRF,
-      'PUT /estudos/1/criterios/5': { status: 200, data: { id: 5, descricao: 'Lactantes.' } },
+      'PUT /estudos/1/criterios/5': { status: 200, data: { id: 5, tipo: 'EXCLUSAO', descricao: 'Lactantes.' } },
       'DELETE /estudos/1/criterios/5': { status: 204 },
     });
 
-    expect(await servicoProtocoloApi.editarCriterio(1, 5, 'Lactantes.')).toEqual({ id: 5, descricao: 'Lactantes.' });
+    // A resposta traz o tipo, mas o Criterio da tela guarda só id e descrição
+    expect(await servicoProtocoloApi.editarCriterio(1, 5, { tipo: 'EXCLUSAO', descricao: 'Lactantes.' })).toEqual({
+      id: 5,
+      descricao: 'Lactantes.',
+    });
     await expect(servicoProtocoloApi.removerCriterio(1, 5)).resolves.toBeUndefined();
 
     const [put, remocao] = semCsrf(chamadas);
-    expect(corpo(put)).toEqual({ descricao: 'Lactantes.' });
+    expect(put.method).toBe('put');
+    expect(put.url).toBe('/estudos/1/criterios/5');
+    expect(corpo(put)).toEqual({ tipo: 'EXCLUSAO', descricao: 'Lactantes.' });
+    expect(put.headers.get('X-CSRF-TOKEN')).toBe('abc');
     expect(remocao.method).toBe('delete');
     expect(corpo(remocao)).toBeUndefined();
     expect(remocao.headers.get('X-CSRF-TOKEN')).toBe('abc');
+  });
+
+  it('repassa CRITERIOS_EXCLUSAO_INCONSISTENTES ao editar uma exclusão com a declaração marcada', async () => {
+    simularBackend({
+      'GET /auth/csrf': CSRF,
+      'PUT /estudos/1/criterios/5': {
+        status: 400,
+        data: {
+          codigo: 'CRITERIOS_EXCLUSAO_INCONSISTENTES',
+          mensagem: 'Desmarque a ausência de critérios de exclusão antes de cadastrar ou editar uma exclusão.',
+        },
+      },
+    });
+
+    const erro = await servicoProtocoloApi
+      .editarCriterio(1, 5, { tipo: 'EXCLUSAO', descricao: 'Lactantes.' })
+      .catch((e: unknown) => e);
+    expect(erro).toBeInstanceOf(ErroRequisicao);
+    expect(erro).toMatchObject({
+      status: 400,
+      codigo: 'CRITERIOS_EXCLUSAO_INCONSISTENTES',
+      message: 'Desmarque a ausência de critérios de exclusão antes de cadastrar ou editar uma exclusão.',
+    });
+    // Erro de regra de negócio não é tratado como acesso negado
+    expect(acessoNegado).not.toHaveBeenCalled();
   });
 
   it('editar e remover visita: PUT e DELETE /estudos/{id}/visitas/{visitaId}', async () => {
@@ -252,22 +301,5 @@ describe('servicoProtocoloApi: rotas propostas', () => {
     const [put, remocao] = semCsrf(chamadas);
     expect(corpo(put)).toEqual({ descricao: 'Outra.' });
     expect(remocao.url).toBe('/estudos/1/visitas/4/atividades/7');
-  });
-
-  it('com o backend do PR #32, uma rota não publicada responde 403 e leva à página de acesso negado', async () => {
-    // ConfiguracaoSeguranca: anyRequest().denyAll()
-    simularBackend({
-      'GET /auth/csrf': CSRF,
-      'DELETE /estudos/1/visitas/4': {
-        status: 403,
-        data: { codigo: 'ACESSO_NEGADO', mensagem: 'Seu perfil não permite esta operação.' },
-      },
-    });
-
-    const erro = await servicoProtocoloApi.removerVisita(1, 4).catch((e: unknown) => e);
-
-    expect(erro).toMatchObject({ status: 403, codigo: 'ACESSO_NEGADO' });
-    // O cliente trata o 403 de forma global: por isso a tela esconde editar e remover
-    expect(acessoNegado).toHaveBeenCalledTimes(1);
   });
 });

@@ -2,7 +2,8 @@ import { api } from './cliente';
 import { servicoProtocoloSimulado } from './protocoloSimulado';
 
 // <-------------------CONTRATO DO PROTOCOLO------------------->
-// Segue o PR #32 (T39/T40: critérios, visitas previstas e atividades) e docs/modelagem/RF05-RF07.md.
+// Segue o backend da main (PR #32 e commit 08d857a: critérios, visitas previstas e atividades) e
+// docs/modelagem/RF05-RF07.md.
 // Os critérios são textos avaliados pelo coordenador: o sistema não decide elegibilidade (RF05).
 
 export type TipoCriterio = 'INCLUSAO' | 'EXCLUSAO';
@@ -48,7 +49,7 @@ export type Protocolo = {
   visitas: VisitaPrevista[];
 };
 
-/** Dados enviados em POST /estudos/{estudoId}/criterios. */
+/** Dados enviados em POST /estudos/{estudoId}/criterios e PUT /estudos/{estudoId}/criterios/{criterioId}. */
 export type CriterioCadastroEntrada = {
   tipo: TipoCriterio;
   descricao: string;
@@ -71,7 +72,8 @@ export type ServicoProtocolo = {
   recursos: RecursosProtocolo;
   obter(estudoId: number): Promise<Protocolo>;
   adicionarCriterio(estudoId: number, entrada: CriterioCadastroEntrada): Promise<Criterio>;
-  editarCriterio(estudoId: number, criterioId: number, descricao: string): Promise<Criterio>;
+  /** O backend exige o tipo também na edição (CriterioCadastroEntrada). */
+  editarCriterio(estudoId: number, criterioId: number, entrada: CriterioCadastroEntrada): Promise<Criterio>;
   removerCriterio(estudoId: number, criterioId: number): Promise<void>;
   /** Devolve o valor gravado da declaração "sem critérios de exclusão". */
   definirSemExclusao(estudoId: number, semCriteriosExclusao: boolean): Promise<boolean>;
@@ -90,28 +92,29 @@ export type ServicoProtocolo = {
 };
 
 // <-------------------SERVIÇO REAL------------------->
-// Rotas do PR #32: GET e POST /estudos/{id}/criterios, PUT /estudos/{id}/criterios/exclusao,
-// GET e POST /estudos/{id}/visitas e POST /estudos/{id}/visitas/{visitaId}/atividades.
-// Só o pesquisador responsável e só em Planejamento. Erros: 404 para estudo de outro pesquisador
-// ou visita de outro protocolo; 400 VALIDACAO_INVALIDA (errosCampos), ESTUDO_FORA_PLANEJAMENTO,
-// ORDEM_VISITA_DUPLICADA e CRITERIOS_EXCLUSAO_INCONSISTENTES (declarar "sem exclusão" com exclusões).
-//
-// A confirmar com o backend: PUT e DELETE de critério, visita e atividade não existem no PR #32.
-// As chamadas abaixo seguem as rotas propostas, mas recursos.editarRemover fica false: a segurança
-// do backend nega qualquer rota não publicada com 403, e o cliente trata esse 403 levando à página
-// de acesso negado antes de a tela poder mostrar um erro.
-//
-// Também depende do backend: não há GET do semCriteriosExclusao (proposta: GET
-// /estudos/{id}/criterios/exclusao ou o campo na listagem). Pelo mesmo motivo do 403, a rota não é
-// chamada; o valor começa false ao carregar e passa a seguir o que o PUT devolver.
+// Rotas do backend (CriterioController e VisitaPrevistaController):
+// - GET /estudos/{id}/criterios e GET /estudos/{id}/criterios/exclusao ({ semCriteriosExclusao },
+//   false quando o estudo ainda não tem protocolo); POST /estudos/{id}/criterios ({ tipo, descricao });
+//   PUT /estudos/{id}/criterios/exclusao; PUT /estudos/{id}/criterios/{criterioId} ({ tipo, descricao });
+//   DELETE /estudos/{id}/criterios/{criterioId} (204; remover a última exclusão não marca a declaração).
+// - GET e POST /estudos/{id}/visitas; PUT e DELETE /estudos/{id}/visitas/{visitaId} (o DELETE remove
+//   as atividades junto); POST /estudos/{id}/visitas/{visitaId}/atividades; PUT e DELETE
+//   /estudos/{id}/visitas/{visitaId}/atividades/{atividadeId}.
+// As consultas (GET) valem para o pesquisador responsável e o coordenador vinculado; as alterações,
+// só para o pesquisador responsável e só em Planejamento.
+// Erros: 404 para estudo de outro pesquisador, critério, visita ou atividade fora do estudo;
+// 400 VALIDACAO_INVALIDA (errosCampos), ESTUDO_FORA_PLANEJAMENTO, ORDEM_VISITA_DUPLICADA (também na
+// edição, ignorando a própria visita) e CRITERIOS_EXCLUSAO_INCONSISTENTES (declarar "sem exclusão"
+// com exclusões cadastradas, ou cadastrar/editar uma exclusão com a declaração marcada).
 type CriterioResposta = Criterio & { tipo: TipoCriterio };
 
 export const servicoProtocoloApi: ServicoProtocolo = {
-  recursos: { editarRemover: false },
+  recursos: { editarRemover: true },
 
   async obter(estudoId) {
-    const [criterios, visitas] = await Promise.all([
+    const [criterios, exclusao, visitas] = await Promise.all([
       api.get<CriterioResposta[]>(`/estudos/${estudoId}/criterios`),
+      api.get<{ semCriteriosExclusao: boolean }>(`/estudos/${estudoId}/criterios/exclusao`),
       api.get<VisitaPrevista[]>(`/estudos/${estudoId}/visitas`),
     ]);
     const doTipo = (tipo: TipoCriterio) =>
@@ -120,7 +123,7 @@ export const servicoProtocoloApi: ServicoProtocolo = {
       estudoId,
       criteriosInclusao: doTipo('INCLUSAO'),
       criteriosExclusao: doTipo('EXCLUSAO'),
-      semCriteriosExclusao: false,
+      semCriteriosExclusao: exclusao.data.semCriteriosExclusao,
       visitas: visitas.data,
     };
   },
@@ -128,12 +131,10 @@ export const servicoProtocoloApi: ServicoProtocolo = {
     const { data } = await api.post<CriterioResposta>(`/estudos/${estudoId}/criterios`, entrada);
     return { id: data.id, descricao: data.descricao };
   },
-  // A confirmar com o backend
-  async editarCriterio(estudoId, criterioId, descricao) {
-    const { data } = await api.put<Criterio>(`/estudos/${estudoId}/criterios/${criterioId}`, { descricao });
-    return data;
+  async editarCriterio(estudoId, criterioId, entrada) {
+    const { data } = await api.put<CriterioResposta>(`/estudos/${estudoId}/criterios/${criterioId}`, entrada);
+    return { id: data.id, descricao: data.descricao };
   },
-  // A confirmar com o backend
   async removerCriterio(estudoId, criterioId) {
     await api.delete(`/estudos/${estudoId}/criterios/${criterioId}`);
   },
@@ -147,12 +148,11 @@ export const servicoProtocoloApi: ServicoProtocolo = {
     const { data } = await api.post<VisitaPrevista>(`/estudos/${estudoId}/visitas`, entrada);
     return data;
   },
-  // A confirmar com o backend
   async editarVisita(estudoId, visitaId, entrada) {
     const { data } = await api.put<VisitaPrevista>(`/estudos/${estudoId}/visitas/${visitaId}`, entrada);
     return data;
   },
-  // A confirmar com o backend: remove as atividades junto
+  // O backend remove as atividades junto
   async removerVisita(estudoId, visitaId) {
     await api.delete(`/estudos/${estudoId}/visitas/${visitaId}`);
   },
@@ -162,7 +162,6 @@ export const servicoProtocoloApi: ServicoProtocolo = {
     });
     return data;
   },
-  // A confirmar com o backend
   async editarAtividade(estudoId, visitaId, atividadeId, descricao) {
     const { data } = await api.put<AtividadePrevista>(
       `/estudos/${estudoId}/visitas/${visitaId}/atividades/${atividadeId}`,
@@ -170,14 +169,13 @@ export const servicoProtocoloApi: ServicoProtocolo = {
     );
     return data;
   },
-  // A confirmar com o backend
   async removerAtividade(estudoId, visitaId, atividadeId) {
     await api.delete(`/estudos/${estudoId}/visitas/${visitaId}/atividades/${atividadeId}`);
   },
 };
 
 // <-------------------SERVIÇO EM USO------------------->
-// O simulado é o padrão até o PR #32 entrar na main.
+// O simulado continua o padrão (dados fictícios, sem depender do backend).
 // Para usar o backend, definir VITE_PROTOCOLO_API=real no web/.env
 export const servicoProtocolo: ServicoProtocolo =
   import.meta.env.VITE_PROTOCOLO_API === 'real' ? servicoProtocoloApi : servicoProtocoloSimulado;

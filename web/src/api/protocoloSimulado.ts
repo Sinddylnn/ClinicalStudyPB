@@ -1,15 +1,23 @@
 import { ErroRequisicao } from './erros';
 import { servicoEstudos, type ServicoEstudos } from './estudos';
 import { servicoEstudosSimulado } from './estudosSimulado';
-import type { AtividadePrevista, Criterio, Protocolo, ServicoProtocolo, TipoCriterio, VisitaPrevista } from './protocolo';
+import type {
+  AtividadePrevista,
+  Criterio,
+  CriterioCadastroEntrada,
+  Protocolo,
+  ServicoProtocolo,
+  TipoCriterio,
+  VisitaPrevista,
+} from './protocolo';
 import { normalizarVisita, validarAtividade, validarVisita } from '../pages/protocolo/validacao';
 
 // <-------------------SERVIÇO SIMULADO------------------->
-// Guarda os protocolos em memória e responde como o backend do PR #32, com as mesmas mensagens e a
-// mesma ordem de verificação: campos (@Valid), estudo da sessão (404), estudo em Planejamento e as
-// regras de cada operação. Editar e remover seguem as rotas propostas ao backend.
-// Diferença decidida com a modelagem (seção 3): cadastrar exclusão com a declaração "sem exclusão"
-// marcada é recusado (SEM_EXCLUSAO_DECLARADA); o PR #32 desmarca a declaração sozinho.
+// Guarda os protocolos em memória e responde como o backend (CriterioService e VisitaPrevistaService),
+// com as mesmas mensagens e a mesma ordem de verificação: campos (@Valid), estudo da sessão (404),
+// estudo em Planejamento, item do estudo (404) e as regras de cada operação.
+// Modelagem, seção 3: cadastrar ou editar uma exclusão com a declaração "sem exclusão" marcada é
+// recusado (CRITERIOS_EXCLUSAO_INCONSISTENTES); a declaração só muda por escolha do pesquisador.
 // Os dados são fictícios e voltam ao estado inicial ao recarregar a página.
 const ATRASO_MS = 300;
 
@@ -76,12 +84,14 @@ const LISTAS: Record<TipoCriterio, 'criteriosInclusao' | 'criteriosExclusao'> = 
   EXCLUSAO: 'criteriosExclusao',
 };
 
-// CriterioCadastroEntrada do PR #32; a tela usa os próprios textos (validarCriterio)
-function validarCriterioApi(descricao: string): string | undefined {
-  const texto = descricao.trim();
-  if (!texto) return 'Informe a descrição do critério.';
-  if (texto.length > 1000) return 'A descrição deve ter no máximo 1000 caracteres.';
-  return undefined;
+// CriterioCadastroEntrada do backend; a tela usa os próprios textos (validarCriterio)
+function validarCriterioApi({ tipo, descricao }: CriterioCadastroEntrada): Record<string, string> {
+  const erros: Record<string, string> = {};
+  if (tipo !== 'INCLUSAO' && tipo !== 'EXCLUSAO') erros.tipo = 'Informe o tipo do critério.';
+  const texto = (descricao ?? '').trim();
+  if (!texto) erros.descricao = 'Informe a descrição do critério.';
+  else if (texto.length > 1000) erros.descricao = 'A descrição deve ter no máximo 1000 caracteres.';
+  return erros;
 }
 
 function erroValidacao(errosCampos: Record<string, string>) {
@@ -167,6 +177,11 @@ export function criarServicoProtocoloSimulado(estudos: ServicoEstudos, iniciais:
     return visita;
   }
 
+  // A atividade precisa ser da visita informada
+  function exigirAtividade(visita: VisitaPrevista, atividadeId: number) {
+    if (!visita.atividades.some((a) => a.id === atividadeId)) throw naoEncontrado('Atividade prevista não encontrada.');
+  }
+
   function exigirOrdemLivre(protocolo: Protocolo, ordem: number, visitaId?: number) {
     if (protocolo.visitas.some((v) => v.ordem === ordem && v.id !== visitaId)) {
       throw new ErroRequisicao(400, {
@@ -186,9 +201,19 @@ export function criarServicoProtocoloSimulado(estudos: ServicoEstudos, iniciais:
   const idsAtividades = () => protocolos.flatMap((p) => p.visitas.flatMap((v) => v.atividades)).map((a) => a.id);
 
   // Campos primeiro, como o @Valid do backend; o atraso vem depois de achar o estudo
-  function exigirCriterioValido(descricao: string) {
-    const erro = validarCriterioApi(descricao);
-    if (erro) throw erroValidacao({ descricao: erro });
+  function exigirCriterioValido(entrada: CriterioCadastroEntrada) {
+    const erros = validarCriterioApi(entrada);
+    if (Object.keys(erros).length > 0) throw erroValidacao(erros);
+  }
+
+  // CriterioService.validarExclusao: vale para cadastrar e para editar
+  function exigirExclusaoPermitida(protocolo: Protocolo, tipo: TipoCriterio) {
+    if (tipo === 'EXCLUSAO' && protocolo.semCriteriosExclusao) {
+      throw new ErroRequisicao(400, {
+        codigo: 'CRITERIOS_EXCLUSAO_INCONSISTENTES',
+        mensagem: 'Desmarque a ausência de critérios de exclusão antes de cadastrar ou editar uma exclusão.',
+      });
+    }
   }
 
   function exigirVisitaValida(entrada: Parameters<typeof validarVisita>[0]) {
@@ -211,20 +236,14 @@ export function criarServicoProtocoloSimulado(estudos: ServicoEstudos, iniciais:
     },
 
     async adicionarCriterio(estudoId, entrada) {
-      exigirCriterioValido(entrada.descricao);
+      exigirCriterioValido(entrada);
       const estudo = await buscarEstudo(estudoId);
       await aguardar();
       exigirPlanejamentoCriterios(estudo.estado);
 
       const protocolo = protocoloDe(estudoId);
       // Modelagem, seção 3: com a declaração marcada, o pesquisador desmarca antes de cadastrar
-      if (entrada.tipo === 'EXCLUSAO' && protocolo.semCriteriosExclusao) {
-        throw new ErroRequisicao(400, {
-          codigo: 'SEM_EXCLUSAO_DECLARADA',
-          mensagem:
-            'Desmarque a opção de que o estudo não possui critérios de exclusão antes de cadastrar um.',
-        });
-      }
+      exigirExclusaoPermitida(protocolo, entrada.tipo);
 
       const novo: Criterio = { id: proximoId(idsCriterios()), descricao: entrada.descricao.trim() };
       const lista = LISTAS[entrada.tipo];
@@ -232,16 +251,21 @@ export function criarServicoProtocoloSimulado(estudos: ServicoEstudos, iniciais:
       return { ...novo };
     },
 
-    async editarCriterio(estudoId, criterioId, descricao) {
-      exigirCriterioValido(descricao);
+    async editarCriterio(estudoId, criterioId, entrada) {
+      exigirCriterioValido(entrada);
       const estudo = await buscarEstudo(estudoId);
       await aguardar();
       exigirPlanejamentoCriterios(estudo.estado);
 
       const protocolo = protocoloDe(estudoId);
-      const lista = LISTAS[tipoDoCriterio(protocolo, criterioId)];
-      const editado: Criterio = { id: criterioId, descricao: descricao.trim() };
-      salvar({ ...protocolo, [lista]: protocolo[lista].map((c) => (c.id === criterioId ? editado : c)) });
+      const origem = LISTAS[tipoDoCriterio(protocolo, criterioId)];
+      exigirExclusaoPermitida(protocolo, entrada.tipo);
+
+      // O backend grava o tipo enviado: se mudar, o critério passa para a outra lista (em ordem de id)
+      const destino = LISTAS[entrada.tipo];
+      const editado: Criterio = { id: criterioId, descricao: entrada.descricao.trim() };
+      const semEle = { ...protocolo, [origem]: protocolo[origem].filter((c) => c.id !== criterioId) };
+      salvar({ ...semEle, [destino]: [...semEle[destino], editado].sort((a, b) => a.id - b.id) });
       return { ...editado };
     },
 
@@ -335,7 +359,7 @@ export function criarServicoProtocoloSimulado(estudos: ServicoEstudos, iniciais:
 
       const protocolo = protocoloDe(estudoId);
       const visita = buscarVisita(protocolo, visitaId);
-      if (!visita.atividades.some((a) => a.id === atividadeId)) throw naoEncontrado('Atividade não encontrada.');
+      exigirAtividade(visita, atividadeId);
       const editada: AtividadePrevista = { id: atividadeId, descricao: descricao.trim() };
       trocarVisita(protocolo, {
         ...visita,
@@ -351,7 +375,7 @@ export function criarServicoProtocoloSimulado(estudos: ServicoEstudos, iniciais:
 
       const protocolo = protocoloDe(estudoId);
       const visita = buscarVisita(protocolo, visitaId);
-      if (!visita.atividades.some((a) => a.id === atividadeId)) throw naoEncontrado('Atividade não encontrada.');
+      exigirAtividade(visita, atividadeId);
       trocarVisita(protocolo, { ...visita, atividades: visita.atividades.filter((a) => a.id !== atividadeId) });
     },
   };
