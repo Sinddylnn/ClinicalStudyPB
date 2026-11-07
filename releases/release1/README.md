@@ -45,9 +45,29 @@ Para cada requisito, incluir ao menos uma captura de sucesso e uma de erro ou va
  
 ## 4. Diagramas
  
-Os diagramas desta release estão em [`diagramas/`](diagramas/).
- 
-<Listar e linkar cada diagrama: casos de uso, classes, sequência e arquitetura.>
+## 4. Diagramas
+
+Os diagramas representam o desenho do sistema completo; os fluxos de acompanhamento e do participante serão implementados na Release 2.
+
+**Casos de uso**
+![Casos de uso: acesso e estudos](diagramas/02_casos_acesso_estudos.png)
+![Casos de uso: recrutamento](diagramas/03_casos_recrutamento.png)
+![Casos de uso: acompanhamento](diagramas/04_casos_acompanhamento.png)
+![Casos de uso: participante](diagramas/05_casos_participante.png)
+
+**Modelo de domínio**
+![Modelo de domínio](diagramas/09_modelo_dominio.png)
+
+**Sequência do cadastro**
+![Sequência do cadastro](diagramas/08_sequencia_cadastro.png)
+
+**Arquitetura**
+![Visão geral](diagramas/01_visao_geral.png)
+![Componentes](diagramas/06_componentes_uml.png)
+![Camadas do backend](diagramas/07_camadas_backend.png)
+
+**Estados do estudo**
+![Estados do estudo](diagramas/10_estados_estudos.png)
  
 ## 5. Alterações na arquitetura e no stack
  

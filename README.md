@@ -26,7 +26,7 @@ Como se trata de um projeto acadêmico, serão utilizados dados fictícios. O si
 A aplicação web e o aplicativo se comunicam com o mesmo backend por meio de uma API REST. O backend concentra as regras de negócio, o controle de acesso e a comunicação com o banco de dados.
 
 <div align="center">
-  <img src="docs/diagramas/01_visao_geral.png" alt="visão geral do sistema" width="50%">
+  <img src="releases/release1/diagramas/01_visao_geral.png" alt="visão geral do sistema" width="50%">
 </div>
 
 As interfaces não acessam diretamente o banco. Dessa forma, as regras e os dados permanecem centralizados, mesmo quando são utilizados em telas diferentes.
