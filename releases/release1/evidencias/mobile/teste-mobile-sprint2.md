@@ -20,7 +20,7 @@ Executar a aplicação mobile criada na Sprint 1, verificar seu funcionamento no
 ### Versões testadas
 | Item | Versão |
 |------|--------|
-| Expo SDK | 58.0.13 |
+| Expo SDK | 58 (pacote `expo` 58.0.17) |
 | React Native | 0.88.0 |
 | Node | 24.11.1 |
 

@@ -51,8 +51,11 @@ backend/             API Java + Spring Boot ⟶ Georis e Luiz
 web/                 Interface React ⟶ Suelle e Sinddy
 mobile/              Aplicativo React Native + Expo ⟶ Horlan
 docs/                Decisões e orientações para a equipe
-docs/diagramas/      Diagramas editáveis e imagens
-releases/release1/   Evidências da primeira release
+docs/                Guias técnicos (autenticação, OpenAPI, Docker, modelagem, Postman)
+releases/release1/   Documentação e evidências da primeira release
+  diagramas/         Diagramas editáveis (.drawio) e imagens
+  evidencias/        Capturas e relatórios (web, mobile, backend)
+  sprints/           Planning, review e burndown de cada sprint
 releases/release2/   Evidências da segunda release
 releases/release3/   Evidências da terceira release
 ```
@@ -212,7 +215,7 @@ Aplicativo mobile do participante do ClinicalStudyPB, feito com React Native, Ty
 |Item                | Versão  |
 |--------------------|---------|
 |React Native        | 0.88.0  |
-|React               | 0.88.0  |
+|React               | 19.3.0  |
 |TypeScript          | 6.0.3   |
 |Expo                | 58.0.17 |
 |Expo Router         | 58.0.25 |
@@ -242,8 +245,9 @@ Todos os comandos abaixo são executados dentro da pasta `mobile/`.
 ##### 2. Instalar as dependências
 
 ```bash
-npm install
+npm ci
 ```
+O `npm ci` instala exatamente as versões do `package-lock.json`, sem alterá-lo. Use `npm install` apenas se for adicionar ou atualizar uma dependência.
 
 ##### 3. Abrir o emulador Android
 
@@ -388,6 +392,15 @@ necessário para atualizar as aplicações.
 - **Erro de autenticação depois de trocar a senha:** o PostgreSQL só lê a senha na criação do volume. Reutilize a senha definida na criação do banco ou altere-a de forma controlada no PostgreSQL; não apague o volume para resolver isso.
 - **Backend não conecta:** confirme que `docker compose ps` mostra `healthy` e consulte os logs. Fora do Docker, confira também se as três variáveis `SPRING_DATASOURCE_*` estão configuradas no terminal/IDE.
 
+## Releases
+
+| Release | Sprints | Entrega | Documentação |
+|---|---|---|---|
+| Release 1 | 1 e 2 | 09/11/2026 | [README da Release 1](releases/release1/README.md) |
+| Release 2 | 3 e 4 | 07/12/2026 | [README da Release 2](releases/release2/README.md) |
+| Release 3 | 5 e 6 | 11/02/2027 | [README da Release 3](releases/release3/README.md) |
+
+Os requisitos implementados em cada entrega, com as capturas das interfaces (sucesso e erro), estão no README da respectiva release. Os guias técnicos, a modelagem e a coleção Postman estão em [`docs/`](docs/).
 
 ## Autores
 
