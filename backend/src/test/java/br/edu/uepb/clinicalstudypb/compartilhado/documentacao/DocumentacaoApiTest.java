@@ -14,6 +14,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import br.edu.uepb.clinicalstudypb.estudos.repository.AtividadePrevistaRepository;
+import br.edu.uepb.clinicalstudypb.recrutamento.repository.AvaliacaoElegibilidadeRepository;
+import br.edu.uepb.clinicalstudypb.recrutamento.repository.RespostaElegibilidadeRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -21,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import br.edu.uepb.clinicalstudypb.recrutamento.repository.CandidatoRepository;
 
 // <-------------------CONTRATO GERADO E ACESSO À DOCUMENTAÇÃO------------------->
 /**
@@ -40,10 +44,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class DocumentacaoApiTest {
 
+    @MockitoBean
+    private br.edu.uepb.clinicalstudypb.recrutamento.repository.ConsentimentoRepository consentimentoRepository;
+
     @MockitoBean private ProtocoloRepository protocoloRepository;
     @MockitoBean private CriterioRepository criterioRepository;
     @MockitoBean private VisitaPrevistaRepository visitaPrevistaRepository;
     @MockitoBean private ParticipacaoRepository participacaoRepository;
+    @MockitoBean private AtividadePrevistaRepository atividadePrevistaRepository;
 
     @Autowired
     private MockMvc mvc;
@@ -53,6 +61,12 @@ class DocumentacaoApiTest {
     private UsuarioRepository usuarios;
     @MockitoBean
     private EstudoRepository estudos;
+    @MockitoBean
+    private CandidatoRepository candidatoRepository;
+    @MockitoBean
+    private AvaliacaoElegibilidadeRepository avaliacaoElegibilidadeRepository;
+    @MockitoBean
+    private RespostaElegibilidadeRepository respostaElegibilidadeRepository;
 
     /**
      * Confere rotas, DTOs e mecanismos de acesso publicados no contrato real.
@@ -286,5 +300,47 @@ class DocumentacaoApiTest {
         mvc.perform(post("/auth/logout"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.codigo").value("CSRF_INVALIDO"));
+    }
+
+    /** Mantém o contrato das novas operações disponível para a integração da web. */
+    @Test
+    void documentaConfiguracaoCompletaDoProtocolo() throws Exception {
+        JsonNode rotas = json.readTree(mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString()).path("paths");
+        assertThat(rotas.path("/estudos/{estudoId}/criterios/exclusao").has("get")).isTrue();
+        for (String caminho : new String[]{
+                "/estudos/{estudoId}/criterios/{criterioId}",
+                "/estudos/{estudoId}/visitas/{visitaId}",
+                "/estudos/{estudoId}/visitas/{visitaId}/atividades/{atividadeId}"}) {
+            for (String metodo : new String[]{"put", "delete"}) {
+                JsonNode operacao = rotas.path(caminho).path(metodo);
+                assertThat(operacao.isMissingNode()).isFalse();
+                for (String codigo : new String[]{"400", "401", "403", "404"}) {
+                    assertThat(operacao.path("responses").has(codigo)).isTrue();
+                }
+                assertThat(operacao.path("parameters").toString()).contains("TokenCsrf");
+            }
+        }
+    }
+
+    /** Confere as operações e limites publicados para a integração da web. */
+    @Test
+    void documentaConsentimentoEInclusao() throws Exception {
+        JsonNode contrato = json.readTree(mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        JsonNode rotas = contrato.path("paths");
+        String base = "/estudos/{estudoId}/candidatos/{candidatoId}";
+        for (String[] item : new String[][]{
+                {"/consentimento", "get"}, {"/consentimento", "put"},
+                {"/consentimento/historico", "get"}, {"/inclusao", "get"}, {"/inclusao", "post"}}) {
+            JsonNode operacao = rotas.path(base + item[0]).path(item[1]);
+            assertThat(operacao.isMissingNode()).isFalse();
+            assertThat(operacao.path("security").toString()).contains("sessao");
+            assertThat(operacao.path("parameters").toString().contains("TokenCsrf")).isEqualTo(!item[1].equals("get"));
+        }
+        JsonNode campos = contrato.path("components").path("schemas").path("ConsentimentoEntrada").path("properties");
+        assertThat(campos.path("observacao").path("maxLength").asInt()).isEqualTo(500);
+        assertThat(campos.path("resposta").path("enum").toString()).contains("ACEITOU", "RECUSOU").doesNotContain("PENDENTE");
+        assertThat(rotas.path(base + "/inclusao").path("post").path("responses").has("409")).isTrue();
     }
 }

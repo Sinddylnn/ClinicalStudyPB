@@ -34,7 +34,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 // <-------------------POLÍTICA DE ACESSO DA API------------------->
 /**
- * Configura autenticação por sessão, proteção de alterações e permissões da Sprint 1.
+ * Configura autenticação por sessão, proteção de alterações e permissões da
+ * Sprint 1.
  *
  * @author Georis
  * @version 1.0
@@ -60,7 +61,7 @@ public class ConfiguracaoSeguranca {
      * Delega a conferência de senha e conta ativa ao Spring Security.
      *
      * @param usuarios serviço que localiza a conta pelo e-mail
-     * @param senhas algoritmo usado para verificar o hash
+     * @param senhas   algoritmo usado para verificar o hash
      * @return gerenciador da autenticação
      * @since 1.0
      */
@@ -131,52 +132,188 @@ public class ConfiguracaoSeguranca {
 
     // <-------------------ROTAS E PERMISSÕES------------------->
     /**
-     * Protege a API sem páginas de login, autenticação Basic ou permissões implícitas.
+     * Protege a API sem páginas de login, autenticação Basic ou permissões
+     * implícitas.
      *
-     * @param http configuração da cadeia de filtros
-     * @param erros respostas JSON de segurança
+     * @param http      configuração da cadeia de filtros
+     * @param erros     respostas JSON de segurança
      * @param contextos armazenamento da autenticação
-     * @param tokens armazenamento dos tokens CSRF
-     * @param cors origens permitidas para a web
-     * @param usuarios acesso ao estado atual da conta
+     * @param tokens    armazenamento dos tokens CSRF
+     * @param cors      origens permitidas para a web
+     * @param usuarios  acesso ao estado atual da conta
      * @return cadeia que protege as requisições HTTP
      * @throws Exception se não for possível construir a configuração de segurança
      * @since 1.0
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, RespostaErroSeguranca erros,
-            SecurityContextRepository contextos, CsrfTokenRepository tokens,
-            UrlBasedCorsConfigurationSource cors, UsuarioRepository usuarios) throws Exception {
-        http
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .requestCache(AbstractHttpConfigurer::disable)
-                .cors(config -> config.configurationSource(cors))
-                .csrf(config -> config.csrfTokenRepository(tokens))
-                .securityContext(config -> config.securityContextRepository(contextos).requireExplicitSave(true))
-                .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .exceptionHandling(config -> config.authenticationEntryPoint(erros).accessDeniedHandler(erros))
-                .authorizeHttpRequests(config -> config
-                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                        // A consulta da documentação é pública; as operações mantêm suas proteções
-                        .requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs.yaml",
-                                "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/auth/csrf").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/auth/sessao").authenticated()
-                        .requestMatchers("/usuarios", "/usuarios/**").hasRole("ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.POST, "/estudos").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.PUT, "/estudos/*/coordenador").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.PATCH, "/estudos/*/estado").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.GET, "/estudos/coordenadores").hasRole("PESQUISADOR")
-                        .requestMatchers(HttpMethod.GET, "/estudos", "/estudos/*")
-                                .hasAnyRole("PESQUISADOR", "COORDENADOR")
-                        .anyRequest().denyAll())
-                .logout(config -> config.logoutUrl("/auth/logout")
-                        .invalidateHttpSession(true).clearAuthentication(true).deleteCookies("JSESSIONID")
-                        .logoutSuccessHandler((request, response, autenticacao) -> response.setStatus(204)))
-                // Registro somente nesta cadeia evita executar o filtro duas vezes
-                .addFilterBefore(new FiltroUsuarioAtivo(usuarios, contextos, erros), AuthorizationFilter.class);
-        return http.build();
-    }
+public SecurityFilterChain securityFilterChain(
+        HttpSecurity http,
+        RespostaErroSeguranca erros,
+        SecurityContextRepository contextos,
+        CsrfTokenRepository tokens,
+        UrlBasedCorsConfigurationSource cors,
+        UsuarioRepository usuarios) throws Exception {
+
+    http
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .requestCache(AbstractHttpConfigurer::disable)
+
+            .cors(config -> config.configurationSource(cors))
+
+            .csrf(config -> config
+                    .csrfTokenRepository(tokens))
+
+            .securityContext(config -> config
+                    .securityContextRepository(contextos)
+                    .requireExplicitSave(true))
+
+            .sessionManagement(config -> config
+                    .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+
+            .exceptionHandling(config -> config
+                    .authenticationEntryPoint(erros)
+                    .accessDeniedHandler(erros))
+
+            .authorizeHttpRequests(config -> config
+
+                    .dispatcherTypeMatchers(DispatcherType.ERROR)
+                    .permitAll()
+
+                    // Documentação pública
+                    .requestMatchers(
+                            HttpMethod.GET,
+                            "/v3/api-docs",
+                            "/v3/api-docs.yaml",
+                            "/v3/api-docs/**",
+                            "/swagger-ui.html",
+                            "/swagger-ui/**"
+                    )
+                    .permitAll()
+
+                    // Autenticação
+                    .requestMatchers(HttpMethod.GET, "/auth/csrf")
+                    .permitAll()
+
+                    .requestMatchers(HttpMethod.POST, "/auth/login")
+                    .permitAll()
+
+                    .requestMatchers(HttpMethod.GET, "/auth/sessao")
+                    .authenticated()
+
+                    // Usuários
+                    .requestMatchers("/usuarios", "/usuarios/**")
+                    .hasRole("ADMINISTRADOR")
+
+                    // Estudos
+                    .requestMatchers(HttpMethod.POST, "/estudos")
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(HttpMethod.PUT, "/estudos/*/coordenador")
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(HttpMethod.PATCH, "/estudos/*/estado")
+                    .hasRole("PESQUISADOR")
+
+                    // Critérios
+                    .requestMatchers(HttpMethod.POST, "/estudos/*/criterios")
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(HttpMethod.PUT, "/estudos/*/criterios/exclusao")
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(HttpMethod.GET, "/estudos/*/criterios", "/estudos/*/criterios/exclusao")
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+
+                    .requestMatchers(HttpMethod.PUT, "/estudos/*/criterios/*", "/estudos/*/visitas/*",
+                            "/estudos/*/visitas/*/atividades/*")
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(HttpMethod.DELETE, "/estudos/*/criterios/*", "/estudos/*/visitas/*",
+                            "/estudos/*/visitas/*/atividades/*")
+                    .hasRole("PESQUISADOR")
+
+                    // Visitas previstas
+                    .requestMatchers(HttpMethod.POST, "/estudos/*/visitas")
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(
+                            HttpMethod.POST,
+                            "/estudos/*/visitas/*/atividades"
+                    )
+                    .hasRole("PESQUISADOR")
+
+                    .requestMatchers(HttpMethod.GET, "/estudos/*/visitas")
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+
+                    // <-------------------CANDIDATOS------------------->
+
+                    .requestMatchers(HttpMethod.POST, "/estudos/*/candidatos")
+                    .hasRole("COORDENADOR")
+                    .requestMatchers(HttpMethod.GET, "/estudos/*/candidatos")
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+
+                    // Coordenadores disponíveis
+                    .requestMatchers(HttpMethod.GET, "/estudos/coordenadores")
+                    .hasRole("PESQUISADOR")
+
+                    // <-------------------ELEGIBILIDADE------------------->
+
+                    .requestMatchers(
+                            HttpMethod.GET,
+                            "/estudos/*/candidatos/*/elegibilidade"
+                    )
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+
+                    .requestMatchers(
+                            HttpMethod.PUT,
+                            "/estudos/*/candidatos/*/elegibilidade"
+                    )
+                    .hasRole("COORDENADOR")
+
+                    // <-------------------CONSENTIMENTO E INCLUSÃO------------------->
+                    .requestMatchers(HttpMethod.GET, "/estudos/*/candidatos/*/consentimento",
+                            "/estudos/*/candidatos/*/consentimento/historico", "/estudos/*/candidatos/*/inclusao")
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+                    .requestMatchers(HttpMethod.PUT, "/estudos/*/candidatos/*/consentimento")
+                    .hasRole("COORDENADOR")
+                    .requestMatchers(HttpMethod.POST, "/estudos/*/candidatos/*/inclusao")
+                    .hasRole("COORDENADOR")
+
+                    // Consulta de estudos
+                    .requestMatchers(
+                            HttpMethod.GET,
+                            "/estudos",
+                            "/estudos/*"
+                    )
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+
+                    // Tudo que não foi declarado acima fica bloqueado
+                    .anyRequest()
+                    .denyAll()
+            )
+
+            .logout(config -> config
+                    .logoutUrl("/auth/logout")
+                    .invalidateHttpSession(true)
+                    .clearAuthentication(true)
+                    .deleteCookies("JSESSIONID")
+                    .logoutSuccessHandler(
+                            (request, response, autenticacao) ->
+                                    response.setStatus(204)
+                    )
+            )
+
+            // Registro somente nesta cadeia evita executar o filtro duas vezes
+            .addFilterBefore(
+                    new FiltroUsuarioAtivo(
+                            usuarios,
+                            contextos,
+                            erros
+                    ),
+                    AuthorizationFilter.class
+            );
+
+    return http.build();
+}
 }

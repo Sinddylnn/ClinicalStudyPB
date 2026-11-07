@@ -1,6 +1,7 @@
 package br.edu.uepb.clinicalstudypb.estudos;
 
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
+import br.edu.uepb.clinicalstudypb.recrutamento.Candidato;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -39,6 +40,11 @@ public class Participacao {
     @JoinColumn(name = "participante_id", nullable = false)
     private Usuario participante;
 
+    // Registros anteriores à V9 podem não ter candidato associado
+    @jakarta.persistence.OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "candidato_id", unique = true)
+    private Candidato candidato;
+
     @Column(name = "data_inclusao", nullable = false)
     private Instant dataInclusao;
 
@@ -47,7 +53,8 @@ public class Participacao {
     }
 
     /**
-     * Cria o registro a partir de dados validados pelo serviço responsável.
+     * Mantém a construção de registros legados, anteriores ao vínculo com candidato.
+     * Novas inclusões do RF11 devem usar o construtor que recebe Candidato.
      *
      * @param estudo estudo da inclusão
      * @param participante conta de participante vinculada
@@ -75,5 +82,25 @@ public class Participacao {
 
     public Instant getDataInclusao() {
         return dataInclusao;
+    }
+
+    // <-------------------VÍNCULO COM O RECRUTAMENTO------------------->
+
+    /**
+     * Vincula a inclusão ao candidato cuja avaliação deve ser preservada.
+     * O serviço do RF11 precisa validar consentimento, elegibilidade, conta e vagas.
+     *
+     * @param candidato candidato incluído, já validado pelo serviço
+     * @param participante conta associada à inclusão
+     * @param dataInclusao instante do registro
+     */
+    public Participacao(Candidato candidato, Usuario participante, Instant dataInclusao) {
+        this(java.util.Objects.requireNonNull(candidato).getEstudo(), participante, dataInclusao);
+        this.candidato = candidato;
+        candidato.registrarParticipacao(this);
+    }
+
+    public Candidato getCandidato() {
+        return candidato;
     }
 }

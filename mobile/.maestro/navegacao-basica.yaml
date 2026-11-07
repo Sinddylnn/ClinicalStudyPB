@@ -1,0 +1,21 @@
+appId: host.exp.exponent
+---
+- launchApp
+- openLink: exp://192.168.0.4:8081
+- extendedWaitUntil:
+    visible: "Aplicativo do participante"
+    timeout: 90000
+- assertVisible: "Aplicativo do participante"
+
+- tapOn: "Estudos"
+- assertVisible: "Meus estudos"
+- assertVisible: "Estudos em que você está incluída"
+
+- tapOn: "Visitas"
+- assertVisible: "Próximas visitas e comparecimento"
+
+- tapOn: "Perfil"
+- assertVisible: "Dados da sua conta"
+
+- tapOn: "Início"
+- assertVisible: "Aplicativo do participante"

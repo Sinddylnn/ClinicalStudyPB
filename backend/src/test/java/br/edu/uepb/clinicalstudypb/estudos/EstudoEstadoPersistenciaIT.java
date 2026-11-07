@@ -3,6 +3,10 @@ package br.edu.uepb.clinicalstudypb.estudos;
 import br.edu.uepb.clinicalstudypb.compartilhado.erro.RegraNegocioException;
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
 import br.edu.uepb.clinicalstudypb.estudos.api.AlteracaoEstadoEntrada;
+import br.edu.uepb.clinicalstudypb.estudos.api.CriterioCadastroEntrada;
+import br.edu.uepb.clinicalstudypb.estudos.api.CriterioExclusaoConfiguracaoEntrada;
+import br.edu.uepb.clinicalstudypb.estudos.api.VisitaPrevistaCadastroEntrada;
+import br.edu.uepb.clinicalstudypb.estudos.api.AtividadePrevistaCadastroEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.service.EstudoService;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
@@ -44,6 +48,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @SpringBootTest
 @EnabledIfEnvironmentVariable(named = "CLINICALSTUDYPB_TEST_DB_URL", matches = ".+")
 class EstudoEstadoPersistenciaIT {
+    @Autowired private br.edu.uepb.clinicalstudypb.estudos.service.CriterioService criterios;
+    @Autowired private br.edu.uepb.clinicalstudypb.estudos.service.VisitaPrevistaService visitas;
     @Autowired private EstudoService servico;
     @Autowired private EstudoRepository estudos;
     @Autowired private EntityManager entidades;
@@ -293,4 +299,63 @@ class EstudoEstadoPersistenciaIT {
 
     /** Identificadores mínimos utilizados entre transações distintas. */
     private record Cenario(Long estudoId, Long coordenadorId, Long visitaId, UsuarioAutenticado identidade) { }
+
+    // <-------------------PROTOCOLO CONFIGURADO PELOS SERVIÇOS------------------->
+
+    /** Confere edições, remoções e recrutamento por consultas após cada commit. */
+    @Test
+    void configuraProtocoloPersisteEdicoesERemocoesAntesDeRecrutar() {
+        Cenario c = tx().execute(status -> {
+            Usuario pesquisador = conta(PerfilUsuario.PESQUISADOR);
+            Usuario coordenador = conta(PerfilUsuario.COORDENADOR);
+            Estudo estudo = new Estudo("Protocolo configurável", "Objetivo", pesquisador,
+                    LocalDate.now(), LocalDate.now(), 10);
+            estudo.atribuirCoordenador(coordenador);
+            entidades.persist(estudo);
+            return new Cenario(estudo.getId(), coordenador.getId(), null, new UsuarioAutenticado(pesquisador));
+        });
+        Long id = c.estudoId();
+        UsuarioAutenticado autor = c.identidade();
+        var criterio = criterios.cadastrar(id, new CriterioCadastroEntrada(TipoCriterio.INCLUSAO, "Inicial"), autor);
+        criterios.editar(id, criterio.id(), new CriterioCadastroEntrada(TipoCriterio.INCLUSAO, "Editado"), autor);
+        assertThat(criterios.listar(id, autor).getFirst().descricao()).isEqualTo("Editado");
+        criterios.configurarExclusao(id, new CriterioExclusaoConfiguracaoEntrada(true), autor);
+        assertThatThrownBy(() -> criterios.editar(id, criterio.id(),
+                new CriterioCadastroEntrada(TipoCriterio.EXCLUSAO, "Inválido"), autor))
+                .isInstanceOf(RegraNegocioException.class);
+        assertThat(criterios.listar(id, autor).getFirst().tipo()).isEqualTo(TipoCriterio.INCLUSAO);
+        assertThat(criterios.consultarExclusao(id, autor).semCriteriosExclusao()).isTrue();
+
+        var visita = visitas.cadastrarVisita(id, new VisitaPrevistaCadastroEntrada("Inicial", null, 1), autor);
+        var atividade = visitas.cadastrarAtividade(id, visita.id(), new AtividadePrevistaCadastroEntrada("Inicial"), autor);
+        visitas.editarVisita(id, visita.id(), new VisitaPrevistaCadastroEntrada("Editada", null, 3), autor);
+        visitas.editarAtividade(id, visita.id(), atividade.id(), new AtividadePrevistaCadastroEntrada("Editada"), autor);
+        assertThat(visitas.listar(id, autor).getFirst().ordem()).isEqualTo(3);
+        assertThat(visitas.listar(id, autor).getFirst().atividades().getFirst().descricao()).isEqualTo("Editada");
+        visitas.removerAtividade(id, visita.id(), atividade.id(), autor);
+        assertThatThrownBy(() -> mudar(c, EstadoEstudo.RECRUTAMENTO, null)).isInstanceOf(RegraNegocioException.class);
+        var reposicao = visitas.cadastrarAtividade(id, visita.id(), new AtividadePrevistaCadastroEntrada("Reposição"), autor);
+        visitas.removerVisita(id, visita.id(), autor);
+        // Uma nova transação confirma a remoção em cascata feita pelo PostgreSQL
+        tx().executeWithoutResult(status -> {
+            assertThat(entidades.find(VisitaPrevista.class, visita.id())).isNull();
+            assertThat(entidades.find(AtividadePrevista.class, reposicao.id())).isNull();
+        });
+        criterios.remover(id, criterio.id(), autor);
+        assertThat(criterios.listar(id, autor)).isEmpty();
+        criterios.configurarExclusao(id, new CriterioExclusaoConfiguracaoEntrada(false), autor);
+        var exclusao = criterios.cadastrar(id, new CriterioCadastroEntrada(TipoCriterio.EXCLUSAO, "Exclusão"), autor);
+        criterios.remover(id, exclusao.id(), autor);
+        assertThat(criterios.consultarExclusao(id, autor).semCriteriosExclusao()).isFalse();
+
+        criterios.cadastrar(id, new CriterioCadastroEntrada(TipoCriterio.INCLUSAO, "Inclusão"), autor);
+        criterios.configurarExclusao(id, new CriterioExclusaoConfiguracaoEntrada(true), autor);
+        var finalizada = visitas.cadastrarVisita(id, new VisitaPrevistaCadastroEntrada("Final", null, 5), autor);
+        visitas.cadastrarAtividade(id, finalizada.id(), new AtividadePrevistaCadastroEntrada("Avaliação"), autor);
+        mudar(c, EstadoEstudo.RECRUTAMENTO, null);
+        conferirPersistido(c, EstadoEstudo.RECRUTAMENTO, null);
+        assertThatThrownBy(() -> visitas.removerVisita(id, finalizada.id(), autor))
+                .isInstanceOf(RegraNegocioException.class);
+        assertThat(visitas.listar(id, autor)).hasSize(1);
+    }
 }
