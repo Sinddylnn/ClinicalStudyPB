@@ -45,29 +45,69 @@ Para cada requisito, incluir ao menos uma captura de sucesso e uma de erro ou va
  
 ## 4. Diagramas
  
-## 4. Diagramas
+Os diagramas representam o desenho do sistema completo; os fluxos de acompanhamento e do participante serão implementados na Release 2. Clique em uma imagem para ampliá-la.
 
-Os diagramas representam o desenho do sistema completo; os fluxos de acompanhamento e do participante serão implementados na Release 2.
+### Casos de uso
 
-**Casos de uso**
-![Casos de uso: acesso e estudos](diagramas/02_casos_acesso_estudos.png)
-![Casos de uso: recrutamento](diagramas/03_casos_recrutamento.png)
-![Casos de uso: acompanhamento](diagramas/04_casos_acompanhamento.png)
-![Casos de uso: participante](diagramas/05_casos_participante.png)
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="diagramas/02_casos_acesso_estudos.png" alt="Casos de uso: acesso e estudos" width="100%"><br>
+      <sub>Acesso e estudos</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="diagramas/03_casos_recrutamento.png" alt="Casos de uso: recrutamento" width="100%"><br>
+      <sub>Recrutamento</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="diagramas/04_casos_acompanhamento.png" alt="Casos de uso: acompanhamento" width="100%"><br>
+      <sub>Acompanhamento</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="diagramas/05_casos_participante.png" alt="Casos de uso: participante" width="100%"><br>
+      <sub>Participante</sub>
+    </td>
+  </tr>
+</table>
 
-**Modelo de domínio**
-![Modelo de domínio](diagramas/09_modelo_dominio.png)
+### Modelo de domínio
 
-**Sequência do cadastro**
-![Sequência do cadastro](diagramas/08_sequencia_cadastro.png)
+<p align="center">
+  <img src="diagramas/09_modelo_dominio.png" alt="Modelo de domínio" width="80%">
+</p>
 
-**Arquitetura**
-![Visão geral](diagramas/01_visao_geral.png)
-![Componentes](diagramas/06_componentes_uml.png)
-![Camadas do backend](diagramas/07_camadas_backend.png)
+### Sequência do cadastro
 
-**Estados do estudo**
-![Estados do estudo](diagramas/10_estados_estudos.png)
+<p align="center">
+  <img src="diagramas/08_sequencia_cadastro.png" alt="Sequência do cadastro" width="70%">
+</p>
+
+### Arquitetura
+
+<p align="center">
+  <img src="diagramas/01_visao_geral.png" alt="Visão geral do sistema" width="60%">
+</p>
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="diagramas/06_componentes_uml.png" alt="Componentes" width="100%"><br>
+      <sub>Componentes</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="diagramas/07_camadas_backend.png" alt="Camadas do backend" width="100%"><br>
+      <sub>Camadas do backend</sub>
+    </td>
+  </tr>
+</table>
+
+### Estados do estudo
+
+<p align="center">
+  <img src="diagramas/10_estados_estudos.png" alt="Estados do estudo" width="50%">
+</p>
  
 ## 5. Alterações na arquitetura e no stack
  
