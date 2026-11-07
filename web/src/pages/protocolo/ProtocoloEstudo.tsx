@@ -19,6 +19,7 @@ import { TRANSICOES } from '../estudos/transicoes';
 import DialogoMudancaEstado, { type DestinoEstado } from './DialogoMudancaEstado';
 import { ACOES_ESTADO, NOMES_TIPO_CRITERIO, ORDEM_QUADRO, TEXTOS_REQUISITO } from './formatacao';
 import ListaCriterios from './ListaCriterios';
+import ListaVisitas from './ListaVisitas';
 import QuadroRecrutamento from './QuadroRecrutamento';
 import ResumoEstudo from './ResumoEstudo';
 import SecaoEstado from './SecaoEstado';
@@ -62,17 +63,10 @@ const ICONES_ACAO: Record<DestinoEstado, NomeIcone> = {
   ENCERRADO: 'cadeado',
 };
 
-/**
- * O que falta para iniciar o recrutamento, com os textos do quadro da aba Resumo.
- * As visitas chegam na T46: até lá, o item avisa que o cadastro ainda não existe.
- */
+/** O que falta para iniciar o recrutamento, com os textos do quadro da aba Resumo. */
 function explicarPendencias(protocolo: Protocolo, coordenadorId: number | null): string | undefined {
   const atendidos = requisitosRecrutamento(protocolo, coordenadorId);
-  const faltam = ORDEM_QUADRO.filter((codigo) => !atendidos[codigo]).map((codigo) =>
-    codigo === 'VISITA_PREVISTA'
-      ? `${TEXTOS_REQUISITO[codigo]} (o cadastro de visitas chega em breve)`
-      : TEXTOS_REQUISITO[codigo],
-  );
+  const faltam = ORDEM_QUADRO.filter((codigo) => !atendidos[codigo]).map((codigo) => TEXTOS_REQUISITO[codigo]);
   return faltam.length > 0 ? `Para iniciar o recrutamento, falta: ${faltam.join('; ')}.` : undefined;
 }
 
@@ -106,7 +100,7 @@ async function carregar(estudoId: number, estudos: ServicoEstudos, protocolo: Se
 
 // <-------------------PROTOCOLO DO ESTUDO------------------->
 // Pesquisador responsável, em abas como no protótipo: Resumo (dados, coordenador e o que falta
-// para iniciar o recrutamento), Critérios de inclusão e exclusão (RF05) e Visitas (T46).
+// para iniciar o recrutamento), Critérios de inclusão e exclusão (RF05) e Visitas previstas (T46).
 // Só se edita com o estudo em Planejamento; depois, o protocolo fica para consulta (kickoff 8.1).
 // O cabeçalho traz só as mudanças de estado permitidas a partir do estado atual (T47)
 export default function ProtocoloEstudo({
@@ -191,7 +185,8 @@ export default function ProtocoloEstudo({
   };
 
   const editar = (tipo: TipoCriterio) => async (criterio: Criterio, descricao: string) => {
-    const editado = await protocoloProp.editarCriterio(estudoId, criterio.id, descricao);
+    // O backend exige o tipo também na edição; a tela mantém o critério na mesma lista
+    const editado = await protocoloProp.editarCriterio(estudoId, criterio.id, { tipo, descricao });
     alterarProtocolo((p) => ({
       ...p,
       [LISTAS[tipo]]: p[LISTAS[tipo]].map((c) => (c.id === editado.id ? editado : c)),
@@ -227,8 +222,9 @@ export default function ProtocoloEstudo({
     setSalvandoSemExclusao(true);
     setErroSemExclusao(undefined);
     try {
-      const protocolo = await protocoloProp.definirSemExclusao(estudoId, marcado);
-      alterarProtocolo(() => protocolo);
+      // O backend devolve só o valor gravado da declaração
+      const semCriteriosExclusao = await protocoloProp.definirSemExclusao(estudoId, marcado);
+      alterarProtocolo((p) => ({ ...p, semCriteriosExclusao }));
     } catch (erro) {
       setErroSemExclusao(
         erro instanceof ErroRequisicao ? erro.message : 'Não foi possível salvar a indicação.',
@@ -287,6 +283,8 @@ export default function ProtocoloEstudo({
 
   const estudo = tela.tipo === 'pronto' ? tela.estudo : undefined;
   const editavel = estudo?.estado === 'PLANEJAMENTO';
+  // Editar e remover dependem de rotas que o backend ainda pode não ter (403 em rota não publicada)
+  const { editarRemover } = protocoloProp.recursos;
   const acoes = (estudo ? TRANSICOES[estudo.estado] : []) as DestinoEstado[];
   const faltaParaRecrutar =
     tela.tipo === 'pronto' && estudo ? explicarPendencias(tela.protocolo, estudo.coordenadorId) : undefined;
@@ -398,10 +396,22 @@ export default function ProtocoloEstudo({
                   <h2>Visitas previstas</h2>
                   <p>Modelos de visita do protocolo. As datas são marcadas depois, para cada participante.</p>
                 </div>
-                {/* O cadastro das visitas previstas é da T46 */}
-                <p className="estudos-cartao protocolo-vazio-cartao">
-                  Nenhuma visita cadastrada. O cadastro de visitas previstas chega em breve.
+
+                <p className="aviso aviso-informacao">
+                  <Icone nome="info" />
+                  {editavel
+                    ? 'O protocolo pode ser alterado enquanto o estudo estiver em Planejamento. Depois de iniciar o recrutamento, fica somente para consulta.'
+                    : 'O protocolo fica só para consulta depois que o recrutamento é aberto: as visitas não podem mais ser alteradas.'}
                 </p>
+
+                <ListaVisitas
+                  estudoId={estudoId}
+                  visitas={tela.protocolo.visitas}
+                  editavel={editavel}
+                  servico={protocoloProp}
+                  aoAlterarVisitas={(alterar) => alterarProtocolo((p) => ({ ...p, visitas: alterar(p.visitas) }))}
+                  aoNotificar={setNotificacao}
+                />
               </div>
             )}
 
@@ -427,6 +437,7 @@ export default function ProtocoloEstudo({
                     tipo="INCLUSAO"
                     criterios={tela.protocolo.criteriosInclusao}
                     editavel={editavel}
+                    editarRemover={editarRemover}
                     textoVazio="Nenhum critério de inclusão cadastrado."
                     aoAdicionar={adicionar('INCLUSAO')}
                     aoEditar={editar('INCLUSAO')}
@@ -437,12 +448,13 @@ export default function ProtocoloEstudo({
                     tipo="EXCLUSAO"
                     criterios={tela.protocolo.criteriosExclusao}
                     editavel={editavel}
+                    editarRemover={editarRemover}
                     textoVazio={
                       tela.protocolo.semCriteriosExclusao
                         ? 'Este estudo não possui critérios de exclusão.'
                         : 'Nenhum critério de exclusão cadastrado.'
                     }
-                    // Com a declaração marcada, a exclusão seria recusada (SEM_EXCLUSAO_DECLARADA)
+                    // Com a declaração marcada, a exclusão seria recusada (CRITERIOS_EXCLUSAO_INCONSISTENTES)
                     bloqueioAdicao={
                       tela.protocolo.semCriteriosExclusao
                         ? 'Para cadastrar um critério de exclusão, desmarque a opção abaixo.'
@@ -500,7 +512,7 @@ type PropsSemExclusao = {
   aoAlterar: (marcado: boolean) => void;
 };
 
-// Modelagem, seção 3: a declaração com exclusões cadastradas é recusada (EXCLUSAO_JA_DEFINIDA),
+// Modelagem, seção 3: a declaração com exclusões cadastradas é recusada (CRITERIOS_EXCLUSAO_INCONSISTENTES),
 // então a opção fica desativada até o pesquisador remover as exclusões
 function OpcaoSemExclusao({ marcado, temExclusoes, salvando, erro, aoAlterar }: PropsSemExclusao) {
   return (

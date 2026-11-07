@@ -1,15 +1,15 @@
 import type { PendenciaRecrutamento, Protocolo } from '../../api/protocolo';
 import Icone from '../../components/icones';
-import { contarCriterios, ORDEM_QUADRO, TEXTOS_REQUISITO } from './formatacao';
-import { requisitosRecrutamento } from './validacao';
+import { contarCriterios, contarVisitas, ORDEM_QUADRO, TEXTOS_REQUISITO } from './formatacao';
+import { requisitosRecrutamento, visitasSemAtividade } from './validacao';
 
 type Props = {
-  protocolo: Pick<Protocolo, 'criteriosInclusao' | 'criteriosExclusao' | 'semCriteriosExclusao'>;
+  protocolo: Pick<Protocolo, 'criteriosInclusao' | 'criteriosExclusao' | 'semCriteriosExclusao' | 'visitas'>;
   /** Do estudo: a abertura do recrutamento exige um coordenador atribuído. */
   coordenadorId: number | null;
 };
 
-// Linha de apoio de cada item, como no protótipo ("3 critérios cadastrados", "Nenhuma visita cadastrada")
+// Linha de apoio de cada item, como no protótipo ("3 critérios cadastrados", "Sem atividade: Acompanhamento")
 function detalhe(codigo: PendenciaRecrutamento, ok: boolean, props: Props): string {
   const { protocolo } = props;
   switch (codigo) {
@@ -18,17 +18,19 @@ function detalhe(codigo: PendenciaRecrutamento, ok: boolean, props: Props): stri
     case 'CRITERIOS_EXCLUSAO':
       if (protocolo.semCriteriosExclusao) return 'O estudo não possui critérios de exclusão';
       return ok ? contarCriterios(protocolo.criteriosExclusao.length) : 'Cadastre ou indique que não há';
-    case 'VISITA_PREVISTA':
-      return 'Nenhuma visita cadastrada';
+    case 'VISITA_PREVISTA': {
+      if (ok) return contarVisitas(protocolo.visitas.length);
+      const semAtividade = visitasSemAtividade(protocolo.visitas);
+      return semAtividade.length > 0 ? `Sem atividade: ${semAtividade.join(', ')}` : 'Nenhuma visita cadastrada';
+    }
     case 'COORDENADOR':
       return ok ? 'Coordenador vinculado ao estudo' : 'Atribua na seção Coordenador';
   }
 }
 
 // <-------------------PARA INICIAR O RECRUTAMENTO------------------->
-// Checklist da aba Resumo, calculada na tela a partir do estudo e dos critérios. Com algum item pendente,
-// o "Iniciar recrutamento" do cabeçalho fica desativado (T47); quem decide é o backend.
-// As visitas chegam na T46: até lá, o item fica sempre pendente.
+// Checklist da aba Resumo, calculada na tela a partir do estudo, dos critérios e das visitas. Com algum
+// item pendente, o "Iniciar recrutamento" do cabeçalho fica desativado (T47); quem decide é o backend.
 export default function QuadroRecrutamento(props: Props) {
   const atendidos = requisitosRecrutamento(props.protocolo, props.coordenadorId);
   const faltam = ORDEM_QUADRO.filter((codigo) => !atendidos[codigo]).length;

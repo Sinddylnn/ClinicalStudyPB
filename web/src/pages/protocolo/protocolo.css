@@ -271,10 +271,70 @@
 
 /* <-------------------VISITAS-------------------> */
 .protocolo-vazio-cartao {
+  margin: 0;
   padding: 24px;
   font-size: 14px;
   line-height: 20px;
   color: var(--texto-suave);
+}
+
+/* Cartões das visitas, um abaixo do outro, na ordem do protocolo */
+.protocolo-visitas {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.protocolo-visitas-acoes {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Visita sem atividade: impede a abertura do recrutamento (modelagem, seção 5) */
+.protocolo-visita-pendente {
+  border-left: 4px solid #f59e0b;
+}
+
+.protocolo-visita-aviso {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: #b45309;
+}
+
+/* Formulário da visita: no cartão de nova visita ou no lugar dos dados, ao editar */
+.protocolo-visita-edicao {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 24px;
+}
+
+.protocolo-cartao > .protocolo-visita-edicao {
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.protocolo-visita-titulo-formulario {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.protocolo-visita-campos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px;
+  gap: 16px;
+  align-items: start;
+}
+
+.protocolo-visita-rodape {
+  padding: 12px 24px 16px;
+  border-top: 1px solid var(--borda-cartao);
 }
 
 /* <-------------------CARTÕES DE CRITÉRIOS-------------------> */
@@ -533,6 +593,10 @@
 @media (max-width: 900px) {
   .protocolo-abas {
     gap: 20px;
+  }
+
+  .protocolo-visita-campos {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   /* O cabeçalho quebra a linha: as ações passam para baixo do título, alinhadas à esquerda */

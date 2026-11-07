@@ -56,6 +56,8 @@ export function validarJustificativa(
 export type SituacaoTransicao = {
   /** Requisitos da seção 5 ainda não atendidos (só importa para RECRUTAMENTO). */
   pendencias: PendenciaRecrutamento[];
+  /** Visitas sem atividade, em ordem: com alguma, a mensagem identifica a primeira (modelagem, seção 7). */
+  visitasSemAtividade: string[];
   /** Histórico de inclusões: uma retirada não apaga a participação. */
   possuiInclusoes: boolean;
 };
@@ -125,6 +127,13 @@ export function verificarTransicao(
 
   if (destino === 'RECRUTAMENTO') {
     const primeira = ORDEM_PENDENCIAS.find((codigo) => situacao.pendencias.includes(codigo));
+    // Com visitas cadastradas, o que falta é a atividade de alguma delas
+    if (primeira === 'VISITA_PREVISTA' && situacao.visitasSemAtividade.length > 0) {
+      return {
+        codigo: 'PROTOCOLO_INCOMPLETO',
+        mensagem: `Cadastre pelo menos uma atividade na visita: ${situacao.visitasSemAtividade[0]}.`,
+      };
+    }
     if (primeira) return { ...ERROS_PENDENCIA[primeira] };
   }
   if (destino === 'EXECUCAO' && !situacao.possuiInclusoes) {
