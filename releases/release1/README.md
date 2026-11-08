@@ -25,8 +25,7 @@ Entregar a aplicação web funcional permitindo cadastrar um estudo, avaliar can
 | RF11 | Incluir candidatos elegíveis, respeitando o limite de vagas | 2 | <...> | <...> |
  
 ## 3. Funcionalidades entregues
- 
-Para cada requisito, incluir ao menos uma captura de sucesso e uma de erro ou validação. Nomear as imagens pelo requisito e pelo resultado, por exemplo `rf05-criterios-sucesso.png` e `rf09-elegibilidade-erro.png`. Não incluir vídeos.
+
  
 ### 3.1 Web
 **Responsáveis:** Suelle Ferreira Maciel (Web 1) e Sinddy Lorranny Nobrega Nascimento (Web 2)
@@ -71,12 +70,54 @@ Testes de componentes e de serviços com Vitest e Testing Library: 28 arquivos e
 **Responsável:** <nome>
  
 <Descrever o que foi entregue no mobile (app executável e navegação entre telas) e linkar [`evidencias/mobile/`](evidencias/mobile/), incluindo o teste da Sprint 2 em [`teste-mobile-sprint2.md`](evidencias/mobile/teste-mobile-sprint2.md).>
- 
+
 ### 3.3 Backend
-**Responsável:** <nome>
- 
-<Descrever endpoints e regras de negócio entregues. Evidências em [`evidencias/backend/`](evidencias/backend/): [Docker](evidencias/backend/docker/) e [Postman](evidencias/backend/postman/).>
- 
+
+**Responsáveis:** Georis Samuel e Luiz Inácio
+
+A API Spring Boot implementa os fluxos de configuração do protocolo, recrutamento e inclusão de participantes. Todas as operações de alteração exigem sessão autenticada, 
+perfil compatível, vínculo com o estudo e token CSRF. As regras de negócio são validadas no backend, inclusive em operações simultâneas.
+
+#### Configuração do estudo (RF05 a RF07) • Georis e Luiz
+
+- **RF05 - Critérios:** cadastro, consulta, edição e remoção de critérios de inclusão e exclusão; declaração controlada de ausência de critérios de exclusão.
+- **RF06 - Visitas e atividades:** cadastro, edição, ordenação e remoção de visitas previstas e suas atividades.
+- **RF07 - Estados do estudo:** transições entre planejamento, recrutamento, execução e encerramento, com validação de protocolo completo, participantes e justificativa de encerramento.
+- O protocolo pode ser configurado durante o planejamento e é validado antes da abertura do recrutamento.
+
+Documentação: [configuração do protocolo](../../docs/configuracao-protocolo.md) • [estados do estudo](../../docs/estados-estudo.md).
+
+#### Recrutamento (RF08 e RF09) • Luiz
+
+<Luiz, descrever processos de candadidados e elegibilidade>
+
+Documentação: [candidatos e avaliação de elegibilidade](../../docs/recrutamento-e-elegibilidade.md).
+
+#### Consentimento e inclusão (RF10 e RF11) • Georis
+
+- **RF10 - Consentimento simulado:** registro de aceite ou recusa, com observação opcional e histórico de correções.
+- **RF11 - Inclusão:** valida conta de participante, vínculo, elegibilidade completa, consentimento aceito, limite de vagas e duplicidade antes de criar a participação.
+- A inclusão usa transação e bloqueios para impedir que duas operações ocupem a última vaga simultaneamente.
+
+Documentação: [consentimento e inclusão](../../docs/consentimento-inclusao.md).
+
+#### Qualidade e contrato da API
+
+#### Qualidade e contrato da API
+
+As rotas foram documentadas no OpenAPI/Swagger e verificadas por testes de API, 
+regras de negócio, persistência, migrações e concorrência. Os cenários funcionais executados no Postman e seu relatório estão em [evidências do Postman](evidencias/backend/postman/). A execução integrada com banco, backend e web via Docker Compose está documentada em [evidências do Docker](evidencias/backend/docker/).
+
+#### Evidências do backend
+
+| Evidência | Comprovação |
+|---|---|
+| [Execução bem sucedida do Swagger](evidencias/backend/swagger/swagger-interface-inicial.png) e [Rotas documentadas no Swagger](evidencias/backend/swagger/swagger-rotas-exemplo.png) | Contrato OpenAPI disponível para configuração, recrutamento e inclusão. |
+| [Execução dos testes](evidencias/backend/testes-backend.png) | Suíte final executada sem falhas. |
+| [Cobertura JaCoCo](evidencias/backend/jacoco/cobertura-jacoco.png) | Cobertura de linhas do backend, incluindo serviços acima do mínimo exigido. |
+| [Postman Runner (parte 1)](evidencias/backend/postman/runner-resultado-1.png) | Execução automatizada dos cenários da coleção. |
+| [Postman Runner (parte 2)](evidencias/backend/postman/runner-resultado-2.png) | Continuação dos cenários e resultados da coleção. |
+
 ## 4. Diagramas
  
 Os diagramas representam o desenho do sistema completo; os fluxos de acompanhamento e do participante serão implementados na Release 2. Clique em uma imagem para ampliá-la.
@@ -142,20 +183,34 @@ Os diagramas representam o desenho do sistema completo; os fluxos de acompanhame
 <p align="center">
   <img src="diagramas/10_estados_estudos.png" alt="Estados do estudo" width="50%">
 </p>
- 
+
+
 ## 5. Alterações na arquitetura e no stack
- 
-<Descrever alterações em relação ao planejado, ou escrever "Nenhuma alteração nesta release".>
- 
+
+Não houve alteração das tecnologias definidas no Kickoff, o backend permanece em Java 21 com Spring Boot e Maven, a web em React com TypeScript e Vite, o mobile em React Native com Expo e o banco em PostgreSQL com Flyway.
+
+Durante a release, a arquitetura evoluiu dentro desse stack para suportar os requisitos entregues:
+
+- novas migrações Flyway para protocolo, candidatos, avaliações, participações e histórico de consentimentos;
+- serviços transacionais com bloqueio pessimista para mudanças de estado, avaliações e inclusão de participantes;
+- documentação das rotas com OpenAPI/Swagger e coleções Postman;
+- execução de testes de integração com PostgreSQL e verificação de cobertura com JaCoCo;
+- integração contínua ampliada para executar os testes de integração do backend.
+
+/<completar com envoluções do web e mobile/>
+
+Essas evoluções não alteram a arquitetura geral prevista, mas detalham e consolidam sua implementação para os fluxos da Release 1.
+
 ## 6. Resultados dos testes e cobertura
- 
-**Responsável:** <nome>
- 
-- Testes unitários: <resultado>
-- Testes de integração: <resultado>
-- Testes de componentes (web): 28 arquivos e 414 testes passando (Vitest e Testing Library), com 99,23% das linhas da web cobertas. [Execução](evidencias/web/26-rf05-07-testes.png) • [Cobertura](evidencias/web/27-rf05-07-cobertura.png)
-- Cobertura de linhas do código de negócio do backend: <percentual> (mínimo exigido: 80%)
-<Linkar o relatório de testes e a evidência de cobertura.>
+
+- **Testes de componentes (web)**: 28 arquivos e 414 testes passando (Vitest e Testing Library), com 99,23% das linhas da web cobertas. [Execução](evidencias/web/26-rf05-07-testes.png) • [Cobertura](evidencias/web/27-rf05-07-cobertura.png)
+- **Backend:** 268 testes executados, sem falhas, erros ou testes ignorados. A suíte reúne testes de regras de negócio, API, persistência, migrações e concorrência. [Execução](evidencias/backend/testes-backend.png)
+- **Testes de integração do backend:** executados com PostgreSQL exclusivo de testes, cobrindo persistência, migrações, transações e cenários concorrentes de recrutamento e inclusão.
+- **Cobertura do backend:** 97% de cobertura geral de linhas no JaCoCo. Os serviços de recrutamento alcançaram 95% e os serviços de estudos, 96%, ambos acima do mínimo exigido de 80%. [Relatório JaCoCo](evidencias/backend/jacoco/cobertura-jacoco.png)
+- **Testes de componentes e serviços da web:** 28 arquivos e 414 testes passando, com 99,23% das linhas da web cobertas, usando Vitest e Testing Library. [Execução](evidencias/web/26-rf05-07-testes.png) • [Cobertura](evidencias/web/27-rf05-07-cobertura.png)
+- **Validação funcional da API:** cenários executados pela coleção Postman. [Resultados do Runner](evidencias/backend/postman/)
+
+_Testes, documentação e revisão de código são responsabilidades compartilhadas por toda a equipe._
 
 ## 7. Problemas conhecidos e pendências
  
@@ -164,14 +219,15 @@ Os diagramas representam o desenho do sistema completo; os fluxos de acompanhame
 ## 8. Processo de desenvolvimento
  
 ### Sprint 1 (13/10 a 26/10)
- 
-\<Resumo de uma ou duas linhas do que foi planejado e entregue.\>
+O nosso objetivo foi a definição de arquitetura, modelagem do sistema por meio de diagramas, configuração do ambiente web, backend e mobile; além de
+implementação inicial das entidades e telas do sistema. Conseguimos entregar um sistema funcionando que permitia cadastro e definição dos 4 diferentes perfis existentes
+a única pendência foi a pipeline CI que, devido à prioridade das outras tasks, optamos por deixar para a próxima sprint
 - [Planning](sprints/sprint01/planning.md)
 - [Review](sprints/sprint01/review.md)
 - [Burndown](sprints/sprint01/burndown.png)
  
 ### Sprint 2 (27/10 a 09/11)
-\<Resumo de uma ou duas linhas do que foi planejado e entregue.\>
+\<Luiz: Resumo de uma ou duas linhas do que foi planejado e entregue.\>
 - [Planning](sprints/sprint02/planning.md)
 - [Review](sprints/sprint02/review.md)
 - Burndown: <linkar quando exportado do Azure DevOps>
@@ -179,11 +235,11 @@ Os diagramas representam o desenho do sistema completo; os fluxos de acompanhame
 ### Organização da equipe
 | Integrante | Papel | Contribuições na release |
 |------------|-------|--------------------------|
-| <Georis Samuel> | Tech Leader / Gerente | <...> |
-| <nome> | Desenvolvedor Backend | <...> |
+| Georis Samuel | Tech Leader / Gerente | Coordenação técnica e revisão de PRs; modelagem dos RF05–RF07 (AB#3421); implementação das transições de estado do estudo (AB#3422); configuração completa do protocolo; implementação e documentação do consentimento e inclusão de participantes (RF10 e RF11 — AB#3423); testes de integração, documentação OpenAPI/Postman e revisão da CI do backend. |
+| Luiz Inácio| Desenvolvedor Backend | Implementação de critérios, visitas e atividades previstas (RF05 e RF06); cadastro de candidatos (RF08); avaliação de elegibilidade (RF09); ampliação dos testes de API, persistência e regras de negócio do backend; documentação e planejamento da Sprint 2. |
 | Suelle Ferreira Maciel | Desenvolvedora Web (Web 1) | Base React, rotas e cliente HTTP (T12); login e logout integrados (T13); gestão de usuários (T14); testes e documentação web da Sprint 1 (T15, T16); telas de critérios, visitas e estado do estudo (T45 a T47); testes e evidências das telas de configuração (T48, T49); revisão dos PRs de web e Docker. |
 | <nome> | Desenvolvedor Web | <...> |
 | Horlan Lacerda | Desenvolvedor Mobile | <...> |
 | <nome> | QA / DevOps | <...> |
  
-Testes, documentação e revisão de código são responsabilidades compartilhadas por toda a equipe.
+
