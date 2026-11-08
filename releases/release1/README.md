@@ -235,9 +235,9 @@ a única pendência foi a pipeline CI que, devido à prioridade das outras tasks
 ### Organização da equipe
 | Integrante | Papel | Contribuições na release |
 |------------|-------|--------------------------|
-| Georis Samuel | Tech Leader / Gerente | Coordenação técnica e revisão de PRs; modelagem dos RF05–RF07 (AB#3421); implementação das transições de estado do estudo (AB#3422); configuração completa do protocolo; implementação e documentação do consentimento e inclusão de participantes (RF10 e RF11 — AB#3423); testes de integração, documentação OpenAPI/Postman e revisão da CI do backend. |
+| Georis Samuel | Tech Leader / Gerente | Modelagem da arquitetura inicial do projeto, coordenação técnica e revisão de PRs; modelagem dos RF05–RF07; implementação das transições de estado do estudo; configuração completa do protocolo; implementação e documentação do consentimento e inclusão de participantes (RF10 e RF11); testes de integração, documentação OpenAPI/Postman e revisão da CI do backend. |
 | Luiz Inácio| Desenvolvedor Backend | Implementação de critérios, visitas e atividades previstas (RF05 e RF06); cadastro de candidatos (RF08); avaliação de elegibilidade (RF09); ampliação dos testes de API, persistência e regras de negócio do backend; documentação e planejamento da Sprint 2. |
-| Suelle Ferreira Maciel | Desenvolvedora Web (Web 1) | Base React, rotas e cliente HTTP (T12); login e logout integrados (T13); gestão de usuários (T14); testes e documentação web da Sprint 1 (T15, T16); telas de critérios, visitas e estado do estudo (T45 a T47); testes e evidências das telas de configuração (T48, T49); revisão dos PRs de web e Docker. |
+| Suelle Ferreira Maciel | Desenvolvedora Web (Web 1) | Base React, rotas e cliente HTTP; login e logout integrados; gestão de usuários; testes e documentação web da Sprint 1; telas de critérios, visitas e estado do estudo; testes e evidências das telas de configuração; revisão dos PRs de web e Docker. |
 | <nome> | Desenvolvedor Web | <...> |
 | Horlan Lacerda | Desenvolvedor Mobile | <...> |
 | <nome> | QA / DevOps | <...> |
