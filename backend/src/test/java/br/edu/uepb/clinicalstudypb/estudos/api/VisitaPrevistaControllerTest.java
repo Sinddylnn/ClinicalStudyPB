@@ -256,6 +256,22 @@ class VisitaPrevistaControllerTest {
     }
 
     @Test
+    void impedeCadastroDeAtividadeSemProtocolo() throws Exception {
+        var entrada = new AtividadePrevistaCadastroEntrada(
+                "Realizar aferição da pressão arterial."
+        );
+
+        when(protocolos.findByEstudoId(10L))
+                .thenReturn(Optional.empty());
+
+        mvc.perform(como(1, post("/estudos/10/visitas/30/atividades"))
+                        .content(json.writeValueAsString(entrada)))
+                .andExpect(status().isNotFound());
+
+        verify(atividades, never()).save(any());
+    }
+
+    @Test
     void listaVisitasComAtividades() throws Exception {
         Protocolo protocolo = protocolo();
 
