@@ -47,17 +47,17 @@ Essas escolhas representam a estrutura prevista para o projeto. A configuração
 ## Organização do repositório
 
 ```text
-backend/             API Java + Spring Boot ⟶ Georis e Luiz
-web/                 Interface React ⟶ Suelle e Sinddy
-mobile/              Aplicativo React Native + Expo ⟶ Horlan
-docs/                Decisões e orientações para a equipe
-docs/                Guias técnicos (autenticação, OpenAPI, Docker, modelagem, Postman)
-releases/release1/   Documentação e evidências da primeira release
-  diagramas/         Diagramas editáveis (.drawio) e imagens
-  evidencias/        Capturas e relatórios (web, mobile, backend)
-  sprints/           Planning, review e burndown de cada sprint
-releases/release2/   Evidências da segunda release
-releases/release3/   Evidências da terceira release
+backend/               API Java + Spring Boot ⟶ Georis e Luiz
+web/                   Interface React ⟶ Suelle e Sinddy
+mobile/                Aplicativo React Native + Expo ⟶ Horlan
+docs/                  Decisões, orientações e guias técnicos (autenticação, OpenAPI, Docker, modelagem, Postman)
+releases/              Documentação e evidências de cada release
+  release1/            Documentação e evidências da primeira release
+    diagramas/         Diagramas editáveis (.drawio) e imagens
+    evidencias/        Capturas e relatórios (web, mobile, backend)
+    sprints/           Planning, review e burndown de cada sprint
+  release2/            Evidências da segunda release
+  release3/            Evidências da terceira release
 ```
 
 Gabriela apoia os testes integrados e prepara o ambiente com Docker Compose e a automação com GitHub Actions. Cada integrante também é responsável por testar e documentar o que implementa.
