@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { ErroRequisicao } from '../../api/erros';
-import { servicoEstudos, type AlteracaoEstadoEntrada, type Estudo, type ServicoEstudos } from '../../api/estudos';
+import {
+  servicoCoordenadores,
+  servicoEstudos,
+  type AlteracaoEstadoEntrada,
+  type Estudo,
+  type ServicoCoordenadores,
+  type ServicoEstudos,
+} from '../../api/estudos';
 import {
   servicoProtocolo,
   type Criterio,
@@ -22,6 +29,7 @@ import ListaCriterios from './ListaCriterios';
 import ListaVisitas from './ListaVisitas';
 import QuadroRecrutamento from './QuadroRecrutamento';
 import ResumoEstudo from './ResumoEstudo';
+import SecaoCoordenador from './SecaoCoordenador';
 import SecaoEstado from './SecaoEstado';
 import { requisitosRecrutamento } from './validacao';
 import '../../estilos/comum.css';
@@ -32,6 +40,7 @@ import './protocolo.css';
 type Props = {
   servicoEstudos?: ServicoEstudos;
   servicoProtocolo?: ServicoProtocolo;
+  servicoCoordenadores?: ServicoCoordenadores;
   /** Quem está na sessão; quando omitido, vem do contexto de autenticação. */
   usuario?: UsuarioSessao;
 };
@@ -106,6 +115,7 @@ async function carregar(estudoId: number, estudos: ServicoEstudos, protocolo: Se
 export default function ProtocoloEstudo({
   servicoEstudos: estudosProp = servicoEstudos,
   servicoProtocolo: protocoloProp = servicoProtocolo,
+  servicoCoordenadores: coordenadoresProp = servicoCoordenadores,
   usuario: usuarioProp,
 }: Props) {
   const usuario = useUsuarioLogado(usuarioProp);
@@ -243,6 +253,13 @@ export default function ProtocoloEstudo({
     setDestino(undefined);
     focarNotificacao.current = true;
     setNotificacao(NOTIFICACOES_ESTADO[entrada.estado as DestinoEstado]);
+  };
+
+  // O quadro "Para iniciar o recrutamento" e o diálogo de estado leem o coordenador do estudo atualizado
+  const atribuirCoordenador = (atualizado: Estudo) => {
+    setTela((atual) => (atual.tipo === 'pronto' ? { ...atual, estudo: atualizado } : atual));
+    focarNotificacao.current = true;
+    setNotificacao('Coordenador atribuído.');
   };
 
   const tentarNovamente = () => {
@@ -383,7 +400,13 @@ export default function ProtocoloEstudo({
               <div className="protocolo-painel" role="tabpanel" id="painel-resumo" aria-labelledby="aba-resumo">
                 <SecaoEstado estudo={estudo} />
                 <div className={`protocolo-grade ${editavel ? '' : 'protocolo-grade-unica'}`}>
-                  <ResumoEstudo estudo={estudo} nomeResponsavel={usuario.nome} />
+                  <ResumoEstudo
+                    estudo={estudo}
+                    nomeResponsavel={usuario.nome}
+                    coordenador={
+                      <SecaoCoordenador estudo={estudo} servico={coordenadoresProp} aoAtribuir={atribuirCoordenador} />
+                    }
+                  />
                   {/* Com o recrutamento aberto, não há o que conferir para iniciá-lo */}
                   {editavel && <QuadroRecrutamento protocolo={tela.protocolo} coordenadorId={estudo.coordenadorId} />}
                 </div>

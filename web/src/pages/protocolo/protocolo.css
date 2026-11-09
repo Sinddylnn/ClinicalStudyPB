@@ -186,6 +186,24 @@
   color: var(--icone-suave);
 }
 
+.protocolo-coordenador strong {
+  font-weight: 600;
+  color: var(--texto);
+}
+
+/* Escolha ou troca do coordenador: seletor e botão na mesma coluna do cartão */
+.protocolo-coordenador-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.protocolo-coordenador-form .botao {
+  padding: 6px 12px;
+  font-size: 13px;
+  line-height: 16px;
+}
+
 .protocolo-quadro-cabecalho {
   display: flex;
   gap: 8px;
