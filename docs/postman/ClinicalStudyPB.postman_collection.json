@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "ClinicalStudyPB API",
-    "description": "Coleção com dados fictícios, alinhada ao OpenAPI do backend. Rodar na ordem (Runner). O script da coleção busca um token CSRF novo antes de cada requisição. Cada requisição traz um exemplo de resposta (válido ou inválido, conforme o nome); os exemplos foram montados a partir do contrato OpenAPI, e as mensagens de erro são ilustrativas.",
+    "description": "Coleção com dados fictícios, alinhada ao OpenAPI do backend (Release 1). Rodar a coleção inteira, na ordem, pelo Runner, com o ambiente Local. O script da coleção busca um token CSRF novo antes de cada requisição. Cada requisição traz um exemplo de resposta (válido ou inválido, conforme o nome); os exemplos foram montados a partir do contrato OpenAPI e as mensagens de erro são ilustrativas.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -534,6 +534,108 @@
               ],
               "cookie": [],
               "body": "{\n  \"id\": 3,\n  \"nome\": \"Coordenador Teste\",\n  \"email\": \"coordenador.1700000000000@example.test\",\n  \"perfil\": \"COORDENADOR\",\n  \"ativo\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar participante - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set(\"participanteId\", pm.response.json().id);"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set(\"partEmail\", \"participante.\" + Date.now() + \"@example.test\");"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Participante Teste\",\n  \"email\": \"{{partEmail}}\",\n  \"senha\": \"{{partSenha}}\",\n  \"perfil\": \"PARTICIPANTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar participante - 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Participante Teste\",\n  \"email\": \"{{partEmail}}\",\n  \"senha\": \"{{partSenha}}\",\n  \"perfil\": \"PARTICIPANTE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 5,\n  \"nome\": \"Participante Teste\",\n  \"email\": \"participante.1700000000000@example.test\",\n  \"perfil\": \"PARTICIPANTE\",\n  \"ativo\": true\n}"
             }
           ]
         },
@@ -1963,7 +2065,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"coordenadorId\": \"{{coordenadorId}}\"\n}",
+              "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1999,7 +2101,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"coordenadorId\": \"{{coordenadorId}}\"\n}",
+                  "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2060,7 +2162,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"coordenadorId\": \"{{pesquisadorId}}\"\n}",
+              "raw": "{\n  \"coordenadorId\": {{pesquisadorId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2096,7 +2198,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"coordenadorId\": \"{{pesquisadorId}}\"\n}",
+                  "raw": "{\n  \"coordenadorId\": {{pesquisadorId}}\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2156,7 +2258,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"coordenadorId\": \"{{coordenadorId}}\"\n}",
+              "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2192,7 +2294,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"coordenadorId\": \"{{coordenadorId}}\"\n}",
+                  "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2802,7 +2904,7 @@
             "description": "Não é permitido alterar o coordenador de um estudo encerrado.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"coordenadorId\": \"{{coordenadorId}}\"\n}",
+              "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2839,7 +2941,7 @@
                 "description": "Não é permitido alterar o coordenador de um estudo encerrado.",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"coordenadorId\": \"{{coordenadorId}}\"\n}",
+                  "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2862,7 +2964,3386 @@
       ]
     },
     {
-      "name": "6. Encerrar sessão",
+      "name": "6. Protocolo do estudo (como Pesquisador)",
+      "item": [
+        {
+          "name": "Cadastrar estudo com coordenador - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set(\"estudo2Id\", pm.response.json().id);",
+                  "pm.test(\"estado PLANEJAMENTO\", function () { pm.expect(pm.response.json().estado).to.eql(\"PLANEJAMENTO\"); });",
+                  "pm.test(\"coordenador vinculado\", function () { pm.expect(pm.response.json().coordenadorId).to.eql(Number(pm.environment.get(\"coordenadorId\"))); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Estudo Completo Postman\",\n  \"objetivo\": \"Percorrer protocolo, recrutamento e inclusão com dados fictícios.\",\n  \"dataInicio\": \"2026-12-01\",\n  \"dataFim\": \"2027-06-01\",\n  \"limiteParticipantes\": 5,\n  \"coordenadorId\": {{coordenadorId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar estudo com coordenador - 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"titulo\": \"Estudo Completo Postman\",\n  \"objetivo\": \"Percorrer protocolo, recrutamento e inclusão com dados fictícios.\",\n  \"dataInicio\": \"2026-12-01\",\n  \"dataFim\": \"2027-06-01\",\n  \"limiteParticipantes\": 5,\n  \"coordenadorId\": {{coordenadorId}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 2,\n  \"titulo\": \"Estudo Completo Postman\",\n  \"objetivo\": \"Percorrer protocolo, recrutamento e inclusão com dados fictícios.\",\n  \"responsavelId\": 2,\n  \"responsavelNome\": \"Pesquisador Teste\",\n  \"coordenadorId\": 3,\n  \"dataInicio\": \"2026-12-01\",\n  \"dataFim\": \"2027-06-01\",\n  \"limiteParticipantes\": 5,\n  \"estado\": \"PLANEJAMENTO\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar critério de inclusão - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set(\"criterioId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "criterios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter idade igual ou superior a 18 anos.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar critério de inclusão - 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "criterios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter idade igual ou superior a 18 anos.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 1,\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter idade igual ou superior a 18 anos.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar critério inválido (descrição vazia) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "criterios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar critério inválido (descrição vazia) - 400",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "criterios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"VALIDACAO_INVALIDA\",\n  \"mensagem\": \"Confira os campos informados.\",\n  \"errosCampos\": {\n    \"campo\": \"mensagem do campo\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar critério inválido (tipo inexistente) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "criterios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"OUTRO\",\n  \"descricao\": \"Critério com tipo inválido.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar critério inválido (tipo inexistente) - 400",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "criterios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"OUTRO\",\n  \"descricao\": \"Critério com tipo inválido.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"REQUISICAO_INVALIDA\",\n  \"mensagem\": \"Confira o formato e os dados da requisição.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar critérios - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"lista com o critério cadastrado\", function () { pm.expect(pm.response.json()).to.be.an(\"array\").that.is.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "criterios"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Listar critérios - 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "criterios"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"id\": 1,\n    \"tipo\": \"INCLUSAO\",\n    \"descricao\": \"Ter idade igual ou superior a 18 anos.\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Editar critério - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/{{criterioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "criterios",
+                "{{criterioId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter 18 anos ou mais e aceitar participar do estudo.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Editar critério - 200",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/{{criterioId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "criterios",
+                    "{{criterioId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter 18 anos ou mais e aceitar participar do estudo.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 1,\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter 18 anos ou mais e aceitar participar do estudo.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Editar critério inexistente - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "criterios",
+                "999999"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Critério que não existe.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Editar critério inexistente - 404",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/999999",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "criterios",
+                    "999999"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Critério que não existe.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"NAO_ENCONTRADO\",\n  \"mensagem\": \"Registro não encontrado.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar critério temporário - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set(\"criterioTmpId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "criterios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"EXCLUSAO\",\n  \"descricao\": \"Critério temporário para testar a remoção.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar critério temporário - 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "criterios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"EXCLUSAO\",\n  \"descricao\": \"Critério temporário para testar a remoção.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 2,\n  \"tipo\": \"EXCLUSAO\",\n  \"descricao\": \"Critério temporário para testar a remoção.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Remover critério temporário - 204",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/{{criterioTmpId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "criterios",
+                "{{criterioTmpId}}"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Remover critério temporário - 204",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/{{criterioTmpId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "criterios",
+                    "{{criterioTmpId}}"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Declarar ausência de critérios de exclusão - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"declaração registrada\", function () { pm.expect(pm.response.json().semCriteriosExclusao).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/exclusao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "criterios",
+                "exclusao"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"semCriteriosExclusao\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Declarar ausência de critérios de exclusão - 200",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/exclusao",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "criterios",
+                    "exclusao"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"semCriteriosExclusao\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"semCriteriosExclusao\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar declaração de exclusão - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/exclusao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "criterios",
+                "exclusao"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Consultar declaração de exclusão - 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/exclusao",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "criterios",
+                    "exclusao"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"semCriteriosExclusao\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar visita prevista - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set(\"visitaId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "visitas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Visita inicial\",\n  \"descricao\": \"Avaliação inicial do participante.\",\n  \"ordem\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar visita prevista - 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "visitas"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Visita inicial\",\n  \"descricao\": \"Avaliação inicial do participante.\",\n  \"ordem\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 1,\n  \"nome\": \"Visita inicial\",\n  \"descricao\": \"Avaliação inicial do participante.\",\n  \"ordem\": 1,\n  \"atividades\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar visita com ordem duplicada - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "visitas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Visita repetida\",\n  \"descricao\": \"Usa a mesma ordem da visita inicial.\",\n  \"ordem\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar visita com ordem duplicada - 400",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "visitas"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Visita repetida\",\n  \"descricao\": \"Usa a mesma ordem da visita inicial.\",\n  \"ordem\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"ORDEM_DUPLICADA\",\n  \"mensagem\": \"Já existe uma visita com essa ordem.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar visita inválida (nome vazio, ordem 0) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "visitas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"\",\n  \"descricao\": \"Visita inválida.\",\n  \"ordem\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar visita inválida (nome vazio, ordem 0) - 400",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "visitas"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"\",\n  \"descricao\": \"Visita inválida.\",\n  \"ordem\": 0\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"VALIDACAO_INVALIDA\",\n  \"mensagem\": \"Confira os campos informados.\",\n  \"errosCampos\": {\n    \"campo\": \"mensagem do campo\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar atividade prevista - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set(\"atividadeId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas/{{visitaId}}/atividades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "visitas",
+                "{{visitaId}}",
+                "atividades"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"Realizar aferição da pressão arterial.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar atividade prevista - 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas/{{visitaId}}/atividades",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "visitas",
+                    "{{visitaId}}",
+                    "atividades"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"descricao\": \"Realizar aferição da pressão arterial.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 1,\n  \"descricao\": \"Realizar aferição da pressão arterial.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar atividade inválida (descrição vazia) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas/{{visitaId}}/atividades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "visitas",
+                "{{visitaId}}",
+                "atividades"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar atividade inválida (descrição vazia) - 400",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas/{{visitaId}}/atividades",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "visitas",
+                    "{{visitaId}}",
+                    "atividades"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"descricao\": \"\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"VALIDACAO_INVALIDA\",\n  \"mensagem\": \"Confira os campos informados.\",\n  \"errosCampos\": {\n    \"campo\": \"mensagem do campo\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar visitas previstas - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"visita com uma atividade\", function () { const v = pm.response.json(); pm.expect(v).to.be.an(\"array\").that.is.not.empty; pm.expect(v[0].atividades).to.have.lengthOf(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "visitas"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Listar visitas previstas - 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "visitas"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"id\": 1,\n    \"nome\": \"Visita inicial\",\n    \"descricao\": \"Avaliação inicial do participante.\",\n    \"ordem\": 1,\n    \"atividades\": [\n      {\n        \"id\": 1,\n        \"descricao\": \"Realizar aferição da pressão arterial.\"\n      }\n    ]\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Abrir recrutamento com protocolo completo - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"estado RECRUTAMENTO\", function () { pm.expect(pm.response.json().estado).to.eql(\"RECRUTAMENTO\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "estado"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Abrir recrutamento com protocolo completo - 200",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/estado",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "estado"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 2,\n  \"titulo\": \"Estudo Completo Postman\",\n  \"objetivo\": \"Percorrer protocolo, recrutamento e inclusão com dados fictícios.\",\n  \"responsavelId\": 2,\n  \"responsavelNome\": \"Pesquisador Teste\",\n  \"coordenadorId\": 3,\n  \"dataInicio\": \"2026-12-01\",\n  \"dataFim\": \"2027-06-01\",\n  \"limiteParticipantes\": 5,\n  \"estado\": \"RECRUTAMENTO\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Editar critério fora do planejamento - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/{{criterioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "criterios",
+                "{{criterioId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Alteração após abrir o recrutamento.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Editar critério fora do planejamento - 400",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/{{criterioId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "criterios",
+                    "{{criterioId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Alteração após abrir o recrutamento.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"ESTUDO_FORA_DO_PLANEJAMENTO\",\n  \"mensagem\": \"O protocolo só pode ser alterado durante o planejamento.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Candidatos, elegibilidade e inclusão (como Coordenador)",
+      "item": [
+        {
+          "name": "Logout Pesquisador - 204",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Logout Pesquisador - 204",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Login Coordenador - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{coordEmail}}\",\n  \"senha\": \"{{coordSenha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Login Coordenador - 200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{coordEmail}}\",\n  \"senha\": \"{{coordSenha}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 3,\n  \"nome\": \"Pessoa fictícia\",\n  \"email\": \"conta@example.test\",\n  \"perfil\": \"COORDENADOR\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar candidato - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set(\"candidatoId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Participante Teste\",\n  \"email\": \"{{partEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar candidato - 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Participante Teste\",\n  \"email\": \"{{partEmail}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 1,\n  \"estudoId\": 2,\n  \"nome\": \"Participante Teste\",\n  \"email\": \"participante.1700000000000@example.test\",\n  \"elegibilidade\": \"NAO_AVALIADO\",\n  \"consentimento\": \"PENDENTE\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar candidato com e-mail duplicado - 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409\", function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Candidato Duplicado\",\n  \"email\": \"{{partEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar candidato com e-mail duplicado - 409",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Candidato Duplicado\",\n  \"email\": \"{{partEmail}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"CANDIDATO_DUPLICADO\",\n  \"mensagem\": \"E-mail já cadastrado no estudo.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar candidato inválido (e-mail malformado) - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Candidato Inválido\",\n  \"email\": \"nao-e-email\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Cadastrar candidato inválido (e-mail malformado) - 400",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Candidato Inválido\",\n  \"email\": \"nao-e-email\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"VALIDACAO_INVALIDA\",\n  \"mensagem\": \"Confira os campos informados.\",\n  \"errosCampos\": {\n    \"campo\": \"mensagem do campo\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar candidatos - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"lista com o candidato\", function () { pm.expect(pm.response.json()).to.be.an(\"array\").that.is.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Listar candidatos - 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"id\": 1,\n    \"estudoId\": 2,\n    \"nome\": \"Participante Teste\",\n    \"email\": \"participante.1700000000000@example.test\",\n    \"elegibilidade\": \"NAO_AVALIADO\",\n    \"consentimento\": \"PENDENTE\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Salvar elegibilidade sem respostas - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/elegibilidade",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos",
+                "{{candidatoId}}",
+                "elegibilidade"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"respostas\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Salvar elegibilidade sem respostas - 400",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/elegibilidade",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos",
+                    "{{candidatoId}}",
+                    "elegibilidade"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"respostas\": []\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"VALIDACAO_INVALIDA\",\n  \"mensagem\": \"Confira os campos informados.\",\n  \"errosCampos\": {\n    \"campo\": \"mensagem do campo\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Salvar elegibilidade - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"candidato elegível\", function () { pm.expect(pm.response.json().situacao).to.eql(\"ELEGIVEL\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/elegibilidade",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos",
+                "{{candidatoId}}",
+                "elegibilidade"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"respostas\": [\n    {\n      \"criterioId\": {{criterioId}},\n      \"resposta\": \"ATENDIDO\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Salvar elegibilidade - 200",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/elegibilidade",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos",
+                    "{{candidatoId}}",
+                    "elegibilidade"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"respostas\": [\n    {\n      \"criterioId\": {{criterioId}},\n      \"resposta\": \"ATENDIDO\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"candidato\": {\n    \"id\": 1,\n    \"estudoId\": 2,\n    \"nome\": \"Participante Teste\",\n    \"email\": \"participante.1700000000000@example.test\",\n    \"elegibilidade\": \"ELEGIVEL\",\n    \"consentimento\": \"PENDENTE\"\n  },\n  \"situacao\": \"ELEGIVEL\",\n  \"itens\": [\n    {\n      \"criterioId\": 1,\n      \"tipo\": \"INCLUSAO\",\n      \"descricao\": \"Ter 18 anos ou mais e aceitar participar do estudo.\",\n      \"resposta\": \"ATENDIDO\"\n    }\n  ],\n  \"avaliadoPor\": \"Coordenador Teste\",\n  \"avaliadoEm\": \"2026-11-08T12:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar elegibilidade - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"situação ELEGIVEL\", function () { pm.expect(pm.response.json().situacao).to.eql(\"ELEGIVEL\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/elegibilidade",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos",
+                "{{candidatoId}}",
+                "elegibilidade"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Consultar elegibilidade - 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/elegibilidade",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos",
+                    "{{candidatoId}}",
+                    "elegibilidade"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"candidato\": {\n    \"id\": 1,\n    \"estudoId\": 2,\n    \"nome\": \"Participante Teste\",\n    \"email\": \"participante.1700000000000@example.test\",\n    \"elegibilidade\": \"ELEGIVEL\",\n    \"consentimento\": \"PENDENTE\"\n  },\n  \"situacao\": \"ELEGIVEL\",\n  \"itens\": [],\n  \"avaliadoPor\": \"Coordenador Teste\",\n  \"avaliadoEm\": \"2026-11-08T12:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Registrar aceite de consentimento - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/consentimento",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos",
+                "{{candidatoId}}",
+                "consentimento"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resposta\": \"ACEITOU\",\n  \"observacao\": \"Aceite fictício registrado pela coleção.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Registrar aceite de consentimento - 200",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/consentimento",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos",
+                    "{{candidatoId}}",
+                    "consentimento"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"resposta\": \"ACEITOU\",\n  \"observacao\": \"Aceite fictício registrado pela coleção.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"candidato\": {\n    \"id\": 1,\n    \"estudoId\": 2,\n    \"nome\": \"Participante Teste\",\n    \"email\": \"participante.1700000000000@example.test\",\n    \"elegibilidade\": \"ELEGIVEL\",\n    \"consentimento\": \"ACEITOU\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar histórico de consentimento - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"último registro ACEITOU\", function () { const h = pm.response.json(); pm.expect(h).to.be.an(\"array\").that.is.not.empty; pm.expect(h[0].resposta).to.eql(\"ACEITOU\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/consentimento/historico",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos",
+                "{{candidatoId}}",
+                "consentimento",
+                "historico"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Consultar histórico de consentimento - 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/consentimento/historico",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos",
+                    "{{candidatoId}}",
+                    "consentimento",
+                    "historico"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"resposta\": \"ACEITOU\",\n    \"observacao\": \"Aceite fictício registrado pela coleção.\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Consultar condições de inclusão - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/inclusao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos",
+                "{{candidatoId}}",
+                "inclusao"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Consultar condições de inclusão - 200",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/inclusao",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos",
+                    "{{candidatoId}}",
+                    "inclusao"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"observacao\": \"Corpo ilustrativo; o contrato não descreve esta resposta.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Incluir candidato como participante - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"data de inclusão retornada\", function () { pm.expect(pm.response.json().dataInclusao).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/inclusao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos",
+                "{{candidatoId}}",
+                "inclusao"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contaId\": {{participanteId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Incluir candidato como participante - 201",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/inclusao",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos",
+                    "{{candidatoId}}",
+                    "inclusao"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"contaId\": {{participanteId}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 1,\n  \"estudoId\": 2,\n  \"nome\": \"Participante Teste\",\n  \"email\": \"participante.1700000000000@example.test\",\n  \"elegibilidade\": \"ELEGIVEL\",\n  \"consentimento\": \"ACEITOU\",\n  \"dataInclusao\": \"2026-11-08\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Incluir candidato novamente - 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409\", function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"duplicidade bloqueada\", function () { pm.expect(pm.response.json().codigo).to.eql(\"INCLUSAO_DUPLICADA\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/inclusao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos",
+                "{{candidatoId}}",
+                "inclusao"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contaId\": {{participanteId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Incluir candidato novamente - 409",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/inclusao",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos",
+                    "{{candidatoId}}",
+                    "inclusao"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"contaId\": {{participanteId}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"INCLUSAO_DUPLICADA\",\n  \"mensagem\": \"O candidato já foi incluído.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Corrigir consentimento após inclusão - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"histórico preservado\", function () { pm.expect(pm.response.json().codigo).to.eql(\"CANDIDATO_JA_INCLUIDO\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/consentimento",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos",
+                "{{candidatoId}}",
+                "consentimento"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resposta\": \"RECUSOU\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Corrigir consentimento após inclusão - 400",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/consentimento",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos",
+                    "{{candidatoId}}",
+                    "consentimento"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"resposta\": \"RECUSOU\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"CANDIDATO_JA_INCLUIDO\",\n  \"mensagem\": \"O candidato já foi incluído; o consentimento não pode ser alterado.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout Coordenador - 204",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Logout Coordenador - 204",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Login Pesquisador (retorno) - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Login Pesquisador (retorno) - 200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 3,\n  \"nome\": \"Pessoa fictícia\",\n  \"email\": \"conta@example.test\",\n  \"perfil\": \"PESQUISADOR\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Pesquisador não cadastra candidato - 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "candidatos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Candidato Sem Permissão\",\n  \"email\": \"sem.permissao@example.test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Pesquisador não cadastra candidato - 403",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "candidatos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Candidato Sem Permissão\",\n  \"email\": \"sem.permissao@example.test\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"codigo\": \"ACESSO_NEGADO\",\n  \"mensagem\": \"Perfil sem permissão para esta operação.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Iniciar execução com inclusão - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"estado EXECUCAO\", function () { pm.expect(pm.response.json().estado).to.eql(\"EXECUCAO\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "{{estudo2Id}}",
+                "estado"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EXECUCAO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Iniciar execução com inclusão - 200",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/estado",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos",
+                    "{{estudo2Id}}",
+                    "estado"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"EXECUCAO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": 2,\n  \"titulo\": \"Estudo Completo Postman\",\n  \"objetivo\": \"Percorrer protocolo, recrutamento e inclusão com dados fictícios.\",\n  \"responsavelId\": 2,\n  \"responsavelNome\": \"Pesquisador Teste\",\n  \"coordenadorId\": 3,\n  \"dataInicio\": \"2026-12-01\",\n  \"dataFim\": \"2027-06-01\",\n  \"limiteParticipantes\": 5,\n  \"estado\": \"EXECUCAO\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8. Encerrar sessão",
       "item": [
         {
           "name": "Logout - 204",
