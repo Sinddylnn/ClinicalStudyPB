@@ -1,6 +1,6 @@
 import { ErroRequisicao } from './erros';
 import type { AlteracaoEstadoEntrada, EstadoEstudo, Estudo, EstudoCadastroEntrada, ServicoEstudos } from './estudos';
-import type { PendenciaRecrutamento } from './protocolo';
+import type { Protocolo } from './protocolo';
 import { MENSAGEM_PERIODO_INVALIDO, validarEstudo } from '../pages/estudos/validacao';
 import {
   encerramentoAntecipado,
@@ -10,6 +10,7 @@ import {
   verificarTransicao,
   type SituacaoTransicao,
 } from '../pages/estudos/transicoes';
+import { calcularPendencias, visitasSemAtividade } from '../pages/protocolo/validacao';
 
 // <-------------------SERVIÇO SIMULADO------------------->
 // Guarda os estudos em memória e responde como o backend: mesmos campos,
@@ -67,8 +68,8 @@ const aguardar = () => new Promise((resolver) => setTimeout(resolver, ATRASO_MS)
 
 /** O que o backend consulta no banco para decidir a mudança de estado. */
 export type ConsultasEstado = {
-  /** Requisitos da seção 5 da modelagem ainda não atendidos (protocolo e coordenador). */
-  pendencias(estudoId: number): Promise<PendenciaRecrutamento[]>;
+  /** Protocolo do estudo: critérios, declaração de exclusões e visitas com as atividades. */
+  protocolo(estudoId: number): Promise<Protocolo>;
   /** Se o estudo já teve alguma inclusão, mesmo que a pessoa tenha se retirado depois. */
   possuiInclusoes(estudoId: number): Promise<boolean>;
 };
@@ -76,7 +77,7 @@ export type ConsultasEstado = {
 // Os serviços de protocolo e candidatos importam o de estudos: o import dinâmico, só na hora
 // da consulta, evita o ciclo no carregamento dos módulos
 const CONSULTAS_PADRAO: ConsultasEstado = {
-  pendencias: async (id) => (await (await import('./protocolo')).servicoProtocolo.obter(id)).pendenciasRecrutamento,
+  protocolo: async (id) => (await import('./protocolo')).servicoProtocolo.obter(id),
   possuiInclusoes: async (id) =>
     (await (await import('./candidatos')).servicoCandidatos.listar(id)).some((c) => c.dataInclusao),
 };
@@ -87,9 +88,14 @@ async function consultarSituacao(
   estudo: Estudo,
   destino: EstadoEstudo,
 ): Promise<SituacaoTransicao> {
-  const situacao: SituacaoTransicao = { pendencias: [], possuiInclusoes: false };
+  const situacao: SituacaoTransicao = { pendencias: [], visitasSemAtividade: [], possuiInclusoes: false };
   if (!permiteTransicao(estudo.estado, destino)) return situacao;
-  if (destino === 'RECRUTAMENTO') situacao.pendencias = await consultas.pendencias(estudo.id);
+  if (destino === 'RECRUTAMENTO') {
+    // As pendências dependem também do coordenador do estudo (seção 5)
+    const protocolo = await consultas.protocolo(estudo.id);
+    situacao.pendencias = calcularPendencias(protocolo, estudo.coordenadorId);
+    situacao.visitasSemAtividade = visitasSemAtividade(protocolo.visitas);
+  }
   if (destino === 'EXECUCAO' || (destino === 'ENCERRADO' && encerramentoAntecipado(estudo.estado))) {
     situacao.possuiInclusoes = await consultas.possuiInclusoes(estudo.id);
   }

@@ -30,12 +30,13 @@ vi.mock('../api/estudos', () => ({
 }));
 vi.mock('../api/protocolo', () => ({
   servicoProtocolo: {
+    recursos: { editarRemover: true },
     obter: vi.fn().mockResolvedValue({
       estudoId: 1,
       criteriosInclusao: [],
       criteriosExclusao: [],
       semCriteriosExclusao: false,
-      pendenciasRecrutamento: ['CRITERIO_INCLUSAO', 'CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA'],
+      visitas: [],
     }),
   },
 }));

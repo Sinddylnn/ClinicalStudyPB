@@ -22,8 +22,8 @@ const PERMITIDAS = [
 ];
 
 // Tudo atendido: protocolo completo, com inclusões quando a execução exige
-const LIVRE: SituacaoTransicao = { pendencias: [], possuiInclusoes: false };
-const COM_INCLUSOES: SituacaoTransicao = { pendencias: [], possuiInclusoes: true };
+const LIVRE: SituacaoTransicao = { pendencias: [], visitasSemAtividade: [], possuiInclusoes: false };
+const COM_INCLUSOES: SituacaoTransicao = { pendencias: [], visitasSemAtividade: [], possuiInclusoes: true };
 
 describe('permiteTransicao', () => {
   // As dezesseis combinações, como os testes de domínio do backend (EstudoEstadoTest)
@@ -112,6 +112,7 @@ describe('verificarTransicao', () => {
   it('para o recrutamento, devolve a primeira pendência na ordem do backend', () => {
     const tudo: SituacaoTransicao = {
       pendencias: ['VISITA_PREVISTA', 'CRITERIOS_EXCLUSAO', 'CRITERIO_INCLUSAO', 'COORDENADOR'],
+      visitasSemAtividade: ['Acompanhamento'],
       possuiInclusoes: false,
     };
     expect(verificarTransicao('PLANEJAMENTO', { estado: 'RECRUTAMENTO' }, tudo)).toEqual({
@@ -136,6 +137,22 @@ describe('verificarTransicao', () => {
       codigo: 'PROTOCOLO_INCOMPLETO',
       mensagem: 'Cadastre pelo menos uma visita prevista para iniciar o recrutamento.',
     });
+  });
+
+  it('identifica a primeira visita sem atividade, quando há visitas cadastradas', () => {
+    const situacao: SituacaoTransicao = {
+      ...LIVRE,
+      pendencias: ['VISITA_PREVISTA'],
+      visitasSemAtividade: ['Acompanhamento', 'Visita final'],
+    };
+    expect(verificarTransicao('PLANEJAMENTO', { estado: 'RECRUTAMENTO' }, situacao)).toEqual({
+      codigo: 'PROTOCOLO_INCOMPLETO',
+      mensagem: 'Cadastre pelo menos uma atividade na visita: Acompanhamento.',
+    });
+    // Pendências anteriores vêm primeiro, mesmo com visita sem atividade
+    expect(
+      verificarTransicao('PLANEJAMENTO', { estado: 'RECRUTAMENTO' }, { ...situacao, pendencias: ['CRITERIOS_EXCLUSAO', 'VISITA_PREVISTA'] }),
+    ).toMatchObject({ mensagem: 'Cadastre os critérios de exclusão ou confirme que não existem exclusões.' });
   });
 
   it('confere o protocolo antes de recusar a justificativa fora do encerramento', () => {
