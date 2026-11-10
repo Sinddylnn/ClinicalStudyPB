@@ -7,10 +7,10 @@
 | Início planejado | 27/10/2026 |
 | Término planejado | 09/11/2026 |
 | Duração planejada | 2 semanas |
-| Encerramento confirmado | Pendente — Sprint em andamento |
+| Encerramento confirmado | 09/11/2026 |
 | Esforço planejado | 150 horas: 144 h de atividades dos PBIs + 6 h de reunião de acompanhamento |
 
-O período corresponde ao planejamento da Sprint 2, de 27/10 a 09/11/2026. O encerramento e o resultado final serão registrados após a conclusão da Sprint.
+O período planejado da Sprint 2 foi de 27/10 a 09/11/2026, com encerramento confirmado em 09/11/2026. Os resultados finais estão documentados na Review da Sprint.
 
 As atividades, os responsáveis e as estimativas estão organizados nas tabelas a seguir, conforme o planejamento registrado no Azure DevOps.
 
@@ -189,4 +189,4 @@ A conclusão das tarefas deve ser registrada no Azure DevOps, mantendo o acompan
 
 Entrar no sistema como pesquisador; cadastrar critérios de inclusão e exclusão, visitas previstas e suas atividades; demonstrar as mudanças de estado do estudo. Entrar como coordenador, cadastrar candidatos, avaliar a elegibilidade, registrar o consentimento simulado e incluir participantes, mostrando também as validações e os bloqueios de operações inválidas. Apresentar a integração web com o backend, a aplicação mobile, os testes automatizados, a cobertura, o Swagger UI, o pipeline do GitHub Actions, o burndown e a documentação da Release 1.
 
-Os resultados efetivos e o gráfico de acompanhamento serão registrados na [Review da Sprint 2](review.md).
+Os resultados da Sprint e o gráfico de acompanhamento estão disponíveis na [Review da Sprint 2](review.md).
