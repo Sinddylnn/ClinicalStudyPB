@@ -1,4 +1,4 @@
-# Planning — Sprint 2
+# Planning Sprint 2
 
 | Informação | Definição |
 |---|---|
