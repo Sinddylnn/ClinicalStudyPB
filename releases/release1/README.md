@@ -189,6 +189,6 @@ A Sprint foi encerrada em 09/11/2026, com todas as atividades planejadas conclu�
 | Suelle Maciel | Desenvolvedora Web (Web 1) | Base React, rotas e cliente HTTP; login e logout integrados; gestão de usuários; testes e documentação web da Sprint 1; telas de critérios, visitas e estado do estudo; testes e evidências das telas de configuração; revisão dos PRs de web e Docker. |
 | <nome> | Desenvolvedor Web | <...> |
 | Horlan Lacerda | Desenvolvedor Mobile | <...> |
-| <nome> | QA / DevOps | <...> |
+| Gabriela Andrade | QA / DevOps | Pipeline de integração contínua com GitHub Actions (jobs de backend e web, PostgreSQL de testes, relatórios de testes e cobertura como artefatos, regra de 80% de linhas nas classes de serviço); revisão de PRs do mobile; verificação independente da suíte e da cobertura do backend.  |
  
 
