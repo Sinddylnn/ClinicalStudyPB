@@ -16,9 +16,9 @@ Entregar a aplicação web funcional permitindo cadastrar um estudo, avaliar can
 | RF02 | Autenticação e encerramento de sessão | 1 | <...> | <...> |
 | RF03 | Restringir funcionalidades por perfil | 1 | <...> | <...> |
 | RF04 | Cadastrar estudos | 1 | <...> | <...> |
-| RF05 | Definir critérios de inclusão e exclusão | 2 | Parcial | Telas e backend prontos; a integração com as rotas finais de critérios (edição, remoção e declaração de ausência de exclusões) está no PR #33, aguardando merge. |
-| RF06 | Definir visitas previstas e atividades | 2 | Parcial | Telas e backend prontos; a integração com as rotas finais de visitas e atividades está no PR #33, aguardando merge. |
-| RF07 | Gerenciar estados do estudo | 2 | Parcial | Transições e regras integradas ao backend na main; iniciar o recrutamento pela tela depende do protocolo integrado no PR #33. |
+| RF05 | Definir critérios de inclusão e exclusão | 2 | Concluído | Cadastro, edição e remoção de critérios e declaração de ausência de critérios de exclusão, integrados ao backend. |
+| RF06 | Definir visitas previstas e atividades | 2 | Concluído | Cadastro, edição e remoção de visitas e atividades, com ordem única e remoção das atividades junto com a visita, integrados ao backend. |
+| RF07 | Gerenciar estados do estudo | 2 | Concluído | Transições Planejamento → Recrutamento → Execução → Encerrado integradas ao backend, com requisitos para iniciar o recrutamento (incluindo coordenador atribuído pela tela) e justificativa no encerramento antecipado. |
 | RF08 | Cadastrar candidatos | 2 | Concluído | Cadastro e listagem de candidatos vinculados aos estudos, com validação dos dados, prevenção de e-mails duplicados e controle de acesso por coordenador responsável. |
 | RF09 | Registrar avaliação de elegibilidade | 2 | Concluído | Avaliação dos candidatos com base nos critérios de inclusão e exclusão do estudo, registro das respostas e determinação da situação de elegibilidade. |
 | RF10 | Registrar consentimento simulado | 2 | <...> | <...> |
@@ -64,7 +64,7 @@ O pesquisador responsável abre o estudo pelo título em "Meus estudos" (`/estud
 <Sinddy: descrever o fluxo e linkar as capturas (a partir de 28-...).>
 
 #### Testes da web
-Testes de componentes e de serviços com Vitest e Testing Library: 28 arquivos e 414 testes passando, com 99,23% das linhas cobertas. [Execução dos testes](evidencias/web/26-rf05-07-testes.png) • [Relatório de cobertura](evidencias/web/27-rf05-07-cobertura.png)
+Testes de componentes e de serviços com Vitest e Testing Library: 28 arquivos e 414 testes passando na branch `web`, antes do PR #39, com 99,23% das linhas cobertas. [Execução dos testes](evidencias/web/26-rf05-07-testes.png) • [Relatório de cobertura](evidencias/web/27-rf05-07-cobertura.png)
  
 ### 3.2 Mobile
 **Responsável:** <nome>
@@ -212,24 +212,30 @@ Durante a release, a arquitetura evoluiu dentro desse stack para suportar os req
 - execução de testes de integração com PostgreSQL e verificação de cobertura com JaCoCo;
 - integração contínua ampliada para executar os testes de integração do backend.
 
-/<completar com envoluções do web e mobile/>
+Na web, a evolução também ficou dentro do stack previsto:
+
+- serviços da API com versões real e simulada, escolhidas por `VITE_ESTUDOS_API`, `VITE_PROTOCOLO_API` e `VITE_CANDIDATOS_API`, o que permitiu desenvolver as telas antes dos endpoints;
+- cliente HTTP único com sessão por cookie, proteção CSRF e tratamento centralizado de 401 e 403;
+- componentes compartilhados, como o diálogo de confirmação usado em usuários, protocolo e estados;
+- execução da web também pelo Docker Compose (perfil `web`).
+
+<Horlan: completar com as evoluções do mobile.>
 
 Essas evoluções não alteram a arquitetura geral prevista, mas detalham e consolidam sua implementação para os fluxos da Release 1.
 
 ## 6. Resultados dos testes e cobertura
 
-- **Testes de componentes (web)**: 28 arquivos e 414 testes passando (Vitest e Testing Library), com 99,23% das linhas da web cobertas. [Execução](evidencias/web/26-rf05-07-testes.png) • [Cobertura](evidencias/web/27-rf05-07-cobertura.png)
+- **Testes de componentes (web)**: 28 arquivos e 414 testes passando na branch `web`, antes do PR #39 (Vitest e Testing Library), com 99,23% das linhas da web cobertas. [Execução](evidencias/web/26-rf05-07-testes.png) • [Cobertura](evidencias/web/27-rf05-07-cobertura.png)
 - **Backend:** na validação de 05/11/2026, foram executados 272 testes, sem falhas, erros ou testes ignorados. A suíte contempla testes de regras de negócio, API, persistência, migrações e concorrência, incluindo os novos cenários de critérios, visitas, candidatos e elegibilidade. [Execução](evidencias/backend/testes-backend.png)
 - **Testes de integração do backend:** executados com PostgreSQL exclusivo de testes, cobrindo persistência, migrações, transações e cenários concorrentes de recrutamento e inclusão.
 - **Cobertura do backend:** 97% de cobertura geral de linhas no JaCoCo. Os serviços de recrutamento alcançaram 95% e os serviços de estudos, 96%, ambos acima do mínimo exigido de 80%. [Relatório JaCoCo](evidencias/backend/jacoco/cobertura-jacoco.png)
-- **Testes de componentes e serviços da web:** 28 arquivos e 414 testes passando, com 99,23% das linhas da web cobertas, usando Vitest e Testing Library. [Execução](evidencias/web/26-rf05-07-testes.png) • [Cobertura](evidencias/web/27-rf05-07-cobertura.png)
 - **Validação funcional da API:** cenários executados pela coleção Postman. [Resultados do Runner](evidencias/backend/postman/)
 
 _Testes, documentação e revisão de código são responsabilidades compartilhadas por toda a equipe._
 
 ## 7. Problemas conhecidos e pendências
  
-- RF05 a RF07: o PR #33 (telas de visitas e integração do protocolo com as rotas finais do backend) aguarda merge, bloqueado pelo CI do GitHub Actions, que não executa por um problema da conta do criador do repositório. Evidências e resultados de testes da web foram gerados na branch `web`.
+- GitHub Actions: o pipeline de CI está configurado (`.github/workflows/ci.yml`), mas desde 06/11/2026 os jobs não são iniciados pelo GitHub ("account is locked due to a billing issue"), embora a conta dona do repositório não tenha pendências de cobrança. Foi aberto um chamado no suporte do GitHub. Enquanto isso, os testes e a cobertura foram executados localmente e estão registrados nas evidências.
 
 ## 8. Processo de desenvolvimento
  
@@ -257,7 +263,7 @@ A Sprint foi encerrada em 09/11/2026, com todas as atividades planejadas conclu�
 |------------|-------|--------------------------|
 | Georis Samuel | Tech Leader / Gerente | Modelagem da arquitetura inicial do projeto, coordenação técnica e revisão de PRs; modelagem dos RF05–RF07; implementação das transições de estado do estudo; configuração completa do protocolo; implementação e documentação do consentimento e inclusão de participantes (RF10 e RF11); testes de integração, documentação OpenAPI/Postman e revisão da CI do backend. |
 | Luiz Inácio| Desenvolvedor Backend | Implementação de critérios, visitas e atividades previstas (RF05 e RF06); cadastro de candidatos (RF08); avaliação de elegibilidade (RF09); ampliação dos testes de API, persistência e regras de negócio do backend; documentação e planejamento da Sprint 2. |
-| Suelle Ferreira Maciel | Desenvolvedora Web (Web 1) | Base React, rotas e cliente HTTP; login e logout integrados; gestão de usuários; testes e documentação web da Sprint 1; telas de critérios, visitas e estado do estudo; testes e evidências das telas de configuração; revisão dos PRs de web e Docker. |
+| Suelle Maciel | Desenvolvedora Web (Web 1) | Base React, rotas e cliente HTTP; login e logout integrados; gestão de usuários; testes e documentação web da Sprint 1; telas de critérios, visitas e estado do estudo; testes e evidências das telas de configuração; revisão dos PRs de web e Docker. |
 | <nome> | Desenvolvedor Web | <...> |
 | Horlan Lacerda | Desenvolvedor Mobile | <...> |
 | <nome> | QA / DevOps | <...> |
