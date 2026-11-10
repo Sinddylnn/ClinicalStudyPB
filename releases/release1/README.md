@@ -88,9 +88,25 @@ O coordenador vinculado ao estudo abre o recrutamento pela sua lista de estudos 
 Testes de componentes e de serviços com Vitest e Testing Library: 28 arquivos e 414 testes passando na branch `web`, antes do PR #39, com 99,23% das linhas cobertas. [Execução dos testes](evidencias/web/26-rf05-07-testes.png) • [Relatório de cobertura](evidencias/web/27-rf05-07-cobertura.png)
  
 ### 3.2 Mobile
-**Responsável:** <nome>
+**Responsável:** Horlan Silva de Lacerda
  
-<Descrever o que foi entregue no mobile (app executável e navegação entre telas) e linkar [`evidencias/mobile/`](evidencias/mobile/), incluindo o teste da Sprint 2 em [`teste-mobile-sprint2.md`](evidencias/mobile/teste-mobile-sprint2.md).>
+Aplicativo do participante em React Native com Expo e Expo Router. O app executa no emulador Android e no celular, pelo Expo Go. Na Release 1, ele é a base executável com navegação e protótipo do participante, com dados simulados. As funcionalidades do participante (RF17 a RF20) e o login no app ficam para a Release 2 (Sprint 3).
+
+- **Navegação por abas:** Início, Estudos, Visitas e Perfil, com barra de abas alinhada ao protótipo do Figma.
+- **Protótipo do participante:** telas de início, meus estudos, próximas visitas e dados da conta, com dados simulados.
+- **Teste de componente:** 6 testes com Jest (jest-expo) cobrem a tela Início, a barra de abas e a navegação entre as abas.
+- **Teste E2E:** fluxo de navegação entre as quatro abas automatizado com Maestro, no emulador Android.
+
+#### Evidências do mobile
+
+| Evidência | Comprovação |
+|---|---|
+| [Emulador reconhecido e Expo em execução](evidencias/mobile/Release1_Mobile_Emulador_Pixel4a_adb_devices_Expo_Rodando.png) | App executando no emulador Android (Pixel 4a). |
+| [Início no emulador](evidencias/mobile/Release1_Mobile_Emulador_Pixel4a_Tela_Inicio.png) e [Início no celular](evidencias/mobile/Release1_Mobile_Celular_S24_Android16_Tela_Inicio.jpeg) | Tela inicial no emulador e no celular (Galaxy S24, Android 16). |
+| [Aba Estudos](evidencias/mobile/Release1_Mobile_Emulador_Pixel4a_Aba_Estudos.png), [Aba Visitas](evidencias/mobile/Release1_Mobile_Emulador_Pixel4a_Aba_Visitas.png) e [Aba Perfil](evidencias/mobile/Release1_Mobile_Emulador_Pixel4a_Aba_Perfil.png) | Navegação entre as abas do app. |
+| [Tela inicial](evidencias/mobile/01-tela-inicial.png) e [Navegação](evidencias/mobile/02-navegacao.png) | Evidências da Sprint 1. |
+| [Testes Jest](evidencias/mobile/Release1_Mobile_Jest_6_Testes_Passando.png) | 6 testes de componente passando. |
+| [Execução e evidências no emulador](evidencias/mobile/teste-mobile-sprint2.md) e [Teste E2E com Maestro](evidencias/mobile/e2e-mobile-sprint2.md) | Roteiros dos testes do mobile. |
 
 ### 3.3 Backend
 
@@ -167,13 +183,18 @@ Na web, a evolução também ficou dentro do stack previsto:
 - componentes compartilhados, como o diálogo de confirmação usado em usuários, protocolo e estados;
 - execução da web também pelo Docker Compose (perfil `web`).
 
-<Horlan: completar com as evoluções do mobile.>
+No mobile, a evolução também ficou dentro do stack previsto:
+
+- navegação por abas com Expo Router, baseada em arquivos na pasta `app/`;
+- testes de componente com Jest e o preset jest-expo;
+- teste E2E da navegação com Maestro, executado no emulador pelo Expo Go, sem alteração no código do app.
 
 Essas evoluções não alteram a arquitetura geral prevista, mas detalham e consolidam sua implementação para os fluxos da Release 1.
 
 ## 5. Resultados dos testes e cobertura
 
 - **Testes de componentes (web)**: 28 arquivos e 414 testes passando na branch `web`, antes do PR #39 (Vitest e Testing Library), com 99,23% das linhas da web cobertas. [Execução](evidencias/web/26-rf05-07-testes.png) • [Cobertura](evidencias/web/27-rf05-07-cobertura.png)
+- **Testes do mobile:** 6 testes de componente com Jest passando, sobre a tela Início e a navegação entre as abas. O fluxo E2E de navegação com Maestro foi concluído com sucesso no emulador Android. [Execução do Jest](evidencias/mobile/Release1_Mobile_Jest_6_Testes_Passando.png) • [Teste E2E](evidencias/mobile/e2e-mobile-sprint2.md)
 - **Backend:** na validação de 05/11/2026, foram executados 272 testes, sem falhas, erros ou testes ignorados. A suíte contempla testes de regras de negócio, API, persistência, migrações e concorrência, incluindo os novos cenários de critérios, visitas, candidatos e elegibilidade. [Execução](evidencias/backend/testes-backend.png)
 - **Testes de integração do backend:** executados com PostgreSQL exclusivo de testes, cobrindo persistência, migrações, transações e cenários concorrentes de recrutamento e inclusão.
 - **Cobertura do backend:** 97% de cobertura geral de linhas no JaCoCo. Os serviços de recrutamento alcançaram 95% e os serviços de estudos, 96%, ambos acima do mínimo exigido de 80%. [Relatório JaCoCo](evidencias/backend/jacoco/cobertura-jacoco.png)
@@ -193,7 +214,7 @@ implementação inicial das entidades e telas do sistema. Conseguimos entregar u
 a única pendência foi a pipeline CI que, devido à prioridade das outras tasks, optamos por deixar para a próxima sprint
 - [Planning](sprints/sprint01/planning.md)
 - [Review](sprints/sprint01/review.md)
-- [Burndown](sprints/sprint01/burndown.png)
+- [Burndown](sprints/sprint01/burndown-chart-sprint1.png)
  
 
 ### Sprint 2 (27/10 a 09/11)
@@ -213,7 +234,7 @@ A Sprint foi encerrada em 09/11/2026, com todas as atividades planejadas conclu�
 | Luiz Inácio| Desenvolvedor Backend | Implementação de critérios, visitas e atividades previstas (RF05 e RF06); cadastro de candidatos (RF08); avaliação de elegibilidade (RF09); ampliação dos testes de API, persistência e regras de negócio do backend; documentação e planejamento da Sprint 2. |
 | Suelle Maciel | Desenvolvedora Web (Web 1) | Base React, rotas e cliente HTTP; login e logout integrados; gestão de usuários; testes e documentação web da Sprint 1; telas de critérios, visitas e estado do estudo; testes e evidências das telas de configuração; revisão dos PRs de web e Docker. |
 | Sinddy Lorranny Nobrega Nascimento | Desenvolvedora Web (Web 2) | Diagramas e modelo de domínio da Sprint 1; listagem e cadastro de estudos (RF04), com serviço simulado e integração com a API; telas de Início, acesso negado e página não encontrada; atribuição e troca do coordenador na aba Resumo; telas de recrutamento (candidatos, elegibilidade, consentimento e inclusão); conferência do recrutamento com a API real; testes dos serviços e das telas; evidências de estudos e de recrutamento. |
-| Horlan Lacerda | Desenvolvedor Mobile | <...> |
+| Horlan Silva de Lacerda | Desenvolvedor Mobile | App Expo com navegação por abas e execução no Android; protótipo mobile do participante; testes de componente com Jest e E2E da navegação com Maestro; documentação de execução e evidências do mobile no emulador e no celular; revisão da coleção Postman e da documentação da API; apoio ao README e às evidências da release. |
 | Gabriela Andrade | QA / DevOps | Pipeline de integração contínua com GitHub Actions (jobs de backend e web, PostgreSQL de testes, relatórios de testes e cobertura como artefatos, regra de 80% de linhas nas classes de serviço); revisão de PRs do mobile; verificação independente da suíte e da cobertura do backend.  |
  
 

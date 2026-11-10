@@ -44,7 +44,7 @@ Todas as capturas estão na pasta [releases/release1/evidencias/mobile](./), ao 
 ![Aba Estudos](Release1_Mobile_Emulador_Pixel4a_Aba_Estudos.png)
 ![Aba Visitas](Release1_Mobile_Emulador_Pixel4a_Aba_Visitas.png)
 ![Aba Perfil](Release1_Mobile_Emulador_Pixel4a_Aba_Perfil.png)
-![App no celular com Expo Go](Release1_Mobile_Celular_S24_Android16_Tela_Inicio.png)
+![App no celular com Expo Go](Release1_Mobile_Celular_S24_Android16_Tela_Inicio.jpeg)
 ![Testes unitários passando](Release1_Mobile_Jest_6_Testes_Passando.png)
 ![Emulador reconhecido pelo adb](Release1_Mobile_Emulador_Pixel4a_adb_devices_Expo_Rodando.png)
 
