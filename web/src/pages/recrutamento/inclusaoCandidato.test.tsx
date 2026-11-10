@@ -167,7 +167,9 @@ describe('InclusaoCandidato', () => {
 
     await quadro();
     expect(
-      screen.getByText('Nenhuma conta disponível: o administrador precisa cadastrar a conta antes.'),
+      screen.getByText(
+        'Nenhuma conta de participante com o e-mail do candidato: o administrador precisa cadastrar a conta antes.',
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText('Escolha a conta de participante')).toBeInTheDocument();
     expect(botaoIncluir()).toBeDisabled();

@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ErroRequisicao } from './erros';
 import type { Estudo, EstudoCadastroEntrada } from './estudos';
+import type { Protocolo } from './protocolo';
 import {
   criarServicoEstudosSimulado,
+  criarServicosEstudosSimulados,
   reiniciarEstudosSimulados,
+  servicoCoordenadoresSimulado,
   servicoEstudosSimulado,
   type ConsultasEstado,
 } from './estudosSimulado';
@@ -96,9 +99,18 @@ const MODELO: Estudo = {
   justificativaEncerramento: null,
 };
 
+// Protocolo completo: inclusão, exclusões declaradas ausentes e uma visita com atividade
+const PROTOCOLO_COMPLETO: Protocolo = {
+  estudoId: 1,
+  criteriosInclusao: [{ id: 1, descricao: 'Adultos.' }],
+  criteriosExclusao: [],
+  semCriteriosExclusao: true,
+  visitas: [{ id: 1, nome: 'Visita inicial', descricao: null, ordem: 1, atividades: [{ id: 1, descricao: 'Questionário.' }] }],
+};
+
 function criarConsultas(parcial: Partial<ConsultasEstado> = {}): ConsultasEstado {
   return {
-    pendencias: vi.fn().mockResolvedValue([]),
+    protocolo: vi.fn().mockResolvedValue(PROTOCOLO_COMPLETO),
     possuiInclusoes: vi.fn().mockResolvedValue(false),
     ...parcial,
   };
@@ -121,8 +133,8 @@ describe('servicoEstudosSimulado: alterarEstado', () => {
 
     expect(atualizado).toMatchObject({ id: 1, estado: 'RECRUTAMENTO', justificativaEncerramento: null });
     expect((await executar(servico.listar()))[0].estado).toBe('RECRUTAMENTO');
-    // Para o recrutamento só importam as pendências do protocolo
-    expect(consultas.pendencias).toHaveBeenCalledWith(1);
+    // Para o recrutamento só importa o protocolo
+    expect(consultas.protocolo).toHaveBeenCalledWith(1);
     expect(consultas.possuiInclusoes).not.toHaveBeenCalled();
   });
 
@@ -147,14 +159,43 @@ describe('servicoEstudosSimulado: alterarEstado', () => {
   });
 
   it('recusa com o código do backend e mantém o estado anterior', async () => {
-    const consultas = criarConsultas({ pendencias: vi.fn().mockResolvedValue(['COORDENADOR']) });
-    const servico = criarServicoEstudosSimulado([MODELO], consultas);
+    // O coordenador vem do próprio estudo, não do protocolo
+    const servico = criarServicoEstudosSimulado([{ ...MODELO, coordenadorId: null }], criarConsultas());
 
     const erro = await executar(servico.alterarEstado(1, { estado: 'RECRUTAMENTO' })).catch((e: unknown) => e);
 
     expect(erro).toBeInstanceOf(ErroRequisicao);
     expect(erro).toMatchObject({ status: 400, codigo: 'COORDENADOR_OBRIGATORIO' });
     expect((await executar(servico.listar()))[0].estado).toBe('PLANEJAMENTO');
+  });
+
+  it('identifica a primeira visita sem atividade, na ordem do protocolo', async () => {
+    const visitas = [
+      { id: 3, nome: 'Visita final', descricao: null, ordem: 3, atividades: [] },
+      ...PROTOCOLO_COMPLETO.visitas,
+      { id: 2, nome: 'Acompanhamento', descricao: null, ordem: 2, atividades: [] },
+    ];
+    const servico = criarServicoEstudosSimulado(
+      [MODELO],
+      criarConsultas({ protocolo: vi.fn().mockResolvedValue({ ...PROTOCOLO_COMPLETO, visitas }) }),
+    );
+
+    await expect(executar(servico.alterarEstado(1, { estado: 'RECRUTAMENTO' }))).rejects.toMatchObject({
+      codigo: 'PROTOCOLO_INCOMPLETO',
+      message: 'Cadastre pelo menos uma atividade na visita: Acompanhamento.',
+    });
+  });
+
+  it('pede uma visita quando o protocolo ainda não tem nenhuma', async () => {
+    const servico = criarServicoEstudosSimulado(
+      [MODELO],
+      criarConsultas({ protocolo: vi.fn().mockResolvedValue({ ...PROTOCOLO_COMPLETO, visitas: [] }) }),
+    );
+
+    await expect(executar(servico.alterarEstado(1, { estado: 'RECRUTAMENTO' }))).rejects.toMatchObject({
+      codigo: 'PROTOCOLO_INCOMPLETO',
+      message: 'Cadastre pelo menos uma visita prevista para iniciar o recrutamento.',
+    });
   });
 
   it('conta o histórico de inclusões para iniciar a execução e para o encerramento antecipado', async () => {
@@ -193,7 +234,7 @@ describe('servicoEstudosSimulado: alterarEstado', () => {
       codigo: 'TRANSICAO_ESTADO_INVALIDA',
       message: 'Não é permitido mudar de ENCERRADO para RECRUTAMENTO.',
     });
-    expect(consultas.pendencias).not.toHaveBeenCalled();
+    expect(consultas.protocolo).not.toHaveBeenCalled();
     expect(consultas.possuiInclusoes).not.toHaveBeenCalled();
   });
 });
@@ -216,6 +257,18 @@ describe('servicoEstudosSimulado: consultas aos outros simulados', () => {
       codigo: 'PROTOCOLO_INCOMPLETO',
       message: 'Cadastre os critérios de exclusão ou confirme que não existem exclusões.',
     });
+    // Depois de declarar a ausência de exclusões, falta a atividade da visita de acompanhamento
+    const { servicoProtocolo } = await import('./protocolo');
+    await servicoProtocolo.definirSemExclusao(1, true);
+    await expect(servicoEstudosSimulado.alterarEstado(1, { estado: 'RECRUTAMENTO' })).rejects.toMatchObject({
+      codigo: 'PROTOCOLO_INCOMPLETO',
+      message: 'Cadastre pelo menos uma atividade na visita: Acompanhamento.',
+    });
+    // Com a atividade, o protocolo fica completo e o recrutamento abre
+    await servicoProtocolo.adicionarAtividade(1, 2, 'Revisar o diário de sono.');
+    await expect(servicoEstudosSimulado.alterarEstado(1, { estado: 'RECRUTAMENTO' })).resolves.toMatchObject({
+      estado: 'RECRUTAMENTO',
+    });
     // Estudo 3: já tem uma inclusão (Maria Souza)
     await expect(
       servicoEstudosSimulado.alterarEstado(3, { estado: 'ENCERRADO', justificativaEncerramento: 'Motivo.' }),
@@ -223,5 +276,73 @@ describe('servicoEstudosSimulado: consultas aos outros simulados', () => {
     await expect(servicoEstudosSimulado.alterarEstado(3, { estado: 'EXECUCAO' })).resolves.toMatchObject({
       estado: 'EXECUCAO',
     });
+  });
+});
+
+describe('servicoCoordenadoresSimulado', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    reiniciarEstudosSimulados();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const COORDENADORES = [
+    { id: 6, nome: 'Bianca Coordenadora' },
+    { id: 3, nome: 'Carlos Coordenador' },
+  ];
+
+  it('lista as contas ativas de coordenador', async () => {
+    expect(await executar(servicoCoordenadoresSimulado.listar())).toEqual(COORDENADORES);
+  });
+
+  it('troca o coordenador e o estudo listado já vem atualizado', async () => {
+    const { estudos, coordenadores } = criarServicosEstudosSimulados([MODELO], criarConsultas(), COORDENADORES);
+
+    const atualizado = await executar(coordenadores.atribuir(1, 6));
+
+    expect(atualizado).toMatchObject({ id: 1, coordenadorId: 6 });
+    expect((await executar(estudos.listar()))[0].coordenadorId).toBe(6);
+  });
+
+  it('atribui também em recrutamento, mas não em estudo encerrado', async () => {
+    const { coordenadores } = criarServicosEstudosSimulados(
+      [
+        { ...MODELO, id: 1, estado: 'RECRUTAMENTO' },
+        { ...MODELO, id: 2, estado: 'ENCERRADO' },
+      ],
+      criarConsultas(),
+      COORDENADORES,
+    );
+
+    expect(await executar(coordenadores.atribuir(1, 6))).toMatchObject({ coordenadorId: 6 });
+    await expect(executar(coordenadores.atribuir(2, 6))).rejects.toMatchObject({
+      status: 400,
+      codigo: 'ESTUDO_ENCERRADO',
+    });
+  });
+
+  it('confere na ordem do backend: campo, estudo, conta e por último o encerramento', async () => {
+    const { estudos, coordenadores } = criarServicosEstudosSimulados(
+      [{ ...MODELO, estado: 'ENCERRADO' }],
+      criarConsultas(),
+      COORDENADORES,
+    );
+
+    await expect(executar(coordenadores.atribuir(1, 0))).rejects.toMatchObject({
+      codigo: 'VALIDACAO_INVALIDA',
+      errosCampos: { coordenadorId: expect.any(String) },
+    });
+    await expect(executar(coordenadores.atribuir(9, 4))).rejects.toMatchObject({
+      status: 404,
+      codigo: 'RECURSO_NAO_ENCONTRADO',
+    });
+    // Conta de outro perfil em estudo encerrado: a conta é conferida antes do estado
+    const erro = await executar(coordenadores.atribuir(1, 4)).catch((e: unknown) => e);
+    expect(erro).toBeInstanceOf(ErroRequisicao);
+    expect(erro).toMatchObject({ status: 400, codigo: 'COORDENADOR_INVALIDO' });
+    expect((await executar(estudos.listar()))[0].coordenadorId).toBe(MODELO.coordenadorId);
   });
 });

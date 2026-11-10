@@ -227,6 +227,19 @@ class AvaliacaoElegibilidadeControllerTest {
                 .andExpect(jsonPath("$.avaliadoEm").isEmpty());
     }
 
+    @Test
+    void consultaCandidatoSemProtocolo() throws Exception {
+        when(protocolos.findByEstudoId(10L))
+                .thenReturn(Optional.empty());
+
+        mvc.perform(como(2, get(URL)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.situacao")
+                        .value("NAO_AVALIADO"))
+                .andExpect(jsonPath("$.itens.length()")
+                        .value(0));
+    }
+
     // <-------------------AVALIAÇÃO ELEGÍVEL------------------->
 
     @Test

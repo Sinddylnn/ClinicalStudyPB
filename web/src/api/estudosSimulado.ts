@@ -1,6 +1,14 @@
 import { ErroRequisicao } from './erros';
-import type { AlteracaoEstadoEntrada, EstadoEstudo, Estudo, EstudoCadastroEntrada, ServicoEstudos } from './estudos';
-import type { PendenciaRecrutamento } from './protocolo';
+import type {
+  AlteracaoEstadoEntrada,
+  Coordenador,
+  EstadoEstudo,
+  Estudo,
+  EstudoCadastroEntrada,
+  ServicoCoordenadores,
+  ServicoEstudos,
+} from './estudos';
+import type { Protocolo } from './protocolo';
 import { MENSAGEM_PERIODO_INVALIDO, validarEstudo } from '../pages/estudos/validacao';
 import {
   encerramentoAntecipado,
@@ -10,6 +18,7 @@ import {
   verificarTransicao,
   type SituacaoTransicao,
 } from '../pages/estudos/transicoes';
+import { calcularPendencias, visitasSemAtividade } from '../pages/protocolo/validacao';
 
 // <-------------------SERVIÇO SIMULADO------------------->
 // Guarda os estudos em memória e responde como o backend: mesmos campos,
@@ -63,12 +72,18 @@ const ESTUDOS_INICIAIS: Estudo[] = [
   },
 ];
 
+// Contas ativas com perfil COORDENADOR, em ordem de nome como no backend
+const COORDENADORES_INICIAIS: Coordenador[] = [
+  { id: 6, nome: 'Bianca Coordenadora' },
+  { id: ID_COORDENADOR_SIMULADO, nome: 'Carlos Coordenador' },
+];
+
 const aguardar = () => new Promise((resolver) => setTimeout(resolver, ATRASO_MS));
 
 /** O que o backend consulta no banco para decidir a mudança de estado. */
 export type ConsultasEstado = {
-  /** Requisitos da seção 5 da modelagem ainda não atendidos (protocolo e coordenador). */
-  pendencias(estudoId: number): Promise<PendenciaRecrutamento[]>;
+  /** Protocolo do estudo: critérios, declaração de exclusões e visitas com as atividades. */
+  protocolo(estudoId: number): Promise<Protocolo>;
   /** Se o estudo já teve alguma inclusão, mesmo que a pessoa tenha se retirado depois. */
   possuiInclusoes(estudoId: number): Promise<boolean>;
 };
@@ -76,7 +91,7 @@ export type ConsultasEstado = {
 // Os serviços de protocolo e candidatos importam o de estudos: o import dinâmico, só na hora
 // da consulta, evita o ciclo no carregamento dos módulos
 const CONSULTAS_PADRAO: ConsultasEstado = {
-  pendencias: async (id) => (await (await import('./protocolo')).servicoProtocolo.obter(id)).pendenciasRecrutamento,
+  protocolo: async (id) => (await import('./protocolo')).servicoProtocolo.obter(id),
   possuiInclusoes: async (id) =>
     (await (await import('./candidatos')).servicoCandidatos.listar(id)).some((c) => c.dataInclusao),
 };
@@ -87,16 +102,21 @@ async function consultarSituacao(
   estudo: Estudo,
   destino: EstadoEstudo,
 ): Promise<SituacaoTransicao> {
-  const situacao: SituacaoTransicao = { pendencias: [], possuiInclusoes: false };
+  const situacao: SituacaoTransicao = { pendencias: [], visitasSemAtividade: [], possuiInclusoes: false };
   if (!permiteTransicao(estudo.estado, destino)) return situacao;
-  if (destino === 'RECRUTAMENTO') situacao.pendencias = await consultas.pendencias(estudo.id);
+  if (destino === 'RECRUTAMENTO') {
+    // As pendências dependem também do coordenador do estudo (seção 5)
+    const protocolo = await consultas.protocolo(estudo.id);
+    situacao.pendencias = calcularPendencias(protocolo, estudo.coordenadorId);
+    situacao.visitasSemAtividade = visitasSemAtividade(protocolo.visitas);
+  }
   if (destino === 'EXECUCAO' || (destino === 'ENCERRADO' && encerramentoAntecipado(estudo.estado))) {
     situacao.possuiInclusoes = await consultas.possuiInclusoes(estudo.id);
   }
   return situacao;
 }
 
-function montar(iniciais: Estudo[], consultas: ConsultasEstado) {
+function montar(iniciais: Estudo[], consultas: ConsultasEstado, coordenadores: Coordenador[] = COORDENADORES_INICIAIS) {
   let estudos = [...iniciais];
 
   const servico: ServicoEstudos = {
@@ -162,7 +182,47 @@ function montar(iniciais: Estudo[], consultas: ConsultasEstado) {
     },
   };
 
-  return { servico, reiniciar: () => (estudos = [...iniciais]) };
+  // Mesma ordem do EstudoService.atribuirCoordenador: estudo da sessão (404), conta escolhida e,
+  // por último, a regra do estudo encerrado (Estudo.atribuirCoordenador)
+  const servicoCoordenadores: ServicoCoordenadores = {
+    async listar() {
+      await aguardar();
+      return coordenadores.map((c) => ({ ...c }));
+    },
+
+    async atribuir(estudoId: number, coordenadorId: number) {
+      await aguardar();
+      if (!Number.isInteger(coordenadorId) || coordenadorId <= 0) {
+        throw new ErroRequisicao(400, {
+          codigo: 'VALIDACAO_INVALIDA',
+          mensagem: 'Confira os campos informados.',
+          errosCampos: { coordenadorId: 'O identificador do coordenador deve ser maior que zero.' },
+        });
+      }
+      const estudo = estudos.find((e) => e.id === estudoId);
+      if (!estudo) {
+        throw new ErroRequisicao(404, { codigo: 'RECURSO_NAO_ENCONTRADO', mensagem: 'Estudo não encontrado.' });
+      }
+      if (!coordenadores.some((c) => c.id === coordenadorId)) {
+        throw new ErroRequisicao(400, {
+          codigo: 'COORDENADOR_INVALIDO',
+          mensagem: 'Escolha uma conta ativa com perfil de coordenador.',
+        });
+      }
+      if (estudo.estado === 'ENCERRADO') {
+        throw new ErroRequisicao(400, {
+          codigo: 'ESTUDO_ENCERRADO',
+          mensagem: 'Não é permitido alterar o coordenador de um estudo encerrado.',
+        });
+      }
+
+      const alterado: Estudo = { ...estudo, coordenadorId };
+      estudos = estudos.map((e) => (e.id === estudoId ? alterado : e));
+      return { ...alterado };
+    },
+  };
+
+  return { servico, servicoCoordenadores, reiniciar: () => (estudos = [...iniciais]) };
 }
 
 /** Cria um serviço com dados e consultas próprios. Usado pelos testes. */
@@ -170,9 +230,21 @@ export function criarServicoEstudosSimulado(iniciais: Estudo[], consultas: Consu
   return montar(iniciais, consultas).servico;
 }
 
+/** Estudos e coordenadores sobre os mesmos dados: atribuir muda o estudo listado. Usado pelos testes. */
+export function criarServicosEstudosSimulados(
+  iniciais: Estudo[],
+  consultas: ConsultasEstado,
+  coordenadores: Coordenador[] = COORDENADORES_INICIAIS,
+) {
+  const { servico, servicoCoordenadores } = montar(iniciais, consultas, coordenadores);
+  return { estudos: servico, coordenadores: servicoCoordenadores };
+}
+
 const padrao = montar(ESTUDOS_INICIAIS, CONSULTAS_PADRAO);
 
 export const servicoEstudosSimulado: ServicoEstudos = padrao.servico;
+
+export const servicoCoordenadoresSimulado: ServicoCoordenadores = padrao.servicoCoordenadores;
 
 /** Volta aos dados iniciais. Usado pelos testes. */
 export function reiniciarEstudosSimulados() {
