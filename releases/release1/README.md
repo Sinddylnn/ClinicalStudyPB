@@ -108,8 +108,6 @@ Documentação: [consentimento e inclusão](../../docs/consentimento-inclusao.md
 
 #### Qualidade e contrato da API
 
-#### Qualidade e contrato da API
-
 As rotas foram documentadas no OpenAPI/Swagger e verificadas por testes de API, 
 regras de negócio, persistência, migrações e concorrência. Os cenários funcionais executados no Postman e seu relatório estão em [evidências do Postman](evidencias/backend/postman/). A execução integrada com banco, backend e web via Docker Compose está documentada em [evidências do Docker](evidencias/backend/docker/).
 
@@ -152,17 +150,27 @@ Os diagramas representam o desenho do sistema completo; os fluxos de acompanhame
   </tr>
 </table>
 
-### Modelo de domínio
+<br>
+
+### Modelos de domínio
 
 <p align="center">
-  <img src="diagramas/09_modelo_dominio.png" alt="Modelo de domínio" width="80%">
+  <img src="diagramas/09_modelo_dominio_estudos.png" alt="Modelo de domínio: estudos e protocolos" width="60%">
 </p>
+
+<p align="center">
+  <img src="diagramas/11_modelo_dominio_recrutamento.png" alt="Modelo de domínio: recrutamento e inclusão" width="60%"><br>
+</p>
+
+<br>
 
 ### Sequência do cadastro
 
 <p align="center">
   <img src="diagramas/08_sequencia_cadastro.png" alt="Sequência do cadastro" width="70%">
 </p>
+
+<br>
 
 ### Arquitetura
 
@@ -183,10 +191,12 @@ Os diagramas representam o desenho do sistema completo; os fluxos de acompanhame
   </tr>
 </table>
 
+<br>
+
 ### Estados do estudo
 
 <p align="center">
-  <img src="diagramas/10_estados_estudos.png" alt="Estados do estudo" width="50%">
+  <img src="diagramas/10_estados_estudos.png" alt="Estados do estudo" width="80%">
 </p>
 
 
