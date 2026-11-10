@@ -1,5 +1,5 @@
 
-# Review — Sprint 2
+# Review Sprint 2
 
 | Informação | Definição |
 |---|---|
