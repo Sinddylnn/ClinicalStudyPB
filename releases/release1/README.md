@@ -12,17 +12,18 @@ Entregar a aplicação web funcional permitindo cadastrar um estudo, avaliar can
  
 | ID | Requisito | Sprint | Situação | Justificativa |
 |----|-----------|--------|----------|---------------|
-| RF01 | Cadastrar e gerenciar usuários | 1 | Concluído | Cadastro, listagem, edição, desativação e reativação de usuários dos quatro perfis, com e-mail único e proteção do último administrador ativo, integrados ao backend. |
-| RF02 | Autenticação e encerramento de sessão | 1 | <...> | <...> |
-| RF03 | Restringir funcionalidades por perfil | 1 | <...> | <...> |
-| RF04 | Cadastrar estudos | 1 | <...> | <...> |
+| RF01 | Cadastrar e gerenciar usuários | 1 | Concluído | Cadastro, listagem, edição, desativação e reativação dos quatro perfis, com e-mail único e proteção do último administrador ativo. |
+| RF02 | Autenticação e encerramento de sessão | 1 | Concluído | Login e logout integrados ao backend, sessão por cookie, proteção CSRF, tratamento de credenciais inválidas e aviso de sessão expirada. Há telas de evidência e testes. |
+| RF03 | Restringir funcionalidades por perfil | 1 | Concluído | Menus e rotas são protegidos na interface, e a API aplica autenticação, perfil e vínculo com o estudo. Acesso negado é tratado e documentado. |
+| RF04 | Cadastrar estudos | 1 | Concluído | Cadastro e listagem de estudos com validações e persistência no backend. O responsável vem da sessão; o coordenador pode ser atribuído conforme as regras. |
 | RF05 | Definir critérios de inclusão e exclusão | 2 | Parcial | Telas e backend prontos; a integração com as rotas finais de critérios (edição, remoção e declaração de ausência de exclusões) está no PR #33, aguardando merge. |
 | RF06 | Definir visitas previstas e atividades | 2 | Parcial | Telas e backend prontos; a integração com as rotas finais de visitas e atividades está no PR #33, aguardando merge. |
 | RF07 | Gerenciar estados do estudo | 2 | Parcial | Transições e regras integradas ao backend na main; iniciar o recrutamento pela tela depende do protocolo integrado no PR #33. |
-| RF08 | Cadastrar candidatos | 2 | Concluído | Cadastro e listagem de candidatos vinculados aos estudos, com validação dos dados, prevenção de e-mails duplicados e controle de acesso por coordenador responsável. |
-| RF09 | Registrar avaliação de elegibilidade | 2 | Concluído | Avaliação dos candidatos com base nos critérios de inclusão e exclusão do estudo, registro das respostas e determinação da situação de elegibilidade. |
-| RF10 | Registrar consentimento simulado | 2 | <...> | <...> |
-| RF11 | Incluir candidatos elegíveis, respeitando o limite de vagas | 2 | <...> | <...> |
+| RF08 | Cadastrar candidatos | 2 | Concluído | Backend e interface oferecem cadastro e listagem de candidatos vinculados ao estudo, com validação, prevenção de duplicidade e autorização por coordenador vinculado. A web tem adaptador para API real. |
+| RF09 | Registrar avaliação de elegibilidade | 2 | Concluído | Avaliação baseada nos critérios, respostas persistidas e situação calculada no backend; há telas e chamadas da web para consultar e salvar avaliações. |
+| RF10 | Registrar consentimento simulado | 2 | Concluído | Registro de aceite ou recusa, observação opcional, histórico de correções e bloqueio após inclusão, com endpoints backend e telas da web. |
+| RF11 | Incluir candidatos elegíveis, respeitando o limite de vagas | 2 | Concluído | Inclusão verifica elegibilidade, aceite, conta participante, duplicidade e vagas; a operação é transacional e protege disputas pela última vaga. Há endpoint e fluxo web. |
+
  
 ## 3. Funcionalidades entregues
 
