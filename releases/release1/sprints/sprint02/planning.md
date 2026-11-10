@@ -187,42 +187,6 @@ A conclusão das tarefas deve ser registrada no Azure DevOps, mantendo o acompan
 
 ## Demonstração prevista para a Review
 
-Na Review da Sprint 2, a equipe deverá demonstrar as funcionalidades desenvolvidas para a Release 1, seguindo o fluxo principal do sistema.
-
-### 1. Configuração do estudo (RF05 a RF07)
-
-1. Acessar o sistema como pesquisador.
-2. Cadastrar critérios de inclusão e exclusão de um estudo.
-3. Cadastrar visitas previstas e suas atividades.
-4. Demonstrar as mudanças de estado do estudo e suas validações.
-
-### 2. Recrutamento e elegibilidade (RF08 e RF09)
-
-5. Acessar o estudo como coordenador.
-6. Cadastrar e listar candidatos vinculados ao estudo.
-7. Avaliar os critérios de elegibilidade de um candidato.
-8. Demonstrar o resultado de uma avaliação elegível e inelegível.
-
-### 3. Consentimento e inclusão (RF10 e RF11)
-
-9. Registrar o consentimento simulado de um candidato.
-10. Incluir um candidato elegível como participante.
-11. Demonstrar o bloqueio da inclusão quando as condições não forem atendidas, incluindo o limite de vagas.
-
-### 4. Integração e qualidade
-
-12. Demonstrar a integração das telas web com o backend.
-13. Confirmar que as funcionalidades da Sprint 1 continuam funcionando.
-14. Apresentar a aplicação mobile executável.
-15. Mostrar a documentação dos endpoints no Swagger UI.
-16. Apresentar os testes automatizados, a cobertura do backend e o pipeline do GitHub Actions.
-
-### 5. Documentação e entrega da Release 1
-
-17. Apresentar os burndowns das Sprints 1 e 2.
-18. Mostrar o README principal e a documentação da Release 1, incluindo as evidências organizadas.
-19. Apresentar a versão preparada para identificação pela tag `release1`.
-
-A Review também deverá registrar as funcionalidades concluídas, dificuldades encontradas e possíveis pendências para a próxima Sprint.
+Entrar no sistema como pesquisador; cadastrar critérios de inclusão e exclusão, visitas previstas e suas atividades; demonstrar as mudanças de estado do estudo. Entrar como coordenador, cadastrar candidatos, avaliar a elegibilidade, registrar o consentimento simulado e incluir participantes, mostrando também as validações e os bloqueios de operações inválidas. Apresentar a integração web com o backend, a aplicação mobile, os testes automatizados, a cobertura, o Swagger UI, o pipeline do GitHub Actions, o burndown e a documentação da Release 1.
 
 Os resultados efetivos e o gráfico de acompanhamento serão registrados na [Review da Sprint 2](review.md).
