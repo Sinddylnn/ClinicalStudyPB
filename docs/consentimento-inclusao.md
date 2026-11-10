@@ -1,4 +1,4 @@
-# Consentimento e inclusão de participantes — AB#3423
+# Consentimento e inclusão de participantes
 
 Esta entrega implementa RF10 e RF11 com as regras do Kickoff. O coordenador
 vinculado registra o consentimento simulado e inclui o candidato durante o

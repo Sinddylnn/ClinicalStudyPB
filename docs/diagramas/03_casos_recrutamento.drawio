@@ -40,7 +40,7 @@
         <mxCell id="9" parent="1" style="shape=text;rounded=0;whiteSpace=wrap;html=0;fillColor=none;strokeColor=none;strokeWidth=2;fontColor=#17212B;fontFamily=Arial;fontSize=22;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Coordenador&#xa;do estudo" vertex="1">
           <mxGeometry height="64" width="170" x="30" y="425" as="geometry" />
         </mxCell>
-        <mxCell id="10" parent="1" style="shape=ellipse;rounded=0;whiteSpace=wrap;html=0;fillColor=#F5F5F5;strokeColor=#9E9E9E;dashed=1;dashPattern=8 4;fontColor=#6B7280;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Cadastrar candidato no estudo" vertex="1">
+        <mxCell id="10" parent="1" style="shape=ellipse;rounded=0;whiteSpace=wrap;html=0;fillColor=#DAE8FC;strokeColor=#6C8EBF;dashed=0;fontColor=#17212B;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Cadastrar candidato no estudo" vertex="1">
           <mxGeometry height="95" width="500" x="385" y="110" as="geometry" />
         </mxCell>
         <mxCell id="11" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=none;endFill=1;startArrow=none;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
@@ -53,7 +53,7 @@
             <mxPoint x="385" y="157" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="12" parent="1" style="shape=ellipse;rounded=0;whiteSpace=wrap;html=0;fillColor=#F5F5F5;strokeColor=#9E9E9E;dashed=1;dashPattern=8 4;fontColor=#6B7280;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Registrar avaliação de elegibilidade" vertex="1">
+        <mxCell id="12" parent="1" style="shape=ellipse;rounded=0;whiteSpace=wrap;html=0;fillColor=#DAE8FC;strokeColor=#6C8EBF;dashed=0;fontColor=#17212B;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Registrar avaliação de elegibilidade" vertex="1">
           <mxGeometry height="95" width="500" x="385" y="250" as="geometry" />
         </mxCell>
         <mxCell id="13" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=none;endFill=1;startArrow=none;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
@@ -66,7 +66,7 @@
             <mxPoint x="385" y="297" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="14" parent="1" style="shape=ellipse;rounded=0;whiteSpace=wrap;html=0;fillColor=#F5F5F5;strokeColor=#9E9E9E;dashed=1;dashPattern=8 4;fontColor=#6B7280;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Registrar consentimento simulado" vertex="1">
+        <mxCell id="14" parent="1" style="shape=ellipse;rounded=0;whiteSpace=wrap;html=0;fillColor=#DAE8FC;strokeColor=#6C8EBF;dashed=0;fontColor=#17212B;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Registrar consentimento simulado" vertex="1">
           <mxGeometry height="95" width="500" x="385" y="390" as="geometry" />
         </mxCell>
         <mxCell id="15" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=none;endFill=1;startArrow=none;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
@@ -79,7 +79,7 @@
             <mxPoint x="385" y="437" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="16" parent="1" style="shape=ellipse;rounded=0;whiteSpace=wrap;html=0;fillColor=#F5F5F5;strokeColor=#9E9E9E;dashed=1;dashPattern=8 4;fontColor=#6B7280;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Incluir candidato no estudo" vertex="1">
+        <mxCell id="16" parent="1" style="shape=ellipse;rounded=0;whiteSpace=wrap;html=0;fillColor=#DAE8FC;strokeColor=#6C8EBF;dashed=0;fontColor=#17212B;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Incluir candidato no estudo" vertex="1">
           <mxGeometry height="95" width="500" x="385" y="530" as="geometry" />
         </mxCell>
         <mxCell id="17" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=none;endFill=1;startArrow=none;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">
@@ -93,7 +93,7 @@
           </mxGeometry>
         </mxCell>
         
-              <mxCell id="rev-24" parent="1" style="shape=ellipse;rounded=0;whiteSpace=wrap;html=0;fillColor=#F5F5F5;strokeColor=#9E9E9E;dashed=1;dashPattern=8 4;fontColor=#6B7280;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Consultar candidatos e&#xa;situação do recrutamento" vertex="1">
+              <mxCell id="rev-24" parent="1" style="shape=ellipse;rounded=0;whiteSpace=wrap;html=0;fillColor=#DAE8FC;strokeColor=#6C8EBF;dashed=0;fontColor=#17212B;strokeWidth=2;fontFamily=Arial;fontSize=24;fontStyle=0;align=center;verticalAlign=middle;spacing=4;" value="Consultar candidatos e&#xa;situação do recrutamento" vertex="1">
           <mxGeometry height="95" width="500" x="385" y="670" as="geometry" />
         </mxCell>
         <mxCell id="rev-25" edge="1" parent="1" style="edgeStyle=none;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;endArrow=none;endFill=1;startArrow=none;startFill=1;dashed=0;fontFamily=Arial;fontSize=20;fontColor=#17212B;labelBackgroundColor=#FFFFFF;" value="">

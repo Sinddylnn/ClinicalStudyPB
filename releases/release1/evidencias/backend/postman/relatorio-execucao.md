@@ -3,7 +3,7 @@
 | Item | Valor |
 |---|---|
 | Data e hora da execução | 26/10/2026, 17:01 |
-| Commit testado | `<hash curto: git rev-parse --short HEAD>` |
+| Commit testado | [`dda9f0a`](https://github.com/Sinddylnn/ClinicalStudyPB/commit/dda9f0a) |
 | Branch | `mobile` |
 | Executado por | Horlan de Lacerda |
 | Ferramenta | Postman, Collection Runner |

@@ -325,7 +325,7 @@ de coordenador documenta o bloqueio para estudos encerrados.
 
 Consulte [as regras e os exemplos de mudança de estado](estados-estudo.md).
 
-## Configuração do protocolo — RF05 e RF06
+## Configuração do protocolo - RF05 e RF06
 
 As rotas de critérios, visitas previstas e atividades estão detalhadas em
 [Configuração do protocolo](configuracao-protocolo.md). A declaração de ausência
@@ -341,7 +341,7 @@ O contrato e a integração com a inclusão estão em
 [Recrutamento e elegibilidade](recrutamento-e-elegibilidade.md).
 
 
-## Consentimento e inclusão — RF10 e RF11
+## Consentimento e inclusão - RF10 e RF11
 
 Foram acrescentados GET/PUT de consentimento, GET do histórico e GET/POST de
 inclusão sob `/estudos/{estudoId}/candidatos/{candidatoId}`.

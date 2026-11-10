@@ -1,0 +1,364 @@
+<mxfile host="Electron">
+  <diagram name="Modelo de Domínio: Recrutamento e inclusão (Release 1)" id="modelo-dominio-recrutamento-inclusao">
+    <mxGraphModel dx="3067" dy="1696" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2165" pageHeight="1518" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="user" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#DAE8FC;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«entity»&#xa;Usuario" vertex="1">
+          <mxGeometry height="186" width="360" x="60.5" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="user-r1" parent="user" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- id: Long" vertex="1">
+          <mxGeometry height="30" width="360" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="user-r2" parent="user" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- email: String {único}" vertex="1">
+          <mxGeometry height="30" width="360" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="user-r3" parent="user" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- perfil: PerfilUsuario" vertex="1">
+          <mxGeometry height="30" width="360" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="user-r4" parent="user" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- ativo: boolean" vertex="1">
+          <mxGeometry height="30" width="360" y="146" as="geometry" />
+        </mxCell>
+        <mxCell id="participation" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#D5E8D4;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«entity»&#xa;Participacao" vertex="1">
+          <mxGeometry height="216" width="450" x="795.5" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="participation-r1" parent="participation" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- id: Long" vertex="1">
+          <mxGeometry height="30" width="450" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="participation-r2" parent="participation" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- estudo: Estudo" vertex="1">
+          <mxGeometry height="30" width="450" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="participation-r3" parent="participation" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- participante: Usuario {perfil PARTICIPANTE}" vertex="1">
+          <mxGeometry height="30" width="450" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="participation-r4" parent="participation" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- candidato: Candidato {opcional, único}" vertex="1">
+          <mxGeometry height="30" width="450" y="146" as="geometry" />
+        </mxCell>
+        <mxCell id="participation-r5" parent="participation" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- dataInclusao: Instant" vertex="1">
+          <mxGeometry height="30" width="450" y="176" as="geometry" />
+        </mxCell>
+        <mxCell id="consent" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#D5E8D4;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«entity»&#xa;Consentimento" vertex="1">
+          <mxGeometry height="216" width="400" x="1315.5" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="consent-r1" parent="consent" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- id: Long" vertex="1">
+          <mxGeometry height="30" width="400" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="consent-r2" parent="consent" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- resposta: RespostaConsentimento" vertex="1">
+          <mxGeometry height="30" width="400" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="consent-r3" parent="consent" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- observacao: String {opcional, até 500}" vertex="1">
+          <mxGeometry height="30" width="400" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="consent-r4" parent="consent" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- registradoPor: Usuario" vertex="1">
+          <mxGeometry height="30" width="400" y="146" as="geometry" />
+        </mxCell>
+        <mxCell id="consent-r5" parent="consent" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- registradoEm: Instant" vertex="1">
+          <mxGeometry height="30" width="400" y="176" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-consent-response" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#F5F5F5;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«enumeration»&#xa;RespostaConsentimento" vertex="1">
+          <mxGeometry height="126" width="280" x="1825.5" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-consent-response-r1" parent="enum-consent-response" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="ACEITOU" vertex="1">
+          <mxGeometry height="30" width="280" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-consent-response-r2" parent="enum-consent-response" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="RECUSOU" vertex="1">
+          <mxGeometry height="30" width="280" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="protocol" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#D5E8D4;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«entity»&#xa;Protocolo" vertex="1">
+          <mxGeometry height="126" width="360" x="60.5" y="636" as="geometry" />
+        </mxCell>
+        <mxCell id="protocol-r1" parent="protocol" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- id: Long" vertex="1">
+          <mxGeometry height="30" width="360" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="protocol-r2" parent="protocol" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- semCriteriosExclusao: boolean" vertex="1">
+          <mxGeometry height="30" width="360" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="study" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#DAE8FC;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«entity»&#xa;Estudo" vertex="1">
+          <mxGeometry height="186" width="340" x="590.5" y="636" as="geometry" />
+        </mxCell>
+        <mxCell id="study-r1" parent="study" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- id: Long" vertex="1">
+          <mxGeometry height="30" width="340" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="study-r2" parent="study" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- titulo: String" vertex="1">
+          <mxGeometry height="30" width="340" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="study-r3" parent="study" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- limiteParticipantes: Integer" vertex="1">
+          <mxGeometry height="30" width="340" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="study-r4" parent="study" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- estado: EstadoEstudo" vertex="1">
+          <mxGeometry height="30" width="340" y="146" as="geometry" />
+        </mxCell>
+        <mxCell id="candidate" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#D5E8D4;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«entity»&#xa;Candidato" vertex="1">
+          <mxGeometry height="216" width="450" x="1110.5" y="636" as="geometry" />
+        </mxCell>
+        <mxCell id="candidate-r1" parent="candidate" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- id: Long" vertex="1">
+          <mxGeometry height="30" width="450" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="candidate-r2" parent="candidate" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- nome: String {até 150}" vertex="1">
+          <mxGeometry height="30" width="450" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="candidate-r3" parent="candidate" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- email: String {até 254}" vertex="1">
+          <mxGeometry height="30" width="450" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="candidate-r4" parent="candidate" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- elegibilidade: SituacaoElegibilidade" vertex="1">
+          <mxGeometry height="30" width="450" y="146" as="geometry" />
+        </mxCell>
+        <mxCell id="candidate-r5" parent="candidate" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- consentimento: SituacaoConsentimento" vertex="1">
+          <mxGeometry height="30" width="450" y="176" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-eleg" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#F5F5F5;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«enumeration»&#xa;SituacaoElegibilidade" vertex="1">
+          <mxGeometry height="186" width="280" x="1825.5" y="546" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-eleg-r1" parent="enum-eleg" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="NAO_AVALIADO" vertex="1">
+          <mxGeometry height="30" width="280" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-eleg-r2" parent="enum-eleg" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="INCOMPLETA" vertex="1">
+          <mxGeometry height="30" width="280" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-eleg-r3" parent="enum-eleg" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="ELEGIVEL" vertex="1">
+          <mxGeometry height="30" width="280" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-eleg-r4" parent="enum-eleg" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="INELEGIVEL" vertex="1">
+          <mxGeometry height="30" width="280" y="146" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-consent-current" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#F5F5F5;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«enumeration»&#xa;SituacaoConsentimento" vertex="1">
+          <mxGeometry height="156" width="280" x="1825.5" y="782" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-consent-current-r1" parent="enum-consent-current" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="PENDENTE" vertex="1">
+          <mxGeometry height="30" width="280" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-consent-current-r2" parent="enum-consent-current" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="ACEITOU" vertex="1">
+          <mxGeometry height="30" width="280" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-consent-current-r3" parent="enum-consent-current" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="RECUSOU" vertex="1">
+          <mxGeometry height="30" width="280" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="criterion" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#D5E8D4;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«entity»&#xa;Criterio" vertex="1">
+          <mxGeometry height="156" width="360" x="60.5" y="1002" as="geometry" />
+        </mxCell>
+        <mxCell id="criterion-r1" parent="criterion" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- id: Long" vertex="1">
+          <mxGeometry height="30" width="360" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="criterion-r2" parent="criterion" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- tipo: TipoCriterio" vertex="1">
+          <mxGeometry height="30" width="360" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="criterion-r3" parent="criterion" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- descricao: String {1..1000}" vertex="1">
+          <mxGeometry height="30" width="360" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="answer" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#D5E8D4;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«entity»&#xa;RespostaElegibilidade" vertex="1">
+          <mxGeometry height="126" width="340" x="590.5" y="1002" as="geometry" />
+        </mxCell>
+        <mxCell id="answer-r1" parent="answer" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- id: Long" vertex="1">
+          <mxGeometry height="30" width="340" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="answer-r2" parent="answer" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- resposta: RespostaCriterio" vertex="1">
+          <mxGeometry height="30" width="340" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="assessment" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#D5E8D4;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«entity»&#xa;AvaliacaoElegibilidade" vertex="1">
+          <mxGeometry height="156" width="450" x="1110.5" y="1002" as="geometry" />
+        </mxCell>
+        <mxCell id="assessment-r1" parent="assessment" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- id: Long" vertex="1">
+          <mxGeometry height="30" width="450" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="assessment-r2" parent="assessment" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- avaliadoPor: Usuario" vertex="1">
+          <mxGeometry height="30" width="450" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="assessment-r3" parent="assessment" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="- avaliadoEm: LocalDateTime" vertex="1">
+          <mxGeometry height="30" width="450" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-type" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#F5F5F5;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«enumeration»&#xa;TipoCriterio" vertex="1">
+          <mxGeometry height="126" width="360" x="60.5" y="1268" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-type-r1" parent="enum-type" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="INCLUSAO" vertex="1">
+          <mxGeometry height="30" width="360" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-type-r2" parent="enum-type" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="EXCLUSAO" vertex="1">
+          <mxGeometry height="30" width="360" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-answer" parent="1" style="swimlane;html=0;whiteSpace=wrap;startSize=56;horizontal=1;collapsible=0;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontStyle=1;fontColor=#17212B;fillColor=#F5F5F5;swimlaneFillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;" value="«enumeration»&#xa;RespostaCriterio" vertex="1">
+          <mxGeometry height="186" width="340" x="590.5" y="1268" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-answer-r1" parent="enum-answer" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="ATENDIDO" vertex="1">
+          <mxGeometry height="30" width="340" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-answer-r2" parent="enum-answer" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="NAO_ATENDIDO" vertex="1">
+          <mxGeometry height="30" width="340" y="86" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-answer-r3" parent="enum-answer" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="PRESENTE" vertex="1">
+          <mxGeometry height="30" width="340" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-answer-r4" parent="enum-answer" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;fontFamily=Arial;fontSize=17;fontColor=#17212B;" value="AUSENTE" vertex="1">
+          <mxGeometry height="30" width="340" y="146" as="geometry" />
+        </mxCell>
+        <mxCell id="note-user" parent="1" style="shape=note;whiteSpace=wrap;html=0;backgroundOutline=1;size=18;fillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;fontFamily=Arial;fontSize=15;fontColor=#17212B;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;" value="Usuario também é referenciado por avaliadoPor e registradoPor. A conta da participação deve estar ativa e ter perfil PARTICIPANTE." vertex="1">
+          <mxGeometry height="100" width="360" x="60.5" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="note-legacy" parent="1" style="shape=note;whiteSpace=wrap;html=0;backgroundOutline=1;size=18;fillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;fontFamily=Arial;fontSize=15;fontColor=#17212B;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;" value="Participacao.candidato é opcional para registros legados anteriores à V9. Quando preenchido, é único; uma retirada futura não apaga a participação histórica." vertex="1">
+          <mxGeometry height="100" width="450" x="795.5" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="note-consent" parent="1" style="shape=note;whiteSpace=wrap;html=0;backgroundOutline=1;size=18;fillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;fontFamily=Arial;fontSize=15;fontColor=#17212B;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;" value="SituacaoConsentimento em Candidato é o resumo atual. PENDENTE indica ausência de resposta registrada. Consentimento preserva o histórico e contém apenas ACEITOU ou RECUSOU." vertex="1">
+          <mxGeometry height="100" width="400" x="1315.5" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="scope" parent="1" style="shape=note;whiteSpace=wrap;html=0;backgroundOutline=1;size=18;fillColor=#FFFFFF;strokeColor=#465867;strokeWidth=2;fontFamily=Arial;fontSize=15;fontColor=#17212B;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=12;" value="Diagrama complementar ao modelo de Estudos e Protocolo. Estudo, Protocolo e Criterio aparecem como contexto do domínio de recrutamento e inclusão." vertex="1">
+          <mxGeometry height="100" width="520" x="1530.5" y="1268" as="geometry" />
+        </mxCell>
+        <mxCell id="e-study-protocol" edge="1" parent="1" source="study" style="html=0;rounded=0;endArrow=none;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=0.0;exitY=0.290323;exitPerimeter=0;entryX=1.0;entryY=0.428571;entryPerimeter=0;dashed=0;" target="protocol">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-protocol-criterion" edge="1" parent="1" source="protocol" style="html=0;rounded=0;endArrow=none;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;dashed=0;" target="criterion">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-study-candidate" edge="1" parent="1" source="study" style="html=0;rounded=0;endArrow=none;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=1.0;exitY=0.505376;exitPerimeter=0;entryX=0.0;entryY=0.435185;entryPerimeter=0;dashed=0;" target="candidate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-candidate-assessment" edge="1" parent="1" source="candidate" style="html=0;rounded=0;endArrow=none;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;dashed=0;" target="assessment">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-assessment-answer" edge="1" parent="1" source="assessment" style="html=0;rounded=0;endArrow=none;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=0.0;exitY=0.403846;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;dashed=0;" target="answer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-criterion-answer" edge="1" parent="1" source="criterion" style="html=0;rounded=0;endArrow=none;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=1.0;exitY=0.403846;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;dashed=0;" target="answer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-candidate-consent" edge="1" parent="1" source="candidate" style="html=0;rounded=0;endArrow=none;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=0.733333;exitY=0.0;exitPerimeter=0;entryX=0.3125;entryY=1.0;entryPerimeter=0;dashed=0;" target="consent">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-study-participation" edge="1" parent="1" source="study" style="html=0;rounded=0;endArrow=none;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=0.852941;exitY=0.0;exitPerimeter=0;entryX=0.188889;entryY=1.0;entryPerimeter=0;dashed=0;" target="participation">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-candidate-participation" edge="1" parent="1" source="candidate" style="html=0;rounded=0;endArrow=none;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=0.111111;exitY=0.0;exitPerimeter=0;entryX=0.811111;entryY=1.0;entryPerimeter=0;dashed=0;" target="participation">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-participation-user" edge="1" parent="1" source="participation" style="html=0;rounded=0;endArrow=none;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=0.0;exitY=0.430556;exitPerimeter=0;entryX=1.0;entryY=0.5;entryPerimeter=0;dashed=0;" target="user">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-link-eleg" edge="1" parent="1" source="candidate" style="html=0;rounded=0;endArrow=open;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=1.0;exitY=0.138889;exitPerimeter=0;entryX=0.0;entryY=0.645161;entryPerimeter=0;dashed=1;" target="enum-eleg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-link-type" edge="1" parent="1" source="criterion" style="html=0;rounded=0;endArrow=open;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;dashed=1;" target="enum-type">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-link-answer" edge="1" parent="1" source="answer" style="html=0;rounded=0;endArrow=open;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;dashed=1;" target="enum-answer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-link-current-consent" edge="1" parent="1" source="candidate" style="html=0;rounded=0;endArrow=open;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=1.0;exitY=0.87963;exitPerimeter=0;entryX=0.0;entryY=0.282051;entryPerimeter=0;dashed=1;" target="enum-consent-current">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="enum-link-response-consent" edge="1" parent="1" source="consent" style="html=0;rounded=0;endArrow=open;endFill=0;endSize=12;strokeColor=#465867;strokeWidth=2;exitX=1.0;exitY=0.291667;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;dashed=1;" target="enum-consent-response">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note-user-link" edge="1" parent="1" source="note-user" style="endArrow=none;dashed=1;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;exitX=0.5;exitY=1;exitPerimeter=0;entryX=0.5;entryY=0;entryPerimeter=0;" target="user">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note-legacy-link" edge="1" parent="1" source="note-legacy" style="endArrow=none;dashed=1;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;exitX=0.5;exitY=1;exitPerimeter=0;entryX=0.5;entryY=0;entryPerimeter=0;" target="participation">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note-consent-link" edge="1" parent="1" source="note-consent" style="endArrow=none;dashed=1;html=0;rounded=0;strokeColor=#465867;strokeWidth=2;exitX=0.5;exitY=1;exitPerimeter=0;entryX=0.5;entryY=0;entryPerimeter=0;" target="consent">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-1" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="0..1" vertex="1">
+          <mxGeometry height="25" width="38" x="432.5" y="659" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-2" parent="1" style="text;html=0;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="1" vertex="1">
+          <mxGeometry height="25" width="19" x="559.5" y="659" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-3" parent="1" style="text;html=0;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="possui protocolo" vertex="1">
+          <mxGeometry height="25" width="137" x="436.5" y="696" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-4" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="1" vertex="1">
+          <mxGeometry height="25" width="19" x="255.5" y="770" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-5" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="0..*" vertex="1">
+          <mxGeometry height="25" width="35" x="255.5" y="969" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-6" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="define critérios" vertex="1">
+          <mxGeometry height="25" width="124" x="255.5" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-7" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="1" vertex="1">
+          <mxGeometry height="25" width="19" x="942.5" y="699" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-8" parent="1" style="text;html=0;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="0..*" vertex="1">
+          <mxGeometry height="25" width="35" x="1063.5" y="699" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-9" parent="1" style="text;html=0;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="possui candidatos" vertex="1">
+          <mxGeometry height="25" width="150" x="945.5" y="736" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-10" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="1" vertex="1">
+          <mxGeometry height="25" width="19" x="1350.5" y="860" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-11" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="0..1" vertex="1">
+          <mxGeometry height="25" width="38" x="1350.5" y="969" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-12" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="avaliação atual" vertex="1">
+          <mxGeometry height="25" width="127" x="1350.5" y="915" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-13" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="0..*" vertex="1">
+          <mxGeometry height="25" width="35" x="942.5" y="1034" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-14" parent="1" style="text;html=0;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="1" vertex="1">
+          <mxGeometry height="25" width="19" x="1079.5" y="1034" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-15" parent="1" style="text;html=0;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="respostas" vertex="1">
+          <mxGeometry height="25" width="87" x="976.5" y="1071" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-16" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="1" vertex="1">
+          <mxGeometry height="25" width="19" x="432.5" y="1034" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-17" parent="1" style="text;html=0;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="0..*" vertex="1">
+          <mxGeometry height="25" width="35" x="543.5" y="1034" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-18" parent="1" style="text;html=0;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="critério" vertex="1">
+          <mxGeometry height="25" width="65" x="472.5" y="1071" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-19" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="0..*" vertex="1">
+          <mxGeometry height="25" width="35" x="1455.5" y="494" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-20" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="1" vertex="1">
+          <mxGeometry height="25" width="19" x="1455.5" y="603" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-21" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="histórico" vertex="1">
+          <mxGeometry height="25" width="77" x="1455.5" y="549" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-22" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="0..*" vertex="1">
+          <mxGeometry height="25" width="35" x="895.5" y="494" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-23" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="1" vertex="1">
+          <mxGeometry height="25" width="19" x="895.5" y="603" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-24" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="inclusões" vertex="1">
+          <mxGeometry height="25" width="84" x="895.5" y="549" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-25" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="0..1" vertex="1">
+          <mxGeometry height="25" width="38" x="1175.5" y="494" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-26" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="0..1" vertex="1">
+          <mxGeometry height="25" width="38" x="1175.5" y="603" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-27" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="inclusão" vertex="1">
+          <mxGeometry height="25" width="76" x="1175.5" y="549" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-28" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="1" vertex="1">
+          <mxGeometry height="25" width="19" x="432.5" y="332" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-29" parent="1" style="text;html=0;whiteSpace=wrap;align=right;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="0..*" vertex="1">
+          <mxGeometry height="25" width="35" x="748.5" y="332" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-30" parent="1" style="text;html=0;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=17;fontColor=#17212B;fontStyle=0;spacing=0;" value="conta participante" vertex="1">
+          <mxGeometry height="25" width="148" x="533.5" y="369" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=26;fontColor=#17212B;fontStyle=1;spacing=0;" value="Como ler os vínculos" vertex="1">
+          <mxGeometry height="35" width="263" x="1147.5" y="1314" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-text" parent="1" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=24;fontColor=#17212B;fontStyle=0;spacing=0;" value="1 = exatamente um&#xa;0..1 = nenhum ou um&#xa;0..* = nenhum ou vários" vertex="1">
+          <mxGeometry height="100" width="280" x="1147.5" y="1359" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-frame" parent="1" style="whiteSpace=wrap;html=1;shape=mxgraph.basic.document;fillColor=none;" value="" vertex="1">
+          <mxGeometry height="230" width="360" x="1110.5" y="1268" as="geometry" />
+        </mxCell>
+        <mxCell id="gMJFbVMy_Q66EJ0KPzuW-1" parent="1" style="text;html=0;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=40;fontStyle=1;fontColor=#17212B;" value="Modelo de Domínio - Recrutamento e Inclusão" vertex="1">
+          <mxGeometry height="50" width="1110" x="527" y="12" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

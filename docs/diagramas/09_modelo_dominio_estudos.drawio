@@ -1,6 +1,6 @@
 <mxfile host="Electron">
-  <diagram name="Modelo de Domínio" id="ofzphywlnQm5m5vzf-YS">
-    <mxGraphModel dx="2044" dy="1131" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1870" pageHeight="1370" math="0" shadow="0">
+  <diagram name="Modelo de Domínio: Estudos e Protocolos" id="ofzphywlnQm5m5vzf-YS">
+    <mxGraphModel dx="2265" dy="1252" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1870" pageHeight="1370" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -248,6 +248,9 @@
         </mxCell>
         <mxCell id="KGWm0Q9Y35JegVnVfDz0-78" parent="1" style="whiteSpace=wrap;html=1;shape=mxgraph.basic.document;fillColor=none;" value="" vertex="1">
           <mxGeometry height="230" width="360" x="100" y="998" as="geometry" />
+        </mxCell>
+        <mxCell id="DxXscQYLN5uqY3p0DL1S-1" parent="1" style="text;html=0;whiteSpace=wrap;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=40;fontStyle=1;fontColor=#17212B;" value="Modelo de Domínio - Estudos e Protocolos " vertex="1">
+          <mxGeometry height="50" width="1110" x="380" y="25" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
