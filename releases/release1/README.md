@@ -87,7 +87,7 @@ perfil compatível, vínculo com o estudo e token CSRF. As regras de negócio s�
 - O protocolo pode ser configurado durante o planejamento e é validado antes da abertura do recrutamento.
 
 <p align="center">
-  <img src="docs/diagramas/10_estados_estudos.png" alt="Estados do estudo" width="80%">
+  <img src="../../docs/diagramas/10_estados_estudos.png" alt="Estados do estudo" width="80%">
 </p>
 
 
