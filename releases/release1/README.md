@@ -86,6 +86,11 @@ perfil compatível, vínculo com o estudo e token CSRF. As regras de negócio s�
 - **RF07 - Estados do estudo:** transições entre planejamento, recrutamento, execução e encerramento, com validação de protocolo completo, participantes e justificativa de encerramento.
 - O protocolo pode ser configurado durante o planejamento e é validado antes da abertura do recrutamento.
 
+<p align="center">
+  <img src="docs/diagramas/10_estados_estudos.png" alt="Estados do estudo" width="80%">
+</p>
+
+
 Documentação: [configuração do protocolo](../../docs/configuracao-protocolo.md) • [estados do estudo](../../docs/estados-estudo.md).
 
 

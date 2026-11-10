@@ -10,9 +10,30 @@ O ClinicalStudyPB é um sistema de gestão de estudos clínicos com dados fictí
 
 O sistema permite gerenciar usuários, cadastrar estudos, organizar o recrutamento e acompanhar participantes e visitas. A aplicação web concentra as atividades administrativas e de pesquisa, enquanto o aplicativo permite ao participante consultar informações sobre sua participação e realizar as ações previstas para seu perfil.
 
-O desenvolvimento será dividido em três releases e seis sprints. As funcionalidades serão entregues gradualmente, seguindo os requisitos da disciplina e o planejamento registrado no Azure DevOps.
+| Perfil | Responsabilidade |
+|---|---|
+| Administrador | Gerencia as contas de usuário. |
+| Pesquisador | Cadastra estudos, configura protocolos e gerencia seus estudos. |
+| Coordenador | Atua nos estudos aos quais está vinculado e conduz o recrutamento. |
+| Participante | Representa a pessoa incluída no estudo. O aplicativo mobile ainda é um protótipo. |
+
+O desenvolvimento está organizado em três releases e seis sprints. As funcionalidades serão entregues gradualmente, seguindo os requisitos da disciplina e o planejamento registrado no Azure DevOps.
 
 Como se trata de um projeto acadêmico, serão utilizados dados fictícios. O sistema não realiza diagnósticos nem decisões clínicas automatizadas.
+
+### Equipe
+
+A equipe é formada por seis integrantes. Optamos 
+por manter fixos os papéis disponíveis até o final do projeto, a única alternância é do PO que varia a cada Sprint, conforme definido pela professora.
+
+| Integrante | Papel | 
+|------------|-------|
+| Georis Samuel | Tech Leader / Gerente | 
+| Luiz Inácio| Desenvolvedor Backend |
+| Suelle Maciel | Desenvolvedora Web (Web 1) |
+| Sinddy Nóbrega | Desenvolvedor Web (Web 2) |
+| Horlan Lacerda | Desenvolvedor Mobile |
+| Gabriela Almeida | QA / DevOps | 
 
 ---
 
@@ -76,7 +97,7 @@ As interfaces não acessam diretamente o banco. Dessa forma, as regras e os dado
 <br>
 
 ### Modelos de domínio
-
+Os modelos estão separados para tornar legíveis dois conjuntos relacionados do domínio, sem representar dois sistemas independentes
 <p align="center">
   <img src="docs/diagramas/09_modelo_dominio_estudos.png" alt="Modelo de domínio: estudos e protocolos" width="60%">
 </p>
@@ -87,7 +108,7 @@ As interfaces não acessam diretamente o banco. Dessa forma, as regras e os dado
 
 <br>
 
-### Sequência do cadastro
+### Sequência do fluxo principal
 
 <p align="center">
   <img src="docs/diagramas/08_sequencia_cadastro.png" alt="Sequência do cadastro" width="70%">
@@ -95,354 +116,132 @@ As interfaces não acessam diretamente o banco. Dessa forma, as regras e os dado
 
 <br>
 
-### Arquitetura
+---
 
-<p align="center">
-  <img src="docs/diagramas/01_visao_geral.png" alt="Visão geral do sistema" width="60%">
-</p>
+## Funcionalidades desenvolvidas
 
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="docs/diagramas/06_componentes_uml.png" alt="Componentes" width="100%"><br>
-      <sub>Componentes</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="docs/diagramas/07_camadas_backend.png" alt="Camadas do backend" width="100%"><br>
-      <sub>Camadas do backend</sub>
-    </td>
-  </tr>
-</table>
+A tabela resume os requisitos da Release 1. As capturas e descrições detalhadas estão organizadas na pasta de evidências e no [README da Release 1](releases/release1/README.md).
 
-<br>
-
-### Estados do estudo
-
-<p align="center">
-  <img src="docs/diagramas/10_estados_estudos.png" alt="Estados do estudo" width="80%">
-</p>
+| RF | Comportamento | Situação na Release 1 | Evidências web |
+|---|---|---|---|
+| RF01 | Cadastrar, listar, editar, desativar e reativar usuários, com validação de e-mail e proteção do último administrador ativo. | Concluído | [Usuário cadastrado](releases/release1/evidencias/web/04-usuario-cadastrado.png), [e-mail duplicado](releases/release1/evidencias/web/12-email-duplicado.png), [bloqueio do último administrador](releases/release1/evidencias/web/13-ultimo-administrador.png). |
+| RF02 | Autenticar usuários e encerrar a sessão. | Concluído | [Login realizado](releases/release1/evidencias/web/01-login-sucesso-admin.png), [credenciais inválidas](releases/release1/evidencias/web/10-credenciais-invalidas.png), [sessão encerrada](releases/release1/evidencias/web/09-logout-sessao-encerrada.png), [sessão expirada](releases/release1/evidencias/web/15-sessao-expirada.png). |
+| RF03 | Restringir funcionalidades conforme o perfil e o vínculo com o estudo. | Concluído | [Início do pesquisador](releases/release1/evidencias/web/02-inicio-pesquisador.png), [acesso negado](releases/release1/evidencias/web/14-acesso-negado.png). |
+| RF04 | Cadastrar e listar estudos, com validações e persistência. | Concluído | [Lista de estudos](releases/release1/evidencias/web/44-estudos-lista.png), [estudo cadastrado](releases/release1/evidencias/web/45-estudo-cadastrado.png), [datas inválidas](releases/release1/evidencias/web/46-estudo-datas-invalidas.png). |
+| RF05 | Definir critérios de inclusão e exclusão. | Concluído | [Critérios cadastrados](releases/release1/evidencias/web/19-rf05-criterios-sucesso.png), [erro de validação](releases/release1/evidencias/web/20-rf05-criterios-erro.png). |
+| RF06 | Definir visitas previstas e atividades. | Concluído | [Visitas e atividades](releases/release1/evidencias/web/21-rf06-visitas-sucesso.png), [erro de validação](releases/release1/evidencias/web/22-rf06-visitas-erro.png). |
+| RF07 | Gerenciar os estados do estudo conforme as regras de transição. | Concluído | [Transição bloqueada por pendências](releases/release1/evidencias/web/23-rf07-estado-erro.png), [confirmação da transição](releases/release1/evidencias/web/24-rf07-estado-confirmacao.png), [recrutamento iniciado](releases/release1/evidencias/web/25-rf07-estado-sucesso.png). |
+| RF08 | Cadastrar e listar candidatos vinculados ao estudo. | Concluído | [Lista de candidatos](releases/release1/evidencias/web/28-recrutamento-lista-candidatos.png), [candidato cadastrado](releases/release1/evidencias/web/29-candidato-cadastrado.png), [campos inválidos](releases/release1/evidencias/web/34-candidato-campos-invalidos.png), [e-mail repetido](releases/release1/evidencias/web/35-candidato-email-repetido.png), [estudo fora do recrutamento](releases/release1/evidencias/web/36-candidato-estudo-fora-recrutamento.png). |
+| RF09 | Avaliar a elegibilidade dos candidatos com base nos critérios do estudo. | Concluído | [Elegibilidade confirmada](releases/release1/evidencias/web/30-elegibilidade-elegivel.png), [candidato inelegível](releases/release1/evidencias/web/38-elegibilidade-inelegivel.png), [avaliação sem resposta](releases/release1/evidencias/web/37-elegibilidade-sem-resposta.png). |
+| RF10 | Registrar consentimento simulado, com aceite ou recusa. | Concluído | [Consentimento registrado](releases/release1/evidencias/web/31-consentimento-registrado.png), [sem resposta de avaliação](releases/release1/evidencias/web/39-consentimento-sem-resposta.png), [sem avaliação](releases/release1/evidencias/web/40-consentimento-sem-avaliacao.png). |
+| RF11 | Incluir candidatos elegíveis, respeitando o consentimento e o limite de vagas. | Concluído | [Condições de inclusão atendidas](releases/release1/evidencias/web/32-inclusao-condicoes-atendidas.png), [participante incluído](releases/release1/evidencias/web/33-participante-incluido.png), [consentimento recusado](releases/release1/evidencias/web/41-inclusao-consentimento-recusado.png), [candidato inelegível](releases/release1/evidencias/web/42-inclusao-candidato-inelegivel.png), [e-mail da conta diferente](releases/release1/evidencias/web/43-inclusao-email-diferente.png). |
 
 
+### Protótipo mobile (Expo)
+
+Na Release 1, foi preparada uma versão navegável do aplicativo mobile com Expo. Vale ressaltar que as telas abaixo registram a estrutura inicial e servem de protótipo para as funcionalidades mobile previstas para as próximas sprints.
+Nesta entrega, o aplicativo ainda não consome a API, por isso, as capturas demonstram a execução e a navegação entre telas.
+
+| Tela ou evidência | Captura |
+|---|---|
+| Tela inicial no emulador Android | [Ver captura](releases/release1/evidencias/mobile/Release1_Mobile_Emulador_Pixel4a_Tela_Inicio.png) |
+| Navegação do protótipo | [Ver captura](releases/release1/evidencias/mobile/02-navegacao.png) |
+| Aba Estudos | [Ver captura](releases/release1/evidencias/mobile/Release1_Mobile_Emulador_Pixel4a_Aba_Estudos.png) |
+| Aba Visitas | [Ver captura](releases/release1/evidencias/mobile/Release1_Mobile_Emulador_Pixel4a_Aba_Visitas.png) |
+| Aba Perfil | [Ver captura](releases/release1/evidencias/mobile/Release1_Mobile_Emulador_Pixel4a_Aba_Perfil.png) |
+| Tela inicial em dispositivo físico com Expo Go | [Ver captura](releases/release1/evidencias/mobile/Release1_Mobile_Celular_S24_Android16_Tela_Inicio.jpeg) |
 
 
 ---
-## Stack Tecnológio
-| Componente | Tecnologias definidas |
-|---|---|
-| Backend | Java 21, Spring Boot e Maven Wrapper |
-| Aplicação web | React, TypeScript e Vite |
-| Aplicativo mobile | React Native, TypeScript e Expo |
-| Banco de dados | PostgreSQL, com migrações Flyway |
-| Documentação da API | OpenAPI e Swagger UI |
-| Ambiente local | Docker e Docker Compose |
-| Integração contínua | GitHub Actions |
-| Planejamento e acompanhamento | Azure DevOps |
+## Stack tecnológico e pré-requisitos
 
-A arquitetura e o stack definidos no documento de Kickoff estão configurados no repositório. O estado funcional de cada componente varia por release: consulte a documentação da entrega para distinguir módulos implementados, interfaces prototipadas e integrações ainda pendentes
+| Componente | Tecnologia e versão |
+|---|---|
+| Backend | Java 21, Spring Boot 4.1.1, Maven Wrapper 3.9.16 |
+| Web | React 19.2.3, TypeScript 6.0.3, Vite 8.3.5, Node.js 24.22.0 |
+| Testes web | Vitest 5.0.5 e Testing Library |
+| Mobile | React Native 0.88.0, Expo 58.0.17, React 19.3.0, TypeScript 6.0.3, Node.js 24.11.1 |
+| Testes mobile | Jest 30.5.2, Jest Expo 58.0.12 e React Native Testing Library 14.1.0 |
+| Banco de dados | PostgreSQL 17.11 e Flyway |
+| Ambiente local | Docker e Docker Compose v2.20 ou superior |
+| API | OpenAPI e Swagger UI |
+
+**Pré-Requisitos**
+- Para executar o backend fora do Docker, é necessário JDK 21 completo, incluindo `java` e `javac`.
+- Para o mobile, é necessário Android Studio com emulador ou um dispositivo com Expo Go.
+
+**Observações:**
+- As versões de Node registradas para web e mobile são diferentes devido à compatibilidade entre as frameworks e android emulator.
+- A arquitetura e o stack definidos no nosso documento de Kickoff estão configurados no repositório, porém, o estado funcional de cada componente varia por release: consulte a documentação da entrega para distinguir módulos implementados, interfaces prototipadas e integrações ainda pendentes
 
 ---
 
 ## Organização do repositório
 
 ```text
-backend/               API Java + Spring Boot ⟶ Georis e Luiz
-web/                   Interface React ⟶ Suelle e Sinddy
-mobile/                Aplicativo React Native + Expo ⟶ Horlan
-docs/                  Decisões, orientações e guias técnicos (autenticação, OpenAPI, Docker, modelagem, Postman)
-releases/              Documentação e evidências de cada release
-  release1/            Documentação e evidências da primeira release
-    diagramas/         Diagramas editáveis (.drawio) e imagens
-    evidencias/        Capturas e relatórios (web, mobile, backend)
-    sprints/           Planning, review e burndown de cada sprint
-  release2/            Evidências da segunda release
-  release3/            Evidências da terceira release
+🔎 ClinicalStudyPB/
+│
+├── 📁 backend/               API Java + Spring Boot ⟶ Georis e Luiz
+├── 📁 web/                   Interface React ⟶ Suelle e Sinddy
+├── 📁 mobile/                Aplicativo React Native + Expo ⟶ Horlan
+├── 📁 docs/                  Decisões, diagramas e guias técnicos (autenticação, OpenAPI, Docker, modelagem, Postman)
+├── 📁 assets/                Arquivos avulsos úteis
+│
+└── 📁 releases/              Documentação e evidências de cada release
+    │
+    ├── 📁 release1/          
+    │   ├── 📁 evidencias/    Capturas e relatórios (web, mobile, backend)
+    │   └── 📁 sprints/       Planning, review e burndown de cada sprint
+    │
+    ├── 📁 release2/          
+    │
+    └── 📁 release3/       
 ```
 
 Gabriela apoia os testes integrados e prepara o ambiente com Docker Compose e a automação com GitHub Actions. Cada integrante também é responsável por testar e documentar o que implementa.
 
-As pastas ainda sem implementação contêm apenas `.gitkeep`, um marcador vazio que permite registrá-las no Git. Sua existência organiza o trabalho, mas não significa que o componente esteja concluído.
 
 ---
 
 ## Executar o projeto
 
+### Executar banco, backend e web com Docker (caminho recomendado) 🐳
 
-### Caminho recomendado: Docker Compose 🐳
-
-Para executar banco, backend e web, abra um terminal na raiz do repositório, com o Docker em execução, e rode:
+Na raiz do repositório, com o Docker em execução:
 
 ```bash
 docker compose --profile web up -d --build --wait
 ```
 
-Acesse a web em <http://localhost:5173> e a documentação Swagger em <http://localhost:8080/swagger-ui.html>. O Compose fornece as variáveis de ambiente; não é necessário instalar Java, Maven ou Node localmente para executar esses três componentes.
+Acesse a web em <http://localhost:5173> e o Swagger em <http://localhost:8080/swagger-ui.html>. O Compose fornece as variáveis de ambiente. Para personalizar portas ou credenciais, copie `.env.example` para `.env` antes de iniciar os serviços. Use apenas credenciais fictícias no ambiente local.
 
-Para executar somente o banco e o backend:
+A configuração do Compose define `VITE_ESTUDOS_API=real`. Protocolo e recrutamento têm seletores próprios e podem permanecer simulados.
 
-```bash
-docker compose up -d --build --wait
-```
+### Credenciais fictícias para demonstração
 
-O Expo é executado separadamente, dentro da pasta `mobile/`. As instruções completas para Docker, contas fictícias, logs, atualização de imagens e encerramento estão no [guia de execução com Docker](docs/execucao-docker.md).
+| Perfil | E-mail | Senha |
+|---|---|---|
+| Administrador | `admin@clinicalstudypb.test` | `Demo@123` |
+| Pesquisador | `pesquisador@clinicalstudypb.test` | `Demo@123` |
+| Coordenador | `coordenador@clinicalstudypb.test` | `Demo@123` |
+| Participante | `participante@clinicalstudypb.test` | `Demo@123` |
 
-A configuração do Compose define `VITE_ESTUDOS_API=real` para a web. Os serviços de protocolo e recrutamento têm seletores próprios e podem permanecer simulados. A configuração Docker é voltada a desenvolvimento local e demonstração, não a hospedagem de produção.
+Essas contas são exclusivas para demonstração local. A migração V4 cria os dados iniciais. A senha de login é diferente da senha de conexão com o PostgreSQL.
 
 > As subseções seguintes descrevem como executar cada componente fora do Docker. No Linux, acrescente `sudo` aos comandos Docker se sua instalação exigir isso.
 
-### Preparar o banco
+### Executar os componentes separadamente
 
-Para executar o backend fora do Docker, inicie primeiro o banco PostgreSQL. Na raiz do repositório:
+
+#### BD
+Para iniciar somente o banco via Docker, na raiz do repositório:
 
 ```bash
 docker compose up -d --wait db
-docker compose ps
 ```
 
-O serviço está pronto quando aparece como `healthy`. As credenciais padrão são `clinicalstudypb` e `clinicalstudypb_dev`; a configuração completa está no arquivo `.env.example`. Para personalizar, copie esse arquivo para `.env` somente se ainda não existir e ajuste os valores antes da criação inicial do banco.
-
-O Spring Boot não carrega `.env` automaticamente. Ao iniciar o backend fora do Docker, configure as variáveis de conexão no terminal ou na IDE. Mais detalhes estão na seção [Banco de dados](#banco-de-dados-postgresql-com-docker-compose) e no [guia de execução com Docker](docs/execucao-docker.md).
-
-### Backend
-
-Requisitos: JDK 21 completo, com `java` e `javac`, e PostgreSQL disponível. O Maven Wrapper utiliza Maven 3.9.16 e pode baixar o Maven e as dependências na primeira execução, portanto esse primeiro uso requer acesso à internet.
-
-Configure `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD` no terminal ou na IDE. O arquivo `.env.example` serve como referência, mas não é carregado automaticamente pelo Spring Boot.
-
-#### Linux/macOS 🐧🍎
-
-A partir da raiz do repositório:
-
-```bash
-cd backend
-java -version
-javac -version
-./mvnw --version
-./mvnw spring-boot:run
-```
-
-Se necessário, configure `JAVA_HOME` e `PATH` para apontar para o JDK 21. Ter somente o executável `java` não garante que o compilador `javac` esteja instalado.
-
-#### Windows 🪟
-
-Com `JAVA_HOME` apontando para o JDK 21:
-
-```powershell
-cd backend
-java -version
-javac -version
-.\mvnw.cmd --version
-.\mvnw.cmd spring-boot:run
-```
-
-O backend utiliza `http://localhost:8080`. A mensagem `Started ClinicalStudyPbApplication` confirma a inicialização. Para encerrar, pressione `Ctrl+C` no terminal.
-
-#### Conferir a proteção de acesso
-
-Com o servidor ligado, execute em outro terminal:
-
-```bash
-curl -i -H 'Accept: application/json' http://localhost:8080/auth/sessao
-```
-
-No PowerShell, use `curl.exe`. Sem login, a resposta esperada é HTTP 401, com conteúdo semelhante a:
-
-```json
-{
-  "codigo": "AUTENTICACAO_NECESSARIA",
-  "mensagem": "Entre no sistema para realizar esta operação."
-}
-```
-
-Esse exemplo verifica que o servidor responde e exige autenticação. O fluxo de login, CSRF, consulta da sessão e logout está no [guia de autenticação](docs/autenticacao.md).
-
-#### Consultar a documentação da API
-
-Com o backend ligado, acesse [Swagger UI](http://localhost:8080/swagger-ui.html). O contrato OpenAPI também está disponível em [JSON](http://localhost:8080/v3/api-docs) e [YAML](http://localhost:8080/v3/api-docs.yaml).
-
-A documentação inclui as operações publicadas pelo backend, como autenticação, usuários, estudos, critérios, visitas previstas, recrutamento, elegibilidade, consentimento e inclusão. A existência de uma rota na API não significa que todas as telas da web já estejam integradas a ela. Consulte os guias de [OpenAPI](docs/openapi.md), [configuração do protocolo](docs/configuracao-protocolo.md), [estados do estudo](docs/estados-estudo.md), [recrutamento e elegibilidade](docs/recrutamento-e-elegibilidade.md) e [consentimento e inclusão](docs/consentimento-inclusao.md).
-
-### Aplicação mobile
-
-O aplicativo mobile é um protótipo para o participante, desenvolvido com React Native, TypeScript e Expo Router. Ainda não consome a API; executar o Expo permite verificar a navegação e as telas disponíveis, não realizar o fluxo completo de participação.
-
-#### Versões
-
-| Ferramenta | Versão declarada |
-|---|---|
-| Node.js | 24.22.0 |
-| npm | 11.6.2 |
-| React Native | 0.88.0 |
-| React | 19.3.0 |
-| TypeScript | 6.0.3 |
-| Expo | 58.0.17 |
-| Expo Router | 58.0.25 |
-| Jest | 30.5.2 |
-| Jest Expo | 58.0.12 |
-| React Native Testing Library | 14.1.0 |
-
-Use a versão de Node compatível com o projeto. A versão da aplicação web está registrada em `web/.nvmrc`; mantenha a versão do mobile alinhada com essa versão ao preparar o ambiente local.
-
-#### Pré-requisitos
-
-- Node.js e npm instalados.
-- Git para clonar o repositório.
-- Android Studio com pelo menos um emulador Android (AVD) criado, ou Expo Go instalado em um celular.
-
-#### Executar no Android
-
-A partir da raiz do repositório:
-
-```bash
-cd mobile
-npm ci
-```
-
-Abra o Android Studio, inicie um emulador pelo Device Manager e aguarde a tela inicial do Android. Para conferir se o emulador foi reconhecido:
-
-```bash
-adb devices
-```
-
-O emulador deve aparecer com o estado `device`. Em seguida, inicie o Expo:
-
-```bash
-npx expo start --android
-```
-
-Se o emulador não abrir o app automaticamente, pressione `a` no terminal com o Expo em execução. As telas atualmente disponíveis incluem Início, Estudos, Visitas e Perfil; algumas exibem conteúdo de protótipo, como o cartão “Disponível na Sprint 3”.
-
-#### Executar em um celular físico
-
-Instale o Expo Go, conecte o celular e o computador à mesma rede Wi-Fi e execute, dentro de `mobile/`:
-
-```bash
-npx expo start
-```
-
-Leia o QR code pelo Expo Go. O túnel do Expo disponibiliza o servidor de desenvolvimento do aplicativo, não o backend Spring Boot. Quando a integração mobile com a API for implementada, o endereço será `http://10.0.2.2:8080` no emulador padrão do Android Studio ou o IP local do computador no celular físico.
-
----
-
-## Testes automatizados
-
-Os testes de cada módulo devem ser executados na pasta correspondente. Os comandos e resultados são apresentados separadamente para evitar confundir a suíte mobile com os testes da web e do backend.
-
-### Backend
-
-Na pasta `backend/`, com JDK 21:
-
-```bash
-./mvnw -B verify
-```
-
-Esse comando compila o backend, executa os testes padrão e valida a cobertura configurada. O mínimo de 80% aplica-se às linhas dos pacotes de serviços (`*.service`). Os testes de persistência `*IT` não são incluídos automaticamente no comando padrão.
-
-Para executar também os testes de integração com PostgreSQL, inicie primeiro o banco exclusivo de testes:
-
-```bash
-docker compose --profile test up -d --wait db-test
-```
-
-Configure as variáveis no mesmo terminal:
-
-```bash
-export CLINICALSTUDYPB_TEST_DB_URL=jdbc:postgresql://localhost:5433/clinicalstudypb_test
-export CLINICALSTUDYPB_TEST_DB_USER=clinicalstudypb
-export CLINICALSTUDYPB_TEST_DB_PASSWORD=clinicalstudypb_dev
-```
-
-Depois, dentro de `backend/`, execute:
-
-```bash
-./mvnw -B clean '-Dtest=*Test,*IT' verify
-```
-
-No PowerShell, configure as mesmas variáveis com `$env:NOME_DA_VARIAVEL="valor"` e execute `.mvnw.cmd -B clean "-Dtest=*Test,*IT" verify` dentro de `backend/`. O banco de testes é descartável e não deve ser substituído pelo banco de desenvolvimento.
-
-Ao terminar, pare o banco de testes:
-
-```bash
-docker compose --profile test stop db-test
-```
-
-Os testes de integração leem `CLINICALSTUDYPB_TEST_DB_URL`, `CLINICALSTUDYPB_TEST_DB_USER` e `CLINICALSTUDYPB_TEST_DB_PASSWORD`. Os detalhes estão nos guias de [protocolo](docs/configuracao-protocolo.md), [recrutamento e elegibilidade](docs/recrutamento-e-elegibilidade.md) e [consentimento e inclusão](docs/consentimento-inclusao.md).
-
-### Web
-
-Na pasta `web/`:
-
-```bash
-npm ci
-npm test
-npm run lint
-npm run build
-npm run test:coverage
-```
-
-`npm test` executa os testes com Vitest. `npm run test:coverage` também gera o relatório de cobertura em `web/coverage/`.
-
-### Mobile
-
-Na pasta `mobile/`:
-
-```bash
-npm ci
-npm test -- --ci
-```
-
-A quantidade de testes pode mudar ao longo do desenvolvimento. O número de testes de uma suíte não representa os testes dos outros módulos.
-
-### Integração contínua
-
-A GitHub Actions executa testes e cobertura do backend, incluindo testes de persistência com PostgreSQL, além de testes, cobertura e build da web. O job do aplicativo mobile ainda não está configurado no workflow de CI.
-
----
-
-## Banco de dados (PostgreSQL com Docker Compose)
-
-O banco local utiliza PostgreSQL 17.11, configurado em `docker-compose.yml`. É necessário ter Docker com Compose v2 instalado; no Windows e macOS, mantenha o Docker Desktop aberto e com o motor em execução.
-
-### Iniciar o banco
-
-A partir da raiz do repositório, se quiser personalizar as portas ou credenciais, copie `.env.example` para `.env` somente quando ainda não existir:
-
-```bash
-cp .env.example .env
-```
-
-No PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Sem arquivo `.env`, o Compose usa os valores padrão definidos no projeto. Para iniciar o banco:
-
-```bash
-docker compose up -d --wait db
-docker compose ps
-```
-
-O estado deve aparecer como `healthy`. Os dados ficam no volume `clinicalstudypb-pgdata` e permanecem disponíveis após reiniciar o contêiner.
-
-| Item | Valor padrão |
-|---|---|
-| Endereço publicado | `localhost:5432` |
-| Banco | `clinicalstudypb` |
-| Usuário | `clinicalstudypb` |
-| Senha de desenvolvimento | `clinicalstudypb_dev` |
-
-As credenciais são fictícias e destinadas somente ao ambiente local. Se o banco já foi inicializado, alterar a senha no `.env` não altera a senha armazenada no PostgreSQL. Continue usando a senha original ou altere-a de forma controlada no banco.
-
-Para abrir um terminal SQL dentro do contêiner:
-
-```bash
-docker compose exec db psql -U clinicalstudypb -d clinicalstudypb
-```
-
-### Executar backend conectado ao banco
-
-Fora do Docker, o Spring Boot não carrega `.env` automaticamente. Configure as variáveis no terminal antes de iniciar o backend. Exemplo em Linux/macOS:
+#### Backend
+Para executar o backend fora do Docker, configure as variáveis de conexão. Em Linux/macOS, na raiz do repositório:
 
 ```bash
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/clinicalstudypb
@@ -452,69 +251,99 @@ cd backend
 ./mvnw spring-boot:run
 ```
 
-No PowerShell:
+No PowerShell, defina as mesmas variáveis com `$env:NOME_DA_VARIAVEL="valor"` e execute `.\mvnw.cmd spring-boot:run` dentro de `backend/`.
 
-```powershell
-$env:SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/clinicalstudypb"
-$env:SPRING_DATASOURCE_USERNAME="clinicalstudypb"
-$env:SPRING_DATASOURCE_PASSWORD="clinicalstudypb_dev"
-cd backend
-.\mvnw.cmd spring-boot:run
-```
 
-O Flyway aplica as migrações ao iniciar a aplicação. Para conferir o histórico:
+#### Web
+Para executar a web fora do Docker, em outro terminal:
 
 ```bash
-docker compose exec db psql -U clinicalstudypb -d clinicalstudypb -c "SELECT version, description, success FROM flyway_schema_history;"
+cd web
+npm ci
+npm run dev
 ```
 
-### Banco de testes
+Acesse <http://localhost:5173>. O backend precisa estar ativo para autenticação e para os serviços configurados para usar a API real.
 
-Os testes de integração usam um banco PostgreSQL separado, descartável e armazenado em memória. Ele não deve ser usado para dados de desenvolvimento.
 
-Na raiz do repositório:
+#### Mobile
+Para executar o protótipo mobile, abra um emulador Android ou conecte um celular com Expo Go:
+
+```bash
+cd mobile
+npm ci
+npx expo start --android
+```
+
+Em um dispositivo físico, use `npx expo start` e leia o QR code com Expo Go. O mobile ainda não consome a API. Consulte o [guia de execução com Docker](docs/execucao-docker.md) para detalhes de configuração, logs e solução de problemas.
+
+---
+
+## Testes, cobertura e evidências
+
+
+Os resultados abaixo são os registrados nas evidências da Release 1. É importante ressaltar que são execuções distintas e não devem ser somadas como se fossem uma única rodada de testes.
+
+| Módulo | Resultado registrado | Evidência |
+|---|---|---|
+| Backend | 272 testes na validação de 05/11/2026, sem falhas, erros ou testes ignorados. | [Execução dos testes](releases/release1/evidencias/backend/testes-backend.png) |
+| Backend | 97% de cobertura geral de linhas JaCoCo. Os serviços de recrutamento alcançaram 95% e os de estudos, 96%, acima do mínimo de 80% exigido para o código de negócio. | [Relatório de cobertura JaCoCo](releases/release1/evidencias/backend/jacoco/cobertura-jacoco.png) |
+| Web | 414 testes em 28 arquivos, com 99,23% de cobertura, medidos na branch web antes do PR #39. | [Execução](releases/release1/evidencias/web/26-rf05-07-testes.png) e [cobertura](releases/release1/evidencias/web/27-rf05-07-cobertura.png) |
+| Mobile | 6 testes Jest passando; a aplicação também foi executada e navegada no emulador Android. | [Testes Jest](releases/release1/evidencias/mobile/Release1_Mobile_Jest_6_Testes_Passando.png) e [relatório de execução](releases/release1/evidencias/mobile/teste-mobile-sprint2.md) |
+| API | Coleção Postman com 102 testes e zero falhas, conforme relatório da Release 1. | [Relatório Postman](releases/release1/evidencias/backend/postman/relatorio-execucao.md) |
+
+A meta de cobertura do backend é de no mínimo 80% das linhas do código de negócio. Para executar a suíte padrão e verificar a cobertura JaCoCo, use JDK 21 dentro da pasta `backend/`:
+
+```bash
+cd backend
+./mvnw -B verify
+```
+
+Os testes de persistência `*IT` usam PostgreSQL exclusivo para testes. Para executá-los, inicie o banco descartável a partir da raiz:
 
 ```bash
 docker compose --profile test up -d --wait db-test
 ```
 
-Por padrão, fica disponível em `localhost:5433`, no banco `clinicalstudypb_test`, com usuário `clinicalstudypb` e senha `clinicalstudypb_dev`. Configure as variáveis `CLINICALSTUDYPB_TEST_DB_*` conforme descrito em [Testes automatizados](#testes-automatizados). Ao parar o contêiner, os dados em memória são descartados.
-
-### Parar os serviços
-
-Para parar banco, backend e web sem remover os dados:
+Configure `CLINICALSTUDYPB_TEST_DB_URL`, `CLINICALSTUDYPB_TEST_DB_USER` e `CLINICALSTUDYPB_TEST_DB_PASSWORD` para o banco `clinicalstudypb_test`, disponível por padrão na porta `5433`. Depois, em `backend/`, execute:
 
 ```bash
-docker compose --profile web stop
+./mvnw -B clean '-Dtest=*Test,*IT' verify
 ```
 
-Para remover os contêineres e manter o volume do banco:
+Ao terminar, pare o banco de testes:
 
 ```bash
-docker compose --profile web down
+docker compose --profile test stop db-test
 ```
 
-Não adicione `-v` se quiser preservar os dados. Remover o volume apaga o banco local.
+Não use o banco de desenvolvimento para testes de persistência. As instruções detalhadas estão nos guias de [configuração do protocolo](docs/configuracao-protocolo.md) e [consentimento e inclusão](docs/consentimento-inclusao.md).
 
+O GitHub Actions está configurado para backend e web. Na entrega da release 1, tivemos um problema: os jobs não foram iniciados pelo GitHub devido a um problema de cobrança da conta. Os resultados listados acima foram verificados antes desse impedimento. 
 
-### Problemas comuns
+---
 
-- **Erro ao conectar na API do Docker (`dockerDesktopLinuxEngine`):** o Docker Desktop não está em execução. Abra-o e aguarde o motor iniciar antes de repetir o comando.
-- **Porta 5432 em uso:** já existe outro PostgreSQL na máquina. Defina `POSTGRES_PORT` no `.env` (por exemplo, `5434`). Ajuste `SPRING_DATASOURCE_URL` somente se executar Java fora do Docker; dentro dele, o banco permanece em `db:5432`.
-- **Erro de autenticação depois de trocar a senha:** o PostgreSQL só lê a senha na criação do volume. Reutilize a senha definida na criação do banco ou altere-a de forma controlada no PostgreSQL; não apague o volume para resolver isso.
-- **Backend não conecta:** confirme que `docker compose ps` mostra `healthy` e consulte os logs. Fora do Docker, confira também se as três variáveis `SPRING_DATASOURCE_*` estão configuradas no terminal/IDE.
+## Documentação da API
+
+Com o backend em execução:
+
+- [Swagger UI](http://localhost:8080/swagger-ui.html)
+- [Contrato OpenAPI em JSON](http://localhost:8080/v3/api-docs)
+- [Contrato OpenAPI em YAML](http://localhost:8080/v3/api-docs.yaml)
+
+O Swagger documenta as operações disponíveis no backend. Para instruções sobre autenticação, CSRF e permissões, consulte o [guia OpenAPI](docs/openapi.md).
 
 ---
 
 ## Releases
 
-| Release | Sprints | Entrega | Documentação |
-|---|---|---|---|
-| Release 1 | 1 e 2 | 09/11/2026 | [README da Release 1](releases/release1/README.md) |
-| Release 2 | 3 e 4 | 07/12/2026 | [README da Release 2](releases/release2/README.md) |
-| Release 3 | 5 e 6 | 11/02/2027 | [README da Release 3](releases/release3/README.md) |
+| Release | Sprints | Documentação |
+|---|---|---|
+| Release 1 | 1 e 2 | [README da Release 1](releases/release1/README.md) |
+| Release 2 | 3 e 4 | [README da Release 2](releases/release2/README.md) |
+| Release 3 | 5 e 6 | [README da Release 3](releases/release3/README.md) |
 
-Os requisitos implementados em cada entrega, com as capturas das interfaces (sucesso e erro) para evidências, estão no README da respectiva release. Os guias técnicos, a modelagem e a coleção Postman estão em [`docs/`](docs/).
+Cada `README` de release registra o objetivo, os requisitos, o estado de implementação daquela entrega, suas evidências, os resultados de testes e o processo de desenvolvimento.
 
 ---
 
