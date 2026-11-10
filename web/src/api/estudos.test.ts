@@ -2,7 +2,7 @@ import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 
 import { beforeEach, describe, expect, it } from 'vitest';
 import { api, descartarTokenCsrf, registrarTratadoresSessao } from './cliente';
 import { ErroRequisicao } from './erros';
-import { servicoEstudosApi, type Estudo } from './estudos';
+import { servicoCoordenadoresApi, servicoEstudosApi, type Estudo } from './estudos';
 
 // <-------------------SIMULAÇÃO DO BACKEND------------------->
 // Mesmo arranjo de protocolo.test.ts: cada teste define como o "backend" responde
@@ -138,6 +138,70 @@ describe('servicoEstudosApi', () => {
     });
 
     const erro = await servicoEstudosApi.alterarEstado(9, { estado: 'EXECUCAO' }).catch((e: unknown) => e);
+
+    expect(erro).toMatchObject({ status: 404, codigo: 'RECURSO_NAO_ENCONTRADO' });
+  });
+});
+
+// <-------------------COORDENADOR DO ESTUDO------------------->
+describe('servicoCoordenadoresApi', () => {
+  it('listar: GET /estudos/coordenadores, sem token CSRF', async () => {
+    const opcoes = [{ id: 3, nome: 'Carlos Coordenador' }];
+    const chamadas = simularBackend({ 'GET /estudos/coordenadores': { status: 200, data: opcoes } });
+
+    expect(await servicoCoordenadoresApi.listar()).toEqual(opcoes);
+    expect(chamadas[0].headers.get('X-CSRF-TOKEN')).toBeUndefined();
+  });
+
+  it('atribuir: PUT /estudos/{id}/coordenador com token CSRF e devolve o estudo atualizado', async () => {
+    const atualizado = { ...ESTUDO, estado: 'PLANEJAMENTO', coordenadorId: 6 };
+    const chamadas = simularBackend({
+      'GET /auth/csrf': CSRF,
+      'PUT /estudos/1/coordenador': { status: 200, data: atualizado },
+    });
+
+    expect(await servicoCoordenadoresApi.atribuir(1, 6)).toEqual(atualizado);
+    const [put] = semCsrf(chamadas);
+    expect(put.method).toBe('put');
+    expect(corpo(put)).toEqual({ coordenadorId: 6 });
+    expect(put.headers.get('X-CSRF-TOKEN')).toBe('abc');
+  });
+
+  it('atribuir: repassa COORDENADOR_INVALIDO e ESTUDO_ENCERRADO com a mensagem do backend', async () => {
+    simularBackend({
+      'GET /auth/csrf': CSRF,
+      'PUT /estudos/1/coordenador': {
+        status: 400,
+        data: { codigo: 'COORDENADOR_INVALIDO', mensagem: 'Escolha uma conta ativa com perfil de coordenador.' },
+      },
+      'PUT /estudos/2/coordenador': {
+        status: 400,
+        data: { codigo: 'ESTUDO_ENCERRADO', mensagem: 'Não é permitido alterar o coordenador de um estudo encerrado.' },
+      },
+    });
+
+    const invalido = await servicoCoordenadoresApi.atribuir(1, 4).catch((e: unknown) => e);
+    const encerrado = await servicoCoordenadoresApi.atribuir(2, 3).catch((e: unknown) => e);
+
+    expect(invalido).toBeInstanceOf(ErroRequisicao);
+    expect(invalido).toMatchObject({ status: 400, codigo: 'COORDENADOR_INVALIDO' });
+    expect(encerrado).toMatchObject({
+      status: 400,
+      codigo: 'ESTUDO_ENCERRADO',
+      message: 'Não é permitido alterar o coordenador de um estudo encerrado.',
+    });
+  });
+
+  it('atribuir: repassa o 404 de estudo de outro pesquisador', async () => {
+    simularBackend({
+      'GET /auth/csrf': CSRF,
+      'PUT /estudos/9/coordenador': {
+        status: 404,
+        data: { codigo: 'RECURSO_NAO_ENCONTRADO', mensagem: 'O recurso solicitado não foi encontrado.' },
+      },
+    });
+
+    const erro = await servicoCoordenadoresApi.atribuir(9, 3).catch((e: unknown) => e);
 
     expect(erro).toMatchObject({ status: 404, codigo: 'RECURSO_NAO_ENCONTRADO' });
   });

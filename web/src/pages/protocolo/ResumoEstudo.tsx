@@ -1,17 +1,18 @@
+import type { ReactNode } from 'react';
 import type { Estudo } from '../../api/estudos';
-import Icone from '../../components/icones';
 import { formatarPeriodo } from '../estudos/formatacao';
 
 type Props = {
   estudo: Estudo;
   /** Nome de quem está na sessão: o pesquisador só abre os próprios estudos. */
   nomeResponsavel: string;
+  /** Seção do coordenador (SecaoCoordenador), logo abaixo dos dados. */
+  coordenador: ReactNode;
 };
 
 // <-------------------RESUMO DO ESTUDO------------------->
-// Aba Resumo do protótipo: dados do cadastro e o coordenador.
-// Atribuir ou trocar o coordenador é de outra task; aqui só aparece a situação.
-export default function ResumoEstudo({ estudo, nomeResponsavel }: Props) {
+// Aba Resumo do protótipo: dados do cadastro e o coordenador
+export default function ResumoEstudo({ estudo, nomeResponsavel, coordenador }: Props) {
   const dados: [string, string][] = [
     ['Objetivo', estudo.objetivo],
     ['Período previsto', formatarPeriodo(estudo.dataInicio, estudo.dataFim)],
@@ -33,15 +34,7 @@ export default function ResumoEstudo({ estudo, nomeResponsavel }: Props) {
         </dl>
       </section>
 
-      <section className="estudos-cartao protocolo-bloco" aria-labelledby="secao-coordenador">
-        <h2 id="secao-coordenador">Coordenador</h2>
-        <p className="protocolo-coordenador">
-          <Icone nome="usuario" />
-          {estudo.coordenadorId === null
-            ? 'Nenhum coordenador atribuído. Ele é necessário para iniciar o recrutamento.'
-            : 'Coordenador atribuído ao estudo.'}
-        </p>
-      </section>
+      {coordenador}
     </div>
   );
 }

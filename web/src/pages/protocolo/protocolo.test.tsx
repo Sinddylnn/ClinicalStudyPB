@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { ErroRequisicao } from '../../api/erros';
-import type { Estudo, ServicoEstudos } from '../../api/estudos';
+import type { Estudo, ServicoCoordenadores, ServicoEstudos } from '../../api/estudos';
 import type { Protocolo, ServicoProtocolo } from '../../api/protocolo';
 import type { UsuarioSessao } from '../../api/autenticacao';
 import ProtocoloEstudo from './ProtocoloEstudo';
@@ -67,7 +67,14 @@ function criarServicos(
     removerAtividade: vi.fn(),
     ...parcial,
   };
-  return { estudos, protocolo: servicoProtocolo };
+  const coordenadores: ServicoCoordenadores = {
+    listar: vi.fn().mockResolvedValue([
+      { id: 6, nome: 'Bianca Coordenadora' },
+      { id: 3, nome: 'Carlos Coordenador' },
+    ]),
+    atribuir: vi.fn(),
+  };
+  return { estudos, protocolo: servicoProtocolo, coordenadores };
 }
 
 // A maior parte dos testes trabalha na aba Critérios
@@ -81,6 +88,7 @@ function renderizar(servicos: ReturnType<typeof criarServicos>, caminho = '/estu
             <ProtocoloEstudo
               servicoEstudos={servicos.estudos}
               servicoProtocolo={servicos.protocolo}
+              servicoCoordenadores={servicos.coordenadores}
               usuario={PESQUISADORA}
             />
           }
@@ -114,7 +122,8 @@ describe('ProtocoloEstudo', () => {
     expect(within(resumo).getByText('Objetivo.')).toBeInTheDocument();
     expect(within(resumo).getByText('45 vagas')).toBeInTheDocument();
     expect(within(resumo).getByText('Paula Pesquisadora (você)')).toBeInTheDocument();
-    expect(within(resumo).getByText('Coordenador atribuído ao estudo.')).toBeInTheDocument();
+    // O nome aparece quando a lista de coordenadores chega
+    expect(await within(resumo).findByText('Carlos Coordenador')).toBeInTheDocument();
 
     expect(within(quadro()).getByText('2 pendentes')).toBeInTheDocument();
     const [incl, excl, visita, coordenador] = within(quadro()).getAllByRole('listitem');

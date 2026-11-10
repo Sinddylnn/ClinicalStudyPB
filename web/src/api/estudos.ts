@@ -1,5 +1,5 @@
 import { api } from './cliente';
-import { servicoEstudosSimulado } from './estudosSimulado';
+import { servicoCoordenadoresSimulado, servicoEstudosSimulado } from './estudosSimulado';
 
 // <-------------------CONTRATO DE ESTUDOS------------------->
 // Espelha EstudoCadastroEntrada, EstudoResposta e AlteracaoEstadoEntrada do backend (docs/openapi.md;
@@ -13,7 +13,7 @@ export type EstudoCadastroEntrada = {
   dataInicio: string;
   dataFim: string;
   limiteParticipantes: number;
-  /** Opcional no cadastro. A tela ainda não envia: a escolha do coordenador é da Sprint 2. */
+  /** Opcional no cadastro. A tela não envia: o coordenador é escolhido depois, no Resumo do estudo. */
   coordenadorId?: number | null;
 };
 
@@ -53,6 +53,20 @@ export type ServicoEstudos = {
   alterarEstado(id: number, entrada: AlteracaoEstadoEntrada): Promise<Estudo>;
 };
 
+// <-------------------COORDENADOR DO ESTUDO------------------->
+/** Opção de GET /estudos/coordenadores: só ID e nome de contas ativas com perfil COORDENADOR. */
+export type Coordenador = {
+  id: number;
+  nome: string;
+};
+
+/** Escolha e troca do coordenador pelo pesquisador responsável (CoordenadorEntrada do backend). */
+export type ServicoCoordenadores = {
+  listar(): Promise<Coordenador[]>;
+  /** PUT /estudos/{id}/coordenador: atribui ou substitui; devolve o estudo atualizado. */
+  atribuir(estudoId: number, coordenadorId: number): Promise<Estudo>;
+};
+
 // <-------------------SERVIÇO REAL------------------->
 // O backend filtra a lista: pesquisador vê os próprios estudos, coordenador os vinculados (D02).
 // A mudança de estado é só do pesquisador responsável e exige CSRF (o cliente já envia). Responde 404
@@ -75,8 +89,27 @@ export const servicoEstudosApi: ServicoEstudos = {
   },
 };
 
+// Só o pesquisador responsável, com CSRF. Vale em qualquer estado, menos Encerrado; não remove o vínculo.
+// Erros: 404 para estudo de outro pesquisador ou conta inexistente; 400 VALIDACAO_INVALIDA,
+// COORDENADOR_INVALIDO (conta inativa ou de outro perfil) e ESTUDO_ENCERRADO
+export const servicoCoordenadoresApi: ServicoCoordenadores = {
+  async listar() {
+    const { data } = await api.get<Coordenador[]>('/estudos/coordenadores');
+    return data;
+  },
+  async atribuir(estudoId, coordenadorId) {
+    const { data } = await api.put<Estudo>(`/estudos/${estudoId}/coordenador`, { coordenadorId });
+    return data;
+  },
+};
+
 // <-------------------SERVIÇO EM USO------------------->
 // O simulado continua como padrão até a integração (Task 3131).
 // Para usar o backend, definir VITE_ESTUDOS_API=real no web/.env
-export const servicoEstudos: ServicoEstudos =
-  import.meta.env.VITE_ESTUDOS_API === 'real' ? servicoEstudosApi : servicoEstudosSimulado;
+const usarApi = import.meta.env.VITE_ESTUDOS_API === 'real';
+
+export const servicoEstudos: ServicoEstudos = usarApi ? servicoEstudosApi : servicoEstudosSimulado;
+
+export const servicoCoordenadores: ServicoCoordenadores = usarApi
+  ? servicoCoordenadoresApi
+  : servicoCoordenadoresSimulado;

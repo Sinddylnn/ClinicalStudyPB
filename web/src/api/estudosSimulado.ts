@@ -1,5 +1,13 @@
 import { ErroRequisicao } from './erros';
-import type { AlteracaoEstadoEntrada, EstadoEstudo, Estudo, EstudoCadastroEntrada, ServicoEstudos } from './estudos';
+import type {
+  AlteracaoEstadoEntrada,
+  Coordenador,
+  EstadoEstudo,
+  Estudo,
+  EstudoCadastroEntrada,
+  ServicoCoordenadores,
+  ServicoEstudos,
+} from './estudos';
 import type { Protocolo } from './protocolo';
 import { MENSAGEM_PERIODO_INVALIDO, validarEstudo } from '../pages/estudos/validacao';
 import {
@@ -64,6 +72,12 @@ const ESTUDOS_INICIAIS: Estudo[] = [
   },
 ];
 
+// Contas ativas com perfil COORDENADOR, em ordem de nome como no backend
+const COORDENADORES_INICIAIS: Coordenador[] = [
+  { id: 6, nome: 'Bianca Coordenadora' },
+  { id: ID_COORDENADOR_SIMULADO, nome: 'Carlos Coordenador' },
+];
+
 const aguardar = () => new Promise((resolver) => setTimeout(resolver, ATRASO_MS));
 
 /** O que o backend consulta no banco para decidir a mudança de estado. */
@@ -102,7 +116,7 @@ async function consultarSituacao(
   return situacao;
 }
 
-function montar(iniciais: Estudo[], consultas: ConsultasEstado) {
+function montar(iniciais: Estudo[], consultas: ConsultasEstado, coordenadores: Coordenador[] = COORDENADORES_INICIAIS) {
   let estudos = [...iniciais];
 
   const servico: ServicoEstudos = {
@@ -168,7 +182,47 @@ function montar(iniciais: Estudo[], consultas: ConsultasEstado) {
     },
   };
 
-  return { servico, reiniciar: () => (estudos = [...iniciais]) };
+  // Mesma ordem do EstudoService.atribuirCoordenador: estudo da sessão (404), conta escolhida e,
+  // por último, a regra do estudo encerrado (Estudo.atribuirCoordenador)
+  const servicoCoordenadores: ServicoCoordenadores = {
+    async listar() {
+      await aguardar();
+      return coordenadores.map((c) => ({ ...c }));
+    },
+
+    async atribuir(estudoId: number, coordenadorId: number) {
+      await aguardar();
+      if (!Number.isInteger(coordenadorId) || coordenadorId <= 0) {
+        throw new ErroRequisicao(400, {
+          codigo: 'VALIDACAO_INVALIDA',
+          mensagem: 'Confira os campos informados.',
+          errosCampos: { coordenadorId: 'O identificador do coordenador deve ser maior que zero.' },
+        });
+      }
+      const estudo = estudos.find((e) => e.id === estudoId);
+      if (!estudo) {
+        throw new ErroRequisicao(404, { codigo: 'RECURSO_NAO_ENCONTRADO', mensagem: 'Estudo não encontrado.' });
+      }
+      if (!coordenadores.some((c) => c.id === coordenadorId)) {
+        throw new ErroRequisicao(400, {
+          codigo: 'COORDENADOR_INVALIDO',
+          mensagem: 'Escolha uma conta ativa com perfil de coordenador.',
+        });
+      }
+      if (estudo.estado === 'ENCERRADO') {
+        throw new ErroRequisicao(400, {
+          codigo: 'ESTUDO_ENCERRADO',
+          mensagem: 'Não é permitido alterar o coordenador de um estudo encerrado.',
+        });
+      }
+
+      const alterado: Estudo = { ...estudo, coordenadorId };
+      estudos = estudos.map((e) => (e.id === estudoId ? alterado : e));
+      return { ...alterado };
+    },
+  };
+
+  return { servico, servicoCoordenadores, reiniciar: () => (estudos = [...iniciais]) };
 }
 
 /** Cria um serviço com dados e consultas próprios. Usado pelos testes. */
@@ -176,9 +230,21 @@ export function criarServicoEstudosSimulado(iniciais: Estudo[], consultas: Consu
   return montar(iniciais, consultas).servico;
 }
 
+/** Estudos e coordenadores sobre os mesmos dados: atribuir muda o estudo listado. Usado pelos testes. */
+export function criarServicosEstudosSimulados(
+  iniciais: Estudo[],
+  consultas: ConsultasEstado,
+  coordenadores: Coordenador[] = COORDENADORES_INICIAIS,
+) {
+  const { servico, servicoCoordenadores } = montar(iniciais, consultas, coordenadores);
+  return { estudos: servico, coordenadores: servicoCoordenadores };
+}
+
 const padrao = montar(ESTUDOS_INICIAIS, CONSULTAS_PADRAO);
 
 export const servicoEstudosSimulado: ServicoEstudos = padrao.servico;
+
+export const servicoCoordenadoresSimulado: ServicoCoordenadores = padrao.servicoCoordenadores;
 
 /** Volta aos dados iniciais. Usado pelos testes. */
 export function reiniciarEstudosSimulados() {

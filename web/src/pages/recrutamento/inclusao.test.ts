@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Candidato, ContaParticipante, DadosInclusao } from '../../api/candidatos';
 import type { Estudo } from '../../api/estudos';
-import { proximaEtapa } from './formatacao';
+import { formatarDataHora, proximaEtapa } from './formatacao';
 import { condicoesInclusao, mesmoEmail } from './inclusao';
 import { validarConsentimento } from './validacao';
 
@@ -120,6 +120,19 @@ describe('validarConsentimento', () => {
     expect(validarConsentimento({ resposta: 'ACEITOU', observacao: 'a'.repeat(501) })).toEqual({
       observacao: 'A observação deve ter no máximo 500 caracteres.',
     });
+  });
+});
+
+describe('formatarDataHora', () => {
+  it('mantém o horário sem fuso, que já é local', () => {
+    expect(formatarDataHora('2026-10-27T14:40:00')).toBe('27/10/2026 às 14:40');
+  });
+
+  it('converte o horário em UTC do backend para o horário de Recife', () => {
+    expect(formatarDataHora('2026-11-09T13:05:39.674150Z')).toBe('09/11/2026 às 10:05');
+    // Perto da meia-noite, a data também muda
+    expect(formatarDataHora('2026-11-10T02:30:00Z')).toBe('09/11/2026 às 23:30');
+    expect(formatarDataHora('2026-11-09T10:05:00-03:00')).toBe('09/11/2026 às 10:05');
   });
 });
 

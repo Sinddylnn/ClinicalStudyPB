@@ -16,8 +16,28 @@ export const NOMES_CONSENTIMENTO: Record<Consentimento, string> = {
   RECUSOU: 'Recusou',
 };
 
-/** "27/10/2026 às 14:32" a partir de "2026-10-27T14:32:00", sem passar por Date (fuso). */
+// Mesmo fuso que o backend usa para a data da inclusão (CandidatoResposta)
+const FUSO_ESTUDOS = 'America/Recife';
+
+const HORARIO_LOCAL = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: FUSO_ESTUDOS,
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
+
+/**
+ * "27/10/2026 às 14:32". Com fuso (Instant do backend, ex.: "2026-10-27T17:32:00Z"), converte para o
+ * horário de Recife; sem fuso ("2026-10-27T14:32:00"), o horário já é local e só muda o formato.
+ */
 export function formatarDataHora(iso: string): string {
+  if (/(Z|[+-]\d{2}:?\d{2})$/i.test(iso)) {
+    const partes = Object.fromEntries(HORARIO_LOCAL.formatToParts(new Date(iso)).map((p) => [p.type, p.value]));
+    return `${partes.day}/${partes.month}/${partes.year} às ${partes.hour}:${partes.minute}`;
+  }
   const [data, hora = ''] = iso.split('T');
   return `${formatarData(data)} às ${hora.slice(0, 5)}`;
 }

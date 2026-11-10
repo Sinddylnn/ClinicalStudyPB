@@ -27,6 +27,7 @@ vi.mock('../api/estudos', () => ({
       },
     ]),
   },
+  servicoCoordenadores: { listar: vi.fn().mockResolvedValue([]), atribuir: vi.fn() },
 }));
 vi.mock('../api/protocolo', () => ({
   servicoProtocolo: {

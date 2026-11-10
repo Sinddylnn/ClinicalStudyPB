@@ -231,7 +231,7 @@ export default function InclusaoCandidato({
                     ) : (
                       <span id="ajuda-conta" className="campo-ajuda">
                         {dados.contas.length === 0
-                          ? 'Nenhuma conta disponível: o administrador precisa cadastrar a conta antes.'
+                          ? 'Nenhuma conta de participante com o e-mail do candidato: o administrador precisa cadastrar a conta antes.'
                           : 'Só aparecem contas ativas com perfil Participante.'}
                       </span>
                     )}

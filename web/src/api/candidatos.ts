@@ -3,8 +3,8 @@ import { servicoCandidatosSimulado } from './candidatosSimulado';
 import type { TipoCriterio } from './protocolo';
 
 // <-------------------CONTRATO DE CANDIDATOS------------------->
-// O backend da Sprint 2 ainda não publicou o contrato (docs/openapi.md);
-// estes tipos seguem o protótipo e as regras do RF08 a RF11 e devem ser conferidos na integração.
+// Segue o backend da main (CandidatoController, AvaliacaoElegibilidadeController e
+// ConsentimentoInclusaoController), conferido com a API real no Docker em 09/11/2026.
 
 /** Situação da avaliação de elegibilidade (RF09). */
 export type Elegibilidade = 'NAO_AVALIADO' | 'INCOMPLETA' | 'ELEGIVEL' | 'INELEGIVEL';
@@ -80,7 +80,10 @@ export type ConsentimentoEntrada = {
 };
 
 // <-------------------INCLUSÃO DO PARTICIPANTE (RF11)------------------->
-/** Conta ativa com perfil participante que o coordenador pode vincular ao candidato. */
+/**
+ * Conta ativa com perfil participante que o coordenador pode vincular ao candidato.
+ * O backend só devolve a conta com o mesmo e-mail do candidato (lista vazia quando não há).
+ */
 export type ContaParticipante = {
   id: number;
   nome: string;
@@ -179,7 +182,7 @@ export const servicoCandidatosApi: ServicoCandidatos = {
 };
 
 // <-------------------SERVIÇO EM USO------------------->
-// O simulado é o padrão até o backend do recrutamento ficar pronto.
+// O simulado continua o padrão (dados fictícios, sem depender do backend).
 // Para usar o backend, definir VITE_CANDIDATOS_API=real no web/.env
 export const servicoCandidatos: ServicoCandidatos =
   import.meta.env.VITE_CANDIDATOS_API === 'real' ? servicoCandidatosApi : servicoCandidatosSimulado;
