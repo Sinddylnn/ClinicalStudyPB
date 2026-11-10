@@ -19,8 +19,8 @@ Entregar a aplicação web funcional permitindo cadastrar um estudo, avaliar can
 | RF05 | Definir critérios de inclusão e exclusão | 2 | Parcial | Telas e backend prontos; a integração com as rotas finais de critérios (edição, remoção e declaração de ausência de exclusões) está no PR #33, aguardando merge. |
 | RF06 | Definir visitas previstas e atividades | 2 | Parcial | Telas e backend prontos; a integração com as rotas finais de visitas e atividades está no PR #33, aguardando merge. |
 | RF07 | Gerenciar estados do estudo | 2 | Parcial | Transições e regras integradas ao backend na main; iniciar o recrutamento pela tela depende do protocolo integrado no PR #33. |
-| RF08 | Cadastrar candidatos | 2 | <...> | <...> |
-| RF09 | Registrar avaliação de elegibilidade | 2 | <...> | <...> |
+| RF08 | Cadastrar candidatos | 2 | Concluído | Cadastro e listagem de candidatos vinculados aos estudos, com validação dos dados, prevenção de e-mails duplicados e controle de acesso por coordenador responsável. |
+| RF09 | Registrar avaliação de elegibilidade | 2 | Concluído | Avaliação dos candidatos com base nos critérios de inclusão e exclusão do estudo, registro das respostas e determinação da situação de elegibilidade. |
 | RF10 | Registrar consentimento simulado | 2 | <...> | <...> |
 | RF11 | Incluir candidatos elegíveis, respeitando o limite de vagas | 2 | <...> | <...> |
  
@@ -87,9 +87,14 @@ perfil compatível, vínculo com o estudo e token CSRF. As regras de negócio s�
 
 Documentação: [configuração do protocolo](../../docs/configuracao-protocolo.md) • [estados do estudo](../../docs/estados-estudo.md).
 
+
 #### Recrutamento (RF08 e RF09) • Luiz
 
-<Luiz, descrever processos de candadidados e elegibilidade>
+- **RF08 - Cadastro de candidatos:** permite cadastrar, consultar e listar candidatos vinculados a um estudo. O cadastro valida nome e e-mail, impede e-mails duplicados no mesmo estudo e restringe as alterações ao coordenador responsável durante o recrutamento.
+- **RF09 - Avaliação de elegibilidade:** permite avaliar candidatos com base nos critérios de inclusão e exclusão definidos no protocolo do estudo. As respostas são registradas e utilizadas para determinar a situação de elegibilidade do candidato.
+- **Validações:** o backend verifica permissões, vínculo com o estudo, condições do recrutamento e consistência das respostas, impedindo operações inválidas.
+
+As funcionalidades foram verificadas por testes automatizados, incluindo cenários de sucesso, validações, controle de acesso e consultas sem protocolo.
 
 Documentação: [candidatos e avaliação de elegibilidade](../../docs/recrutamento-e-elegibilidade.md).
 
@@ -204,7 +209,7 @@ Essas evoluções não alteram a arquitetura geral prevista, mas detalham e cons
 ## 6. Resultados dos testes e cobertura
 
 - **Testes de componentes (web)**: 28 arquivos e 414 testes passando (Vitest e Testing Library), com 99,23% das linhas da web cobertas. [Execução](evidencias/web/26-rf05-07-testes.png) • [Cobertura](evidencias/web/27-rf05-07-cobertura.png)
-- **Backend:** 268 testes executados, sem falhas, erros ou testes ignorados. A suíte reúne testes de regras de negócio, API, persistência, migrações e concorrência. [Execução](evidencias/backend/testes-backend.png)
+- **Backend:** na validação de 05/11/2026, foram executados 272 testes, sem falhas, erros ou testes ignorados. A suíte contempla testes de regras de negócio, API, persistência, migrações e concorrência, incluindo os novos cenários de critérios, visitas, candidatos e elegibilidade. [Execução](evidencias/backend/testes-backend.png)
 - **Testes de integração do backend:** executados com PostgreSQL exclusivo de testes, cobrindo persistência, migrações, transações e cenários concorrentes de recrutamento e inclusão.
 - **Cobertura do backend:** 97% de cobertura geral de linhas no JaCoCo. Os serviços de recrutamento alcançaram 95% e os serviços de estudos, 96%, ambos acima do mínimo exigido de 80%. [Relatório JaCoCo](evidencias/backend/jacoco/cobertura-jacoco.png)
 - **Testes de componentes e serviços da web:** 28 arquivos e 414 testes passando, com 99,23% das linhas da web cobertas, usando Vitest e Testing Library. [Execução](evidencias/web/26-rf05-07-testes.png) • [Cobertura](evidencias/web/27-rf05-07-cobertura.png)
@@ -226,11 +231,16 @@ a única pendência foi a pipeline CI que, devido à prioridade das outras tasks
 - [Review](sprints/sprint01/review.md)
 - [Burndown](sprints/sprint01/burndown.png)
  
+
 ### Sprint 2 (27/10 a 09/11)
-\<Luiz: Resumo de uma ou duas linhas do que foi planejado e entregue.\>
+
+A Sprint 2 teve como objetivo concluir os requisitos RF05 a RF11, envolvendo configuração dos estudos, recrutamento, avaliação de elegibilidade, consentimento e inclusão de participantes. Também foram realizadas atividades de integração entre web e backend, testes automatizados, manutenção do mobile e preparação da documentação da Release 1.
+
+A Sprint foi encerrada em 09/11/2026, com todas as atividades planejadas concluídas e sem pendências para a próxima Sprint. O burndown do Azure DevOps registrou 0 horas de trabalho restante.
+
 - [Planning](sprints/sprint02/planning.md)
 - [Review](sprints/sprint02/review.md)
-- Burndown: <linkar quando exportado do Azure DevOps>
+- [Burndown](sprints/sprint02/burndown-chart-sprint2.png)
  
 ### Organização da equipe
 | Integrante | Papel | Contribuições na release |
