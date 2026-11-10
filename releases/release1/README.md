@@ -122,86 +122,8 @@ regras de negócio, persistência, migrações e concorrência. Os cenários fun
 | [Postman Runner (parte 1)](evidencias/backend/postman/runner-resultado-1.png) | Execução automatizada dos cenários da coleção. |
 | [Postman Runner (parte 2)](evidencias/backend/postman/runner-resultado-2.png) | Continuação dos cenários e resultados da coleção. |
 
-## 4. Diagramas
- 
-Os diagramas representam o desenho do sistema completo; os fluxos de acompanhamento e do participante serão implementados na Release 2. Clique em uma imagem para ampliá-la.
 
-### Casos de uso
-
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="diagramas/02_casos_acesso_estudos.png" alt="Casos de uso: acesso e estudos" width="100%"><br>
-      <sub>Acesso e estudos</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="diagramas/03_casos_recrutamento.png" alt="Casos de uso: recrutamento" width="100%"><br>
-      <sub>Recrutamento</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="diagramas/04_casos_acompanhamento.png" alt="Casos de uso: acompanhamento" width="100%"><br>
-      <sub>Acompanhamento</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="diagramas/05_casos_participante.png" alt="Casos de uso: participante" width="100%"><br>
-      <sub>Participante</sub>
-    </td>
-  </tr>
-</table>
-
-<br>
-
-### Modelos de domínio
-
-<p align="center">
-  <img src="diagramas/09_modelo_dominio_estudos.png" alt="Modelo de domínio: estudos e protocolos" width="60%">
-</p>
-
-<p align="center">
-  <img src="diagramas/11_modelo_dominio_recrutamento.png" alt="Modelo de domínio: recrutamento e inclusão" width="60%"><br>
-</p>
-
-<br>
-
-### Sequência do cadastro
-
-<p align="center">
-  <img src="diagramas/08_sequencia_cadastro.png" alt="Sequência do cadastro" width="70%">
-</p>
-
-<br>
-
-### Arquitetura
-
-<p align="center">
-  <img src="diagramas/01_visao_geral.png" alt="Visão geral do sistema" width="60%">
-</p>
-
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="diagramas/06_componentes_uml.png" alt="Componentes" width="100%"><br>
-      <sub>Componentes</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="diagramas/07_camadas_backend.png" alt="Camadas do backend" width="100%"><br>
-      <sub>Camadas do backend</sub>
-    </td>
-  </tr>
-</table>
-
-<br>
-
-### Estados do estudo
-
-<p align="center">
-  <img src="diagramas/10_estados_estudos.png" alt="Estados do estudo" width="80%">
-</p>
-
-
-## 5. Alterações na arquitetura e no stack
+## 4. Alterações na arquitetura e no stack
 
 Não houve alteração das tecnologias definidas no Kickoff, o backend permanece em Java 21 com Spring Boot e Maven, a web em React com TypeScript e Vite, o mobile em React Native com Expo e o banco em PostgreSQL com Flyway.
 
@@ -224,7 +146,7 @@ Na web, a evolução também ficou dentro do stack previsto:
 
 Essas evoluções não alteram a arquitetura geral prevista, mas detalham e consolidam sua implementação para os fluxos da Release 1.
 
-## 6. Resultados dos testes e cobertura
+## 5. Resultados dos testes e cobertura
 
 - **Testes de componentes (web)**: 28 arquivos e 414 testes passando na branch `web`, antes do PR #39 (Vitest e Testing Library), com 99,23% das linhas da web cobertas. [Execução](evidencias/web/26-rf05-07-testes.png) • [Cobertura](evidencias/web/27-rf05-07-cobertura.png)
 - **Backend:** na validação de 05/11/2026, foram executados 272 testes, sem falhas, erros ou testes ignorados. A suíte contempla testes de regras de negócio, API, persistência, migrações e concorrência, incluindo os novos cenários de critérios, visitas, candidatos e elegibilidade. [Execução](evidencias/backend/testes-backend.png)
@@ -234,11 +156,11 @@ Essas evoluções não alteram a arquitetura geral prevista, mas detalham e cons
 
 _Testes, documentação e revisão de código são responsabilidades compartilhadas por toda a equipe._
 
-## 7. Problemas conhecidos e pendências
+## 6. Problemas conhecidos e pendências
  
 - GitHub Actions: o pipeline de CI está configurado (`.github/workflows/ci.yml`), mas desde 06/11/2026 os jobs não são iniciados pelo GitHub ("account is locked due to a billing issue"), embora a conta dona do repositório não tenha pendências de cobrança. Foi aberto um chamado no suporte do GitHub. Enquanto isso, os testes e a cobertura foram executados localmente e estão registrados nas evidências.
 
-## 8. Processo de desenvolvimento
+## 7. Processo de desenvolvimento
  
 ### Sprint 1 (13/10 a 26/10)
 O nosso objetivo foi a definição de arquitetura, modelagem do sistema por meio de diagramas, configuração do ambiente web, backend e mobile; além de
