@@ -46,7 +46,13 @@ Aplicação React + TypeScript (Vite) integrada à API REST por um cliente HTTP 
 | Usuários (RF01) | [Lista](evidencias/web/03-usuarios-lista.png) • [Cadastro](evidencias/web/04-usuario-cadastrado.png) • [Edição](evidencias/web/05-usuario-edicao.png) • [Desativar](evidencias/web/06-usuario-desativar.png) • [Reativar](evidencias/web/07-usuario-reativar.png) | [Campos vazios](evidencias/web/11-cadastro-campos-vazios.png) • [E-mail duplicado](evidencias/web/12-email-duplicado.png) • [Último administrador](evidencias/web/13-ultimo-administrador.png) |
 
 #### Cadastro de estudos (RF04) • Sprint 1 • Sinddy
-<Sinddy: descrever o fluxo e linkar as capturas.>
+- **Listagem de estudos (RF04):** o pesquisador vê "Meus estudos" (`/estudos`), com busca por título e filtro por estado. O coordenador vê apenas os estudos vinculados a ele.
+- **Cadastro de estudos (RF04):** o pesquisador cadastra o estudo em `/estudos/novo`, com título, objetivo, período previsto e limite de participantes. A web valida os campos antes do envio e recusa data final anterior à inicial.
+- **Atribuição de coordenador (PR #39):** na aba Resumo do estudo, o pesquisador atribui ou troca o coordenador. Só aparecem contas ativas com perfil Coordenador, e a troca fica bloqueada em estudos encerrados.
+
+| RF | Sucesso | Erro ou validação |
+|---|---|---|
+| RF04 | [Lista de estudos](evidencias/web/44-estudos-lista.png) • [Estudo cadastrado](evidencias/web/45-estudo-cadastrado.png) | [Datas inválidas](evidencias/web/46-estudo-datas-invalidas.png) |
 
 #### Configuração do estudo (RF05 a RF07) • Sprint 2 • Suelle
 O pesquisador responsável abre o estudo pelo título em "Meus estudos" (`/estudos/:id`), em uma tela com as abas **Resumo**, **Critérios** e **Visitas**.
@@ -62,7 +68,21 @@ O pesquisador responsável abre o estudo pelo título em "Meus estudos" (`/estud
 | RF07 | [Confirmação](evidencias/web/24-rf07-estado-confirmacao.png) • [Recrutamento iniciado](evidencias/web/25-rf07-estado-sucesso.png) | [Recrutamento bloqueado por pendências](evidencias/web/23-rf07-estado-erro.png) |
 
 #### Recrutamento (RF08 a RF11) • Sprint 2 • Sinddy
-<Sinddy: descrever o fluxo e linkar as capturas (a partir de 28-...).>
+O coordenador vinculado ao estudo abre o recrutamento pela sua lista de estudos (`/estudos/:id/recrutamento`). A tela lista os candidatos com elegibilidade, consentimento, situação e próxima etapa.
+
+- **Cadastro de candidatos (RF08):** cadastro com nome e e-mail, apenas em estudos em Recrutamento. O e-mail não pode se repetir no mesmo estudo.
+- **Avaliação de elegibilidade (RF09):** o coordenador responde cada critério de inclusão e exclusão. A avaliação sem respostas não é salva, e um critério de exclusão presente torna o candidato Inelegível.
+- **Consentimento (RF10):** registro simulado do aceite ou da recusa. O consentimento exige resposta e só fica disponível depois da avaliação de elegibilidade.
+- **Inclusão como participante (RF11):** a inclusão só é liberada com as seis condições atendidas: estudo em recrutamento, avaliação elegível, consentimento aceito, conta com o mesmo e-mail do candidato, sem inclusão anterior e vaga disponível.
+
+| RF | Sucesso | Erro ou validação |
+|---|---|---|
+| RF08 | [Lista de candidatos](evidencias/web/28-recrutamento-lista-candidatos.png) • [Candidato cadastrado](evidencias/web/29-candidato-cadastrado.png) | [Campos inválidos](evidencias/web/34-candidato-campos-invalidos.png) • [E-mail repetido](evidencias/web/35-candidato-email-repetido.png) • [Estudo fora de recrutamento](evidencias/web/36-candidato-estudo-fora-recrutamento.png) |
+| RF09 | [Candidato elegível](evidencias/web/30-elegibilidade-elegivel.png) | [Sem resposta](evidencias/web/37-elegibilidade-sem-resposta.png) • [Candidato inelegível](evidencias/web/38-elegibilidade-inelegivel.png) |
+| RF10 | [Consentimento registrado](evidencias/web/31-consentimento-registrado.png) | [Sem resposta](evidencias/web/39-consentimento-sem-resposta.png) • [Sem avaliação](evidencias/web/40-consentimento-sem-avaliacao.png) |
+| RF11 | [Condições atendidas](evidencias/web/32-inclusao-condicoes-atendidas.png) • [Participante incluído](evidencias/web/33-participante-incluido.png) | [Consentimento recusado](evidencias/web/41-inclusao-consentimento-recusado.png) • [Candidato inelegível](evidencias/web/42-inclusao-candidato-inelegivel.png) • [E-mail diferente](evidencias/web/43-inclusao-email-diferente.png) |
+
+[Roteiro dos testes de recrutamento](evidencias/web/recrutamento-rf08-rf11.md)
 
 #### Testes da web
 Testes de componentes e de serviços com Vitest e Testing Library: 28 arquivos e 414 testes passando na branch `web`, antes do PR #39, com 99,23% das linhas cobertas. [Execução dos testes](evidencias/web/26-rf05-07-testes.png) • [Relatório de cobertura](evidencias/web/27-rf05-07-cobertura.png)
@@ -192,7 +212,7 @@ A Sprint foi encerrada em 09/11/2026, com todas as atividades planejadas conclu�
 | Georis Samuel | Tech Leader / Gerente | Modelagem da arquitetura inicial do projeto, coordenação técnica e revisão de PRs; modelagem dos RF05–RF07; implementação das transições de estado do estudo; configuração completa do protocolo; implementação e documentação do consentimento e inclusão de participantes (RF10 e RF11); testes de integração, documentação OpenAPI/Postman e revisão da CI do backend. |
 | Luiz Inácio| Desenvolvedor Backend | Implementação de critérios, visitas e atividades previstas (RF05 e RF06); cadastro de candidatos (RF08); avaliação de elegibilidade (RF09); ampliação dos testes de API, persistência e regras de negócio do backend; documentação e planejamento da Sprint 2. |
 | Suelle Maciel | Desenvolvedora Web (Web 1) | Base React, rotas e cliente HTTP; login e logout integrados; gestão de usuários; testes e documentação web da Sprint 1; telas de critérios, visitas e estado do estudo; testes e evidências das telas de configuração; revisão dos PRs de web e Docker. |
-| <nome> | Desenvolvedor Web | <...> |
+| Sinddy Lorranny Nobrega Nascimento | Desenvolvedora Web (Web 2) | Diagramas e modelo de domínio da Sprint 1; listagem e cadastro de estudos (RF04), com serviço simulado e integração com a API; telas de Início, acesso negado e página não encontrada; atribuição e troca do coordenador na aba Resumo; telas de recrutamento (candidatos, elegibilidade, consentimento e inclusão); conferência do recrutamento com a API real; testes dos serviços e das telas; evidências de estudos e de recrutamento. |
 | Horlan Lacerda | Desenvolvedor Mobile | <...> |
 | Gabriela Andrade | QA / DevOps | Pipeline de integração contínua com GitHub Actions (jobs de backend e web, PostgreSQL de testes, relatórios de testes e cobertura como artefatos, regra de 80% de linhas nas classes de serviço); revisão de PRs do mobile; verificação independente da suíte e da cobertura do backend.  |
  
