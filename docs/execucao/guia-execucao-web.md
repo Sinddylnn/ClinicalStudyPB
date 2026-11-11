@@ -66,7 +66,7 @@ docker compose up -d db
 docker compose ps
 ```
 
-Espere o estado `healthy`. Sem o arquivo `.env` na raiz, a senha do banco é `clinicalstudypb_dev`. Os detalhes estão na seção "Banco de dados" do [README](../README.md#banco-de-dados-postgresql-com-docker-compose).
+Espere o estado `healthy`. Sem o arquivo `.env` na raiz, a senha do banco é `clinicalstudypb_dev`. Os detalhes estão na seção "Banco de dados" do [README](../../README.md#banco-de-dados-postgresql-com-docker-compose).
 
 Se `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD` já estiverem definidas no terminal, o Compose usa esses valores na criação do banco.
 
@@ -107,7 +107,7 @@ cd backend
 
 As variáveis valem só para o terminal aberto. Ao abrir um terminal novo, defina-as de novo.
 
-O backend está pronto quando aparece `Started ClinicalStudyPbApplication`. Deixe esse terminal aberto. Os detalhes estão na seção "Backend" do [README](../README.md#backend) e no [guia de autenticação](autenticacao.md).
+O backend está pronto quando aparece `Started ClinicalStudyPbApplication`. Deixe esse terminal aberto. Os detalhes estão na seção "Backend" do [README](../../README.md#backend) e no [guia de autenticação](../api/autenticacao.md).
 
 ## Credenciais fictícias
 
@@ -197,7 +197,7 @@ No PowerShell, use `curl.exe` no lugar de `curl`.
 
 ## Evidências da Release 1
 
-As capturas foram feitas com o banco PostgreSQL e o backend locais, usando contas e dados fictícios. Os arquivos estão em [`releases/release1/evidencias/web/`](../releases/release1/evidencias/web/), e o resumo da entrega fica em [`releases/release1/README.md`](../releases/release1/README.md).
+As capturas foram feitas com o banco PostgreSQL e o backend locais, usando contas e dados fictícios. Os arquivos estão em [`releases/release1/evidencias/web/`](../../releases/release1/evidencias/web/), e o resumo da entrega fica em [`releases/release1/README.md`](../../releases/release1/README.md).
 
 ## Sprint 1: acesso e usuários (RF01 a RF03)
 
@@ -207,63 +207,63 @@ As capturas da Sprint 1 foram feitas antes da migração de dados fictícios, co
 
 #### 1. Login do administrador
 
-![Início do administrador após o login](../releases/release1/evidencias/web/01-login-sucesso-admin.png)
+![Início do administrador após o login](../../releases/release1/evidencias/web/01-login-sucesso-admin.png)
 
 **Mostra:** a tela inicial da Ana Administradora logo após o login, com "Olá, Ana", o menu "Usuários" e os atalhos "Cadastrar usuário" e "Gerenciar usuários".
 **Comprova:** RF02 (login com e-mail e senha) e RF03 (o administrador vê o menu de usuários).
 
 #### 2. Início do pesquisador
 
-![Início da pesquisadora](../releases/release1/evidencias/web/02-inicio-pesquisador.png)
+![Início da pesquisadora](../../releases/release1/evidencias/web/02-inicio-pesquisador.png)
 
 **Mostra:** a tela inicial da Paula Pesquisadora, com o menu "Meus estudos" e sem o menu "Usuários".
 **Comprova:** RF03. O menu e os atalhos mudam conforme o perfil.
 
 #### 3. Lista de usuários
 
-![Lista de usuários](../releases/release1/evidencias/web/03-usuarios-lista.png)
+![Lista de usuários](../../releases/release1/evidencias/web/03-usuarios-lista.png)
 
 **Mostra:** a lista com nome, e-mail, perfil e situação; a busca; as abas Todos, Ativos e Inativos com contagem; e o filtro por perfil.
 **Comprova:** RF01 (listagem). Contas ativas e inativas aparecem juntas, porque não há exclusão física (D01).
 
 #### 4. Usuário cadastrado
 
-![Usuário cadastrado com sucesso](../releases/release1/evidencias/web/04-usuario-cadastrado.png)
+![Usuário cadastrado com sucesso](../../releases/release1/evidencias/web/04-usuario-cadastrado.png)
 
 **Mostra:** a notificação "Usuário cadastrado com sucesso." e a nova conta destacada na lista, já como "Ativo".
 **Comprova:** RF01. O cadastro gera uma conta que começa ativa.
 
 #### 5. Edição de usuário
 
-![Edição de usuário](../releases/release1/evidencias/web/05-usuario-edicao.png)
+![Edição de usuário](../../releases/release1/evidencias/web/05-usuario-edicao.png)
 
 **Mostra:** o formulário com nome, e-mail e perfil. A senha não aparece, e a situação indica "Para desativar, use a ação na lista."
 **Comprova:** RF01 (edição). A senha não é alterada nesta tela.
 
 #### 6. Confirmação para desativar
 
-![Confirmação para desativar uma conta](../releases/release1/evidencias/web/06-usuario-desativar.png)
+![Confirmação para desativar uma conta](../../releases/release1/evidencias/web/06-usuario-desativar.png)
 
 **Mostra:** o diálogo "Desativar …?", que explica que novos logins são bloqueados, as sessões abertas são encerradas, os registros são preservados e a conta pode ser reativada.
 **Comprova:** D01 e a regra 5.3. Desativar não exclui a conta e bloqueia o acesso.
 
 #### 7. Confirmação para reativar
 
-![Confirmação para reativar uma conta](../releases/release1/evidencias/web/07-usuario-reativar.png)
+![Confirmação para reativar uma conta](../../releases/release1/evidencias/web/07-usuario-reativar.png)
 
 **Mostra:** o diálogo "Reativar …?" de uma conta inativa: a pessoa entra com o mesmo e-mail e senha, o perfil e os vínculos continuam iguais e nenhuma conta nova é criada.
 **Comprova:** D01 e a regra 5.3. Reativar não duplica o e-mail.
 
 #### 8. Menu da conta
 
-![Menu da conta com a opção Sair](../releases/release1/evidencias/web/08-logout-menu-conta.png)
+![Menu da conta com a opção Sair](../../releases/release1/evidencias/web/08-logout-menu-conta.png)
 
 **Mostra:** o menu da conta aberto na barra, com nome, e-mail e a opção "Sair".
 **Comprova:** RF02. O logout está disponível em todas as telas internas.
 
 #### 9. Logout com sessão encerrada no servidor
 
-![Login após o logout, com as requisições no DevTools](../releases/release1/evidencias/web/09-logout-sessao-encerrada.png)
+![Login após o logout, com as requisições no DevTools](../../releases/release1/evidencias/web/09-logout-sessao-encerrada.png)
 
 **Mostra:** a tela de login depois do Sair. No DevTools aparecem `GET /auth/csrf`, `POST /auth/login` (200), as consultas `GET /auth/sessao` (200), um novo `GET /auth/csrf` e **`POST /auth/logout` com 204**.
 **Comprova:** RF02. O logout encerra a sessão no servidor, e não só na tela. Também mostra a proteção CSRF: o token é buscado antes do login e do logout, que são alterações.
@@ -272,49 +272,49 @@ As capturas da Sprint 1 foram feitas antes da migração de dados fictícios, co
 
 #### 10. Credenciais inválidas
 
-![Login com credenciais inválidas](../releases/release1/evidencias/web/10-credenciais-invalidas.png)
+![Login com credenciais inválidas](../../releases/release1/evidencias/web/10-credenciais-invalidas.png)
 
 **Mostra:** a mensagem "E-mail ou senha inválidos. Confira os dados e tente novamente." O campo de senha é limpo.
 **Comprova:** RF02. A mensagem é genérica e não revela se o e-mail existe.
 
 #### 11. Cadastro com campos vazios
 
-![Cadastro com campos vazios](../releases/release1/evidencias/web/11-cadastro-campos-vazios.png)
+![Cadastro com campos vazios](../../releases/release1/evidencias/web/11-cadastro-campos-vazios.png)
 
 **Mostra:** a faixa "Não foi possível salvar. Confira os campos destacados." e o erro de cada campo: nome, e-mail, senha com pelo menos 8 caracteres e perfil.
 **Comprova:** RF01. Nome, e-mail, senha inicial e perfil são obrigatórios: a web valida antes de enviar, e o backend valida de novo. A exceção é o mínimo de 8 caracteres da senha, que por enquanto só a web confere (pendência registrada para o backend).
 
 #### 12. E-mail já cadastrado
 
-![Cadastro com e-mail duplicado](../releases/release1/evidencias/web/12-email-duplicado.png)
+![Cadastro com e-mail duplicado](../../releases/release1/evidencias/web/12-email-duplicado.png)
 
 **Mostra:** a mensagem "Já existe um usuário cadastrado com este e-mail." no campo e-mail. O e-mail usado é o de uma conta **inativa**.
 **Comprova:** RF01. O e-mail é único, inclusive entre contas desativadas (resposta 409 `EMAIL_JA_CADASTRADO`).
 
 #### 13. Último administrador ativo
 
-![Último administrador ativo protegido](../releases/release1/evidencias/web/13-ultimo-administrador.png)
+![Último administrador ativo protegido](../../releases/release1/evidencias/web/13-ultimo-administrador.png)
 
 **Mostra:** o botão de desativar da única administradora ativa está desabilitado, com a dica "O último administrador ativo não pode ser desativado." A mesma nota aparece no rodapé da lista.
 **Comprova:** a regra 5.3. O sistema nunca fica sem um administrador ativo. O backend também recusa a operação (`ULTIMO_ADMINISTRADOR`).
 
 #### 14. Acesso negado por perfil
 
-![Acesso negado](../releases/release1/evidencias/web/14-acesso-negado.png)
+![Acesso negado](../../releases/release1/evidencias/web/14-acesso-negado.png)
 
 **Mostra:** a tela "Acesso negado" (Erro 403) para a administradora, ao abrir uma página de outro perfil, com o botão "Voltar ao início".
 **Comprova:** RF03. Cada rota exige um perfil. O backend também responde 403 (`ACESSO_NEGADO`) quando o perfil não tem permissão.
 
 #### 15. Sessão expirada
 
-![Sessão expirada](../releases/release1/evidencias/web/15-sessao-expirada.png)
+![Sessão expirada](../../releases/release1/evidencias/web/15-sessao-expirada.png)
 
 **Mostra:** a tela de login com o aviso "Sua sessão expirou. Entre novamente."
 **Comprova:** RF02. Quando o backend responde 401 com alguém logado (sessão expirada, cookie apagado ou conta desativada), a web encerra a sessão na tela, avisa e, depois do novo login, volta à página de origem.
 
 #### 16. Página não encontrada
 
-![Página não encontrada](../releases/release1/evidencias/web/16-pagina-nao-encontrada.png)
+![Página não encontrada](../../releases/release1/evidencias/web/16-pagina-nao-encontrada.png)
 
 **Mostra:** a tela "Página não encontrada" (Erro 404) com a barra da pesquisadora e o botão "Voltar ao início".
 **Comprova:** endereços inexistentes têm uma resposta clara, sem perder a sessão.
@@ -323,14 +323,14 @@ As capturas da Sprint 1 foram feitas antes da migração de dados fictícios, co
 
 #### 17. Testes
 
-![Resultado do npm test](../releases/release1/evidencias/web/17-testes.png)
+![Resultado do npm test](../../releases/release1/evidencias/web/17-testes.png)
 
 **Mostra:** o fim da execução do `npm test`: **12 arquivos e 146 testes passando**. Aparecem os grupos de sessão, revalidação, sair, estudos e usuários.
 **Comprova:** os componentes de login e de usuários têm testes automatizados (Vitest e Testing Library).
 
 #### 18. Cobertura
 
-![Relatório de cobertura com Istanbul](../releases/release1/evidencias/web/18-cobertura.png)
+![Relatório de cobertura com Istanbul](../../releases/release1/evidencias/web/18-cobertura.png)
 
 **Mostra:** a tabela do `npm run test:coverage`, gerada pelo Istanbul, ao fim da Sprint 1.
 **Comprova:** a cobertura da web, prevista no kickoff:
@@ -356,28 +356,28 @@ As capturas usam o pesquisador `pesquisador@clinicalstudypb.test`, com `VITE_EST
 
 #### 19. Critérios cadastrados
 
-![Critérios de inclusão e exclusão cadastrados](../releases/release1/evidencias/web/19-rf05-criterios-sucesso.png)
+![Critérios de inclusão e exclusão cadastrados](../../releases/release1/evidencias/web/19-rf05-criterios-sucesso.png)
 
 **Mostra:** a aba Critérios com três critérios de inclusão e dois de exclusão, cada um com as ações de editar e remover. A opção "Este estudo não possui critérios de exclusão" fica desativada, com a explicação "Para marcar esta opção, remova os critérios de exclusão cadastrados."
 **Comprova:** RF05. Os critérios pertencem ao estudo, e a declaração de ausência de exclusões não convive com exclusões cadastradas.
 
 #### 21. Visitas previstas e atividades
 
-![Visitas previstas com atividades](../releases/release1/evidencias/web/21-rf06-visitas-sucesso.png)
+![Visitas previstas com atividades](../../releases/release1/evidencias/web/21-rf06-visitas-sucesso.png)
 
 **Mostra:** a aba Visitas com três visitas em ordem ("1 · Visita Inicial", "2 · Acompanhamento da semana 6" e "3 · Visita final"), cada uma com as suas atividades e as ações de editar, remover e adicionar atividade.
 **Comprova:** RF06. Cada visita prevista tem ordem própria e atividades vinculadas.
 
 #### 24. Confirmação para iniciar o recrutamento
 
-![Confirmação para iniciar o recrutamento](../releases/release1/evidencias/web/24-rf07-estado-confirmacao.png)
+![Confirmação para iniciar o recrutamento](../../releases/release1/evidencias/web/24-rf07-estado-confirmacao.png)
 
 **Mostra:** o diálogo "Iniciar o recrutamento?", que explica que o protocolo fica somente para consulta, que não é possível voltar ao planejamento e que o coordenador passa a cadastrar, avaliar e incluir candidatos.
 **Comprova:** RF07. A mudança de estado é confirmada e explica a consequência antes de acontecer.
 
 #### 25. Recrutamento iniciado
 
-![Estudo em Recrutamento](../releases/release1/evidencias/web/25-rf07-estado-sucesso.png)
+![Estudo em Recrutamento](../../releases/release1/evidencias/web/25-rf07-estado-sucesso.png)
 
 **Mostra:** a notificação "Recrutamento iniciado.", a etiqueta "Recrutamento" e as ações seguintes ("Iniciar execução" e "Encerrar estudo"). Na aba Visitas, o aviso informa que o protocolo ficou só para consulta, sem os botões de alteração.
 **Comprova:** RF07. A transição Planejamento → Recrutamento foi gravada no backend, e o protocolo deixa de ser alterável.
@@ -386,21 +386,21 @@ As capturas usam o pesquisador `pesquisador@clinicalstudypb.test`, com `VITE_EST
 
 #### 20. Critério sem descrição
 
-![Critério sem descrição](../releases/release1/evidencias/web/20-rf05-criterios-erro.png)
+![Critério sem descrição](../../releases/release1/evidencias/web/20-rf05-criterios-erro.png)
 
 **Mostra:** o formulário "Novo critério de inclusão" com o campo destacado e a mensagem "Descreva o critério."
 **Comprova:** RF05. A descrição é obrigatória: a web valida antes de enviar, e o backend valida de novo.
 
 #### 22. Ordem de visita duplicada
 
-![Ordem de visita duplicada](../releases/release1/evidencias/web/22-rf06-visitas-erro.png)
+![Ordem de visita duplicada](../../releases/release1/evidencias/web/22-rf06-visitas-erro.png)
 
 **Mostra:** o formulário "Nova visita" com a ordem 1, já usada pela "Visita Inicial", e a mensagem "Já existe uma visita prevista com essa ordem." no campo da ordem.
 **Comprova:** RF06. A ordem é única no protocolo. A mensagem vem do backend (`ORDEM_VISITA_DUPLICADA`) e aparece no campo correspondente.
 
 #### 23. Recrutamento bloqueado por pendências
 
-![Iniciar recrutamento bloqueado](../releases/release1/evidencias/web/23-rf07-estado-erro.jpg)
+![Iniciar recrutamento bloqueado](../../releases/release1/evidencias/web/23-rf07-estado-erro.png)
 
 **Mostra:** o botão "Iniciar recrutamento" desativado, com a explicação do que falta, e o quadro "Para iniciar o recrutamento" na aba Resumo, com duas pendências: visitas com pelo menos uma atividade cada e coordenador atribuído.
 **Comprova:** RF07. A web orienta e bloqueia a transição enquanto os requisitos não são cumpridos; o backend confere as mesmas condições.
@@ -409,14 +409,14 @@ As capturas usam o pesquisador `pesquisador@clinicalstudypb.test`, com `VITE_EST
 
 #### 26. Testes
 
-![Resultado do npm test](../releases/release1/evidencias/web/26-rf05-07-testes.png)
+![Resultado do npm test](../../releases/release1/evidencias/web/26-rf05-07-testes.png)
 
 **Mostra:** o fim da execução do `npm test`: **28 arquivos e 414 testes passando**.
 **Comprova:** as telas de critérios, visitas e estado do estudo, além das telas da Sprint 1 e do recrutamento, têm testes automatizados (Vitest e Testing Library).
 
 #### 27. Cobertura
 
-![Relatório de cobertura em HTML](../releases/release1/evidencias/web/27-rf05-07-cobertura.png)
+![Relatório de cobertura em HTML](../../releases/release1/evidencias/web/27-rf05-07-cobertura.png)
 
 **Mostra:** o relatório em HTML do Istanbul (`web/coverage/index.html`), com o total e a cobertura de cada pasta.
 **Comprova:** a cobertura da web ao fim da Release 1:

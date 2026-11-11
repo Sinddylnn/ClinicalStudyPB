@@ -4,7 +4,7 @@
 
 Este documento descreve a proposta de API para agendamento e registro de visitas, resultados de avaliações, retirada de participantes e consultas do participante no aplicativo. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
 
-A modelagem do domínio está em [RF12 a RF18](modelagem/RF12-RF18.md). A documentação geral sobre Swagger e OpenAPI está em [OpenAPI](openapi.md).
+A modelagem do domínio está em [RF12 a RF18](../modelagem/RF12-RF18.md). A documentação geral sobre Swagger e OpenAPI está em [OpenAPI](openapi.md).
 
 ## Convenções
 

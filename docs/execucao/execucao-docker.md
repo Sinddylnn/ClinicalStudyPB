@@ -107,7 +107,7 @@ A senha de login da aplicação é diferente da senha de conexão com o PostgreS
 
 Para uma conferência rápida: entre como pesquisador, cadastre um estudo, atualize
 a página e confira a listagem. Depois, faça logout e tente uma senha incorreta.
-O guia [OpenAPI](openapi.md) explica como testar também sessão, CSRF e permissões.
+O guia [OpenAPI](../api/openapi.md) explica como testar também sessão, CSRF e permissões.
 
 ## 4. Abrir o Expo em outro terminal (opcional)
 
@@ -199,7 +199,7 @@ A configuração não define uma hospedagem de produção. Os healthchecks compr
 que os serviços responderam; não substituem testes de login, cadastro e persistência.
 
 Os resultados da verificação desta configuração estão no
-[registro de validação Docker](../releases/release1/evidencias/docker/validacao.md).
+[registro de validação Docker](../../releases/release1/evidencias/backend/docker/validacao.md).
 
 ## 7. Logs, Docker Desktop e encerramento
 

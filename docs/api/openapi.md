@@ -261,7 +261,7 @@ essa operação existente ao contrato. Esse código não implementa um segundo l
   confere as operações de autenticação, usuários e estudos, sem limitar o total de caminhos.
   Assim, novas rotas podem ser adicionadas sem quebrar uma contagem fixa.
 
-As versões e as decisões aprovadas estão em [decisões e versões](decisoes-e-versoes.md).
+As versões e as decisões aprovadas estão em [decisões e versões](../decisoes-e-versoes.md).
 Os contratos de estudos descritos acima já têm implementação no backend.
 
 ## Verificação automatizada e limites
@@ -323,7 +323,7 @@ respostas `200`, `400`, `401`, `403` e `404`. A rota exige pesquisador responsá
 sessão e CSRF. `EstudoResposta` inclui `justificativaEncerramento`, e a atribuição
 de coordenador documenta o bloqueio para estudos encerrados.
 
-Consulte [as regras e os exemplos de mudança de estado](estados-estudo.md).
+Consulte [as regras e os exemplos de mudança de estado](../estados-estudo.md).
 
 ## Configuração do protocolo, RF05 e RF06
 

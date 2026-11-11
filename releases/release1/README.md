@@ -31,7 +31,7 @@ Entregar a aplicação web funcional permitindo cadastrar um estudo, avaliar can
 ### 3.1 Web
 **Responsáveis:** Suelle Ferreira Maciel (Web 1) e Sinddy Lorranny Nobrega Nascimento (Web 2)
 
-Aplicação React + TypeScript (Vite) integrada à API REST por um cliente HTTP único, com sessão por cookie HttpOnly e proteção CSRF. As rotas são protegidas por perfil na interface, e o backend continua sendo o responsável pelo controle de acesso. Instruções de execução em [`docs/guia-execucao-web.md`](../../docs/guia-execucao-web.md).
+Aplicação React + TypeScript (Vite) integrada à API REST por um cliente HTTP único, com sessão por cookie HttpOnly e proteção CSRF. As rotas são protegidas por perfil na interface, e o backend continua sendo o responsável pelo controle de acesso. Instruções de execução em [`guia-execucao-web.md`](../../docs/execucao/guia-execucao-web.md).
 
 #### Acesso e usuários (RF01 a RF03) • Sprint 1 • Suelle
 - **Login e logout (RF02):** entrada com e-mail e senha, mensagem para credenciais inválidas, encerramento da sessão pelo menu da conta e aviso quando a sessão expira.
@@ -127,7 +127,7 @@ perfil compatível, vínculo com o estudo e token CSRF. As regras de negócio s�
 </p>
 
 
-Documentação: [configuração do protocolo](../../docs/configuracao-protocolo.md) • [estados do estudo](../../docs/estados-estudo.md).
+Documentação: [configuração do protocolo](../../docs/api/configuracao-protocolo.md) • [estados do estudo](../../docs/estados-estudo.md).
 
 
 #### Recrutamento (RF08 e RF09) • Luiz
@@ -138,7 +138,7 @@ Documentação: [configuração do protocolo](../../docs/configuracao-protocolo.
 
 As funcionalidades foram verificadas por testes automatizados, incluindo cenários de sucesso, validações, controle de acesso e consultas sem protocolo.
 
-Documentação: [candidatos e avaliação de elegibilidade](../../docs/recrutamento-e-elegibilidade.md).
+Documentação: [candidatos e avaliação de elegibilidade](../../docs/api/recrutamento-e-elegibilidade.md).
 
 #### Consentimento e inclusão (RF10 e RF11) • Georis
 
@@ -146,7 +146,7 @@ Documentação: [candidatos e avaliação de elegibilidade](../../docs/recrutame
 - **RF11 - Inclusão:** valida conta de participante, vínculo, elegibilidade completa, consentimento aceito, limite de vagas e duplicidade antes de criar a participação.
 - A inclusão usa transação e bloqueios para impedir que duas operações ocupem a última vaga simultaneamente.
 
-Documentação: [consentimento e inclusão](../../docs/consentimento-inclusao.md).
+Documentação: [consentimento e inclusão](../../docs/api/consentimento-inclusao.md).
 
 #### Qualidade e contrato da API
 
@@ -237,4 +237,3 @@ A Sprint foi encerrada em 09/11/2026, com todas as atividades planejadas conclu�
 | Horlan Silva de Lacerda | Desenvolvedor Mobile | App Expo com navegação por abas e execução no Android; protótipo mobile do participante; testes de componente com Jest e E2E da navegação com Maestro; documentação de execução e evidências do mobile no emulador e no celular; revisão da coleção Postman e da documentação da API; apoio ao README e às evidências da release. |
 | Gabriela Andrade | QA / DevOps | Pipeline de integração contínua com GitHub Actions (jobs de backend e web, PostgreSQL de testes, relatórios de testes e cobertura como artefatos, regra de 80% de linhas nas classes de serviço); revisão de PRs do mobile; verificação independente da suíte e da cobertura do backend.  |
  
-
