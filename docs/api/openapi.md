@@ -325,7 +325,7 @@ de coordenador documenta o bloqueio para estudos encerrados.
 
 Consulte [as regras e os exemplos de mudança de estado](estados-estudo.md).
 
-## Configuração do protocolo - RF05 e RF06
+## Configuração do protocolo, RF05 e RF06
 
 As rotas de critérios, visitas previstas e atividades estão detalhadas em
 [Configuração do protocolo](configuracao-protocolo.md). A declaração de ausência
@@ -341,9 +341,22 @@ O contrato e a integração com a inclusão estão em
 [Recrutamento e elegibilidade](recrutamento-e-elegibilidade.md).
 
 
-## Consentimento e inclusão - RF10 e RF11
+## Consentimento e inclusão, RF10 e RF11
 
 Foram acrescentados GET/PUT de consentimento, GET do histórico e GET/POST de
 inclusão sob `/estudos/{estudoId}/candidatos/{candidatoId}`.
 Os contratos, os erros e os exemplos estão em
 [Consentimento e inclusão](consentimento-inclusao.md).
+
+
+## Acompanhamento de participantes, RF12 a RF18
+
+O contrato preliminar de agendamento e registro de visitas, resultados, retirada
+e consultas do participante está em
+[Acompanhamento de participantes](acompanhamento-de-participantes.md).
+
+No início da Sprint 3, esse documento é um rascunho para alinhar web, backend e
+mobile. Ele não representa rotas já disponíveis no Swagger. O OpenAPI é gerado a
+partir dos controllers e DTOs existentes; quando as operações forem implementadas,
+este contrato deverá ser conferido com o `/v3/api-docs`, atualizado e coberto pelos
+testes do contrato.
