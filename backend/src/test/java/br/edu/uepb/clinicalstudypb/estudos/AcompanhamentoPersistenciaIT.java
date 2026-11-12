@@ -119,7 +119,7 @@ class AcompanhamentoPersistenciaIT {
                     assertThat(nomes).containsExactlyInAnyOrder(
                             "situacao", "data_retirada", "motivo_retirada", "retirada_por_id");
                 }
-                for (String tabela : new String[]{"visita_agendada", "resultado_atividade", "correcao_visita"}) {
+                for (String tabela : new String[]{"visitas_agendadas", "resultados_atividades", "correcoes_visitas"}) {
                     try (var existe = sql.executeQuery("""
                             SELECT EXISTS (
                                 SELECT 1 FROM information_schema.tables
@@ -168,7 +168,8 @@ class AcompanhamentoPersistenciaIT {
         visita.registrarSituacao(SituacaoVisita.AUSENTE, "Ausência registrada", coordenador, agora);
         entidades.persist(visita);
         CorrecaoVisita correcao = new CorrecaoVisita(visita, SituacaoVisita.AUSENTE,
-                SituacaoVisita.REALIZADA, "Correção validada", coordenador, agora);
+                SituacaoVisita.REALIZADA, "Correção validada", "Ausência registrada", null,
+                coordenador, agora);
         visita.registrarSituacao(SituacaoVisita.REALIZADA, null, coordenador, agora);
         entidades.persist(correcao);
 
@@ -194,6 +195,8 @@ class AcompanhamentoPersistenciaIT {
         assertThat(resultadoPersistido.getAtualizadoEm()).isEqualTo(agora.plusSeconds(60));
         assertThat(correcaoPersistida.getSituacaoAnterior()).isEqualTo(SituacaoVisita.AUSENTE);
         assertThat(correcaoPersistida.getSituacaoNova()).isEqualTo(SituacaoVisita.REALIZADA);
+        assertThat(correcaoPersistida.getMotivoAnterior()).isEqualTo("Ausência registrada");
+        assertThat(correcaoPersistida.getMotivoNovo()).isNull();
     }
 
     /**

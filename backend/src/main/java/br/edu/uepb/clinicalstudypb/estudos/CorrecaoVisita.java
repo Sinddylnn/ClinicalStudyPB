@@ -23,7 +23,7 @@ import java.time.Instant;
  * @since 11/11/2026
  */
 @Entity
-@Table(name = "correcao_visita")
+@Table(name = "correcoes_visitas")
 public class CorrecaoVisita {
 
     @Id
@@ -45,6 +45,12 @@ public class CorrecaoVisita {
     @Column(nullable = false, length = 500)
     private String justificativa;
 
+    @Column(name = "motivo_anterior", length = 500)
+    private String motivoAnterior;
+
+    @Column(name = "motivo_novo", length = 500)
+    private String motivoNovo;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "corrigida_por_id", nullable = false)
     private Usuario corrigidaPor;
@@ -56,12 +62,14 @@ public class CorrecaoVisita {
     }
 
     /**
-     * Registra a mudança de uma situação final para outra.
+     * Registra a mudança de uma situação final para outra, preservando os motivos.
      *
      * @param visitaAgendada visita corrigida
      * @param situacaoAnterior situação antes da correção
      * @param situacaoNova situação definida pela correção
-     * @param justificativa motivo da correção
+     * @param justificativa por que o registro anterior estava incorreto
+     * @param motivoAnterior motivo que a visita tinha antes, ou null
+     * @param motivoNovo motivo da visita após a correção, conforme a situação nova
      * @param corrigidaPor usuário que corrigiu o registro
      * @param corrigidaEm instante da correção
      */
@@ -70,43 +78,29 @@ public class CorrecaoVisita {
             SituacaoVisita situacaoAnterior,
             SituacaoVisita situacaoNova,
             String justificativa,
+            String motivoAnterior,
+            String motivoNovo,
             Usuario corrigidaPor,
             Instant corrigidaEm) {
         this.visitaAgendada = visitaAgendada;
         this.situacaoAnterior = situacaoAnterior;
         this.situacaoNova = situacaoNova;
         this.justificativa = justificativa == null ? null : justificativa.strip();
+        this.motivoAnterior = motivoAnterior == null ? null : motivoAnterior.strip();
+        this.motivoNovo = motivoNovo == null ? null : motivoNovo.strip();
         this.corrigidaPor = corrigidaPor;
         this.corrigidaEm = corrigidaEm;
     }
 
     // <-------------------CONSULTA DOS DADOS------------------->
 
-    public Long getId() {
-        return id;
-    }
-
-    public VisitaAgendada getVisitaAgendada() {
-        return visitaAgendada;
-    }
-
-    public SituacaoVisita getSituacaoAnterior() {
-        return situacaoAnterior;
-    }
-
-    public SituacaoVisita getSituacaoNova() {
-        return situacaoNova;
-    }
-
-    public String getJustificativa() {
-        return justificativa;
-    }
-
-    public Usuario getCorrigidaPor() {
-        return corrigidaPor;
-    }
-
-    public Instant getCorrigidaEm() {
-        return corrigidaEm;
-    }
+    public Long getId() { return id; }
+    public VisitaAgendada getVisitaAgendada() { return visitaAgendada; }
+    public SituacaoVisita getSituacaoAnterior() { return situacaoAnterior; }
+    public SituacaoVisita getSituacaoNova() { return situacaoNova; }
+    public String getJustificativa() { return justificativa; }
+    public String getMotivoAnterior() { return motivoAnterior; }
+    public String getMotivoNovo() { return motivoNovo; }
+    public Usuario getCorrigidaPor() { return corrigidaPor; }
+    public Instant getCorrigidaEm() { return corrigidaEm; }
 }

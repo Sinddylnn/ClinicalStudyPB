@@ -21,7 +21,7 @@ import java.time.Instant;
  * @since 11/11/2026
  */
 @Entity
-@Table(name = "resultado_atividade")
+@Table(name = "resultados_atividades")
 public class ResultadoAtividade {
 
     @Id
