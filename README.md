@@ -106,6 +106,10 @@ Os modelos estão separados para tornar legíveis dois conjuntos relacionados do
   <img src="docs/diagramas/11_modelo_dominio_recrutamento.png" alt="Modelo de domínio: recrutamento e inclusão" width="60%"><br>
 </p>
 
+<p align="center">
+  <img src="docs/diagramas/15_modelo_dominio_acompanhamento.png" alt="Modelo de domínio: acompanhamento do participante" width="60%"><br>
+</p>
+
 <br>
 
 ### Sequência do fluxo principal
