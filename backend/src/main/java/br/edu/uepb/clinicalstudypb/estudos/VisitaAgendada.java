@@ -23,7 +23,7 @@ import java.time.Instant;
  * @since 11/11/2026
  */
 @Entity
-@Table(name = "visita_agendada")
+@Table(name = "visitas_agendadas")
 public class VisitaAgendada {
 
     @Id
