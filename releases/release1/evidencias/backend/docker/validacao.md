@@ -51,7 +51,7 @@ Spring Boot e persistidos no PostgreSQL, após recarregar a página.
 
 ## Como repetir a conferência principal
 
-Siga a preparação e os comandos do [guia Docker](../../../../docs/execucao-docker.md).
+Siga a preparação e os comandos do [guia Docker](../../../../../docs/execucao/execucao-docker.md).
 Com o ambiente completo iniciado:
 
 1. Entre na web como pesquisador, usando a conta fictícia documentada no guia.

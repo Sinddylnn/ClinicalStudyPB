@@ -131,7 +131,7 @@ sincronização automática de arquivos nesta primeira configuração.
 O Compose fornece as variáveis ao backend, usa `db:5432` internamente e direciona
 o proxy da web a `backend:8080`. A API, a sessão, as permissões e as migrações não
 foram alteradas. O volume existente do banco foi preservado. Os detalhes estão em
-[execução com Docker](execucao-docker.md).
+[execução com Docker](execucao/execucao-docker.md).
 
 ## Versões acordadas
 
@@ -204,7 +204,7 @@ continuam exclusivas do responsável durante o planejamento.
 O cadastro ou a edição para EXCLUSAO exige desmarcar a declaração previamente,
 conforme a modelagem. A exclusão de uma visita aproveita a cascata já definida
 na V6, sem modificar migrações. As rotas e os cuidados para a integração da web
-estão em [Configuração do protocolo](configuracao-protocolo.md).
+estão em [Configuração do protocolo](api/configuracao-protocolo.md).
 
 ### 04/11/2026 — Consultas e preservação da elegibilidade (AB#3396 e AB#3397)
 
@@ -215,7 +215,7 @@ A participação passa a referenciar o candidato por uma nova migração V9.
 A avaliação não pode ser alterada após a inclusão, mesmo durante o recrutamento.
 A verificação usa o bloqueio do estudo compartilhado com a futura inclusão da
 task AB#3423. As regras de integração estão em
-[Recrutamento e elegibilidade](recrutamento-e-elegibilidade.md).
+[Recrutamento e elegibilidade](api/recrutamento-e-elegibilidade.md).
 
 
 ### 04/11/2026 — Consentimento e inclusão (AB#3423)
@@ -233,4 +233,4 @@ coordenador durante o recrutamento.
 
 Contas com participações históricas não podem perder o perfil PARTICIPANTE.
 A CI executa todos os testes de integração PostgreSQL. As rotas, regras e
-exemplos estão em [Consentimento e inclusão](consentimento-inclusao.md).
+exemplos estão em [Consentimento e inclusão](api/consentimento-inclusao.md).

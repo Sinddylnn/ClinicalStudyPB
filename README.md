@@ -106,6 +106,10 @@ Os modelos estão separados para tornar legíveis dois conjuntos relacionados do
   <img src="docs/diagramas/11_modelo_dominio_recrutamento.png" alt="Modelo de domínio: recrutamento e inclusão" width="60%"><br>
 </p>
 
+<p align="center">
+  <img src="docs/diagramas/15_modelo_dominio_acompanhamento.png" alt="Modelo de domínio: acompanhamento do participante" width="60%"><br>
+</p>
+
 <br>
 
 ### Sequência do fluxo principal
@@ -275,7 +279,7 @@ npm ci
 npx expo start --android
 ```
 
-Em um dispositivo físico, use `npx expo start` e leia o QR code com Expo Go. O mobile ainda não consome a API. Consulte o [guia de execução com Docker](docs/execucao-docker.md) para detalhes de configuração, logs e solução de problemas.
+Em um dispositivo físico, use `npx expo start` e leia o QR code com Expo Go. O mobile ainda não consome a API. Consulte o [guia de execução com Docker](docs/execucao/execucao-docker.md) para detalhes de configuração, logs e solução de problemas.
 
 ---
 
@@ -317,7 +321,7 @@ Ao terminar, pare o banco de testes:
 docker compose --profile test stop db-test
 ```
 
-Não use o banco de desenvolvimento para testes de persistência. As instruções detalhadas estão nos guias de [configuração do protocolo](docs/configuracao-protocolo.md) e [consentimento e inclusão](docs/consentimento-inclusao.md).
+Não use o banco de desenvolvimento para testes de persistência. As instruções detalhadas estão nos guias de [configuração do protocolo](docs/api/configuracao-protocolo.md) e [consentimento e inclusão](docs/api/consentimento-inclusao.md).
 
 O GitHub Actions está configurado para backend e web. Na entrega da release 1, tivemos um problema: os jobs não foram iniciados pelo GitHub devido a um problema de cobrança da conta. Os resultados listados acima foram verificados antes desse impedimento. 
 
@@ -331,7 +335,7 @@ Com o backend em execução:
 - [Contrato OpenAPI em JSON](http://localhost:8080/v3/api-docs)
 - [Contrato OpenAPI em YAML](http://localhost:8080/v3/api-docs.yaml)
 
-O Swagger documenta as operações disponíveis no backend. Para instruções sobre autenticação, CSRF e permissões, consulte o [guia OpenAPI](docs/openapi.md).
+O Swagger documenta as operações disponíveis no backend. Para instruções sobre autenticação, CSRF e permissões, consulte o [guia OpenAPI](docs/api/openapi.md).
 
 ---
 

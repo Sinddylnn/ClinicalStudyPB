@@ -1,7 +1,7 @@
 # Configuração do protocolo
 
 Este contrato complementa a modelagem dos RF05–RF07 e as transições documentadas
-em [Estados do estudo](estados-estudo.md).
+em [Estados do estudo](../estados-estudo.md).
 
 O pesquisador responsável configura o protocolo durante o planejamento. Já o
 coordenador vinculado pode consultar os critérios, a declaração de exclusões e

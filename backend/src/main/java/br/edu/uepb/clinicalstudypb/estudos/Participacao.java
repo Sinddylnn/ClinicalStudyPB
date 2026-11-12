@@ -1,9 +1,12 @@
 package br.edu.uepb.clinicalstudypb.estudos;
 
-import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
+import br.edu.uepb.clinicalstudypb.compartilhado.erro.RegraNegocioException;
 import br.edu.uepb.clinicalstudypb.recrutamento.Candidato;
+import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,17 +15,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.Objects;
 
 // <-------------------PARTICIPACAO: BASE DE PERSISTÊNCIA------------------->
 /**
  * Preserva a inclusão histórica de uma conta de participante em um estudo.
  *
  * <p>Base para RF11: a criação pela aplicação deverá validar elegibilidade, consentimento,
- * conta ativa, vagas e estado. Não há endpoint de inclusão nesta entrega. Uma retirada
- * futura preservará este registro para a contagem histórica.</p>
+ * conta ativa, vagas e estado. A retirada preserva este registro para a contagem histórica.</p>
  * @author Georis
- * @version 1.0
- * @since 29/10/2026
+ * @version 1.1
+ * @since 11/11/2026
  */
 @Entity
 @Table(name = "participacoes")
@@ -47,6 +50,20 @@ public class Participacao {
 
     @Column(name = "data_inclusao", nullable = false)
     private Instant dataInclusao;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private SituacaoParticipacao situacao = SituacaoParticipacao.ATIVA;
+
+    @Column(name = "data_retirada")
+    private Instant dataRetirada;
+
+    @Column(name = "motivo_retirada", length = 500)
+    private String motivoRetirada;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "retirada_por_id")
+    private Usuario retiradaPor;
 
     /** Construtor protegido utilizado pelo JPA. */
     protected Participacao() {
@@ -102,5 +119,47 @@ public class Participacao {
 
     public Candidato getCandidato() {
         return candidato;
+    }
+
+    public SituacaoParticipacao getSituacao() {
+        return situacao;
+    }
+
+    public Instant getDataRetirada() {
+        return dataRetirada;
+    }
+
+    public String getMotivoRetirada() {
+        return motivoRetirada;
+    }
+
+    public Usuario getRetiradaPor() {
+        return retiradaPor;
+    }
+
+    // <-------------------RETIRADA DO PARTICIPANTE------------------->
+
+    /**
+     * Registra a retirada sem excluir a participação histórica.
+     *
+     * @param motivo motivo informado para a retirada
+     * @param dataRetirada instante em que a retirada foi registrada
+     * @param responsavel usuário que registrou a retirada
+     */
+    public void registrarRetirada(String motivo, Instant dataRetirada, Usuario responsavel) {
+        String motivoNormalizado = motivo == null ? null : motivo.strip();
+        if (situacao != SituacaoParticipacao.ATIVA) {
+            throw new RegraNegocioException("PARTICIPACAO_JA_RETIRADA", "A participação já foi retirada.");
+        }
+        if (motivoNormalizado == null || motivoNormalizado.isEmpty() || motivoNormalizado.length() > 500) {
+            throw new RegraNegocioException("MOTIVO_RETIRADA_INVALIDO",
+                    "O motivo deve ter entre 1 e 500 caracteres.");
+        }
+        Instant instante = Objects.requireNonNull(dataRetirada);
+        Usuario autor = Objects.requireNonNull(responsavel);
+        this.situacao = SituacaoParticipacao.RETIRADA;
+        this.motivoRetirada = motivoNormalizado;
+        this.dataRetirada = instante;
+        this.retiradaPor = autor;
     }
 }

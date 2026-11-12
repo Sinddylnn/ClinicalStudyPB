@@ -62,7 +62,7 @@ aparecia em UTC.
 ## Como repetir
 
 1. No `web/.env`, deixe os três serviços como `simulado` (ou apague as linhas, já que esse é o padrão).
-2. Inicie o banco e o backend pelo [guia Docker](../../../../docs/execucao-docker.md), que tem o login,
+2. Inicie o banco e o backend pelo [guia Docker](../../../../docs/execucao/execucao-docker.md), que tem o login,
    e a web com `npm run dev` (no Windows PowerShell, `npm.cmd run dev`).
 3. Entre com a conta fictícia de coordenador do guia. Os estudos simulados estão vinculados ao
    coordenador de id 3; se a conta tiver outro id, eles aparecem como "não encontrado".

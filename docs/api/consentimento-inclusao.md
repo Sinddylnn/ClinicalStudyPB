@@ -133,7 +133,7 @@ exclusivo de testes com `CLINICALSTUDYPB_TEST_DB_URL`,
 A CI passa a executar todos os testes `*IT`, incluindo o teste desta entrega.
 
 Os exemplos estão em
-[Consentimento-inclusao.postman_collection.json](postman/Consentimento-inclusao.postman_collection.json).
+[Consentimento-inclusao.postman_collection.json](../postman/Consentimento-inclusao.postman_collection.json).
 Prepare um estudo em recrutamento, candidato elegível ainda não incluído, uma
 conta ativa de participante com o mesmo e-mail e ao menos uma vaga disponível.
 Na coleção, informe os IDs e as credenciais fictícias do coordenador vinculado.
