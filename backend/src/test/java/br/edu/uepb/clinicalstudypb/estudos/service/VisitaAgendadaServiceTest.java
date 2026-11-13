@@ -260,4 +260,34 @@ class VisitaAgendadaServiceTest {
         verifyNoInteractions(visitasAgendadas);
     }
 
+
+    @Test
+    void reagendaVisitaComSucesso() {
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, dataVisita);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        Instant novaData = dataVisita.plus(1, ChronoUnit.DAYS);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        when(visitasAgendadas.save(any(VisitaAgendada.class)))
+                .thenAnswer(chamada -> chamada.getArgument(0));
+
+        VisitaAgendadaResposta resposta = servico.reagendar(
+                10L, 20L, 40L,
+                new VisitaAgendadaReagendamentoEntrada(novaData),
+                coordenador);
+
+        assertThat(resposta.dataHora()).isEqualTo(novaData);
+        assertThat(resposta.situacao()).isEqualTo(SituacaoVisita.AGENDADA);
+
+        verify(visitasAgendadas).save(visita);
+    }
+
 }
