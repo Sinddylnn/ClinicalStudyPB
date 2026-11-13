@@ -1,0 +1,236 @@
+/* <-------------------HISTÓRICO DO PARTICIPANTE-------------------> */
+/* Linha do tempo: um cartão por visita e a retirada como último evento */
+.historico-subtitulo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.historico-linha {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historico-evento {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px 24px;
+}
+
+.historico-marcador {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.historico-marcador-agendada {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.historico-marcador-realizada {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.historico-marcador-ausente {
+  color: #b45309;
+  background: #fffbeb;
+}
+
+.historico-marcador-retirada {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.historico-corpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.historico-cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.historico-cabecalho h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.historico-dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+.historico-dados dt {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--texto-suave);
+}
+
+.historico-dados dd {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 19px;
+  overflow-wrap: anywhere;
+}
+
+.historico-resultados,
+.historico-correcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.historico-resultados h3,
+.historico-correcoes h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.historico-resultados ul,
+.historico-correcoes ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 19px;
+}
+
+.historico-resultados li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+
+.historico-atividade {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--texto-suave);
+}
+
+.historico-evento-retirada {
+  border-color: #fecaca;
+}
+
+.historico-acoes {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.historico-acoes .botao {
+  padding: 6px 12px;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+/* <-------------------RESULTADOS DA VISITA-------------------> */
+.resultados-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Aviso fixo de dados fictícios (RF14), em âmbar para não passar despercebido */
+.pagina-interna .aviso-alerta {
+  color: #92400e;
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.resultados-cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+}
+
+.resultados-cartao header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--borda-cartao);
+}
+
+.resultados-cartao h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.resultados-cartao header p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--texto-suave);
+}
+
+/* <-------------------ETIQUETAS-------------------> */
+.etiqueta-visita-agendada {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.etiqueta-visita-realizada,
+.etiqueta-participacao-ativa {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.etiqueta-visita-ausente {
+  color: #b45309;
+  background: #fffbeb;
+}
+
+.etiqueta-visita-cancelada {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.etiqueta-participacao-retirada {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+@media (max-width: 600px) {
+  .historico-evento {
+    padding: 16px;
+  }
+
+  .historico-marcador {
+    display: none;
+  }
+}

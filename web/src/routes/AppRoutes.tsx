@@ -12,6 +12,8 @@ import NovoCandidato from '../pages/recrutamento/NovoCandidato';
 import ElegibilidadeCandidato from '../pages/recrutamento/ElegibilidadeCandidato';
 import ConsentimentoCandidato from '../pages/recrutamento/ConsentimentoCandidato';
 import InclusaoCandidato from '../pages/recrutamento/InclusaoCandidato';
+import HistoricoParticipante from '../pages/acompanhamento/HistoricoParticipante';
+import ResultadosVisita from '../pages/acompanhamento/ResultadosVisita';
 import ListaUsuarios from '../pages/usuarios/ListaUsuarios';
 import NovoUsuario from '../pages/usuarios/NovoUsuario';
 import EditarUsuario from '../pages/usuarios/EditarUsuario';
@@ -57,6 +59,19 @@ export default function AppRoutes() {
         {/* Consentimento simulado (RF10) e inclusão como participante (RF11) */}
         <Route path="/estudos/:id/candidatos/:candidatoId/consentimento" element={<ConsentimentoCandidato />} />
         <Route path="/estudos/:id/candidatos/:candidatoId/inclusao" element={<InclusaoCandidato />} />
+      </Route>
+
+      {/* <-------------------ACOMPANHAMENTO-------------------> */}
+      {/* Histórico de visitas e avaliações (RF15): coordenador vinculado e pesquisador responsável */}
+      <Route element={<RotaProtegida perfis={['PESQUISADOR', 'COORDENADOR']} />}>
+        <Route path="/estudos/:id/participacoes/:participacaoId/historico" element={<HistoricoParticipante />} />
+      </Route>
+      {/* Resultados fictícios das avaliações de uma visita realizada (RF14): só o coordenador vinculado */}
+      <Route element={<RotaProtegida perfis={['COORDENADOR']} />}>
+        <Route
+          path="/estudos/:id/participacoes/:participacaoId/visitas/:visitaId/resultados"
+          element={<ResultadosVisita />}
+        />
       </Route>
 
       {/* <-------------------ROTA NÃO ENCONTRADA-------------------> */}
