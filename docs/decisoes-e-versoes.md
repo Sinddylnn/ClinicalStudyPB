@@ -194,7 +194,7 @@ data; classes novas desta revisão usam `@author Georis`, `@version 1.0` e
 
 
 
-### 03/11/2026 — Revisão da configuração do protocolo (AB#3392 e AB#3395)
+### 03/11/2026 - Revisão da configuração do protocolo (AB#3392 e AB#3395)
 
 A configuração recebeu edição e remoção de critérios, visitas previstas e
 atividades, além da consulta da declaração de ausência de exclusões. As leituras
@@ -218,7 +218,7 @@ task AB#3423. As regras de integração estão em
 [Recrutamento e elegibilidade](api/recrutamento-e-elegibilidade.md).
 
 
-### 04/11/2026 — Consentimento e inclusão (AB#3423)
+### 04/11/2026 - Consentimento e inclusão (AB#3423)
 
 RF10 e RF11 passam a utilizar o candidato e a avaliação já existentes. A V10
 registra respostas e correções de consentimento sem sobrescrever o histórico.
@@ -234,3 +234,25 @@ coordenador durante o recrutamento.
 Contas com participações históricas não podem perder o perfil PARTICIPANTE.
 A CI executa todos os testes de integração PostgreSQL. As rotas, regras e
 exemplos estão em [Consentimento e inclusão](api/consentimento-inclusao.md).
+
+
+## 13/11/2026 - Validação da sessão no aplicativo mobile (task 3954)
+
+A validação da autenticação no aplicativo React Native confirmou a compatibilidade com a sessão por cookie do Spring Security definida em D05. Não foi necessário introduzir autenticação alternativa baseada em tokens.
+
+Os testes foram realizados em um celular Android físico, utilizando Expo Go e a API executada no computador pela rede Wi-Fi local.
+
+Foram verificados:
+- Login válido e inválido, com respostas HTTP 200 e 401, respectivamente.
+- Reutilização do cookie `JSESSIONID` nas requisições autenticadas.
+- Proteção CSRF: requisição sem token recusada com `403 CSRF_INVALIDO`; requisição com token aceita pela proteção CSRF, mas recusada pela autorização do perfil participante com `403 ACESSO_NEGADO`.
+- Logout com resposta `204` e invalidação da sessão, confirmada por resposta `401` em consulta posterior.
+- Persistência da sessão após fechar e reabrir o Expo Go, com `GET /auth/sessao` retornando `200` no cenário testado.
+
+O aplicativo deverá obter o token por `GET /auth/csrf`, enviá-lo no cabeçalho indicado pela API nas operações de escrita e obter um novo token após o login, pois a sessão é renovada nesse fluxo. O cookie de sessão deve ser mantido pela pilha de rede do aplicativo.
+
+A validação foi realizada no dispositivo físico. O comportamento no emulador Android não foi verificado nesta etapa. A persistência observada não representa garantia após limpeza dos dados ou reinstalação do aplicativo.
+
+O resultado fornece a validação técnica necessária para a implementação do login, logout e controle de perfil participante nas tarefas T88 e T89.
+
+O procedimento, os resultados detalhados e as capturas estão documentados em [Validação da sessão no aplicativo mobile](../releases/release2/evidencias/mobile/validacao-sessao.md).
