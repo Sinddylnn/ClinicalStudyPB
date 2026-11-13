@@ -2,6 +2,7 @@ package br.edu.uepb.clinicalstudypb.compartilhado.erro;
 
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ProtocoloRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.CriterioRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaPrevistaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
@@ -24,6 +25,7 @@ import br.edu.uepb.clinicalstudypb.estudos.repository.AtividadePrevistaRepositor
 import br.edu.uepb.clinicalstudypb.recrutamento.repository.CandidatoRepository;
 import br.edu.uepb.clinicalstudypb.recrutamento.repository.AvaliacaoElegibilidadeRepository;
 import br.edu.uepb.clinicalstudypb.recrutamento.repository.RespostaElegibilidadeRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -68,6 +70,9 @@ class TratadorErrosApiTest {
 
     @MockitoBean
     private RespostaElegibilidadeRepository respostaElegibilidadeRepository;
+
+    @MockitoBean
+    private VisitaAgendadaRepository visitaAgendadaRepository;
 
     @MockitoBean private ProtocoloRepository protocoloRepository;
     @MockitoBean private CriterioRepository criterioRepository;
