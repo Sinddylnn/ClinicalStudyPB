@@ -12,7 +12,7 @@ import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +24,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.server.ResponseStatusException;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,7 +57,7 @@ class VisitaAgendadaServiceTest {
 
     @BeforeEach
     void prepararDados() {
-        LocalDate hoje = LocalDate.now(ZoneOffset.UTC);
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Recife"));
 
         Usuario pesquisador = new Usuario(
                 "Pesquisador", "pesquisador@teste.com",
@@ -289,5 +291,372 @@ class VisitaAgendadaServiceTest {
 
         verify(visitasAgendadas).save(visita);
     }
+
+
+    @Test
+    void impedeAgendamentoEmEstudoNaoVinculadoAoCoordenador() {
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servico.agendar(
+                10L, 20L,
+                new VisitaAgendadaCadastroEntrada(30L, dataVisita),
+                coordenador))
+                .isInstanceOfSatisfying(
+                        ResponseStatusException.class,
+                        erro -> assertThat(erro.getStatusCode().value())
+                                .isEqualTo(404));
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+    @Test
+    void impedeAgendamentoDeParticipacaoDeOutroEstudo() {
+        Participacao outraParticipacao = mock(Participacao.class);
+        Estudo outroEstudo = mock(Estudo.class);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(participacoes.findById(20L))
+                .thenReturn(Optional.of(outraParticipacao));
+
+        when(outraParticipacao.getEstudo())
+                .thenReturn(outroEstudo);
+
+        when(outroEstudo.getId()).thenReturn(99L);
+
+        assertThatThrownBy(() -> servico.agendar(
+                10L, 20L,
+                new VisitaAgendadaCadastroEntrada(30L, dataVisita),
+                coordenador))
+                .isInstanceOfSatisfying(
+                        ResponseStatusException.class,
+                        erro -> assertThat(erro.getStatusCode().value())
+                                .isEqualTo(404));
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+
+    @ParameterizedTest
+    @EnumSource(value = EstadoEstudo.class,
+            names = {"PLANEJAMENTO", "ENCERRADO"})
+    void impedeAgendamentoEmEstadoInvalido(EstadoEstudo estado) {
+        Estudo estudoInvalido = mock(Estudo.class);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudoInvalido));
+
+        when(estudoInvalido.getEstado()).thenReturn(estado);
+
+        assertThatThrownBy(() -> servico.agendar(
+                10L, 20L,
+                new VisitaAgendadaCadastroEntrada(30L, dataVisita),
+                coordenador))
+                .isInstanceOf(RegraNegocioException.class)
+                .hasMessageContaining("não permite agendamento");
+
+        verifyNoInteractions(visitasAgendadas);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = EstadoEstudo.class,
+            names = {"PLANEJAMENTO", "ENCERRADO"})
+    void impedeReagendamentoEmEstadoInvalido(EstadoEstudo estado) {
+        Estudo estudoInvalido = mock(Estudo.class);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudoInvalido));
+
+        when(estudoInvalido.getEstado()).thenReturn(estado);
+
+        assertThatThrownBy(() -> servico.reagendar(
+                10L, 20L, 40L,
+                new VisitaAgendadaReagendamentoEntrada(dataVisita),
+                coordenador))
+                .isInstanceOf(RegraNegocioException.class)
+                .hasMessageContaining("não permite reagendamento");
+
+        verifyNoInteractions(visitasAgendadas);
+    }
+
+
+    @Test
+    void permiteAgendamentoNoDiaAtual() {
+        prepararConsulta();
+
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Recife"));
+
+        Instant dataHoje = hoje.atTime(23, 0)
+                .atZone(ZoneId.of("America/Recife"))
+                .toInstant();
+
+        when(visitasAgendadas.save(any(VisitaAgendada.class)))
+                .thenAnswer(chamada -> chamada.getArgument(0));
+
+        VisitaAgendadaResposta resposta = servico.agendar(
+                10L, 20L,
+                new VisitaAgendadaCadastroEntrada(30L, dataHoje),
+                coordenador);
+
+        assertThat(resposta.dataHora()).isEqualTo(dataHoje);
+
+        verify(visitasAgendadas).save(any(VisitaAgendada.class));
+    }
+
+    @Test
+    void impedeAgendamentoNoDiaAnterior() {
+        prepararConsulta();
+
+        LocalDate ontem = LocalDate.now(ZoneId.of("America/Recife"))
+                .minusDays(1);
+
+        Instant dataOntem = ontem.atTime(12, 0)
+                .atZone(ZoneId.of("America/Recife"))
+                .toInstant();
+
+        assertThatThrownBy(() -> servico.agendar(
+                10L, 20L,
+                new VisitaAgendadaCadastroEntrada(30L, dataOntem),
+                coordenador))
+                .isInstanceOf(RegraNegocioException.class)
+                .hasMessageContaining("fora do período permitido");
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+
+    @Test
+    void impedeAgendamentoAntesDoInicioDoEstudo() {
+        prepararConsulta();
+
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Recife"));
+
+        ReflectionTestUtils.setField(
+                estudo, "dataInicio", hoje.plusDays(3));
+
+        assertThatThrownBy(() -> servico.agendar(
+                10L, 20L,
+                new VisitaAgendadaCadastroEntrada(30L, dataVisita),
+                coordenador))
+                .isInstanceOf(RegraNegocioException.class)
+                .hasMessageContaining("fora do período permitido");
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+    @Test
+    void impedeAgendamentoDepoisDoFimDoEstudo() {
+        prepararConsulta();
+
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Recife"));
+
+        ReflectionTestUtils.setField(
+                estudo, "dataFim", hoje.plusDays(1));
+
+        assertThatThrownBy(() -> servico.agendar(
+                10L, 20L,
+                new VisitaAgendadaCadastroEntrada(30L, dataVisita),
+                coordenador))
+                .isInstanceOf(RegraNegocioException.class)
+                .hasMessageContaining("fora do período permitido");
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+
+    @Test
+    void impedeReagendamentoComDataInvalida() {
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, dataVisita);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        Instant dataInvalida = dataVisita.plus(100, ChronoUnit.DAYS);
+
+        assertThatThrownBy(() -> servico.reagendar(
+                10L, 20L, 40L,
+                new VisitaAgendadaReagendamentoEntrada(dataInvalida),
+                coordenador))
+                .isInstanceOf(RegraNegocioException.class)
+                .hasMessageContaining("fora do período permitido");
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+    @Test
+    void impedeReagendamentoDeParticipanteRetirado() {
+        Usuario responsavel = new Usuario(
+                "Responsavel", "responsavel2@teste.com",
+                "senha", PerfilUsuario.COORDENADOR);
+
+        participacao.registrarRetirada(
+                "Retirada do estudo", Instant.now(), responsavel);
+
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, dataVisita);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        assertThatThrownBy(() -> servico.reagendar(
+                10L, 20L, 40L,
+                new VisitaAgendadaReagendamentoEntrada(
+                        dataVisita.plus(1, ChronoUnit.DAYS)),
+                coordenador))
+                .isInstanceOf(RegraNegocioException.class)
+                .hasMessageContaining("participante retirado");
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+
+    @Test
+    void impedeReagendamentoDeVisitaDeOutraParticipacao() {
+        VisitaAgendada visita = mock(VisitaAgendada.class);
+        Participacao outraParticipacao = mock(Participacao.class);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        when(visita.getParticipacao())
+                .thenReturn(outraParticipacao);
+
+        when(outraParticipacao.getId()).thenReturn(99L);
+
+        assertThatThrownBy(() -> servico.reagendar(
+                10L, 20L, 40L,
+                new VisitaAgendadaReagendamentoEntrada(dataVisita),
+                coordenador))
+                .isInstanceOfSatisfying(
+                        ResponseStatusException.class,
+                        erro -> assertThat(erro.getStatusCode().value())
+                                .isEqualTo(404));
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+    @Test
+    void impedeReagendamentoDeVisitaDeOutroEstudo() {
+        VisitaAgendada visita = mock(VisitaAgendada.class);
+        Participacao participacaoVisita = mock(Participacao.class);
+        Estudo outroEstudo = mock(Estudo.class);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        when(visita.getParticipacao())
+                .thenReturn(participacaoVisita);
+
+        when(participacaoVisita.getId()).thenReturn(20L);
+        when(participacaoVisita.getEstudo()).thenReturn(outroEstudo);
+        when(outroEstudo.getId()).thenReturn(99L);
+
+        assertThatThrownBy(() -> servico.reagendar(
+                10L, 20L, 40L,
+                new VisitaAgendadaReagendamentoEntrada(dataVisita),
+                coordenador))
+                .isInstanceOfSatisfying(
+                        ResponseStatusException.class,
+                        erro -> assertThat(erro.getStatusCode().value())
+                                .isEqualTo(404));
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+
+    @Test
+    void permiteMesmaVisitaPrevistaParaDoisParticipantes() {
+        prepararConsulta();
+
+        Usuario outroUsuario = new Usuario(
+                "Outro Participante", "outro.participante@teste.com",
+                "senha", PerfilUsuario.PARTICIPANTE);
+
+        Participacao outraParticipacao = new Participacao(
+                estudo, outroUsuario, Instant.now());
+
+        ReflectionTestUtils.setField(outraParticipacao, "id", 21L);
+
+        when(participacoes.findById(21L))
+                .thenReturn(Optional.of(outraParticipacao));
+
+        when(visitasAgendadas.save(any(VisitaAgendada.class)))
+                .thenAnswer(chamada -> chamada.getArgument(0));
+
+        VisitaAgendadaCadastroEntrada entrada =
+                new VisitaAgendadaCadastroEntrada(30L, dataVisita);
+
+        VisitaAgendadaResposta primeira =
+                servico.agendar(10L, 20L, entrada, coordenador);
+
+        VisitaAgendadaResposta segunda =
+                servico.agendar(10L, 21L, entrada, coordenador);
+
+        assertThat(primeira.participacaoId()).isEqualTo(20L);
+        assertThat(segunda.participacaoId()).isEqualTo(21L);
+
+        assertThat(primeira.visitaPrevistaId()).isEqualTo(30L);
+        assertThat(segunda.visitaPrevistaId()).isEqualTo(30L);
+
+        verify(visitasAgendadas, times(2))
+                .save(any(VisitaAgendada.class));
+    }
+
+
+    @Test
+    void permiteAgendamentoAs23hNoUltimoDiaDoEstudo() {
+        prepararConsulta();
+
+        ZoneId zona = ZoneId.of("America/Recife");
+        LocalDate ultimoDia = LocalDate.now(zona).plusDays(3);
+
+        ReflectionTestUtils.setField(
+                estudo, "dataFim", ultimoDia);
+
+        Instant dataUltimoDia = ultimoDia.atTime(23, 0)
+                .atZone(zona)
+                .toInstant();
+
+        when(visitasAgendadas.save(any(VisitaAgendada.class)))
+                .thenAnswer(chamada -> chamada.getArgument(0));
+
+        VisitaAgendadaResposta resposta = servico.agendar(
+                10L, 20L,
+                new VisitaAgendadaCadastroEntrada(30L, dataUltimoDia),
+                coordenador);
+
+        assertThat(resposta.dataHora()).isEqualTo(dataUltimoDia);
+
+        verify(visitasAgendadas)
+                .save(any(VisitaAgendada.class));
+     }
 
 }

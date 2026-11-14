@@ -14,7 +14,7 @@ import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaReagendamentoEntrada;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -29,6 +29,7 @@ public class VisitaAgendadaService {
     private final ParticipacaoRepository participacoes;
     private final VisitaPrevistaRepository visitasPrevistas;
     private final VisitaAgendadaRepository visitasAgendadas;
+    private static final ZoneId ZONA = ZoneId.of("America/Recife");
 
     public VisitaAgendadaService(
             EstudoRepository estudos,
@@ -65,7 +66,7 @@ public class VisitaAgendadaService {
         if (estudo.getEstado() != EstadoEstudo.RECRUTAMENTO
                 && estudo.getEstado() != EstadoEstudo.EXECUCAO) {
             throw new RegraNegocioException(
-                    "ESTUDO_FORA_PERIODO",
+                    "ESTADO_ESTUDO_INVALIDO",
                     "O estudo não permite agendamento de visitas.");
         }
 
@@ -79,7 +80,7 @@ public class VisitaAgendadaService {
 
         if (participacao.getSituacao() != SituacaoParticipacao.ATIVA) {
             throw new RegraNegocioException(
-                    "PARTICIPACAO_RETIRADA",
+                    "PARTICIPACAO_INVALIDA",
                     "Não é possível agendar visita para participante retirado.");
         }
 
@@ -141,7 +142,7 @@ public class VisitaAgendadaService {
         if (estudo.getEstado() != EstadoEstudo.RECRUTAMENTO
                 && estudo.getEstado() != EstadoEstudo.EXECUCAO) {
             throw new RegraNegocioException(
-                    "ESTUDO_FORA_PERIODO",
+                    "ESTADO_ESTUDO_INVALIDO",
                     "O estudo não permite reagendamento de visitas.");
         }
 
@@ -158,7 +159,7 @@ public class VisitaAgendadaService {
         if (visita.getParticipacao().getSituacao()
                 != SituacaoParticipacao.ATIVA) {
             throw new RegraNegocioException(
-                    "PARTICIPACAO_RETIRADA",
+                    "PARTICIPACAO_INVALIDA",
                     "Não é possível reagendar visita de participante retirado.");
         }
 
@@ -186,8 +187,8 @@ public class VisitaAgendadaService {
                     "Informe a data da visita.");
         }
 
-        LocalDate diaVisita = dataHora.atOffset(ZoneOffset.UTC).toLocalDate();
-        LocalDate hoje = LocalDate.now(ZoneOffset.UTC);
+        LocalDate diaVisita = dataHora.atZone(ZONA).toLocalDate();
+        LocalDate hoje = LocalDate.now(ZONA);
 
         if (diaVisita.isBefore(hoje)
                 || diaVisita.isBefore(estudo.getDataInicio())
