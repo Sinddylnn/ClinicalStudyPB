@@ -288,13 +288,18 @@ public SecurityFilterChain securityFilterChain(
                     )
                     .hasAnyRole("PESQUISADOR", "COORDENADOR")
 
+                    // Listagem de participantes incluídos no estudo
+                    .requestMatchers(
+                            HttpMethod.GET,
+                            "/estudos/*/participacoes"
+                    )
+                    .hasRole("COORDENADOR")
                     // Agendamento e reagendamento de visitas
                     .requestMatchers(
                             HttpMethod.POST,
                             "/estudos/*/participacoes/*/visitas"
                     )
                     .hasRole("COORDENADOR")
-
                     .requestMatchers(
                             HttpMethod.PUT,
                             "/estudos/*/participacoes/*/visitas/*"
