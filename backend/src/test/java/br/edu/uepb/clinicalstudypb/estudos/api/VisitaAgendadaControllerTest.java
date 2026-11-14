@@ -1,27 +1,5 @@
 package br.edu.uepb.clinicalstudypb.estudos.api;
 
-import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.ConfiguracaoSeguranca;
-import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.RespostaErroSeguranca;
-import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
-import br.edu.uepb.clinicalstudypb.estudos.service.VisitaAgendadaService;
-import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
-import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
-import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
-import br.edu.uepb.clinicalstudypb.usuarios.service.AutenticacaoService;
-import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.test.web.servlet.MockMvc;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -33,6 +11,38 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.MockMvc;
+
+import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.ConfiguracaoSeguranca;
+import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.RespostaErroSeguranca;
+import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
+import br.edu.uepb.clinicalstudypb.estudos.service.VisitaAgendadaService;
+import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
+import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
+import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
+import br.edu.uepb.clinicalstudypb.usuarios.service.AutenticacaoService;
+
+/**
+ * Testa os endpoints de agendamento e reagendamento,
+ * incluindo validações e permissões de acesso.
+ *
+ * @author Luiz
+ * @version 1.0
+ * @since 13/11/2026
+ */
 @WebMvcTest(VisitaAgendadaController.class)
 @Import({
         ConfiguracaoSeguranca.class,
@@ -53,6 +63,12 @@ class VisitaAgendadaControllerTest {
     private Usuario coordenador;
     private Usuario pesquisador;
 
+    // <-------PREPARACAO DOS TESTES------->
+    /**
+     * Prepara os dados necessários para executar os testes.
+     *
+     * @since 1.0
+     */
     @BeforeEach
     void prepararDados() {
         coordenador = criarUsuario(1L, PerfilUsuario.COORDENADOR);
@@ -64,6 +80,12 @@ class VisitaAgendadaControllerTest {
                 .thenReturn(Optional.of(pesquisador));
     }
 
+    /**
+     * Verifica se coordenadores podem agendar visitas.
+     *
+     * @throws Exception se ocorrer erro na execução da requisição de teste
+     * @since 1.0
+     */
     @Test
     void coordenadorPodeAgendar() throws Exception {
         mvc.perform(post("/estudos/10/participacoes/20/visitas")
@@ -85,6 +107,12 @@ class VisitaAgendadaControllerTest {
                 any(UsuarioAutenticado.class));
     }
 
+    /**
+     * Verifica se pesquisadores não podem agendar visitas.
+     *
+     * @throws Exception se ocorrer erro na execução da requisição de teste
+     * @since 1.0
+     */
     @Test
     void pesquisadorNaoPodeAgendar() throws Exception {
         mvc.perform(post("/estudos/10/participacoes/20/visitas")
@@ -103,6 +131,12 @@ class VisitaAgendadaControllerTest {
                 any(), any(), any(), any());
     }
 
+    /**
+     * Verifica se o agendamento exige autenticação.
+     *
+     * @throws Exception se ocorrer erro na execução da requisição de teste
+     * @since 1.0
+     */
     @Test
     void agendamentoSemLoginEhBloqueado() throws Exception {
         mvc.perform(post("/estudos/10/participacoes/20/visitas")
@@ -117,6 +151,12 @@ class VisitaAgendadaControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    /**
+     * Verifica se o agendamento exige um token CSRF válido.
+     *
+     * @throws Exception se ocorrer erro na execução da requisição de teste
+     * @since 1.0
+     */
     @Test
     void agendamentoSemCsrfEhBloqueado() throws Exception {
         mvc.perform(post("/estudos/10/participacoes/20/visitas")
@@ -131,6 +171,12 @@ class VisitaAgendadaControllerTest {
                 .andExpect(status().isForbidden());
     }
 
+    /**
+     * Verifica se coordenadores podem reagendar visitas.
+     *
+     * @throws Exception se ocorrer erro na execução da requisição de teste
+     * @since 1.0
+     */
     @Test
     void coordenadorPodeReagendar() throws Exception {
         mvc.perform(put("/estudos/10/participacoes/20/visitas/40")
@@ -153,6 +199,13 @@ class VisitaAgendadaControllerTest {
     }
 
 
+    /**
+     * Verifica se usuários sem permissão não podem reagendar visitas.
+     *
+     * @param perfil perfil do usuário utilizado no teste
+     * @throws Exception se ocorrer erro na execução da requisição de teste
+     * @since 1.0
+     */
     @ParameterizedTest
     @EnumSource(value = PerfilUsuario.class,
             names = {"PESQUISADOR", "ADMINISTRADOR", "PARTICIPANTE"})
@@ -177,6 +230,12 @@ class VisitaAgendadaControllerTest {
                 any(), any(), any(), any(), any());
     }
 
+    /**
+     * Verifica se o reagendamento exige autenticação.
+     *
+     * @throws Exception se ocorrer erro na execução da requisição de teste
+     * @since 1.0
+     */
     @Test
     void reagendamentoSemLoginEhBloqueado() throws Exception {
         mvc.perform(put("/estudos/10/participacoes/20/visitas/40")
@@ -193,6 +252,12 @@ class VisitaAgendadaControllerTest {
                 any(), any(), any(), any(), any());
     }
 
+    /**
+     * Verifica se o reagendamento exige um token CSRF válido.
+     *
+     * @throws Exception se ocorrer erro na execução da requisição de teste
+     * @since 1.0
+     */
     @Test
     void reagendamentoSemCsrfEhBloqueado() throws Exception {
         mvc.perform(put("/estudos/10/participacoes/20/visitas/40")
@@ -210,6 +275,13 @@ class VisitaAgendadaControllerTest {
     }
 
 
+    /**
+     * Verifica se identificadores inválidos retornam HTTP 400.
+     *
+     * @param valor valor inválido utilizado no teste
+     * @throws Exception se ocorrer erro na execução da requisição de teste
+     * @since 1.0
+     */
     @ParameterizedTest
     @ValueSource(strings = {"null", "0", "-1"})
     void agendamentoComVisitaPrevistaInvalidaRetorna400(String valor) throws Exception {
@@ -231,6 +303,12 @@ class VisitaAgendadaControllerTest {
                 any(), any(), any(), any());
     }
 
+    /**
+     * Verifica se uma data nula no agendamento retorna HTTP 400.
+     *
+     * @throws Exception se ocorrer erro na execução da requisição de teste
+     * @since 1.0
+     */
     @Test
     void agendamentoComDataHoraNulaRetorna400() throws Exception {
         mvc.perform(post("/estudos/10/participacoes/20/visitas")
@@ -249,6 +327,12 @@ class VisitaAgendadaControllerTest {
                 any(), any(), any(), any());
     }
 
+    /**
+     * Verifica se uma data nula no reagendamento retorna HTTP 400.
+     *
+     * @throws Exception se ocorrer erro na execução da requisição de teste
+     * @since 1.0
+     */
     @Test
     void reagendamentoComDataHoraNulaRetorna400() throws Exception {
         mvc.perform(put("/estudos/10/participacoes/20/visitas/40")
@@ -267,6 +351,14 @@ class VisitaAgendadaControllerTest {
     }
 
 
+    /**
+     * Cria um usuário com o identificador e perfil informados.
+     *
+     * @param id identificador do usuário
+     * @param perfil perfil do usuário
+     * @return usuário criado para o teste
+     * @since 1.0
+     */
     private Usuario criarUsuario(Long id, PerfilUsuario perfil) {
         Usuario usuario = new Usuario(
                 "Usuario " + id,

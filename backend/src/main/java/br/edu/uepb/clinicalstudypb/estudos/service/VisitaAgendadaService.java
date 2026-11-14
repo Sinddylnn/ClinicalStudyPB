@@ -1,29 +1,45 @@
 package br.edu.uepb.clinicalstudypb.estudos.service;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Objects;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
 import br.edu.uepb.clinicalstudypb.compartilhado.erro.ConflitoException;
 import br.edu.uepb.clinicalstudypb.compartilhado.erro.RegraNegocioException;
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
-import br.edu.uepb.clinicalstudypb.estudos.*;
+import br.edu.uepb.clinicalstudypb.estudos.EstadoEstudo;
+import br.edu.uepb.clinicalstudypb.estudos.Estudo;
+import br.edu.uepb.clinicalstudypb.estudos.Participacao;
+import br.edu.uepb.clinicalstudypb.estudos.SituacaoParticipacao;
+import br.edu.uepb.clinicalstudypb.estudos.SituacaoVisita;
+import br.edu.uepb.clinicalstudypb.estudos.VisitaAgendada;
+import br.edu.uepb.clinicalstudypb.estudos.VisitaPrevista;
+import br.edu.uepb.clinicalstudypb.estudos.api.ParticipacaoResumoResposta;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaCadastroEntrada;
+import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaReagendamentoEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaResposta;
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaPrevistaRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
-import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaReagendamentoEntrada;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Objects;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-import br.edu.uepb.clinicalstudypb.estudos.api.ParticipacaoResumoResposta;
-import java.util.List;
 
+/**
+ * Gerencia o agendamento e reagendamento de visitas
+ * e a consulta de participações dos estudos.
+ *
+ * @author Luiz
+ * @version 1.0
+ * @since 13/11/2026
+ */
 @Service
 public class VisitaAgendadaService {
 
@@ -33,6 +49,14 @@ public class VisitaAgendadaService {
     private final VisitaAgendadaRepository visitasAgendadas;
     private static final ZoneId ZONA = ZoneId.of("America/Recife");
 
+    /**
+    * Inicializa o serviço com os repositórios necessários.
+    *
+    * @param estudos repositório de estudos
+    * @param participacoes repositório de participações
+    * @param visitasPrevistas repositório de visitas previstas
+    * @param visitasAgendadas repositório de visitas agendadas
+    */
     public VisitaAgendadaService(
             EstudoRepository estudos,
             ParticipacaoRepository participacoes,
@@ -44,7 +68,21 @@ public class VisitaAgendadaService {
         this.visitasAgendadas = visitasAgendadas;
     }
 
-    // Agenda uma visita para um participante incluído
+    // <-------AGENDAMENTO DE VISITAS------->
+   /**
+    * Agenda uma visita prevista para um participante ativo do estudo.
+    *
+    * @param estudoId identificador do estudo
+    * @param participacaoId identificador da participação
+    * @param entrada dados para o agendamento
+    * @param autenticado usuário autenticado
+    * @return dados da visita agendada
+    * @throws AccessDeniedException se o usuário não for coordenador
+    * @throws ResponseStatusException se algum vínculo não for encontrado
+    * @throws RegraNegocioException se o estado, participação ou data for inválido
+    * @throws ConflitoException se já existir um agendamento pendente
+    * @since 1.0
+    */
     @Transactional
     public VisitaAgendadaResposta agendar(
             Long estudoId,
@@ -100,7 +138,7 @@ public class VisitaAgendadaService {
 
         // Impede agendamento pendente duplicado
         boolean duplicada = visitasAgendadas
-                .existsByParticipacao_IdAndVisitaPrevista_IdAndSituacao(
+                .existsByParticipacaoIdAndVisitaPrevistaIdAndSituacao(
                         participacaoId,
                         visitaPrevista.getId(),
                         SituacaoVisita.AGENDADA);
@@ -121,7 +159,21 @@ public class VisitaAgendadaService {
     }
 
 
-    // Altera a data de uma visita ainda agendada
+    // <-------REAGENDAMENTO DE VISITAS------->
+    /**
+     * Altera a data de uma visita que ainda está agendada.
+     *
+     * @param estudoId identificador do estudo
+     * @param participacaoId identificador da participação
+     * @param visitaAgendadaId identificador da visita agendada
+     * @param entrada dados do reagendamento
+     * @param autenticado usuário autenticado
+     * @return dados atualizados da visita
+     * @throws AccessDeniedException se o usuário não for coordenador
+     * @throws ResponseStatusException se algum vínculo não for encontrado
+     * @throws RegraNegocioException se o reagendamento não for permitido
+     * @since 1.0
+     */
     @Transactional
     public VisitaAgendadaResposta reagendar(
             Long estudoId,
@@ -180,6 +232,18 @@ public class VisitaAgendadaService {
     }
 
 
+    // <-------CONSULTA DE PARTICIPACOES------->
+    /**
+     * Lista as participações de um estudo vinculado ao coordenador,
+     * incluindo participantes ativos e retirados.
+     *
+     * @param estudoId identificador do estudo
+     * @param autenticado usuário autenticado
+     * @return lista de participações do estudo
+     * @throws AccessDeniedException se o usuário não for coordenador
+     * @throws ResponseStatusException se o estudo não for encontrado
+     * @since 1.0
+     */
     @Transactional
     public List<ParticipacaoResumoResposta> listarParticipacoes(
             Long estudoId, UsuarioAutenticado autenticado) {
@@ -196,7 +260,16 @@ public class VisitaAgendadaService {
                 .toList();
     }
 
-    // Confere o dia e o período permitido
+    // <-------VALIDACAO DA DATA------->
+    /**
+     * Verifica se a data está dentro do período permitido,
+     * considerando o fuso horário de Recife.
+     *
+     * @param estudo estudo com o período permitido
+     * @param dataHora data e hora da visita
+     * @throws RegraNegocioException se a data for nula ou inválida
+     * @since 1.0
+     */
     private void validarData(Estudo estudo, Instant dataHora) {
 
         if (dataHora == null) {

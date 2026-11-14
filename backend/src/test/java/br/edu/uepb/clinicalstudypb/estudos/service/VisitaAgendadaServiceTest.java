@@ -1,36 +1,61 @@
 package br.edu.uepb.clinicalstudypb.estudos.service;
 
-import br.edu.uepb.clinicalstudypb.compartilhado.erro.ConflitoException;
-import br.edu.uepb.clinicalstudypb.compartilhado.erro.RegraNegocioException;
-import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
-import br.edu.uepb.clinicalstudypb.estudos.*;
-import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaCadastroEntrada;
-import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaReagendamentoEntrada;
-import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaResposta;
-import br.edu.uepb.clinicalstudypb.estudos.repository.*;
-import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
-import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import br.edu.uepb.clinicalstudypb.compartilhado.erro.ConflitoException;
+import br.edu.uepb.clinicalstudypb.compartilhado.erro.RegraNegocioException;
+import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
+import br.edu.uepb.clinicalstudypb.estudos.EstadoEstudo;
+import br.edu.uepb.clinicalstudypb.estudos.Estudo;
+import br.edu.uepb.clinicalstudypb.estudos.Participacao;
+import br.edu.uepb.clinicalstudypb.estudos.Protocolo;
+import br.edu.uepb.clinicalstudypb.estudos.SituacaoVisita;
+import br.edu.uepb.clinicalstudypb.estudos.VisitaAgendada;
+import br.edu.uepb.clinicalstudypb.estudos.VisitaPrevista;
+import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaCadastroEntrada;
+import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaReagendamentoEntrada;
+import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaResposta;
+import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaPrevistaRepository;
+import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
+import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 
+/**
+ * Testa as regras de agendamento e reagendamento
+ * de visitas dos participantes.
+ *
+ * @author Luiz
+ * @version 1.0
+ * @since 13/11/2026
+ */
 @ExtendWith(MockitoExtension.class)
 class VisitaAgendadaServiceTest {
 
@@ -55,6 +80,12 @@ class VisitaAgendadaServiceTest {
     private UsuarioAutenticado coordenador;
     private Instant dataVisita;
 
+    // <-------PREPARACAO DOS TESTES------->
+    /**
+     * Prepara os dados necessários para executar os testes.
+     *
+     * @since 1.0
+     */
     @BeforeEach
     void prepararDados() {
         LocalDate hoje = LocalDate.now(ZoneId.of("America/Recife"));
@@ -94,6 +125,11 @@ class VisitaAgendadaServiceTest {
         dataVisita = Instant.now().plus(2, ChronoUnit.DAYS);
     }
 
+    /**
+     * Prepara os dados usados nos testes de consulta.
+     *
+     * @since 1.0
+     */
     private void prepararConsulta() {
         when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
                 .thenReturn(Optional.of(estudo));
@@ -105,6 +141,11 @@ class VisitaAgendadaServiceTest {
                 .thenReturn(Optional.of(visitaPrevista));
     }
 
+    /**
+     * Verifica o agendamento de uma visita para participante ativo.
+     *
+     * @since 1.0
+     */
     @Test
     void agendaVisitaParaParticipanteAtivo() {
         prepararConsulta();
@@ -125,12 +166,17 @@ class VisitaAgendadaServiceTest {
         verify(visitasAgendadas).save(any(VisitaAgendada.class));
     }
 
+    /**
+     * Verifica se um agendamento duplicado é impedido.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeAgendamentoDuplicado() {
         prepararConsulta();
 
         when(visitasAgendadas
-                .existsByParticipacao_IdAndVisitaPrevista_IdAndSituacao(
+                .existsByParticipacaoIdAndVisitaPrevistaIdAndSituacao(
                         20L, 30L, SituacaoVisita.AGENDADA))
                 .thenReturn(true);
 
@@ -145,6 +191,11 @@ class VisitaAgendadaServiceTest {
                 .save(any(VisitaAgendada.class));
     }
 
+    /**
+     * Verifica se participantes retirados não podem receber agendamentos.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeAgendamentoDeParticipanteRetirado() {
         participacao.registrarRetirada(
@@ -169,6 +220,11 @@ class VisitaAgendadaServiceTest {
                 .save(any(VisitaAgendada.class));
     }
 
+    /**
+     * Verifica se uma visita finalizada não pode ser reagendada.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeReagendarVisitaFinalizada() {
         VisitaAgendada visita = new VisitaAgendada(
@@ -198,6 +254,11 @@ class VisitaAgendadaServiceTest {
     }
 
 
+    /**
+     * Verifica se datas anteriores ao dia atual são rejeitadas.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeAgendamentoComDataPassada() {
         prepararConsulta();
@@ -215,6 +276,11 @@ class VisitaAgendadaServiceTest {
                 .save(any(VisitaAgendada.class));
     }
 
+    /**
+     * Verifica se a visita prevista deve pertencer ao estudo.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeAgendamentoDeVisitaDeOutroEstudo() {
         Estudo outroEstudo = mock(Estudo.class);
@@ -245,6 +311,11 @@ class VisitaAgendadaServiceTest {
                 .save(any(VisitaAgendada.class));
     }
 
+    /**
+     * Verifica se pesquisadores não podem agendar visitas.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeAgendamentoPorPesquisador() {
         Usuario usuario = new Usuario(
@@ -263,6 +334,11 @@ class VisitaAgendadaServiceTest {
     }
 
 
+    /**
+     * Verifica o reagendamento de uma visita pendente.
+     *
+     * @since 1.0
+     */
     @Test
     void reagendaVisitaComSucesso() {
         VisitaAgendada visita = new VisitaAgendada(
@@ -293,6 +369,11 @@ class VisitaAgendadaServiceTest {
     }
 
 
+    /**
+     * Verifica se o coordenador só pode agendar visitas em seus estudos.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeAgendamentoEmEstudoNaoVinculadoAoCoordenador() {
         when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
@@ -311,6 +392,11 @@ class VisitaAgendadaServiceTest {
                 .save(any(VisitaAgendada.class));
     }
 
+    /**
+     * Verifica se a participação deve pertencer ao estudo informado.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeAgendamentoDeParticipacaoDeOutroEstudo() {
         Participacao outraParticipacao = mock(Participacao.class);
@@ -341,6 +427,12 @@ class VisitaAgendadaServiceTest {
     }
 
 
+    /**
+     * Verifica se o estado do estudo permite agendamento.
+     *
+     * @param estado estado do estudo utilizado no teste
+     * @since 1.0
+     */
     @ParameterizedTest
     @EnumSource(value = EstadoEstudo.class,
             names = {"PLANEJAMENTO", "ENCERRADO"})
@@ -362,6 +454,12 @@ class VisitaAgendadaServiceTest {
         verifyNoInteractions(visitasAgendadas);
     }
 
+    /**
+     * Verifica se o estado do estudo permite reagendamento.
+     *
+     * @param estado estado do estudo utilizado no teste
+     * @since 1.0
+     */
     @ParameterizedTest
     @EnumSource(value = EstadoEstudo.class,
             names = {"PLANEJAMENTO", "ENCERRADO"})
@@ -384,6 +482,11 @@ class VisitaAgendadaServiceTest {
     }
 
 
+    /**
+     * Verifica se é possível agendar uma visita para o dia atual.
+     *
+     * @since 1.0
+     */
     @Test
     void permiteAgendamentoNoDiaAtual() {
         prepararConsulta();
@@ -407,6 +510,11 @@ class VisitaAgendadaServiceTest {
         verify(visitasAgendadas).save(any(VisitaAgendada.class));
     }
 
+    /**
+     * Verifica se uma visita não pode ser agendada para o dia anterior.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeAgendamentoNoDiaAnterior() {
         prepararConsulta();
@@ -430,6 +538,11 @@ class VisitaAgendadaServiceTest {
     }
 
 
+    /**
+     * Verifica se a data não pode anteceder o início do estudo.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeAgendamentoAntesDoInicioDoEstudo() {
         prepararConsulta();
@@ -450,6 +563,11 @@ class VisitaAgendadaServiceTest {
                 .save(any(VisitaAgendada.class));
     }
 
+    /**
+     * Verifica se a data não pode ultrapassar o fim do estudo.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeAgendamentoDepoisDoFimDoEstudo() {
         prepararConsulta();
@@ -471,6 +589,11 @@ class VisitaAgendadaServiceTest {
     }
 
 
+    /**
+     * Verifica se uma data inválida impede o reagendamento.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeReagendamentoComDataInvalida() {
         VisitaAgendada visita = new VisitaAgendada(
@@ -497,6 +620,11 @@ class VisitaAgendadaServiceTest {
                 .save(any(VisitaAgendada.class));
     }
 
+    /**
+     * Verifica se participantes retirados não podem ter visitas reagendadas.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeReagendamentoDeParticipanteRetirado() {
         Usuario responsavel = new Usuario(
@@ -530,6 +658,11 @@ class VisitaAgendadaServiceTest {
     }
 
 
+    /**
+     * Verifica se a visita reagendada pertence à participação informada.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeReagendamentoDeVisitaDeOutraParticipacao() {
         VisitaAgendada visita = mock(VisitaAgendada.class);
@@ -559,6 +692,11 @@ class VisitaAgendadaServiceTest {
                 .save(any(VisitaAgendada.class));
     }
 
+    /**
+     * Verifica se a visita reagendada pertence ao estudo informado.
+     *
+     * @since 1.0
+     */
     @Test
     void impedeReagendamentoDeVisitaDeOutroEstudo() {
         VisitaAgendada visita = mock(VisitaAgendada.class);
@@ -592,6 +730,11 @@ class VisitaAgendadaServiceTest {
     }
 
 
+    /**
+     * Verifica se dois participantes podem agendar a mesma visita prevista.
+     *
+     * @since 1.0
+     */
     @Test
     void permiteMesmaVisitaPrevistaParaDoisParticipantes() {
         prepararConsulta();
@@ -631,6 +774,11 @@ class VisitaAgendadaServiceTest {
     }
 
 
+    /**
+     * Verifica se o agendamento é permitido às 23h do último dia do estudo.
+     *
+     * @since 1.0
+     */
     @Test
     void permiteAgendamentoAs23hNoUltimoDiaDoEstudo() {
         prepararConsulta();
