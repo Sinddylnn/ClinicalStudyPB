@@ -21,6 +21,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import br.edu.uepb.clinicalstudypb.estudos.api.ParticipacaoResumoResposta;
+import java.util.List;
 
 @Service
 public class VisitaAgendadaService {
@@ -177,6 +179,22 @@ public class VisitaAgendadaService {
                 visitasAgendadas.save(visita));
     }
 
+
+    @Transactional
+    public List<ParticipacaoResumoResposta> listarParticipacoes(
+            Long estudoId, UsuarioAutenticado autenticado) {
+        if (autenticado == null || autenticado.getPerfil() != PerfilUsuario.COORDENADOR) {
+            throw new AccessDeniedException(
+                    "Apenas coordenadores podem consultar as participações.");
+        }
+        estudos.bloquearPorIdECoordenadorId(estudoId, autenticado.getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Estudo não encontrado."));
+        return participacoes.findByEstudoIdOrderByIdAsc(estudoId)
+                .stream()
+                .map(ParticipacaoResumoResposta::de)
+                .toList();
+    }
 
     // Confere o dia e o período permitido
     private void validarData(Estudo estudo, Instant dataHora) {
