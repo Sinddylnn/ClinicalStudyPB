@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +36,7 @@ import br.edu.uepb.clinicalstudypb.estudos.EstadoEstudo;
 import br.edu.uepb.clinicalstudypb.estudos.Estudo;
 import br.edu.uepb.clinicalstudypb.estudos.Participacao;
 import br.edu.uepb.clinicalstudypb.estudos.Protocolo;
+import br.edu.uepb.clinicalstudypb.estudos.SituacaoParticipacao;
 import br.edu.uepb.clinicalstudypb.estudos.SituacaoVisita;
 import br.edu.uepb.clinicalstudypb.estudos.VisitaAgendada;
 import br.edu.uepb.clinicalstudypb.estudos.VisitaPrevista;
@@ -230,8 +232,12 @@ class VisitaAgendadaServiceTest {
         VisitaAgendada visita = new VisitaAgendada(
                 participacao, visitaPrevista, dataVisita);
 
+        Usuario responsavel = new Usuario(
+                "Coordenador", "registro@teste.com",
+                "senha", PerfilUsuario.COORDENADOR);
+
         visita.registrarSituacao(
-                SituacaoVisita.REALIZADA, null, null, Instant.now());
+                SituacaoVisita.REALIZADA, null, responsavel, Instant.now());
 
         ReflectionTestUtils.setField(visita, "id", 40L);
 
@@ -805,6 +811,62 @@ class VisitaAgendadaServiceTest {
 
         verify(visitasAgendadas)
                 .save(any(VisitaAgendada.class));
-     }
+    }
 
+    // <-------CONSULTA DE PARTICIPACOES------->
+
+    /**
+     * Verifica se a listagem utiliza a consulta sem bloqueio pessimista.
+     *
+     * @since 1.0
+     */
+    @Test
+    void listaParticipacoesSemBloqueioPessimista() {
+        when(estudos.findByIdAndCoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(participacoes.findByEstudoIdOrderByIdAsc(10L))
+                .thenReturn(List.of(participacao));
+
+        var resposta = servico.listarParticipacoes(10L, coordenador);
+
+        assertThat(resposta).hasSize(1);
+        assertThat(resposta.get(0).id()).isEqualTo(20L);
+        assertThat(resposta.get(0).situacao()).isEqualTo(SituacaoParticipacao.ATIVA);
+
+        verify(estudos).findByIdAndCoordenadorId(10L, 1L);
+        verify(estudos, never()).bloquearPorIdECoordenadorId(10L, 1L);
+    }
+
+    /**
+     * Verifica se participações retiradas continuam listadas
+     * com a data de retirada.
+     *
+     * @since 1.0
+     */
+    @Test
+    void listaParticipacaoRetiradaComDataRetirada() {
+        Instant retiradaEm = Instant.now();
+        Usuario responsavel = new Usuario(
+                "Coordenador", "retirada@teste.com",
+                "senha", PerfilUsuario.COORDENADOR);
+
+        participacao.registrarRetirada(
+                "Retirada do estudo", retiradaEm, responsavel);
+
+        when(estudos.findByIdAndCoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(participacoes.findByEstudoIdOrderByIdAsc(10L))
+                .thenReturn(List.of(participacao));
+
+        var resposta = servico.listarParticipacoes(10L, coordenador);
+
+        assertThat(resposta).hasSize(1);
+        assertThat(resposta.get(0).id()).isEqualTo(20L);
+        assertThat(resposta.get(0).situacao()).isEqualTo(SituacaoParticipacao.RETIRADA);
+        assertThat(resposta.get(0).dataRetirada()).isEqualTo(retiradaEm);
+
+        verify(participacoes).findByEstudoIdOrderByIdAsc(10L);
+    }
 }

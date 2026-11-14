@@ -244,14 +244,14 @@ public class VisitaAgendadaService {
      * @throws ResponseStatusException se o estudo não for encontrado
      * @since 1.0
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public List<ParticipacaoResumoResposta> listarParticipacoes(
             Long estudoId, UsuarioAutenticado autenticado) {
         if (autenticado == null || autenticado.getPerfil() != PerfilUsuario.COORDENADOR) {
             throw new AccessDeniedException(
                     "Apenas coordenadores podem consultar as participações.");
         }
-        estudos.bloquearPorIdECoordenadorId(estudoId, autenticado.getId())
+        estudos.findByIdAndCoordenadorId(estudoId, autenticado.getId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Estudo não encontrado."));
         return participacoes.findByEstudoIdOrderByIdAsc(estudoId)
