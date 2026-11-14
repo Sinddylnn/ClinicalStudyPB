@@ -166,9 +166,9 @@ public class VisitaAgendadaService {
         }
 
         if (visita.getSituacao() != SituacaoVisita.AGENDADA) {
-            throw new ConflitoException(
-                    "VISITA_NAO_AGENDADA",
-                    "Apenas visitas agendadas podem ser reagendadas.");
+            throw new RegraNegocioException(
+                "TRANSICAO_VISITA_INVALIDA",
+                "Apenas visitas agendadas podem ser reagendadas.");
         }
 
         validarData(estudo, entrada.dataHora());

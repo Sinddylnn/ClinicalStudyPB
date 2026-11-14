@@ -18,6 +18,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -148,6 +151,121 @@ class VisitaAgendadaControllerTest {
                 any(VisitaAgendadaReagendamentoEntrada.class),
                 any(UsuarioAutenticado.class));
     }
+
+
+    @ParameterizedTest
+    @EnumSource(value = PerfilUsuario.class,
+            names = {"PESQUISADOR", "ADMINISTRADOR", "PARTICIPANTE"})
+    void usuarioSemPermissaoNaoPodeReagendar(PerfilUsuario perfil) throws Exception {
+        Usuario usuario = criarUsuario(50L, perfil);
+
+        when(usuarios.findById(50L))
+                .thenReturn(Optional.of(usuario));
+
+        mvc.perform(put("/estudos/10/participacoes/20/visitas/40")
+                        .with(user(new UsuarioAutenticado(usuario)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "dataHora": "2026-12-02T14:00:00Z"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+
+        verify(visitas, never()).reagendar(
+                any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void reagendamentoSemLoginEhBloqueado() throws Exception {
+        mvc.perform(put("/estudos/10/participacoes/20/visitas/40")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "dataHora": "2026-12-02T14:00:00Z"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+
+        verify(visitas, never()).reagendar(
+                any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void reagendamentoSemCsrfEhBloqueado() throws Exception {
+        mvc.perform(put("/estudos/10/participacoes/20/visitas/40")
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "dataHora": "2026-12-02T14:00:00Z"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+
+        verify(visitas, never()).reagendar(
+                any(), any(), any(), any(), any());
+    }
+
+
+    @ParameterizedTest
+    @ValueSource(strings = {"null", "0", "-1"})
+    void agendamentoComVisitaPrevistaInvalidaRetorna400(String valor) throws Exception {
+        String corpo = """
+                {
+                  "visitaPrevistaId": %s,
+                  "dataHora": "2026-12-01T14:00:00Z"
+                }
+                """.formatted(valor);
+
+        mvc.perform(post("/estudos/10/participacoes/20/visitas")
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo))
+                .andExpect(status().isBadRequest());
+
+        verify(visitas, never()).agendar(
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void agendamentoComDataHoraNulaRetorna400() throws Exception {
+        mvc.perform(post("/estudos/10/participacoes/20/visitas")
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "visitaPrevistaId": 30,
+                                  "dataHora": null
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+
+        verify(visitas, never()).agendar(
+                any(), any(), any(), any());
+    }
+
+    @Test
+    void reagendamentoComDataHoraNulaRetorna400() throws Exception {
+        mvc.perform(put("/estudos/10/participacoes/20/visitas/40")
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "dataHora": null
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+
+        verify(visitas, never()).reagendar(
+                any(), any(), any(), any(), any());
+    }
+
 
     private Usuario criarUsuario(Long id, PerfilUsuario perfil) {
         Usuario usuario = new Usuario(

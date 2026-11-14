@@ -190,7 +190,7 @@ class VisitaAgendadaServiceTest {
                 new VisitaAgendadaReagendamentoEntrada(
                         dataVisita.plus(1, ChronoUnit.DAYS)),
                 coordenador))
-                .isInstanceOf(ConflitoException.class)
+                .isInstanceOf(RegraNegocioException.class)
                 .hasMessageContaining("Apenas visitas agendadas");
 
         verify(visitasAgendadas, never())
