@@ -15,6 +15,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+// <-------CONSULTA DE PARTICIPACOES------->
+/**
+ * Disponibiliza a consulta de participações de um estudo.
+ *
+ * @author Luiz
+ * @version 1.0
+ * @since 13/11/2026
+ */
 @RestController
 @RequestMapping("/estudos/{estudoId}/participacoes")
 @Tag(name = "Participações")
@@ -23,10 +31,25 @@ public class ParticipacaoConsultaController {
 
     private final VisitaAgendadaService visitas;
 
+    // <-------INICIALIZACAO DO CONTROLLER------->
+    /**
+     * Inicializa o controller com o serviço de visitas.
+     *
+     * @param visitas serviço responsável pela consulta de participações
+     */
     public ParticipacaoConsultaController(VisitaAgendadaService visitas) {
         this.visitas = visitas;
     }
 
+    // <-------LISTAGEM DE PARTICIPACOES------->
+    /**
+     * Lista as participações de um estudo vinculado ao coordenador autenticado.
+     *
+     * @param estudoId identificador do estudo
+     * @param autenticado usuário autenticado
+     * @return participações ativas e retiradas do estudo
+     * @since 1.0
+     */
     @GetMapping
     @Operation(summary = "Listar participantes incluídos no estudo")
     @ApiResponses({

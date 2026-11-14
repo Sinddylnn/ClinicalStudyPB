@@ -25,7 +25,6 @@ import br.edu.uepb.clinicalstudypb.estudos.repository.AtividadePrevistaRepositor
 import br.edu.uepb.clinicalstudypb.recrutamento.repository.CandidatoRepository;
 import br.edu.uepb.clinicalstudypb.recrutamento.repository.AvaliacaoElegibilidadeRepository;
 import br.edu.uepb.clinicalstudypb.recrutamento.repository.RespostaElegibilidadeRepository;
-import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
