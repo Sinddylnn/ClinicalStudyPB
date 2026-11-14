@@ -1,4 +1,4 @@
-# Validação da sessão no aplicativo mobile task 3954)
+# Validação da sessão no aplicativo mobile (task 3954)
 
 ## Decisão
 
@@ -29,50 +29,35 @@ o token CSRF exigido nas operações de escrita e encerrar a sessão.
 O roteiro foi executado no celular Android físico. Os resultados
 observados foram:
 
-  -----------------------------------------------------------------------
-
-  Verificação                         Resultado no celular
-
-  ----------------------------------- -----------------------------------
-
-  Consulta antes do login             **Aprovado:** HTTP 401,
-  (`GET /auth/sessao`)                `AUTENTICACAO_NECESSARIA`
-
-  Login com credenciais inválidas     **Aprovado:** HTTP 401,
-                                      `CREDENCIAIS_INVALIDAS`
-
-  Login válido com perfil             **Aprovado:** HTTP 200
-  `PARTICIPANTE`                      
-
-  Requisição autenticada reutiliza o  **Aprovado:** `GET /auth/sessao`
-  cookie da sessão                    retornou HTTP 200 após o login
-
-  Escrita sem token CSRF              **Aprovado:** HTTP 403,
-                                      `CSRF_INVALIDO`
-
-  Escrita com token CSRF obtido em    **Aprovado quanto ao CSRF:** a
-  `GET /auth/csrf`                    resposta foi HTTP 403,
-                                      `ACESSO_NEGADO`, indicando que a
-                                      proteção CSRF foi aceita, mas a
-                                      operação `/estudos` foi recusada
-                                      por falta de permissão do perfil
-                                      participante
-
-  Logout                              **Aprovado:** `POST /auth/logout`
-                                      retornou HTTP 204
-
-  Consulta após logout                **Aprovado:** `GET /auth/sessao`
-                                      retornou HTTP 401
-
-  Sessão sobrevive ao fechamento e à  **Aprovado no cenário testado:**
-  reabertura do Expo Go               `GET /auth/sessao` retornou HTTP
-                                      200 após reabrir o aplicativo
-
-  -----------------------------------------------------------------------
+| Verificação | Resultado no celular |
+|---|---|
+| Consulta antes do login (`GET /auth/sessao`) | **Aprovado:** HTTP 401, `AUTENTICACAO_NECESSARIA` |
+| Login com credenciais inválidas | **Aprovado:** HTTP 401, `CREDENCIAIS_INVALIDAS` |
+| Login válido com perfil `PARTICIPANTE` | **Aprovado:** HTTP 200 |
+| Requisição autenticada reutiliza o cookie da sessão | **Aprovado:** `GET /auth/sessao` retornou HTTP 200 após o login |
+| Escrita sem token CSRF | **Aprovado:** HTTP 403, `CSRF_INVALIDO` |
+| Escrita com token CSRF obtido em `GET /auth/csrf` | **Aprovado quanto ao CSRF:** a resposta foi HTTP 403, `ACESSO_NEGADO`. A proteção CSRF aceitou o token, mas a autorização recusou a operação `/estudos` por falta de permissão do perfil participante |
+| Logout | **Aprovado:** `POST /auth/logout` retornou HTTP 204 |
+| Consulta após logout | **Aprovado:** `GET /auth/sessao` retornou HTTP 401 |
+| Sessão após fechar e reabrir o Expo Go | **Aprovado no cenário testado:** `GET /auth/sessao` retornou HTTP 200 após reabrir o aplicativo |
 
 **Emulador Android:** não testado. O endereço `10.0.2.2`
 foi documentado como configuração para testes futuros no emulador, mas
 não há evidência de execução desse cenário nesta validação.
+
+### Procedimento de persistência da sessão
+
+Para verificar se o cookie da sessão permanecia disponível após o fechamento do aplicativo, foi realizado um segundo teste, separado do roteiro completo:
+
+1. O roteiro de autenticação foi executado novamente, mantendo o login válido e a consulta autenticada.
+2. As etapas de logout e de consulta após logout foram temporariamente desativadas no roteiro, para que a sessão não fosse encerrada ao final da execução.
+3. Após a confirmação de HTTP 200 em `GET /auth/sessao`, o Expo Go foi encerrado pelo seletor de aplicativos recentes do Android, sem executar o logout.
+4. O aplicativo permaneceu fechado por aproximadamente 10 segundos antes de ser aberto novamente.
+5. Foi executada somente a consulta `GET /auth/sessao`, sem realizar um novo login.
+6. A API retornou HTTP 200 e os dados do participante autenticado.
+
+O resultado indica que, no cenário testado, o cookie `JSESSIONID` permaneceu disponível após o fechamento e a reabertura do Expo Go.
+
 
 ## Fluxo que o aplicativo deve seguir
 
@@ -96,6 +81,7 @@ O cookie de sessão deve ser gerenciado pela pilha de rede do React
 Native, utilizando `credentials: 'include'`. O token CSRF deve ser
 enviado separadamente no cabeçalho retornado pela API; ele não substitui
 o cookie de sessão.
+
 
 ## Endereços para execução
 

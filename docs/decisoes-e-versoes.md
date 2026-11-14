@@ -206,7 +206,7 @@ conforme a modelagem. A exclusão de uma visita aproveita a cascata já definida
 na V6, sem modificar migrações. As rotas e os cuidados para a integração da web
 estão em [Configuração do protocolo](api/configuracao-protocolo.md).
 
-### 04/11/2026 — Consultas e preservação da elegibilidade (AB#3396 e AB#3397)
+### 04/11/2026 - Consultas e preservação da elegibilidade (AB#3396 e AB#3397)
 
 O pesquisador responsável pode consultar candidatos e elegibilidade dos próprios
 estudos. Cadastro e avaliação continuam exclusivos do coordenador vinculado.
@@ -240,7 +240,7 @@ exemplos estão em [Consentimento e inclusão](api/consentimento-inclusao.md).
 
 A validação da autenticação no aplicativo React Native confirmou a compatibilidade com a sessão por cookie do Spring Security definida em D05. Não foi necessário introduzir autenticação alternativa baseada em tokens.
 
-Os testes foram realizados em um celular Android físico, utilizando Expo Go e a API executada no computador pela rede Wi-Fi local.
+Os testes foram realizados num celular Android físico, utilizando Expo Go e a API executada no computador pela rede Wi-Fi local.
 
 Foram verificados:
 - Login válido e inválido, com respostas HTTP 200 e 401, respectivamente.
@@ -253,6 +253,6 @@ O aplicativo deverá obter o token por `GET /auth/csrf`, enviá-lo no cabeçalho
 
 A validação foi realizada no dispositivo físico. O comportamento no emulador Android não foi verificado nesta etapa. A persistência observada não representa garantia após limpeza dos dados ou reinstalação do aplicativo.
 
-O resultado fornece a validação técnica necessária para a implementação do login, logout e controle de perfil participante nas tarefas T88 e T89.
+O resultado fornece a validação técnica necessária para a implementação do login, logout e controle de perfil participante nas próximas tasks de Horlan.
 
 O procedimento, os resultados detalhados e as capturas estão documentados em [Validação da sessão no aplicativo mobile](../releases/release2/evidencias/mobile/validacao-sessao.md).
