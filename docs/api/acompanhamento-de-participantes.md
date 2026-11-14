@@ -125,8 +125,9 @@ Requisição:
   "dataHora": "2026-11-16T13:30:00Z"
 }
 ```
-
 Só é permitido alterar a data enquanto a visita estiver `AGENDADA`. O ID da visita e a visita prevista permanecem os mesmos. Resposta `200` com a representação atualizada da visita.
+
+Caso a visita não esteja mais `AGENDADA`, a API retorna HTTP `400`, com o código `TRANSICAO_VISITA_INVALIDA`.
 
 ### Registrar situação da visita
 

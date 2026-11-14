@@ -2,6 +2,7 @@ package br.edu.uepb.clinicalstudypb.estudos.repository;
 
 import br.edu.uepb.clinicalstudypb.estudos.Participacao;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
 
 // <-------------------HISTÓRICO DE INCLUSÕES------------------->
 /**
@@ -29,4 +30,7 @@ public interface ParticipacaoRepository extends JpaRepository<Participacao, Long
     boolean existsByEstudoIdAndParticipanteId(Long estudoId, Long participanteId);
 
     boolean existsByParticipanteId(Long participanteId);
+
+    /** Lista as participações de um estudo, incluindo as retiradas. */
+    List<Participacao> findByEstudoIdOrderByIdAsc(Long estudoId);
 }

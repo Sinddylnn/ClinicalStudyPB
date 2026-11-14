@@ -2,6 +2,7 @@ package br.edu.uepb.clinicalstudypb.compartilhado.erro;
 
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ProtocoloRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.CriterioRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaPrevistaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
@@ -68,6 +69,9 @@ class TratadorErrosApiTest {
 
     @MockitoBean
     private RespostaElegibilidadeRepository respostaElegibilidadeRepository;
+
+    @MockitoBean
+    private VisitaAgendadaRepository visitaAgendadaRepository;
 
     @MockitoBean private ProtocoloRepository protocoloRepository;
     @MockitoBean private CriterioRepository criterioRepository;
