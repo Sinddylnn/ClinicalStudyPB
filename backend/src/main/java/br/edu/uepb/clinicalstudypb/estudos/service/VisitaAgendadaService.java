@@ -26,6 +26,7 @@ import br.edu.uepb.clinicalstudypb.estudos.api.ParticipacaoResumoResposta;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaCadastroEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaReagendamentoEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaResposta;
+import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaSituacaoEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
@@ -231,6 +232,117 @@ public class VisitaAgendadaService {
                 visitasAgendadas.save(visita));
     }
 
+
+    // <-------REGISTRO DE SITUACAO DE VISITAS------->
+    /**
+     * Registra a realização, ausência ou cancelamento de uma visita.
+     *
+     * @param estudoId identificador do estudo
+     * @param participacaoId identificador da participação
+     * @param visitaAgendadaId identificador da visita
+     * @param entrada situação e motivo do registro
+     * @param autenticado usuário autenticado
+     * @return dados atualizados da visita
+     * @throws AccessDeniedException se o usuário não for coordenador
+     * @throws ResponseStatusException se algum vínculo não for encontrado
+     * @throws RegraNegocioException se o registro não for permitido
+     * @since 1.0
+     */
+    @Transactional
+    public VisitaAgendadaResposta registrarSituacao(
+            Long estudoId,
+            Long participacaoId,
+            Long visitaAgendadaId,
+            VisitaAgendadaSituacaoEntrada entrada,
+            UsuarioAutenticado autenticado) {
+
+        if (autenticado == null
+                || autenticado.getPerfil() != PerfilUsuario.COORDENADOR) {
+            throw new AccessDeniedException(
+                    "Apenas coordenadores podem registrar visitas.");
+        }
+
+        Estudo estudo = estudos.bloquearPorIdECoordenadorId(
+                estudoId, autenticado.getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Estudo não encontrado."));
+
+        if (estudo.getEstado() != EstadoEstudo.RECRUTAMENTO
+                && estudo.getEstado() != EstadoEstudo.EXECUCAO) {
+            throw new RegraNegocioException(
+                    "ESTADO_ESTUDO_INVALIDO",
+                    "O estudo não permite registrar visitas.");
+        }
+
+        VisitaAgendada visita = visitasAgendadas.findById(visitaAgendadaId)
+                .filter(v -> Objects.equals(
+                        v.getParticipacao().getId(), participacaoId))
+                .filter(v -> Objects.equals(
+                        v.getParticipacao().getEstudo().getId(), estudoId))
+                .filter(v -> Objects.equals(
+                        v.getVisitaPrevista().getProtocolo()
+                                .getEstudo().getId(), estudoId))
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Visita agendada não encontrada."));
+
+        if (visita.getParticipacao().getSituacao()
+                != SituacaoParticipacao.ATIVA) {
+            throw new RegraNegocioException(
+                    "PARTICIPACAO_INVALIDA",
+                    "Não é possível registrar visita de participante retirado.");
+        }
+
+        if (visita.getSituacao() != SituacaoVisita.AGENDADA) {
+            throw new RegraNegocioException(
+                    "TRANSICAO_VISITA_INVALIDA",
+                    "Apenas visitas agendadas podem ser registradas.");
+        }
+
+        SituacaoVisita situacao = entrada.situacao();
+        String motivo = entrada.motivo();
+
+        if (situacao == null || situacao == SituacaoVisita.AGENDADA) {
+            throw new RegraNegocioException(
+                    "TRANSICAO_VISITA_INVALIDA",
+                    "Informe uma situação final válida.");
+        }
+
+        if (motivo != null && motivo.length() > 500) {
+            throw new RegraNegocioException(
+                    "VALIDACAO_INVALIDA",
+                    "O motivo deve ter no máximo 500 caracteres.");
+        }
+
+        if (situacao == SituacaoVisita.CANCELADA) {
+            if (motivo == null) {
+                throw new RegraNegocioException(
+                        "VALIDACAO_INVALIDA",
+                        "Informe o motivo do cancelamento.");
+            }
+        } else {
+            LocalDate diaVisita = visita.getDataHora()
+                    .atZone(ZONA).toLocalDate();
+
+            if (diaVisita.isAfter(LocalDate.now(ZONA))) {
+                throw new RegraNegocioException(
+                        "TRANSICAO_VISITA_INVALIDA",
+                        "A visita ainda não pode ser registrada.");
+            }
+
+            if (situacao == SituacaoVisita.REALIZADA && motivo != null) {
+                throw new RegraNegocioException(
+                        "VALIDACAO_INVALIDA",
+                        "Uma visita realizada não deve ter motivo.");
+            }
+        }
+
+        visita.registrarSituacao(
+                situacao, motivo, estudo.getCoordenador(), Instant.now());
+
+        return VisitaAgendadaResposta.de(
+                visitasAgendadas.save(visita));
+    }
 
 
     // <-------CONSULTA DE PARTICIPACOES------->

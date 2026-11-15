@@ -43,6 +43,7 @@ import br.edu.uepb.clinicalstudypb.estudos.VisitaPrevista;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaCadastroEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaReagendamentoEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaResposta;
+import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaSituacaoEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
@@ -114,6 +115,8 @@ class VisitaAgendadaServiceTest {
         ReflectionTestUtils.setField(estudo, "id", 10L);
         estudo.alterarEstado(EstadoEstudo.RECRUTAMENTO, null);
 
+        estudo.atribuirCoordenador(usuarioCoordenador);
+
         participacao = new Participacao(
                 estudo, participante, Instant.now());
         ReflectionTestUtils.setField(participacao, "id", 20L);
@@ -126,6 +129,386 @@ class VisitaAgendadaServiceTest {
 
         dataVisita = Instant.now().plus(2, ChronoUnit.DAYS);
     }
+
+    // <-------TESTES DE REGISTRO DE SITUACAO------->
+    /**
+     * Verifica o cancelamento de uma visita futura com motivo.
+     *
+     * @since 1.0
+     */
+    @Test
+    void cancelaVisitaFuturaComMotivo() {
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, dataVisita);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        when(visitasAgendadas.save(any(VisitaAgendada.class)))
+                .thenAnswer(chamada -> chamada.getArgument(0));
+
+        VisitaAgendadaSituacaoEntrada entrada =
+                new VisitaAgendadaSituacaoEntrada(
+                        SituacaoVisita.CANCELADA,
+                        "Participante solicitou cancelamento");
+
+        VisitaAgendadaResposta resposta = servico.registrarSituacao(
+                10L, 20L, 40L, entrada, coordenador);
+
+        assertThat(resposta.situacao())
+                .isEqualTo(SituacaoVisita.CANCELADA);
+        assertThat(resposta.motivo())
+                .isEqualTo("Participante solicitou cancelamento");
+        assertThat(resposta.registradoPorId()).isEqualTo(1L);
+        assertThat(resposta.registradoEm()).isNotNull();
+
+        verify(visitasAgendadas).save(visita);
+    }
+
+
+    /**
+     * Impede o cancelamento de uma visita sem motivo.
+     *
+     * @since 1.0
+     */
+    @Test
+    void impedeCancelamentoSemMotivo() {
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, dataVisita);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        VisitaAgendadaSituacaoEntrada entrada =
+                new VisitaAgendadaSituacaoEntrada(
+                        SituacaoVisita.CANCELADA, null);
+
+        assertThatThrownBy(() -> servico.registrarSituacao(
+                10L, 20L, 40L, entrada, coordenador))
+                .isInstanceOfSatisfying(
+                        RegraNegocioException.class, erro -> {
+                            assertThat(erro.getCodigo())
+                                    .isEqualTo("VALIDACAO_INVALIDA");
+                            assertThat(erro)
+                                    .hasMessageContaining("Informe o motivo");
+                        });
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+
+    /**
+     * Verifica o registro de uma visita realizada
+     * após a data agendada.
+     *
+     * @since 1.0
+     */
+    @Test
+    void registraVisitaRealizadaAposDataAgendada() {
+        Instant ontem = Instant.now().minus(1, ChronoUnit.DAYS);
+
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, ontem);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        when(visitasAgendadas.save(any(VisitaAgendada.class)))
+                .thenAnswer(chamada -> chamada.getArgument(0));
+
+        VisitaAgendadaSituacaoEntrada entrada =
+                new VisitaAgendadaSituacaoEntrada(
+                        SituacaoVisita.REALIZADA, null);
+
+        VisitaAgendadaResposta resposta = servico.registrarSituacao(
+                10L, 20L, 40L, entrada, coordenador);
+
+        assertThat(resposta.situacao())
+                .isEqualTo(SituacaoVisita.REALIZADA);
+        assertThat(resposta.motivo()).isNull();
+        assertThat(resposta.registradoPorId()).isEqualTo(1L);
+        assertThat(resposta.registradoEm()).isNotNull();
+
+        verify(visitasAgendadas).save(visita);
+    }
+
+
+    /**
+     * Impede registrar uma visita futura como realizada.
+     *
+     * @since 1.0
+     */
+    @Test
+    void impedeRegistrarVisitaFuturaComoRealizada() {
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, dataVisita);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        VisitaAgendadaSituacaoEntrada entrada =
+                new VisitaAgendadaSituacaoEntrada(
+                        SituacaoVisita.REALIZADA, null);
+
+        assertThatThrownBy(() -> servico.registrarSituacao(
+                10L, 20L, 40L, entrada, coordenador))
+                .isInstanceOfSatisfying(
+                        RegraNegocioException.class, erro -> {
+                            assertThat(erro.getCodigo())
+                                    .isEqualTo("TRANSICAO_VISITA_INVALIDA");
+                            assertThat(erro)
+                                    .hasMessageContaining(
+                                            "ainda não pode ser registrada");
+                        });
+
+        assertThat(visita.getSituacao())
+                .isEqualTo(SituacaoVisita.AGENDADA);
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+
+    /**
+     * Verifica o registro de ausência sem motivo.
+     *
+     * @since 1.0
+     */
+    @Test
+    void registraAusenciaSemMotivo() {
+        Instant ontem = Instant.now().minus(1, ChronoUnit.DAYS);
+
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, ontem);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        when(visitasAgendadas.save(any(VisitaAgendada.class)))
+                .thenAnswer(chamada -> chamada.getArgument(0));
+
+        VisitaAgendadaSituacaoEntrada entrada =
+                new VisitaAgendadaSituacaoEntrada(
+                        SituacaoVisita.AUSENTE, null);
+
+        VisitaAgendadaResposta resposta = servico.registrarSituacao(
+                10L, 20L, 40L, entrada, coordenador);
+
+        assertThat(resposta.situacao())
+                .isEqualTo(SituacaoVisita.AUSENTE);
+        assertThat(resposta.motivo()).isNull();
+        assertThat(resposta.registradoPorId()).isEqualTo(1L);
+        assertThat(resposta.registradoEm()).isNotNull();
+
+        verify(visitasAgendadas).save(visita);
+    }
+
+
+    /**
+     * Impede registrar ausência antes do dia agendado.
+     *
+     * @since 1.0
+     */
+    @Test
+    void impedeRegistrarAusenciaAntesDaDataAgendada() {
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, dataVisita);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        VisitaAgendadaSituacaoEntrada entrada =
+                new VisitaAgendadaSituacaoEntrada(
+                        SituacaoVisita.AUSENTE, null);
+
+        assertThatThrownBy(() -> servico.registrarSituacao(
+                10L, 20L, 40L, entrada, coordenador))
+                .isInstanceOfSatisfying(
+                        RegraNegocioException.class, erro -> {
+                            assertThat(erro.getCodigo())
+                                    .isEqualTo("TRANSICAO_VISITA_INVALIDA");
+                        });
+
+        assertThat(visita.getSituacao())
+                .isEqualTo(SituacaoVisita.AGENDADA);
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+
+    /**
+     * Impede registrar novamente uma visita finalizada.
+     *
+     * @since 1.0
+     */
+    @Test
+    void impedeRegistrarSituacaoDeVisitaFinalizada() {
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, dataVisita);
+
+        visita.registrarSituacao(
+                SituacaoVisita.CANCELADA,
+                "Cancelamento solicitado",
+                estudo.getCoordenador(),
+                Instant.now());
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        VisitaAgendadaSituacaoEntrada entrada =
+                new VisitaAgendadaSituacaoEntrada(
+                        SituacaoVisita.REALIZADA, null);
+
+        assertThatThrownBy(() -> servico.registrarSituacao(
+                10L, 20L, 40L, entrada, coordenador))
+                .isInstanceOfSatisfying(
+                        RegraNegocioException.class, erro -> {
+                            assertThat(erro.getCodigo())
+                                    .isEqualTo("TRANSICAO_VISITA_INVALIDA");
+                        });
+
+        assertThat(visita.getSituacao())
+                .isEqualTo(SituacaoVisita.CANCELADA);
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
+
+    /**
+     * Impede o registro de visitas por usuários sem permissão.
+     *
+     * @param perfil perfil sem permissão de registro
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @EnumSource(value = PerfilUsuario.class,
+            names = {"ADMINISTRADOR", "PESQUISADOR", "PARTICIPANTE"})
+    void perfilSemPermissaoNaoPodeRegistrarSituacao(
+            PerfilUsuario perfil) {
+
+        Usuario usuario = new Usuario(
+                "Sem permissao", "sem.permissao@teste.com",
+                "senha", perfil);
+
+        UsuarioAutenticado autenticado = new UsuarioAutenticado(usuario);
+
+        VisitaAgendadaSituacaoEntrada entrada =
+                new VisitaAgendadaSituacaoEntrada(
+                        SituacaoVisita.CANCELADA,
+                        "Cancelamento solicitado");
+
+        assertThatThrownBy(() -> servico.registrarSituacao(
+                10L, 20L, 40L, entrada, autenticado))
+                .isInstanceOf(AccessDeniedException.class);
+
+        verifyNoInteractions(estudos, visitasAgendadas);
+    }
+
+
+    /**
+     * Impede registrar visitas de estudos de outro coordenador.
+     *
+     * @since 1.0
+     */
+    @Test
+    void coordenadorDeOutroEstudoNaoPodeRegistrarSituacao() {
+        VisitaAgendadaSituacaoEntrada entrada =
+                new VisitaAgendadaSituacaoEntrada(
+                        SituacaoVisita.CANCELADA,
+                        "Cancelamento solicitado");
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servico.registrarSituacao(
+                10L, 20L, 40L, entrada, coordenador))
+                .isInstanceOfSatisfying(
+                        ResponseStatusException.class, erro -> {
+                            assertThat(erro.getStatusCode().value())
+                                    .isEqualTo(404);
+                        });
+
+        verify(estudos).bloquearPorIdECoordenadorId(10L, 1L);
+        verifyNoInteractions(visitasAgendadas);
+    }
+
+
+    /**
+     * Impede registrar uma visita de outra participação.
+     *
+     * @since 1.0
+     */
+    @Test
+    void impedeRegistrarVisitaDeOutraParticipacao() {
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, dataVisita);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        VisitaAgendadaSituacaoEntrada entrada =
+                new VisitaAgendadaSituacaoEntrada(
+                        SituacaoVisita.CANCELADA,
+                        "Cancelamento solicitado");
+
+        assertThatThrownBy(() -> servico.registrarSituacao(
+                10L, 99L, 40L, entrada, coordenador))
+                .isInstanceOfSatisfying(
+                        ResponseStatusException.class, erro -> {
+                            assertThat(erro.getStatusCode().value())
+                                    .isEqualTo(404);
+                        });
+
+        assertThat(visita.getSituacao())
+                .isEqualTo(SituacaoVisita.AGENDADA);
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+    }
+
 
     /**
      * Prepara os dados usados nos testes de consulta.
