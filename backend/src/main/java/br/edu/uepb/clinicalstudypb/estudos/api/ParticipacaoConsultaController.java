@@ -41,9 +41,11 @@ public class ParticipacaoConsultaController {
         this.visitas = visitas;
     }
 
+
     // <-------LISTAGEM DE PARTICIPACOES------->
     /**
-     * Lista as participações de um estudo vinculado ao coordenador autenticado.
+     * Lista as participações de um estudo vinculado ao coordenador
+     * ou ao pesquisador responsável, incluindo ativos e retirados.
      *
      * @param estudoId identificador do estudo
      * @param autenticado usuário autenticado
@@ -51,7 +53,11 @@ public class ParticipacaoConsultaController {
      * @since 1.0
      */
     @GetMapping
-    @Operation(summary = "Listar participantes incluídos no estudo")
+    @Operation(
+            summary = "Listar participantes incluídos no estudo",
+            description = "Permite a consulta pelo coordenador vinculado "
+                    + "ou pelo pesquisador responsável pelo estudo."
+    )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Participações listadas com sucesso"),
         @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),

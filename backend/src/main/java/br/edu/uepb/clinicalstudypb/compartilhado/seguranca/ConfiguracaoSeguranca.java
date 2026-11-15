@@ -293,7 +293,8 @@ public SecurityFilterChain securityFilterChain(
                             HttpMethod.GET,
                             "/estudos/*/participacoes"
                     )
-                    .hasRole("COORDENADOR")
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+
                     // Agendamento e reagendamento de visitas
                     .requestMatchers(
                             HttpMethod.POST,

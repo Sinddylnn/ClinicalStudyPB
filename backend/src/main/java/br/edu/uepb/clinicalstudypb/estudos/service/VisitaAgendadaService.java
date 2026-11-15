@@ -232,33 +232,49 @@ public class VisitaAgendadaService {
     }
 
 
+
     // <-------CONSULTA DE PARTICIPACOES------->
     /**
-     * Lista as participações de um estudo vinculado ao coordenador,
-     * incluindo participantes ativos e retirados.
+     * Lista as participações de um estudo vinculado ao coordenador
+     * ou ao pesquisador responsável, incluindo ativos e retirados.
      *
      * @param estudoId identificador do estudo
      * @param autenticado usuário autenticado
      * @return lista de participações do estudo
-     * @throws AccessDeniedException se o usuário não for coordenador
+     * @throws AccessDeniedException se o perfil não tiver permissão
      * @throws ResponseStatusException se o estudo não for encontrado
      * @since 1.0
      */
     @Transactional(readOnly = true)
     public List<ParticipacaoResumoResposta> listarParticipacoes(
             Long estudoId, UsuarioAutenticado autenticado) {
-        if (autenticado == null || autenticado.getPerfil() != PerfilUsuario.COORDENADOR) {
+
+        if (autenticado == null) {
             throw new AccessDeniedException(
-                    "Apenas coordenadores podem consultar as participações.");
+                    "Usuário sem permissão para consultar participações.");
         }
-        estudos.findByIdAndCoordenadorId(estudoId, autenticado.getId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Estudo não encontrado."));
+
+        var consulta = switch (autenticado.getPerfil()) {
+            case PESQUISADOR -> estudos.findByIdAndResponsavelId(
+                    estudoId, autenticado.getId());
+
+            case COORDENADOR -> estudos.findByIdAndCoordenadorId(
+                    estudoId, autenticado.getId());
+
+            default -> throw new AccessDeniedException(
+                    "Apenas pesquisadores responsáveis e coordenadores "
+                            + "podem consultar as participações.");
+        };
+
+        consulta.orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Estudo não encontrado."));
+
         return participacoes.findByEstudoIdOrderByIdAsc(estudoId)
                 .stream()
                 .map(ParticipacaoResumoResposta::de)
                 .toList();
     }
+
 
     // <-------VALIDACAO DA DATA------->
     /**

@@ -83,9 +83,49 @@ class ParticipacaoConsultaControllerTest {
                 eq(10L), any(UsuarioAutenticado.class));
     }
 
+
+    /**
+     * Verifica se o pesquisador pode consultar as participações
+     * do estudo pelo qual é responsável.
+     *
+     * @since 1.0
+     */
+    @Test
+    void pesquisadorPodeListarParticipacoes() throws Exception {
+        Usuario pesquisador = criarUsuario(2L, PerfilUsuario.PESQUISADOR);
+
+        when(usuarios.findById(2L))
+                .thenReturn(Optional.of(pesquisador));
+
+        ParticipacaoResumoResposta resposta = new ParticipacaoResumoResposta(
+                120L,
+                45L,
+                "Ana Participante",
+                Instant.parse("2026-11-10T12:00:00Z"),
+                SituacaoParticipacao.ATIVA,
+                null
+        );
+
+        when(visitas.listarParticipacoes(
+                eq(10L), any(UsuarioAutenticado.class)))
+                .thenReturn(List.of(resposta));
+
+        mvc.perform(get("/estudos/10/participacoes")
+                        .with(user(new UsuarioAutenticado(pesquisador))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(120))
+                .andExpect(jsonPath("$[0].participanteNome")
+                        .value("Ana Participante"))
+                .andExpect(jsonPath("$[0].situacao").value("ATIVA"));
+
+        verify(visitas).listarParticipacoes(
+                eq(10L), any(UsuarioAutenticado.class));
+    }
+
+
     @ParameterizedTest
     @EnumSource(value = PerfilUsuario.class,
-            names = {"PESQUISADOR", "ADMINISTRADOR", "PARTICIPANTE"})
+            names = {"ADMINISTRADOR", "PARTICIPANTE"})
     void perfilSemPermissaoNaoPodeListar(PerfilUsuario perfil) throws Exception {
         Usuario usuario = criarUsuario(50L, perfil);
 

@@ -869,4 +869,90 @@ class VisitaAgendadaServiceTest {
 
         verify(participacoes).findByEstudoIdOrderByIdAsc(10L);
     }
+
+
+    /**
+     * Verifica se o pesquisador responsável pode listar
+     * as participações do seu estudo.
+     *
+     * @since 1.0
+     */
+    @Test
+    void pesquisadorResponsavelPodeListarParticipacoes() {
+        Usuario usuario = new Usuario(
+                "Pesquisador", "pesquisador@teste.com",
+                "senha", PerfilUsuario.PESQUISADOR);
+        ReflectionTestUtils.setField(usuario, "id", 2L);
+
+        UsuarioAutenticado pesquisador = new UsuarioAutenticado(usuario);
+
+        when(estudos.findByIdAndResponsavelId(10L, 2L))
+                .thenReturn(Optional.of(estudo));
+
+        when(participacoes.findByEstudoIdOrderByIdAsc(10L))
+                .thenReturn(List.of(participacao));
+
+        var resposta = servico.listarParticipacoes(10L, pesquisador);
+
+        assertThat(resposta).hasSize(1);
+        assertThat(resposta.get(0).id()).isEqualTo(20L);
+
+        verify(estudos).findByIdAndResponsavelId(10L, 2L);
+        verify(estudos, never()).bloquearPorIdEResponsavelId(10L, 2L);
+    }
+
+    /**
+     * Verifica se o pesquisador não pode consultar
+     * participações de outro estudo.
+     *
+     * @since 1.0
+     */
+    @Test
+    void pesquisadorDeOutroEstudoRecebe404() {
+        Usuario usuario = new Usuario(
+                "Pesquisador", "outro.pesquisador@teste.com",
+                "senha", PerfilUsuario.PESQUISADOR);
+        ReflectionTestUtils.setField(usuario, "id", 99L);
+
+        UsuarioAutenticado pesquisador = new UsuarioAutenticado(usuario);
+
+        when(estudos.findByIdAndResponsavelId(10L, 99L))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                servico.listarParticipacoes(10L, pesquisador))
+                .isInstanceOfSatisfying(
+                        ResponseStatusException.class,
+                        erro -> assertThat(erro.getStatusCode().value())
+                                .isEqualTo(404));
+
+        verifyNoInteractions(participacoes);
+    }
+
+    /**
+     * Verifica se administradores e participantes não podem
+     * consultar a listagem.
+     *
+     * @param perfil perfil sem permissão de consulta
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @EnumSource(value = PerfilUsuario.class,
+            names = {"ADMINISTRADOR", "PARTICIPANTE"})
+    void perfilSemPermissaoNaoPodeListarParticipacoes(
+            PerfilUsuario perfil) {
+
+        Usuario usuario = new Usuario(
+                "Sem permissao", "sem.permissao@teste.com",
+                "senha", perfil);
+
+        UsuarioAutenticado autenticado = new UsuarioAutenticado(usuario);
+
+        assertThatThrownBy(() ->
+                servico.listarParticipacoes(10L, autenticado))
+                .isInstanceOf(AccessDeniedException.class);
+
+        verifyNoInteractions(estudos, participacoes);
+    }
+
 }
