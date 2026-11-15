@@ -1,6 +1,7 @@
 # Contrato preliminar de acompanhamento de participantes
 
-> **Estado: rascunho para alinhamento no início da Sprint 3.** Os caminhos e códigos abaixo são propostas de contrato. As operações ainda precisam ser confrontadas com as rotas que forem implementadas no backend. Este documento não significa que essas rotas já estejam disponíveis no Swagger.
+> **Estado: rascunho para alinhamento no início da Sprint 3.** Os caminhos e códigos abaixo são propostas de contrato. As operações ainda precisam ser confrontadas com as rotas que forem implementadas no backend. 
+> Este documento não significa que essas rotas já estejam disponíveis no Swagger.
 
 Este documento descreve a proposta de API para agendamento e registro de visitas, resultados de avaliações, retirada de participantes e consultas do participante no aplicativo. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
 
@@ -10,7 +11,8 @@ A modelagem do domínio está em [RF12 a RF18](../modelagem/RF12-RF18.md). A doc
 
 As rotas protegidas exigem uma sessão autenticada pelo cookie `JSESSIONID`. Operações que alteram dados também exigem o token CSRF no cabeçalho `X-CSRF-TOKEN`.
 
-Datas e horários são enviados como `Instant` no formato ISO 8601, preferencialmente em UTC, por exemplo, `2026-11-15T13:30:00Z`.
+Datas e horários são enviados como `Instant` no formato ISO 8601, preferencialmente em UTC, por exemplo, `2026-11-15T13:30:00Z`.  
+O backend compara o dia da visita no fuso `America/Recife`. Por isso, uma visita às 22h locais do último dia do estudo é aceita, mesmo sendo o dia seguinte em UTC.
 
 As respostas de erro usam o formato já adotado pelo projeto:
 
@@ -34,8 +36,10 @@ As respostas de erro usam o formato já adotado pelo projeto:
 | Registrar e editar resultados | Coordenador vinculado ao estudo |
 | Registrar retirada | Coordenador vinculado ao estudo |
 | Consultar histórico completo | Pesquisador responsável ou coordenador vinculado |
+| Listar as participações do estudo | Pesquisador responsável ou coordenador vinculado, somente leitura |
 | Consultar estudos, próximas visitas e comparecimento no app | Participante autenticado, apenas para seus próprios dados |
 | Acessar estas operações | Administrador, não permitido |
+
 
 Uma sessão ausente ou inválida retorna `401`. Perfil sem permissão ou falha de CSRF retorna `403`. Recursos inexistentes ou fora do vínculo autorizado retornam `404`, evitando revelar dados de outro estudo ou participante.
 
@@ -55,11 +59,20 @@ Todos os caminhos de gestão começam com `/estudos/{estudoId}`. As operações 
 | POST | `/estudos/{estudoId}/participacoes/{participacaoId}/retirada` | Registrar retirada | `200` |
 | GET | `/estudos/{estudoId}/participacoes/{participacaoId}/historico` | Consultar histórico completo | `200` |
 
+Já implementadas na task 3964 (PR #41): `GET /estudos/{estudoId}/participacoes`, `POST .../visitas` e `PUT .../visitas/{visitaAgendadaId}`. As demais continuam propostas.
+
 ### Listar participantes incluídos
 
 `GET /estudos/{estudoId}/participacoes`
 
-Retorna as participações do estudo, inclusive as retiradas, para que a tela possa identificá-las e impedir novos agendamentos.
+Leitura permitida ao coordenador vinculado e ao pesquisador responsável pelo estudo. A lista vem em ordem crescente de `id`, e `dataRetirada` aparece só nas participações retiradas. Um estudo sem participações devolve `[]`.
+
+| HTTP | Situação |
+|---|---|
+| `200` | Lista devolvida |
+| `401` | Sessão ausente ou inválida |
+| `403` | Perfil sem permissão (administrador ou participante) |
+| `404` | Estudo inexistente ou fora do vínculo (outro pesquisador ou coordenador não vinculado) |
 
 Exemplo de resposta:
 
@@ -96,7 +109,16 @@ Requisição:
 }
 ```
 
-A visita prevista deve pertencer ao protocolo do estudo. A data deve estar dentro do período do estudo e não pode ser anterior ao dia atual. Só pode existir uma visita `AGENDADA` para a mesma participação e visita prevista.
+Somente o coordenador vinculado agenda; o pesquisador responsável recebe `403`. O estudo deve estar em `RECRUTAMENTO` ou `EXECUCAO` e a participação deve estar `ATIVA`.
+
+| HTTP | Código | Situação |
+|---|---|---|
+| `400` | `ESTADO_ESTUDO_INVALIDO` | Estudo fora de recrutamento ou execução |
+| `400` | `PARTICIPACAO_INVALIDA` | Participação retirada |
+| `400` | `DATA_VISITA_INVALIDA` | Data anterior a hoje ou fora do período do estudo |
+| `400` | `VALIDACAO_INVALIDA` | `visitaPrevistaId` ou `dataHora` ausentes, ou `visitaPrevistaId` não positivo |
+| `404` | `RECURSO_NAO_ENCONTRADO` | Estudo, participação ou visita prevista fora do vínculo |
+| `409` | `VISITA_JA_AGENDADA` | Já existe visita `AGENDADA` para essa participação e visita prevista |
 
 Resposta `201`:
 
@@ -127,6 +149,20 @@ Requisição:
 ```
 
 Só é permitido alterar a data enquanto a visita estiver `AGENDADA`. O ID da visita e a visita prevista permanecem os mesmos. Resposta `200` com a representação atualizada da visita.
+
+Somente o coordenador vinculado reagenda, com o estudo em `RECRUTAMENTO` ou `EXECUCAO` e a participação `ATIVA`. A nova data segue as mesmas regras do agendamento. O pesquisador responsável recebe `403`.
+
+| HTTP | Código | Situação |
+|---|---|---|
+| `400` | `TRANSICAO_VISITA_INVALIDA` | Visita não está `AGENDADA` |
+| `400` | `ESTADO_ESTUDO_INVALIDO` | Estudo fora de recrutamento ou execução |
+| `400` | `PARTICIPACAO_INVALIDA` | Participação retirada |
+| `400` | `DATA_VISITA_INVALIDA` | Data anterior a hoje ou fora do período do estudo |
+| `400` | `VALIDACAO_INVALIDA` | `dataHora` ausente |
+| `404` | `RECURSO_NAO_ENCONTRADO` | Estudo fora do vínculo, ou visita que não pertence à participação ou ao estudo da rota |
+
+Não há `409` no reagendamento.
+
 
 ### Registrar situação da visita
 
@@ -159,6 +195,7 @@ Requisição para cancelar:
 ```
 
 A visita precisa estar `AGENDADA`. `REALIZADA` e `AUSENTE` só podem ser registradas a partir do dia agendado. `CANCELADA` pode ser registrada antes desse dia e exige motivo. Resposta `200` com a visita atualizada e os dados de quem registrou e quando.
+
 
 ### Corrigir situação da visita
 
@@ -363,12 +400,14 @@ O app não recebe resultados, motivos, justificativas ou dados de quem registrou
 
 Os códigos abaixo são sugestões para o rascunho. Antes da conclusão da sprint, devem ser comparados com os códigos lançados pelos serviços e pelo tratador global de erros.
 
+Os códigos do RF12 (`ESTADO_ESTUDO_INVALIDO`, `PARTICIPACAO_INVALIDA`, `DATA_VISITA_INVALIDA`, `TRANSICAO_VISITA_INVALIDA` e `VISITA_JA_AGENDADA`) foram conferidos com a implementação na task 3964. Os demais seguem como sugestão.
+
 | HTTP | Código sugerido | Situação |
 |---|---|---|
 | `400` | `PARTICIPACAO_INVALIDA` | Participação retirada ou incompatível com a operação |
 | `400` | `ESTADO_ESTUDO_INVALIDO` | Estudo fora de recrutamento ou execução para escrita |
 | `400` | `DATA_VISITA_INVALIDA` | Data anterior ao permitido ou fora do período do estudo |
-| `400` | `TRANSICAO_VISITA_INVALIDA` | Visita não está agendada ou a data não permite o registro |
+| `400` | `TRANSICAO_VISITA_INVALIDA` | Visita não está `AGENDADA` (registro ou reagendamento) ou a data não permite o registro |
 | `400` | `CORRECAO_BLOQUEADA` | Correção vedada por resultados, retirada ou encerramento |
 | `400` | `RESULTADO_INVALIDO` | Visita não realizada ou atividade não pertence à visita prevista |
 | `400` | `VALIDACAO_INVALIDA` | Campo obrigatório vazio ou acima do limite |
@@ -377,6 +416,7 @@ Os códigos abaixo são sugestões para o rascunho. Antes da conclusão da sprin
 | `404` | `RECURSO_NAO_ENCONTRADO` | Estudo, participação ou visita não existe ou está fora do vínculo autorizado |
 | `409` | `VISITA_JA_AGENDADA` | Já existe visita agendada para a mesma participação e visita prevista |
 | `409` | `RESULTADO_JA_REGISTRADO` | Já existe resultado para a mesma visita e atividade |
+
 
 ## Conferência no fim da sprint
 
