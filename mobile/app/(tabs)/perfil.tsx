@@ -46,7 +46,7 @@ export default function PerfilScreen() {
           <View style={[styles.card, styles.listCard]}>
             {/* RF19/RF20 entram na Sprint 4: por enquanto a linha não navega */}
             <View style={styles.row}>
-              <Ionicons name="document-text-outline" size={18} color="#475569" />
+              <Ionicons name="document-text-outline" size={18} color="#0E5F67" />
               <Text style={styles.rowText}>Minhas solicitações</Text>
               <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
             </View>
@@ -113,12 +113,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FDE9D9',
+    backgroundColor: '#FFFBEB',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
-  avatarText: { fontSize: 15, fontWeight: 'bold', color: '#C2410C' },
+  avatarText: { fontSize: 15, fontWeight: 'bold', color: '#B45309' },
   userInfo: { flex: 1 },
   userName: { fontSize: 15, fontWeight: 'bold', color: '#1E293B' },
   userEmail: { fontSize: 12, color: '#64748B', marginTop: 1 },
@@ -128,9 +128,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 8,
     borderRadius: 999,
-    backgroundColor: '#E0F2F3',
+    backgroundColor: '#FFFBEB',
   },
-  badgeText: { fontSize: 11, fontWeight: '600', color: '#0E7C86' },
+  badgeText: { fontSize: 11, fontWeight: '600', color: '#B45309' },
 
   listCard: { flexDirection: 'column', alignItems: 'stretch', padding: 0 },
   row: {
@@ -152,8 +152,8 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#BFE3E6',
-    backgroundColor: '#E8F5F6',
+    borderColor: '#B6E0E3',
+    backgroundColor: '#E6F4F5',
   },
   infoText: { flex: 1, fontSize: 12, lineHeight: 17, color: '#0E5F67' },
 });
