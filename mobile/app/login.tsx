@@ -21,6 +21,12 @@ const MSG_CAMPOS = 'Informe o e-mail e a senha.';
 const MSG_EMAIL = 'Informe um e-mail válido.';
 const MSG_FALHA = 'Não foi possível entrar agora. Tente novamente.';
 
+// Medidas do Figma (frame de 390 px de largura). Ajuste aqui se precisar.
+const HERO_ALTURA = 431; // altura do bloco escuro
+const HERO_SOBREPOSICAO = 40; // quanto o bloco claro sobe sobre o escuro
+const HERO_RODAPE = 124; // distância entre os chips e o fim do bloco escuro
+const ESPACO_TITULO_CHIPS = 18; // espaço entre o título e os chips
+
 export default function LoginScreen() {
   const { entrar } = useAuth();
   const insets = useSafeAreaInsets();
@@ -63,9 +69,10 @@ export default function LoginScreen() {
         bounces={false}
       >
         {/* Bloco escuro */}
-        <View style={[styles.hero, { paddingTop: insets.top + 20 }]}>
+        <View style={[styles.hero, { paddingTop: insets.top + 32 }]}>
           <View style={styles.ringTop} />
-          <View style={styles.ringBottom} />
+          <View style={styles.ringBottomLeft} />
+          <View style={styles.ringBottomRight} />
 
           <View style={styles.logoContainer}>
             <View style={styles.logoIconBox}>
@@ -78,11 +85,11 @@ export default function LoginScreen() {
             <Text style={styles.headline}>Acompanhe sua participação nos estudos.</Text>
             <View style={styles.chips}>
               <View style={styles.chip}>
-                <Ionicons name="calendar-outline" size={12} color="#E2E8F0" />
+                <Ionicons name="calendar-outline" size={12} color="#5EEAD4" />
                 <Text style={styles.chipText}>Próximas visitas</Text>
               </View>
               <View style={styles.chip}>
-                <Ionicons name="flask-outline" size={12} color="#E2E8F0" />
+                <Ionicons name="flask-outline" size={12} color="#5EEAD4" />
                 <Text style={styles.chipText}>Estudos e solicitações</Text>
               </View>
             </View>
@@ -185,9 +192,9 @@ const styles = StyleSheet.create({
 
   hero: {
     flex: 1,
-    minHeight: 260,
+    minHeight: HERO_ALTURA,
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: HERO_RODAPE,
     justifyContent: 'space-between',
     overflow: 'hidden',
   },
@@ -199,17 +206,27 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: 110,
     borderWidth: 28,
-    borderColor: 'rgba(14, 124, 134, 0.18)',
+    borderColor: '#5EEAD414',
   },
-  ringBottom: {
+  ringBottomLeft: {
     position: 'absolute',
-    bottom: -60,
+    bottom: -19,
     left: -50,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 22,
-    borderColor: 'rgba(14, 124, 134, 0.14)',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 16,
+    borderColor: '#5EEAD414',
+  },
+  ringBottomRight: {
+    position: 'absolute',
+    bottom: -30,
+    right: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 20,
+    borderColor: '#5EEAD414',
   },
   logoContainer: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' },
   logoIconBox: {
@@ -226,8 +243,7 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginTop: 32,
-    marginBottom: 16,
+    marginBottom: ESPACO_TITULO_CHIPS,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
@@ -238,12 +254,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: 'rgba(94, 234, 212, 0.25)',
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   chipText: { fontSize: 11, color: '#E2E8F0' },
 
   sheet: {
+    marginTop: -HERO_SOBREPOSICAO,
     backgroundColor: '#F8FAFC',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
