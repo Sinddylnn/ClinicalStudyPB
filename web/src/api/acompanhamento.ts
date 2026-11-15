@@ -3,7 +3,8 @@ import { servicoAcompanhamentoSimulado } from './acompanhamentoSimulado';
 
 // <-------------------CONTRATO DE ACOMPANHAMENTO------------------->
 // Segue o rascunho do contrato da Sprint 3 (docs/api/acompanhamento-de-participantes.md).
-// As rotas ainda não existem no backend: conferir campos e códigos quando forem implementadas.
+// A lista de participações, o agendamento e o reagendamento seguem o PR #41 (task 3964). As demais
+// rotas ainda não existem no backend: conferir campos e códigos quando forem implementadas.
 
 /** Situação da participação no estudo: a retirada é irreversível (RF16). */
 export type SituacaoParticipacao = 'ATIVA' | 'RETIRADA';
@@ -111,9 +112,40 @@ export type ResultadoEntrada = {
   texto: string;
 };
 
+// <-------------------AGENDAMENTO DE VISITAS (RF12)------------------->
+/** Dados enviados em POST .../visitas (VisitaAgendadaCadastroEntrada do backend). */
+export type VisitaAgendadaEntrada = {
+  visitaPrevistaId: number;
+  /** Data e hora da visita (Instant, ISO 8601 em UTC). */
+  dataHora: string;
+};
+
+/** Dados enviados em PUT .../visitas/{visitaAgendadaId} (VisitaAgendadaReagendamentoEntrada do backend). */
+export type ReagendamentoEntrada = {
+  dataHora: string;
+};
+
+/**
+ * Visita agendada como a tela de agendamento lista. Só usa campos que o item do histórico também traz:
+ * o histórico do contrato não devolve o visitaPrevistaId, que o reagendamento não precisa.
+ */
+export type ResumoVisitaAgendada = Pick<VisitaAgendada, 'id' | 'nomeVisita' | 'dataHora' | 'situacao'>;
+
 export type ServicoAcompanhamento = {
   listarParticipacoes(estudoId: number): Promise<Participacao[]>;
   obterHistorico(estudoId: number, participacaoId: number): Promise<HistoricoParticipacao>;
+  /**
+   * Visitas agendadas da participação, em qualquer situação. Não há rota própria no backend: vem do
+   * histórico (RF15). Só deve ser chamada quando recursosAcompanhamento.historico for verdadeiro.
+   */
+  listarVisitas(estudoId: number, participacaoId: number): Promise<ResumoVisitaAgendada[]>;
+  agendarVisita(estudoId: number, participacaoId: number, entrada: VisitaAgendadaEntrada): Promise<VisitaAgendada>;
+  reagendarVisita(
+    estudoId: number,
+    participacaoId: number,
+    visitaAgendadaId: number,
+    entrada: ReagendamentoEntrada,
+  ): Promise<VisitaAgendada>;
   /**
    * GET .../visitas/{visitaAgendadaId}. Não está no rascunho do contrato: a tela de resultados
    * precisa da visita prevista e da situação. Pedido ao backend junto com a listagem abaixo.
@@ -136,6 +168,9 @@ export type ServicoAcompanhamento = {
   ): Promise<ResultadoAtividade>;
 };
 
+const caminhoVisitas = (estudoId: number, participacaoId: number) =>
+  `/estudos/${estudoId}/participacoes/${participacaoId}/visitas`;
+
 const caminhoVisita = (estudoId: number, participacaoId: number, visitaAgendadaId: number) =>
   `/estudos/${estudoId}/participacoes/${participacaoId}/visitas/${visitaAgendadaId}`;
 
@@ -151,6 +186,28 @@ export const servicoAcompanhamentoApi: ServicoAcompanhamento = {
     const { data } = await api.get<HistoricoParticipacao>(
       `/estudos/${estudoId}/participacoes/${participacaoId}/historico`,
     );
+    return data;
+  },
+  // Deriva as visitas dos itens do histórico, já que o PR #41 não tem rota que as liste
+  async listarVisitas(estudoId, participacaoId) {
+    const { itens } = await servicoAcompanhamentoApi.obterHistorico(estudoId, participacaoId);
+    return itens
+      .filter((item): item is ItemHistoricoVisita => item.tipo === 'VISITA')
+      .map((v) => ({ id: v.visitaAgendadaId, nomeVisita: v.nomeVisita, dataHora: v.dataHora, situacao: v.situacao }));
+  },
+  // Só o coordenador vinculado, com CSRF (PR #41). 400 VALIDACAO_INVALIDA (errosCampos visitaPrevistaId
+  // ou dataHora), ESTADO_ESTUDO_INVALIDO (estudo fora de recrutamento ou execução), PARTICIPACAO_INVALIDA
+  // (participação retirada) e DATA_VISITA_INVALIDA (dia anterior a hoje ou fora do período, no fuso de
+  // Recife); 404 RECURSO_NAO_ENCONTRADO (estudo, participação ou visita prevista fora do vínculo);
+  // 409 VISITA_JA_AGENDADA (já existe visita AGENDADA para a mesma participação e visita prevista)
+  async agendarVisita(estudoId, participacaoId, entrada) {
+    const { data } = await api.post<VisitaAgendada>(caminhoVisitas(estudoId, participacaoId), entrada);
+    return data;
+  },
+  // Mesmos códigos do agendamento, sem o 409, e 400 TRANSICAO_VISITA_INVALIDA para visita que não está
+  // AGENDADA. A visita continua com o mesmo ID e a mesma visita prevista
+  async reagendarVisita(estudoId, participacaoId, visitaAgendadaId, entrada) {
+    const { data } = await api.put<VisitaAgendada>(caminhoVisita(estudoId, participacaoId, visitaAgendadaId), entrada);
     return data;
   },
   async obterVisita(estudoId, participacaoId, visitaAgendadaId) {
@@ -185,5 +242,22 @@ export const servicoAcompanhamentoApi: ServicoAcompanhamento = {
 // <-------------------SERVIÇO EM USO------------------->
 // O simulado é o padrão enquanto as rotas não existem no backend.
 // Para usar o backend, definir VITE_ACOMPANHAMENTO_API=real no web/.env
-export const servicoAcompanhamento: ServicoAcompanhamento =
-  import.meta.env.VITE_ACOMPANHAMENTO_API === 'real' ? servicoAcompanhamentoApi : servicoAcompanhamentoSimulado;
+const usaBackend = import.meta.env.VITE_ACOMPANHAMENTO_API === 'real';
+
+export const servicoAcompanhamento: ServicoAcompanhamento = usaBackend
+  ? servicoAcompanhamentoApi
+  : servicoAcompanhamentoSimulado;
+
+/** O que a web pode pedir ao backend sem receber 403 de uma rota que ainda não existe ou nega o perfil. */
+export type RecursosAcompanhamento = {
+  /** GET .../historico (RF15): ainda não existe no backend. */
+  historico: boolean;
+  /** GET /estudos/{estudoId}/participacoes pelo pesquisador responsável: o PR #41 ainda nega. */
+  listaPesquisador: boolean;
+};
+
+// No modo real, ficam desligados até o backend entregar o histórico e liberar o pesquisador na lista;
+// sem isso, a web chamaria uma rota negada e iria para "Acesso negado"
+export const recursosAcompanhamento: RecursosAcompanhamento = usaBackend
+  ? { historico: false, listaPesquisador: false }
+  : { historico: true, listaPesquisador: true };

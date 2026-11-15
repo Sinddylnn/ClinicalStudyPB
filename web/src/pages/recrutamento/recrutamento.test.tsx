@@ -87,6 +87,15 @@ function renderizar(servicos: ReturnType<typeof criarServicos>, caminho = '/estu
 }
 
 describe('Recrutamento', () => {
+  it('leva o coordenador aos participantes incluídos', async () => {
+    renderizar(criarServicos());
+
+    expect(await screen.findByRole('link', { name: 'Participantes incluídos' })).toHaveAttribute(
+      'href',
+      '/estudos/3/participacoes',
+    );
+  });
+
   it('mostra o estudo, os indicadores e os candidatos com a próxima etapa', async () => {
     renderizar(criarServicos());
 

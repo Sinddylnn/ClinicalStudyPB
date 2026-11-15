@@ -198,6 +198,100 @@
   color: var(--texto-suave);
 }
 
+/* <-------------------PARTICIPANTES INCLUÍDOS-------------------> */
+.participantes-tabela-cartao {
+  padding: 0;
+  overflow: hidden;
+}
+
+.participantes-tabela th:nth-child(1) {
+  width: 30%;
+}
+
+.participantes-tabela th:nth-child(2) {
+  width: 22%;
+}
+
+.participantes-tabela th:nth-child(3) {
+  width: 14%;
+}
+
+.participantes-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* <-------------------AGENDAMENTO DE VISITAS-------------------> */
+.agendamento-formulario,
+.agendamento-visitas {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+}
+
+.agendamento-formulario header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--borda-cartao);
+}
+
+.agendamento-formulario h2,
+.agendamento-visitas h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.agendamento-formulario header p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.agendamento-data-hora {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.agendamento-visitas ul {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agendamento-visitas li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--borda-cartao);
+}
+
+.agendamento-visita-dados {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 180px;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.agendamento-visita-nome {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
 /* <-------------------ETIQUETAS-------------------> */
 .etiqueta-visita-agendada {
   color: #1d4ed8;
@@ -232,5 +326,9 @@
 
   .historico-marcador {
     display: none;
+  }
+
+  .agendamento-data-hora {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

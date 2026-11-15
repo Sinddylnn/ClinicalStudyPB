@@ -16,6 +16,7 @@ import {
   type ServicoProtocolo,
   type TipoCriterio,
 } from '../../api/protocolo';
+import { recursosAcompanhamento, type RecursosAcompanhamento } from '../../api/acompanhamento';
 import type { UsuarioSessao } from '../../api/autenticacao';
 import { useUsuarioLogado } from '../../autenticacao/contextoAutenticacao';
 import BarraNavegacao from '../../components/BarraNavegacao';
@@ -41,6 +42,8 @@ type Props = {
   servicoEstudos?: ServicoEstudos;
   servicoProtocolo?: ServicoProtocolo;
   servicoCoordenadores?: ServicoCoordenadores;
+  /** O que o backend de acompanhamento já oferece; quando omitido, vem do serviço em uso. */
+  recursos?: RecursosAcompanhamento;
   /** Quem está na sessão; quando omitido, vem do contexto de autenticação. */
   usuario?: UsuarioSessao;
 };
@@ -116,6 +119,7 @@ export default function ProtocoloEstudo({
   servicoEstudos: estudosProp = servicoEstudos,
   servicoProtocolo: protocoloProp = servicoProtocolo,
   servicoCoordenadores: coordenadoresProp = servicoCoordenadores,
+  recursos = recursosAcompanhamento,
   usuario: usuarioProp,
 }: Props) {
   const usuario = useUsuarioLogado(usuarioProp);
@@ -346,6 +350,13 @@ export default function ProtocoloEstudo({
                   Responsável: você • {formatarPeriodo(estudo.dataInicio, estudo.dataFim)} •{' '}
                   {estudo.limiteParticipantes} vagas
                 </p>
+                {/* Depois do planejamento já pode haver incluídos; o pesquisador só consulta (RF12 e RF15) */}
+                {estudo.estado !== 'PLANEJAMENTO' && recursos.listaPesquisador && (
+                  <Link className="protocolo-link-participantes" to={`/estudos/${estudo.id}/participacoes`}>
+                    <Icone nome="usuarios" tamanho={16} />
+                    Participantes incluídos
+                  </Link>
+                )}
               </div>
               {/* Só as mudanças permitidas a partir do estado atual; a web orienta e o backend decide (seção 4.5) */}
               {acoes.length > 0 && (

@@ -160,4 +160,21 @@ describe('AppRoutes', () => {
     renderizarEm('/estudos/1');
     expect(await screen.findByRole('heading', { name: 'Acesso negado' })).toBeInTheDocument();
   });
+
+  it('abre os participantes incluídos para o coordenador', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue({ ...PAULA, perfil: 'COORDENADOR' });
+    renderizarEm('/estudos/1/participacoes');
+    expect(await screen.findByRole('heading', { name: 'Participantes incluídos' })).toBeInTheDocument();
+  });
+
+  it('abre o agendamento de visitas para o coordenador', async () => {
+    vi.mocked(sessaoAtual).mockResolvedValue({ ...PAULA, perfil: 'COORDENADOR' });
+    renderizarEm('/estudos/1/participacoes/1/visitas');
+    expect(await screen.findByRole('heading', { name: 'Agendamento de visitas' })).toBeInTheDocument();
+  });
+
+  it('leva a pesquisadora ao acesso negado no agendamento de visitas', async () => {
+    renderizarEm('/estudos/1/participacoes/1/visitas');
+    expect(await screen.findByRole('heading', { name: 'Acesso negado' })).toBeInTheDocument();
+  });
 });

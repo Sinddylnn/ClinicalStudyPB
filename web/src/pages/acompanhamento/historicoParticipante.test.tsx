@@ -2,7 +2,12 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import type { HistoricoParticipacao, Participacao, ServicoAcompanhamento } from '../../api/acompanhamento';
+import type {
+  HistoricoParticipacao,
+  Participacao,
+  RecursosAcompanhamento,
+  ServicoAcompanhamento,
+} from '../../api/acompanhamento';
 import type { UsuarioSessao } from '../../api/autenticacao';
 import { ErroRequisicao } from '../../api/erros';
 import type { Estudo, ServicoEstudos } from '../../api/estudos';
@@ -102,6 +107,9 @@ function criarServicos(parcial: Partial<ServicoAcompanhamento> = {}, estudos: Es
   const acompanhamento: ServicoAcompanhamento = {
     listarParticipacoes: vi.fn().mockResolvedValue([PARTICIPACAO]),
     obterHistorico: vi.fn().mockResolvedValue(HISTORICO),
+    listarVisitas: vi.fn(),
+    agendarVisita: vi.fn(),
+    reagendarVisita: vi.fn(),
     obterVisita: vi.fn(),
     listarResultados: vi.fn(),
     registrarResultado: vi.fn(),
@@ -115,6 +123,7 @@ function renderizar(
   servicos: ReturnType<typeof criarServicos>,
   usuario = COORDENADOR,
   caminho: string | { pathname: string; state: unknown } = '/estudos/3/participacoes/1/historico',
+  recursos: RecursosAcompanhamento = { historico: true, listaPesquisador: true },
 ) {
   render(
     <MemoryRouter initialEntries={[caminho]}>
@@ -125,10 +134,12 @@ function renderizar(
             <HistoricoParticipante
               servicoEstudos={servicos.estudos}
               servicoAcompanhamento={servicos.acompanhamento}
+              recursos={recursos}
               usuario={usuario}
             />
           }
         />
+        <Route path="/estudos/:id/participacoes" element={<h1>Participantes</h1>} />
         <Route path="/estudos/:id/recrutamento" element={<h1>Recrutamento</h1>} />
         <Route path="/estudos/:id" element={<h1>Protocolo</h1>} />
       </Routes>
@@ -148,6 +159,7 @@ describe('HistoricoParticipante', () => {
 
     expect(await screen.findByRole('heading', { name: 'Histórico do participante' })).toBeInTheDocument();
     expect(await screen.findByText('Incluído em 28/10/2026 às 10:00')).toBeInTheDocument();
+    expect(screen.getByText('Ativo')).toHaveClass('etiqueta-participacao-ativa');
     expect(servicos.acompanhamento.obterHistorico).toHaveBeenCalledWith(3, 1);
     expect(screen.getByText('Os resultados das avaliações são fictícios.')).toBeInTheDocument();
 
@@ -229,16 +241,61 @@ describe('HistoricoParticipante', () => {
     expect(await screen.findByRole('heading', { name: 'Nenhuma visita agendada' })).toBeInTheDocument();
   });
 
-  it('volta para o recrutamento (coordenador) ou para o estudo (pesquisador)', async () => {
+  it('o coordenador volta para a lista de participantes', async () => {
     renderizar(criarServicos());
     await userEvent.click(await screen.findByRole('link', { name: 'Voltar' }));
-    expect(screen.getByRole('heading', { name: 'Recrutamento' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Participantes' })).toBeInTheDocument();
   });
 
-  it('o pesquisador volta para a tela do estudo', async () => {
+  it('o pesquisador também volta para a lista de participantes', async () => {
     renderizar(criarServicos(), PESQUISADORA);
     await userEvent.click(await screen.findByRole('link', { name: 'Voltar' }));
+    expect(screen.getByRole('heading', { name: 'Participantes' })).toBeInTheDocument();
+  });
+
+  it('na trilha, o estudo leva ao recrutamento (coordenador) e "Participantes" vem antes do participante', async () => {
+    renderizar(criarServicos());
+    await screen.findByRole('link', { name: 'Voltar' });
+
+    const trilha = within(screen.getByRole('navigation', { name: 'Trilha de navegação' }));
+    expect(trilha.getByRole('link', { name: 'Acompanhamento de hábitos' })).toHaveAttribute(
+      'href',
+      '/estudos/3/recrutamento',
+    );
+    expect(trilha.getByRole('link', { name: 'Participantes' })).toHaveAttribute('href', '/estudos/3/participacoes');
+    expect(screen.getByRole('navigation', { name: 'Trilha de navegação' })).toHaveTextContent(
+      'InícioEstudosAcompanhamento de hábitosParticipantesMaria SouzaHistórico',
+    );
+  });
+
+  it('na trilha do pesquisador, o estudo leva à tela do estudo e "Participantes" aparece', async () => {
+    renderizar(criarServicos(), PESQUISADORA);
+    await screen.findByRole('link', { name: 'Voltar' });
+
+    const trilha = within(screen.getByRole('navigation', { name: 'Trilha de navegação' }));
+    expect(trilha.getByRole('link', { name: 'Acompanhamento de hábitos' })).toHaveAttribute('href', '/estudos/3');
+    expect(trilha.getByRole('link', { name: 'Participantes' })).toHaveAttribute('href', '/estudos/3/participacoes');
+  });
+
+  it('sem a lista liberada ao pesquisador, ele volta para o estudo e a trilha não mostra "Participantes"', async () => {
+    const semLista = { historico: true, listaPesquisador: false };
+    renderizar(criarServicos(), PESQUISADORA, undefined, semLista);
+    await screen.findByRole('link', { name: 'Voltar' });
+
+    const trilha = within(screen.getByRole('navigation', { name: 'Trilha de navegação' }));
+    expect(trilha.queryByRole('link', { name: 'Participantes' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('link', { name: 'Voltar' }));
     expect(screen.getByRole('heading', { name: 'Protocolo' })).toBeInTheDocument();
+  });
+
+  it('sem a lista liberada ao pesquisador, o coordenador continua indo para a lista', async () => {
+    renderizar(criarServicos(), COORDENADOR, undefined, { historico: true, listaPesquisador: false });
+    await screen.findByRole('link', { name: 'Voltar' });
+
+    const trilha = within(screen.getByRole('navigation', { name: 'Trilha de navegação' }));
+    expect(trilha.getByRole('link', { name: 'Participantes' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('link', { name: 'Voltar' }));
+    expect(screen.getByRole('heading', { name: 'Participantes' })).toBeInTheDocument();
   });
 
   it('trata estudo fora da sessão como não encontrado, sem pedir o histórico', async () => {

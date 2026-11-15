@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
@@ -94,6 +94,9 @@ function criarServicos({ acompanhamento = {}, estudos = [ESTUDO], resultados = [
   const servicoAcompanhamento: ServicoAcompanhamento = {
     listarParticipacoes: vi.fn().mockResolvedValue([PARTICIPACAO]),
     obterHistorico: vi.fn(),
+    listarVisitas: vi.fn(),
+    agendarVisita: vi.fn(),
+    reagendarVisita: vi.fn(),
     obterVisita: vi.fn().mockResolvedValue(VISITA),
     listarResultados: vi.fn().mockResolvedValue(resultados),
     registrarResultado: vi.fn().mockImplementation((_e, _p, _v, entrada) => Promise.resolve({ ...SALVO, ...entrada })),
@@ -128,6 +131,30 @@ const campo = (nome: string) => screen.getByLabelText<HTMLTextAreaElement>(nome)
 const salvar = () => userEvent.click(screen.getByRole('button', { name: 'Salvar resultados' }));
 
 describe('ResultadosVisita', () => {
+  it('na trilha, mostra o estudo (recrutamento), "Participantes" e o participante, que leva ao histórico', async () => {
+    renderizar(criarServicos());
+    await screen.findByLabelText('Registrar hábitos de sono.');
+
+    const nav = screen.getByRole('navigation', { name: 'Trilha de navegação' });
+    const trilha = within(nav);
+    expect(trilha.getByRole('link', { name: 'Acompanhamento de hábitos' })).toHaveAttribute(
+      'href',
+      '/estudos/3/recrutamento',
+    );
+    expect(trilha.getByRole('link', { name: 'Participantes' })).toHaveAttribute('href', '/estudos/3/participacoes');
+    expect(trilha.getByRole('link', { name: 'Maria Souza' })).toHaveAttribute(
+      'href',
+      '/estudos/3/participacoes/1/historico',
+    );
+    expect(nav).toHaveTextContent('InícioEstudosAcompanhamento de hábitosParticipantesMaria SouzaResultados');
+  });
+
+  it('o "Cancelar" continua voltando para o histórico', async () => {
+    renderizar(criarServicos());
+    await userEvent.click(await screen.findByRole('link', { name: 'Cancelar' }));
+    expect(await screen.findByRole('heading', { name: /^Histórico/ })).toBeInTheDocument();
+  });
+
   it('mostra a visita, o aviso de dados fictícios e um campo por atividade prevista', async () => {
     renderizar(criarServicos({ resultados: [SALVO] }));
 

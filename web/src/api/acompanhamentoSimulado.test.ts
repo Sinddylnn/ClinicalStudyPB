@@ -203,3 +203,285 @@ describe('servicoAcompanhamentoSimulado', () => {
     await expect(tentar(4, 2, 9, 3)).rejects.toMatchObject({ codigo: 'ESTADO_ESTUDO_INVALIDO' });
   });
 });
+
+// <-------------------AGENDAMENTO E REAGENDAMENTO (RF12)------------------->
+// Hoje é 14/11/2026 às 12:00 em Recife. Cada erro é conferido sozinho: os dados de cada caso só
+// quebram a regra testada, sem depender da ordem exata das conferências
+describe('servicoAcompanhamentoSimulado: agendamento de visitas', () => {
+  const AGORA = '2026-11-14T15:00:00Z';
+
+  // Estados e períodos que cada caso precisa; a lista é a mesma referência para mudar o estado no teste
+  function criarEstudosAgendamento(): { servico: ServicoEstudos; estudos: Estudo[] } {
+    const estudos = [
+      { id: 3, estado: 'RECRUTAMENTO', dataInicio: '2026-10-20', dataFim: '2026-12-20' },
+      { id: 4, estado: 'ENCERRADO', dataInicio: '2026-09-01', dataFim: '2026-12-31' },
+      { id: 5, estado: 'EXECUCAO', dataInicio: '2026-09-01', dataFim: '2026-12-31' },
+      { id: 6, estado: 'PLANEJAMENTO', dataInicio: '2026-11-20', dataFim: '2027-03-31' },
+      { id: 7, estado: 'RECRUTAMENTO', dataInicio: '2026-12-01', dataFim: '2027-04-30' },
+    ] as Estudo[];
+    return {
+      estudos,
+      servico: { listar: vi.fn(() => Promise.resolve(estudos)), cadastrar: vi.fn(), alterarEstado: vi.fn() },
+    };
+  }
+
+  // Mesmo protocolo para todos os estudos: visitas previstas 3, 4 e 5
+  const PROTOCOLO_AGENDAMENTO = {
+    visitas: [
+      { id: 3, nome: 'Visita inicial', ordem: 1, atividades: [] },
+      { id: 4, nome: 'Visita de acompanhamento', ordem: 2, atividades: [] },
+      { id: 5, nome: 'Visita final', ordem: 3, atividades: [] },
+    ],
+  } as unknown as Protocolo;
+  const protocoloAgendamento = {
+    obter: vi.fn().mockResolvedValue(PROTOCOLO_AGENDAMENTO),
+  } as unknown as ServicoProtocolo;
+
+  const ativa = (id: number, estudoId: number, nome: string): ParticipacaoSimulada => ({
+    id,
+    estudoId,
+    participanteId: 100 + id,
+    participanteNome: nome,
+    dataInclusao: '2026-10-25T12:00:00Z',
+    situacao: 'ATIVA',
+    visitas: [],
+  });
+
+  // Retirada no estudo 3: a visita que estava agendada foi cancelada pela retirada
+  const RETIRADA: ParticipacaoSimulada = {
+    ...ativa(12, 3, 'Joana Retirada'),
+    situacao: 'RETIRADA',
+    dataRetirada: '2026-11-10T12:00:00Z',
+    visitas: [
+      {
+        id: 30,
+        visitaPrevistaId: 4,
+        nomeVisita: 'Visita de acompanhamento',
+        dataHora: '2026-11-25T12:00:00Z',
+        situacao: 'CANCELADA',
+        motivo: 'Retirada do participante',
+        registradoPorId: 3,
+        registradoEm: '2026-11-10T12:00:00Z',
+        resultados: [],
+        correcoes: [],
+      },
+    ],
+  };
+
+  const PARTICIPACOES = [
+    ...PARTICIPACOES_INICIAIS,
+    ativa(10, 6, 'Ana Planejamento'),
+    ativa(11, 4, 'Bruno Encerrado'),
+    RETIRADA,
+    ativa(13, 5, 'Carla Execução'),
+    ativa(14, 7, 'Davi Futuro'),
+  ];
+
+  function criarAgendamento() {
+    const { servico, estudos } = criarEstudosAgendamento();
+    return {
+      estudos,
+      servico: criarServicoAcompanhamentoSimulado(servico, PARTICIPACOES, protocoloAgendamento),
+    };
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(AGORA));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('agenda a visita prevista com a situação AGENDADA e ela aparece nas visitas e no histórico', async () => {
+    const { servico } = criarAgendamento();
+
+    const visita = await executar(servico.agendarVisita(3, 1, { visitaPrevistaId: 4, dataHora: '2026-11-20T12:30:00Z' }));
+
+    expect(visita).toEqual({
+      id: 31,
+      participacaoId: 1,
+      visitaPrevistaId: 4,
+      nomeVisita: 'Visita de acompanhamento',
+      dataHora: '2026-11-20T12:30:00Z',
+      situacao: 'AGENDADA',
+      motivo: null,
+      registradoPorId: null,
+      registradoEm: null,
+    });
+    expect(await executar(servico.listarVisitas(3, 1))).toContainEqual({
+      id: 31,
+      nomeVisita: 'Visita de acompanhamento',
+      dataHora: '2026-11-20T12:30:00Z',
+      situacao: 'AGENDADA',
+    });
+    const historico = await executar(servico.obterHistorico(3, 1));
+    expect(historico.itens).toContainEqual(expect.objectContaining({ tipo: 'VISITA', visitaAgendadaId: 31 }));
+  });
+
+  it('lista as visitas da participação em qualquer situação e responde 404 fora do vínculo', async () => {
+    const { servico } = criarAgendamento();
+
+    const visitas = await executar(servico.listarVisitas(3, 1));
+    expect(visitas.map((v) => v.situacao)).toEqual(['REALIZADA', 'AUSENTE', 'REALIZADA', 'AGENDADA']);
+    await expect(executar(servico.listarVisitas(3, 13))).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('aceita hoje com hora já passada, o último dia às 22h de Recife e estudo em Execução', async () => {
+    const { servico } = criarAgendamento();
+
+    // 07:00 de hoje em Recife, antes do momento atual: a comparação é por dia
+    await expect(
+      executar(servico.agendarVisita(3, 1, { visitaPrevistaId: 4, dataHora: '2026-11-14T10:00:00Z' })),
+    ).resolves.toMatchObject({ situacao: 'AGENDADA' });
+    // 20/12 às 22:00 em Recife já é 21/12 em UTC
+    await expect(
+      executar(servico.agendarVisita(3, 1, { visitaPrevistaId: 3, dataHora: '2026-12-21T01:00:00Z' })),
+    ).resolves.toMatchObject({ situacao: 'AGENDADA' });
+    await expect(
+      executar(servico.agendarVisita(5, 13, { visitaPrevistaId: 3, dataHora: '2026-11-18T12:00:00Z' })),
+    ).resolves.toMatchObject({ participacaoId: 13 });
+  });
+
+  it('permite agendar de novo uma visita prevista já realizada', async () => {
+    const { servico } = criarAgendamento();
+
+    // A visita inicial (prevista 3) da Maria está realizada
+    await expect(
+      executar(servico.agendarVisita(3, 1, { visitaPrevistaId: 3, dataHora: '2026-11-30T12:00:00Z' })),
+    ).resolves.toMatchObject({ visitaPrevistaId: 3, situacao: 'AGENDADA' });
+  });
+
+  it('recusa campos ausentes ou inválidos com VALIDACAO_INVALIDA e o erro no campo', async () => {
+    const { servico } = criarAgendamento();
+    const agendar = (entrada: object) =>
+      executar(servico.agendarVisita(3, 1, entrada as { visitaPrevistaId: number; dataHora: string }));
+
+    await expect(agendar({ dataHora: '2026-11-20T12:00:00Z' })).rejects.toMatchObject({
+      status: 400,
+      codigo: 'VALIDACAO_INVALIDA',
+      errosCampos: { visitaPrevistaId: 'Informe a visita prevista.' },
+    });
+    await expect(agendar({ visitaPrevistaId: 0, dataHora: '2026-11-20T12:00:00Z' })).rejects.toMatchObject({
+      errosCampos: { visitaPrevistaId: 'A visita prevista deve ser válida.' },
+    });
+    await expect(agendar({ visitaPrevistaId: 4, dataHora: '' })).rejects.toMatchObject({
+      codigo: 'VALIDACAO_INVALIDA',
+      errosCampos: { dataHora: 'Informe a data e hora da visita.' },
+    });
+  });
+
+  it('responde 404 para estudo fora da sessão, participação de outro estudo e visita prevista fora do protocolo', async () => {
+    const { servico } = criarAgendamento();
+    const valida = '2026-11-20T12:00:00Z';
+
+    await expect(
+      executar(servico.agendarVisita(99, 1, { visitaPrevistaId: 4, dataHora: valida })),
+    ).rejects.toMatchObject({ status: 404, codigo: 'RECURSO_NAO_ENCONTRADO' });
+    // A participação 13 é do estudo 5
+    await expect(
+      executar(servico.agendarVisita(3, 13, { visitaPrevistaId: 4, dataHora: valida })),
+    ).rejects.toMatchObject({ status: 404, message: 'Participação não encontrada.' });
+    await expect(
+      executar(servico.agendarVisita(3, 1, { visitaPrevistaId: 99, dataHora: valida })),
+    ).rejects.toMatchObject({ status: 404, message: 'Visita prevista não encontrada.' });
+  });
+
+  it('recusa estudo em Planejamento ou Encerrado com ESTADO_ESTUDO_INVALIDO', async () => {
+    const { servico } = criarAgendamento();
+
+    await expect(
+      executar(servico.agendarVisita(6, 10, { visitaPrevistaId: 3, dataHora: '2026-11-25T12:00:00Z' })),
+    ).rejects.toMatchObject({ status: 400, codigo: 'ESTADO_ESTUDO_INVALIDO' });
+    await expect(
+      executar(servico.agendarVisita(4, 11, { visitaPrevistaId: 3, dataHora: '2026-11-25T12:00:00Z' })),
+    ).rejects.toMatchObject({ codigo: 'ESTADO_ESTUDO_INVALIDO', message: 'O estudo não permite agendamento de visitas.' });
+  });
+
+  it('recusa participante retirado com PARTICIPACAO_INVALIDA', async () => {
+    const { servico } = criarAgendamento();
+
+    await expect(
+      executar(servico.agendarVisita(3, 12, { visitaPrevistaId: 3, dataHora: '2026-11-25T12:00:00Z' })),
+    ).rejects.toMatchObject({
+      status: 400,
+      codigo: 'PARTICIPACAO_INVALIDA',
+      message: 'Não é possível agendar visita para participante retirado.',
+    });
+  });
+
+  it('recusa com DATA_VISITA_INVALIDA o dia anterior a hoje, antes do início e depois do fim do estudo', async () => {
+    const { servico } = criarAgendamento();
+    const agendar = (estudoId: number, participacaoId: number, dataHora: string) =>
+      executar(servico.agendarVisita(estudoId, participacaoId, { visitaPrevistaId: 4, dataHora }));
+
+    await expect(agendar(3, 1, '2026-11-13T15:00:00Z')).rejects.toMatchObject({
+      status: 400,
+      codigo: 'DATA_VISITA_INVALIDA',
+      message: 'A data da visita está fora do período permitido.',
+    });
+    // O estudo 7 só começa em 01/12
+    await expect(agendar(7, 14, '2026-11-20T12:00:00Z')).rejects.toMatchObject({ codigo: 'DATA_VISITA_INVALIDA' });
+    // 21/12 às 09:00 em Recife, um dia depois do fim do estudo 3
+    await expect(agendar(3, 1, '2026-12-21T12:00:00Z')).rejects.toMatchObject({ codigo: 'DATA_VISITA_INVALIDA' });
+  });
+
+  it('recusa com 409 uma segunda visita AGENDADA para a mesma visita prevista', async () => {
+    const { servico } = criarAgendamento();
+
+    // A visita final (prevista 5) da Maria já está agendada
+    await expect(
+      executar(servico.agendarVisita(3, 1, { visitaPrevistaId: 5, dataHora: '2026-11-25T12:00:00Z' })),
+    ).rejects.toMatchObject({
+      status: 409,
+      codigo: 'VISITA_JA_AGENDADA',
+      message: 'Já existe um agendamento pendente para essa visita.',
+    });
+  });
+
+  it('reagenda a visita AGENDADA mantendo o ID e a visita prevista, sem 409', async () => {
+    const { servico } = criarAgendamento();
+
+    const visita = await executar(servico.reagendarVisita(3, 1, 3, { dataHora: '2026-12-15T13:00:00Z' }));
+
+    expect(visita).toMatchObject({ id: 3, visitaPrevistaId: 5, situacao: 'AGENDADA', dataHora: '2026-12-15T13:00:00Z' });
+    expect((await executar(servico.listarVisitas(3, 1))).find((v) => v.id === 3)?.dataHora).toBe('2026-12-15T13:00:00Z');
+  });
+
+  it('recusa reagendar visita que não está AGENDADA com TRANSICAO_VISITA_INVALIDA', async () => {
+    const { servico } = criarAgendamento();
+
+    await expect(
+      executar(servico.reagendarVisita(3, 1, 1, { dataHora: '2026-12-15T13:00:00Z' })),
+    ).rejects.toMatchObject({
+      status: 400,
+      codigo: 'TRANSICAO_VISITA_INVALIDA',
+      message: 'Apenas visitas agendadas podem ser reagendadas.',
+    });
+  });
+
+  it('recusa reagendar sem data, com data inválida, fora do vínculo, de retirado ou com o estudo encerrado', async () => {
+    const { servico, estudos } = criarAgendamento();
+
+    await expect(executar(servico.reagendarVisita(3, 1, 3, { dataHora: '' }))).rejects.toMatchObject({
+      codigo: 'VALIDACAO_INVALIDA',
+      errosCampos: { dataHora: 'Informe a nova data e hora.' },
+    });
+    await expect(
+      executar(servico.reagendarVisita(3, 1, 3, { dataHora: '2026-11-13T12:00:00Z' })),
+    ).rejects.toMatchObject({ codigo: 'DATA_VISITA_INVALIDA' });
+    // A visita 30 é da participação 12
+    await expect(
+      executar(servico.reagendarVisita(3, 1, 30, { dataHora: '2026-12-15T13:00:00Z' })),
+    ).rejects.toMatchObject({ status: 404, message: 'Visita não encontrada.' });
+    await expect(
+      executar(servico.reagendarVisita(3, 12, 30, { dataHora: '2026-12-15T13:00:00Z' })),
+    ).rejects.toMatchObject({ codigo: 'PARTICIPACAO_INVALIDA' });
+
+    estudos[0].estado = 'ENCERRADO';
+    await expect(
+      executar(servico.reagendarVisita(3, 1, 3, { dataHora: '2026-12-15T13:00:00Z' })),
+    ).rejects.toMatchObject({ codigo: 'ESTADO_ESTUDO_INVALIDO', message: 'O estudo não permite reagendamento de visitas.' });
+  });
+});

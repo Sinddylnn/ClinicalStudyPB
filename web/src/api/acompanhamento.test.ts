@@ -159,4 +159,86 @@ describe('servicoAcompanhamentoApi', () => {
       servicoAcompanhamentoApi.registrarResultado(30, 120, 7, { atividadePrevistaId: 5, texto: 'Ok.' }),
     ).rejects.toMatchObject({ status: 409, codigo: 'RESULTADO_JA_REGISTRADO' });
   });
+
+  // <-------------------AGENDAMENTO (PR #41)------------------->
+  it('agendarVisita: POST .../visitas com a visita prevista e a data, levando o token CSRF', async () => {
+    const agendada = { ...VISITA, id: 8, situacao: 'AGENDADA', registradoPorId: null, registradoEm: null };
+    const chamadas = simularBackend({
+      'GET /auth/csrf': CSRF,
+      'POST /estudos/30/participacoes/120/visitas': { status: 201, data: agendada },
+    });
+
+    const entrada = { visitaPrevistaId: 2, dataHora: '2026-11-20T12:30:00Z' };
+    expect(await servicoAcompanhamentoApi.agendarVisita(30, 120, entrada)).toEqual(agendada);
+
+    const post = chamadas.find((c) => c.method === 'post');
+    expect(JSON.parse(post?.data as string)).toEqual(entrada);
+    expect(post?.headers.get('X-CSRF-TOKEN')).toBe('abc');
+  });
+
+  it('agendarVisita: repassa o 409 VISITA_JA_AGENDADA e o 400 DATA_VISITA_INVALIDA', async () => {
+    simularBackend({
+      'GET /auth/csrf': CSRF,
+      'POST /estudos/30/participacoes/120/visitas': {
+        status: 409,
+        data: { codigo: 'VISITA_JA_AGENDADA', mensagem: 'Já existe um agendamento pendente para essa visita.' },
+      },
+      'POST /estudos/30/participacoes/121/visitas': {
+        status: 400,
+        data: { codigo: 'DATA_VISITA_INVALIDA', mensagem: 'A data da visita está fora do período permitido.' },
+      },
+    });
+    const entrada = { visitaPrevistaId: 2, dataHora: '2026-11-20T12:30:00Z' };
+
+    await expect(servicoAcompanhamentoApi.agendarVisita(30, 120, entrada)).rejects.toMatchObject({
+      status: 409,
+      codigo: 'VISITA_JA_AGENDADA',
+    });
+    await expect(servicoAcompanhamentoApi.agendarVisita(30, 121, entrada)).rejects.toMatchObject({
+      status: 400,
+      codigo: 'DATA_VISITA_INVALIDA',
+    });
+  });
+
+  it('reagendarVisita: PUT .../visitas/{id} só com a nova data, levando o token CSRF', async () => {
+    const reagendada = { ...VISITA, situacao: 'AGENDADA', dataHora: '2026-12-01T13:00:00Z' };
+    const chamadas = simularBackend({
+      'GET /auth/csrf': CSRF,
+      [`PUT ${VISITA_URL}`]: { status: 200, data: reagendada },
+    });
+
+    expect(await servicoAcompanhamentoApi.reagendarVisita(30, 120, 7, { dataHora: '2026-12-01T13:00:00Z' })).toEqual(
+      reagendada,
+    );
+
+    const put = chamadas.find((c) => c.method === 'put');
+    expect(JSON.parse(put?.data as string)).toEqual({ dataHora: '2026-12-01T13:00:00Z' });
+    expect(put?.headers.get('X-CSRF-TOKEN')).toBe('abc');
+  });
+
+  it('listarVisitas: monta as visitas a partir do histórico, sem a retirada', async () => {
+    const historico: HistoricoParticipacao = {
+      participacaoId: 120,
+      itens: [
+        {
+          tipo: 'VISITA',
+          visitaAgendadaId: 7,
+          nomeVisita: 'Visita inicial',
+          dataHora: '2026-11-12T12:00:00Z',
+          situacao: 'AGENDADA',
+          motivo: null,
+          registradoPorId: null,
+          registradoEm: null,
+          resultados: [],
+          correcoes: [],
+        },
+        ...HISTORICO.itens,
+      ],
+    };
+    simularBackend({ 'GET /estudos/30/participacoes/120/historico': { status: 200, data: historico } });
+
+    expect(await servicoAcompanhamentoApi.listarVisitas(30, 120)).toEqual([
+      { id: 7, nomeVisita: 'Visita inicial', dataHora: '2026-11-12T12:00:00Z', situacao: 'AGENDADA' },
+    ]);
+  });
 });

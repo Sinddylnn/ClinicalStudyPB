@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import {
+  recursosAcompanhamento,
   servicoAcompanhamento,
   type ItemHistoricoRetirada,
   type ItemHistoricoVisita,
   type Participacao,
+  type RecursosAcompanhamento,
   type ServicoAcompanhamento,
 } from '../../api/acompanhamento';
 import type { UsuarioSessao } from '../../api/autenticacao';
@@ -28,6 +30,8 @@ import './acompanhamento.css';
 type Props = {
   servicoEstudos?: ServicoEstudos;
   servicoAcompanhamento?: ServicoAcompanhamento;
+  /** O que o backend de acompanhamento já oferece; quando omitido, vem do serviço em uso. */
+  recursos?: RecursosAcompanhamento;
   /** Quem está na sessão; quando omitido, vem do contexto de autenticação. */
   usuario?: UsuarioSessao;
 };
@@ -66,6 +70,7 @@ async function carregar(
 export default function HistoricoParticipante({
   servicoEstudos: estudosProp = servicoEstudos,
   servicoAcompanhamento: acompanhamentoProp = servicoAcompanhamento,
+  recursos = recursosAcompanhamento,
   usuario: usuarioProp,
 }: Props) {
   const usuario = useUsuarioLogado(usuarioProp);
@@ -112,6 +117,11 @@ export default function HistoricoParticipante({
   const dados = tela.tipo === 'pronto' ? tela : undefined;
   // O coordenador chega pelo recrutamento; o pesquisador, pela tela do estudo
   const caminhoEstudo = usuario.perfil === 'COORDENADOR' ? `/estudos/${estudoId}/recrutamento` : `/estudos/${estudoId}`;
+  // Chega-se ao histórico pela lista de participantes. Enquanto o backend nega a lista ao pesquisador,
+  // ele volta para a tela do estudo e a trilha não mostra o nível "Participantes"
+  const caminhoParticipantes = `/estudos/${estudoId}/participacoes`;
+  const acessaLista = usuario.perfil === 'COORDENADOR' || recursos.listaPesquisador;
+  const caminhoVoltar = acessaLista ? caminhoParticipantes : caminhoEstudo;
   // Só o coordenador registra resultados, e só enquanto o estudo não encerra (RF14)
   const registraResultados = usuario.perfil === 'COORDENADOR' && dados?.estudo.estado !== 'ENCERRADO';
   const caminhoResultados = (visitaId: number) =>
@@ -136,6 +146,12 @@ export default function HistoricoParticipante({
           <Icone nome="setaDireita" tamanho={14} />
           <Link to={caminhoEstudo}>{dados?.estudo.titulo ?? 'Estudo'}</Link>
           <Icone nome="setaDireita" tamanho={14} />
+          {acessaLista && (
+            <>
+              <Link to={caminhoParticipantes}>Participantes</Link>
+              <Icone nome="setaDireita" tamanho={14} />
+            </>
+          )}
           {dados && (
             <>
               <span>{dados.participacao.participanteNome}</span>
@@ -230,7 +246,7 @@ export default function HistoricoParticipante({
             )}
 
             <div className="estudos-acoes">
-              <Link className="botao botao-secundario" to={caminhoEstudo}>
+              <Link className="botao botao-secundario" to={caminhoVoltar}>
                 Voltar
               </Link>
             </div>
