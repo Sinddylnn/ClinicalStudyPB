@@ -692,6 +692,40 @@ class VisitaAgendadaServiceTest {
     }
 
 
+    /**
+     * Impede registrar uma visita prevista de outro estudo.
+     */
+    @Test
+    void impedeRegistroComVisitaPrevistaDeOutroEstudo() {
+        VisitaAgendada visita = mock(VisitaAgendada.class);
+        VisitaPrevista previstaOutroEstudo = mock(VisitaPrevista.class);
+        Protocolo protocoloOutroEstudo = mock(Protocolo.class);
+        Estudo outroEstudo = mock(Estudo.class);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+        when(visita.getParticipacao()).thenReturn(participacao);
+        when(visita.getVisitaPrevista()).thenReturn(previstaOutroEstudo);
+        when(previstaOutroEstudo.getProtocolo()).thenReturn(protocoloOutroEstudo);
+        when(protocoloOutroEstudo.getEstudo()).thenReturn(outroEstudo);
+        when(outroEstudo.getId()).thenReturn(99L);
+
+        VisitaAgendadaSituacaoEntrada entrada =
+                new VisitaAgendadaSituacaoEntrada(
+                        SituacaoVisita.CANCELADA, "Cancelamento solicitado");
+
+        assertThatThrownBy(() -> servico.registrarSituacao(
+                10L, 20L, 40L, entrada, coordenador))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        erro -> assertThat(erro.getStatusCode().value())
+                                .isEqualTo(404));
+
+        verify(visitasAgendadas, never()).save(any(VisitaAgendada.class));
+    }
+
+
     // <-------TESTES DE CORRECAO DE SITUACAO------->
 
     /**

@@ -717,6 +717,44 @@ class EstudoControllerTest {
     }
 
     /**
+     * Informa os IDs dos participantes quando há visitas pendentes.
+     *
+     * @throws Exception se ocorrer erro na requisição
+     * @since 1.0
+     */
+    @Test
+    void informaParticipantesComVisitasPendentesNoErro() throws Exception {
+        ReflectionTestUtils.setField(
+                registros.get(10L), "estado", EstadoEstudo.EXECUCAO);
+
+        when(visitasAgendadasRepository
+                .countByParticipacao_Estudo_IdAndSituacao(
+                        10L, SituacaoVisita.AGENDADA))
+                .thenReturn(3L);
+        when(visitasAgendadasRepository
+                .findIdsParticipantesComVisitasNaSituacao(
+                        10L, SituacaoVisita.AGENDADA))
+                .thenReturn(java.util.List.of(101L, 202L));
+
+        mvc.perform(como(1, patch("/estudos/10/estado"))
+                        .content("{\"estado\":\"ENCERRADO\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo")
+                        .value("VISITAS_PENDENTES"))
+                .andExpect(jsonPath("$.mensagem")
+                        .value(org.hamcrest.Matchers.containsString("3 visita")))
+                .andExpect(jsonPath("$.mensagem")
+                        .value(org.hamcrest.Matchers.containsString(
+                                "Participantes com pendências (IDs): [101, 202]")));
+
+        verify(visitasAgendadasRepository)
+                .findIdsParticipantesComVisitasNaSituacao(
+                        10L, SituacaoVisita.AGENDADA);
+        assertThat(registros.get(10L).getEstado())
+                .isEqualTo(EstadoEstudo.EXECUCAO);
+    }
+
+    /**
      * Permite encerrar um estudo sem visitas pendentes.
      *
      * @throws Exception se ocorrer erro na requisição
