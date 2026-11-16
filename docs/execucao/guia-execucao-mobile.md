@@ -199,8 +199,8 @@ O aplicativo abre na tela de login. Não existe cadastro pelo app: a conta de pa
 
 Use a conta de participante de teste fornecida pela equipe:
 
-- **E-mail:** **[PREENCHER]**
-- **Senha:** **[PREENCHER]**
+- **E-mail:** **participante@clinicalstudypb.test**
+- **Senha:** **Demon@123**
 
 ### Roteiro de verificação
 
