@@ -190,12 +190,19 @@ export default function Recrutamento({
                   <span>{estudo.limiteParticipantes} vagas</span>
                 </p>
               </div>
-              {podeRecrutar && tela.candidatos.length > 0 && (
-                <Link className="botao botao-primario" to={caminhoNovo}>
-                  <Icone nome="usuarioMais" />
-                  Novo candidato
+              <div className="recrutamento-acoes-cabecalho">
+                {/* Participantes incluídos, com o histórico e o agendamento de visitas (RF12) */}
+                <Link className="botao botao-secundario" to={`/estudos/${estudoId}/participacoes`}>
+                  <Icone nome="usuarios" />
+                  Participantes incluídos
                 </Link>
-              )}
+                {podeRecrutar && tela.candidatos.length > 0 && (
+                  <Link className="botao botao-primario" to={caminhoNovo}>
+                    <Icone nome="usuarioMais" />
+                    Novo candidato
+                  </Link>
+                )}
+              </div>
             </header>
 
             {!podeRecrutar && (

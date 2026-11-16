@@ -9,7 +9,7 @@ export const NOMES_SITUACAO_VISITA: Record<SituacaoVisita, string> = {
 };
 
 export const NOMES_SITUACAO_PARTICIPACAO: Record<SituacaoParticipacao, string> = {
-  ATIVA: 'Incluído',
+  ATIVA: 'Ativo',
   RETIRADA: 'Retirado',
 };
 

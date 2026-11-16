@@ -12,6 +12,8 @@ import NovoCandidato from '../pages/recrutamento/NovoCandidato';
 import ElegibilidadeCandidato from '../pages/recrutamento/ElegibilidadeCandidato';
 import ConsentimentoCandidato from '../pages/recrutamento/ConsentimentoCandidato';
 import InclusaoCandidato from '../pages/recrutamento/InclusaoCandidato';
+import ParticipantesEstudo from '../pages/acompanhamento/ParticipantesEstudo';
+import AgendamentoVisitas from '../pages/acompanhamento/AgendamentoVisitas';
 import HistoricoParticipante from '../pages/acompanhamento/HistoricoParticipante';
 import ResultadosVisita from '../pages/acompanhamento/ResultadosVisita';
 import ListaUsuarios from '../pages/usuarios/ListaUsuarios';
@@ -63,8 +65,14 @@ export default function AppRoutes() {
 
       {/* <-------------------ACOMPANHAMENTO-------------------> */}
       {/* Histórico de visitas e avaliações (RF15): coordenador vinculado e pesquisador responsável */}
+      {/* Participantes incluídos (RF12): o coordenador vinculado agenda; o pesquisador responsável só consulta */}
       <Route element={<RotaProtegida perfis={['PESQUISADOR', 'COORDENADOR']} />}>
+        <Route path="/estudos/:id/participacoes" element={<ParticipantesEstudo />} />
         <Route path="/estudos/:id/participacoes/:participacaoId/historico" element={<HistoricoParticipante />} />
+      </Route>
+      {/* Agendamento e reagendamento de visitas (RF12): só o coordenador vinculado */}
+      <Route element={<RotaProtegida perfis={['COORDENADOR']} />}>
+        <Route path="/estudos/:id/participacoes/:participacaoId/visitas" element={<AgendamentoVisitas />} />
       </Route>
       {/* Resultados fictícios das avaliações de uma visita realizada (RF14): só o coordenador vinculado */}
       <Route element={<RotaProtegida perfis={['COORDENADOR']} />}>

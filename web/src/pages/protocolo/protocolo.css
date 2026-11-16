@@ -648,3 +648,15 @@
     padding-left: 16px;
   }
 }
+
+/* <-------------------PARTICIPANTES INCLUÍDOS-------------------> */
+/* Acesso do pesquisador à lista de participantes, abaixo dos dados do estudo */
+.protocolo-link-participantes {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primaria);
+}

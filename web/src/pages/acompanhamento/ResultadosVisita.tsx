@@ -189,6 +189,9 @@ export default function ResultadosVisita({
           <Icone nome="setaDireita" tamanho={14} />
           <Link to={`/estudos/${estudoId}/recrutamento`}>{dados?.estudo.titulo ?? 'Estudo'}</Link>
           <Icone nome="setaDireita" tamanho={14} />
+          {/* Só o coordenador abre esta tela, e ele sempre tem acesso à lista de participantes */}
+          <Link to={`/estudos/${estudoId}/participacoes`}>Participantes</Link>
+          <Icone nome="setaDireita" tamanho={14} />
           <Link to={caminhoHistorico}>{dados?.participacao.participanteNome ?? 'Histórico'}</Link>
           <Icone nome="setaDireita" tamanho={14} />
           <span aria-current="page">Resultados</span>

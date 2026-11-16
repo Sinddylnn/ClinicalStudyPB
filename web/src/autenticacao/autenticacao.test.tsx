@@ -166,7 +166,7 @@ describe('tratadores de sessão', () => {
     act(() => tratadores().naoAutenticado?.());
 
     expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
-    expect(screen.getByText('Sua sessão expirou. Entre novamente.')).toBeInTheDocument();
+    expect(await screen.findByText('Sua sessão expirou. Entre novamente.')).toBeInTheDocument();
   });
 
   it('depois da sessão expirada, volta à página de origem ao entrar de novo', async () => {
@@ -204,7 +204,7 @@ describe('revalidação da sessão', () => {
     await userEvent.setup().click(screen.getByRole('link', { name: 'Ir para novo estudo' }));
 
     expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
-    expect(screen.getByText('Sua sessão expirou. Entre novamente.')).toBeInTheDocument();
+    expect(await screen.findByText('Sua sessão expirou. Entre novamente.')).toBeInTheDocument();
 
     await entrarComo('paula@exemplo.com');
     expect(await screen.findByRole('heading', { name: 'Novo estudo protegido' })).toBeInTheDocument();
@@ -250,7 +250,7 @@ describe('revalidação da sessão', () => {
     });
 
     expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
-    expect(screen.getByText('Sua sessão expirou. Entre novamente.')).toBeInTheDocument();
+    expect(await screen.findByText('Sua sessão expirou. Entre novamente.')).toBeInTheDocument();
     visibilidade.mockRestore();
   });
 });

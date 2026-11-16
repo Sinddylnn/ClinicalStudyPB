@@ -88,6 +88,13 @@
   color: #6d28d9;
 }
 
+/* Botões do cabeçalho: participantes incluídos e novo candidato */
+.recrutamento-acoes-cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 /* <-------------------ETIQUETAS DO CANDIDATO-------------------> */
 /* Cores confirmadas no protótipo: verde, âmbar, vermelho, roxo e cinza */
 .etiqueta-elegivel,

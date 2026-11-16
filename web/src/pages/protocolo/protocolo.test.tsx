@@ -1,7 +1,8 @@
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
+import type { RecursosAcompanhamento } from '../../api/acompanhamento';
 import { ErroRequisicao } from '../../api/erros';
 import type { Estudo, ServicoCoordenadores, ServicoEstudos } from '../../api/estudos';
 import type { Protocolo, ServicoProtocolo } from '../../api/protocolo';
@@ -78,7 +79,11 @@ function criarServicos(
 }
 
 // A maior parte dos testes trabalha na aba Critérios
-function renderizar(servicos: ReturnType<typeof criarServicos>, caminho = '/estudos/1?aba=criterios') {
+function renderizar(
+  servicos: ReturnType<typeof criarServicos>,
+  caminho = '/estudos/1?aba=criterios',
+  recursos: RecursosAcompanhamento = { historico: true, listaPesquisador: true },
+) {
   render(
     <MemoryRouter initialEntries={[caminho]}>
       <Routes>
@@ -89,6 +94,7 @@ function renderizar(servicos: ReturnType<typeof criarServicos>, caminho = '/estu
               servicoEstudos={servicos.estudos}
               servicoProtocolo={servicos.protocolo}
               servicoCoordenadores={servicos.coordenadores}
+              recursos={recursos}
               usuario={PESQUISADORA}
             />
           }
@@ -108,6 +114,29 @@ const aba = (nome: 'Resumo' | 'Critérios' | 'Visitas') => screen.getByRole('tab
 const cabecalho = () => screen.getByRole('heading', { level: 1 }).closest('header') as HTMLElement;
 
 describe('ProtocoloEstudo', () => {
+  it('leva a pesquisadora aos participantes incluídos depois do planejamento', async () => {
+    renderizar(criarServicos({ ...ESTUDO, estado: 'RECRUTAMENTO' }), '/estudos/1');
+
+    expect(await screen.findByRole('link', { name: 'Participantes incluídos' })).toHaveAttribute(
+      'href',
+      '/estudos/1/participacoes',
+    );
+  });
+
+  it('não mostra os participantes incluídos em Planejamento nem sem a lista liberada no backend', async () => {
+    renderizar(criarServicos(), '/estudos/1');
+    expect(await screen.findByRole('heading', { name: ESTUDO.titulo })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Participantes incluídos' })).not.toBeInTheDocument();
+    cleanup();
+
+    renderizar(criarServicos({ ...ESTUDO, estado: 'EXECUCAO' }), '/estudos/1', {
+      historico: false,
+      listaPesquisador: false,
+    });
+    expect(await screen.findByRole('heading', { name: ESTUDO.titulo })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Participantes incluídos' })).not.toBeInTheDocument();
+  });
+
   it('abre no Resumo com os dados do estudo e o que falta para iniciar o recrutamento', async () => {
     renderizar(criarServicos(), '/estudos/1');
 
