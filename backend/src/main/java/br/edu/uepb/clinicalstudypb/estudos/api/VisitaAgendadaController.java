@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PatchMapping;
 
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
 import br.edu.uepb.clinicalstudypb.estudos.service.VisitaAgendadaService;
@@ -21,8 +22,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 /**
- * Disponibiliza os endpoints de agendamento e
- * reagendamento de visitas dos participantes.
+ * Disponibiliza os endpoints de agendamento, reagendamento
+ * e registro da situação das visitas.
  *
  * @author Luiz
  * @version 1.0
@@ -122,4 +123,44 @@ public class VisitaAgendadaController {
                 entrada,
                 autenticado);
     }
+
+
+    // <-------REGISTRO DE SITUACAO DE VISITAS------->
+    /**
+     * Registra a realização, ausência ou cancelamento de uma visita.
+     *
+     * @param estudoId identificador do estudo
+     * @param participacaoId identificador da participação
+     * @param visitaAgendadaId identificador da visita agendada
+     * @param entrada situação e motivo do registro
+     * @param autenticado usuário autenticado
+     * @return dados atualizados da visita
+     * @since 1.0
+     */
+    @Parameter(ref = "#/components/parameters/TokenCsrf")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Situação registrada com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos ou transição não permitida"),
+        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+        @ApiResponse(responseCode = "403", description = "Acesso negado"),
+        @ApiResponse(responseCode = "404", description = "Estudo, participação ou visita não encontrada")
+    })
+    @PatchMapping("/{visitaAgendadaId}/situacao")
+    @Operation(summary = "Registrar situação de visita")
+    public VisitaAgendadaResposta registrarSituacao(
+            @PathVariable Long estudoId,
+            @PathVariable Long participacaoId,
+            @PathVariable Long visitaAgendadaId,
+            @Valid @RequestBody VisitaAgendadaSituacaoEntrada entrada,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal UsuarioAutenticado autenticado) {
+
+        return visitas.registrarSituacao(
+                estudoId,
+                participacaoId,
+                visitaAgendadaId,
+                entrada,
+                autenticado);
+    }
+
 }

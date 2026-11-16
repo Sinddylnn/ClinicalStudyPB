@@ -10,6 +10,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 import java.util.Optional;
 
@@ -347,6 +348,173 @@ class VisitaAgendadaControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(visitas, never()).reagendar(
+                any(), any(), any(), any(), any());
+    }
+
+
+    // <-------TESTES DE REGISTRO DE SITUACAO------->
+    /**
+     * Verifica se coordenadores podem registrar a situação de visitas.
+     *
+     * @throws Exception se ocorrer erro na execução da requisição de teste
+     * @since 1.0
+     */
+    @Test
+    void coordenadorPodeRegistrarSituacao() throws Exception {
+        mvc.perform(patch("/estudos/10/participacoes/20/visitas/40/situacao")
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "situacao": "CANCELADA",
+                                  "motivo": "Participante solicitou cancelamento"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        verify(visitas).registrarSituacao(
+                eq(10L),
+                eq(20L),
+                eq(40L),
+                any(VisitaAgendadaSituacaoEntrada.class),
+                any(UsuarioAutenticado.class));
+    }
+
+
+    /**
+     * Impede o registro de visitas por usuários sem permissão.
+     *
+     * @param perfil perfil sem permissão
+     * @throws Exception se ocorrer erro na requisição
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @EnumSource(value = PerfilUsuario.class,
+            names = {"PESQUISADOR", "ADMINISTRADOR", "PARTICIPANTE"})
+    void usuarioSemPermissaoNaoPodeRegistrarSituacao(
+            PerfilUsuario perfil) throws Exception {
+
+        Usuario usuario = criarUsuario(50L, perfil);
+
+        when(usuarios.findById(50L))
+                .thenReturn(Optional.of(usuario));
+
+        mvc.perform(patch("/estudos/10/participacoes/20/visitas/40/situacao")
+                        .with(user(new UsuarioAutenticado(usuario)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "situacao": "CANCELADA",
+                                  "motivo": "Cancelamento solicitado"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+
+        verify(visitas, never()).registrarSituacao(
+                any(), any(), any(), any(), any());
+    }
+
+
+    /**
+     * Impede o registro de situação sem token CSRF.
+     *
+     * @throws Exception se ocorrer erro na requisição de teste
+     * @since 1.0
+     */
+    @Test
+    void registroSituacaoSemCsrfEhBloqueado() throws Exception {
+        mvc.perform(patch("/estudos/10/participacoes/20/visitas/40/situacao")
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "situacao": "CANCELADA",
+                                  "motivo": "Cancelamento solicitado"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+
+        verify(visitas, never()).registrarSituacao(
+                any(), any(), any(), any(), any());
+    }
+
+
+    /**
+     * Impede o registro de situação sem autenticação.
+     *
+     * @throws Exception se ocorrer erro na requisição de teste
+     * @since 1.0
+     */
+    @Test
+    void registroSituacaoSemLoginEhBloqueado() throws Exception {
+        mvc.perform(patch("/estudos/10/participacoes/20/visitas/40/situacao")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "situacao": "CANCELADA",
+                                  "motivo": "Cancelamento solicitado"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+
+        verify(visitas, never()).registrarSituacao(
+                any(), any(), any(), any(), any());
+    }
+
+
+    /**
+     * Impede registrar uma visita sem informar a situação.
+     *
+     * @throws Exception se ocorrer erro na requisição de teste
+     * @since 1.0
+     */
+    @Test
+    void registroSituacaoNulaRetorna400() throws Exception {
+        mvc.perform(patch("/estudos/10/participacoes/20/visitas/40/situacao")
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "situacao": null,
+                                  "motivo": "Cancelamento solicitado"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+
+        verify(visitas, never()).registrarSituacao(
+                any(), any(), any(), any(), any());
+    }
+
+
+    /**
+     * Rejeita um motivo com mais de 500 caracteres.
+     *
+     * @throws Exception se ocorrer erro na requisição de teste
+     * @since 1.0
+     */
+    @Test
+    void registroSituacaoComMotivoMuitoLongoRetorna400() throws Exception {
+        String motivo = "a".repeat(501);
+
+        String corpo = """
+                {
+                  "situacao": "CANCELADA",
+                  "motivo": "%s"
+                }
+                """.formatted(motivo);
+
+        mvc.perform(patch("/estudos/10/participacoes/20/visitas/40/situacao")
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo))
+                .andExpect(status().isBadRequest());
+
+        verify(visitas, never()).registrarSituacao(
                 any(), any(), any(), any(), any());
     }
 
