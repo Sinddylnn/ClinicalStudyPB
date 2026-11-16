@@ -332,3 +332,15 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* <-------------------RETIRADA (RF16)-------------------> */
+/* Contorno vermelho: ação irreversível, mas que só acontece depois da confirmação no diálogo */
+.pagina-interna .botao-retirar {
+  color: #b91c1c;
+  background: #fff;
+  border-color: #fecaca;
+}
+
+.pagina-interna .botao-retirar:hover {
+  background: #fef2f2;
+}

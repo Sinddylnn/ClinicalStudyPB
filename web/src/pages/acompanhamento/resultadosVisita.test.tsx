@@ -101,6 +101,7 @@ function criarServicos({ acompanhamento = {}, estudos = [ESTUDO], resultados = [
     listarResultados: vi.fn().mockResolvedValue(resultados),
     registrarResultado: vi.fn().mockImplementation((_e, _p, _v, entrada) => Promise.resolve({ ...SALVO, ...entrada })),
     editarResultado: vi.fn().mockImplementation((_e, _p, _v, _r, texto) => Promise.resolve({ ...SALVO, texto })),
+    retirarParticipante: vi.fn(),
     ...acompanhamento,
   };
   const servicoProtocolo = { obter: vi.fn().mockResolvedValue(PROTOCOLO) } as unknown as ServicoProtocolo;

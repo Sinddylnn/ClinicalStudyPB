@@ -131,6 +131,21 @@ export type ReagendamentoEntrada = {
  */
 export type ResumoVisitaAgendada = Pick<VisitaAgendada, 'id' | 'nomeVisita' | 'dataHora' | 'situacao'>;
 
+// <-------------------RETIRADA DO PARTICIPANTE (RF16)------------------->
+/** Dados enviados em POST .../retirada: motivo de 1 a 500 caracteres depois de aparar. */
+export type RetiradaEntrada = {
+  motivo: string;
+};
+
+/** Resposta 200 da retirada, como no rascunho do contrato. */
+export type RetiradaParticipacao = {
+  participacaoId: number;
+  situacao: 'RETIRADA';
+  dataRetirada: string;
+  motivoRetirada: string;
+  retiradaPorId: number;
+};
+
 export type ServicoAcompanhamento = {
   listarParticipacoes(estudoId: number): Promise<Participacao[]>;
   obterHistorico(estudoId: number, participacaoId: number): Promise<HistoricoParticipacao>;
@@ -166,6 +181,11 @@ export type ServicoAcompanhamento = {
     resultadoId: number,
     texto: string,
   ): Promise<ResultadoAtividade>;
+  /**
+   * POST .../retirada (RF16), irreversível. Só deve ser chamada quando recursosAcompanhamento.retirada
+   * for verdadeiro: a rota ainda não existe no backend.
+   */
+  retirarParticipante(estudoId: number, participacaoId: number, entrada: RetiradaEntrada): Promise<RetiradaParticipacao>;
 };
 
 const caminhoVisitas = (estudoId: number, participacaoId: number) =>
@@ -237,6 +257,16 @@ export const servicoAcompanhamentoApi: ServicoAcompanhamento = {
     );
     return data;
   },
+  // Só o coordenador vinculado, com CSRF, e com o estudo em recrutamento ou execução. 400
+  // VALIDACAO_INVALIDA (errosCampos motivo), ESTADO_ESTUDO_INVALIDO e PARTICIPACAO_INVALIDA (já retirada);
+  // 404 para estudo ou participação fora do vínculo. Cancela as visitas ainda agendadas
+  async retirarParticipante(estudoId, participacaoId, entrada) {
+    const { data } = await api.post<RetiradaParticipacao>(
+      `/estudos/${estudoId}/participacoes/${participacaoId}/retirada`,
+      entrada,
+    );
+    return data;
+  },
 };
 
 // <-------------------SERVIÇO EM USO------------------->
@@ -254,10 +284,12 @@ export type RecursosAcompanhamento = {
   historico: boolean;
   /** GET /estudos/{estudoId}/participacoes pelo pesquisador responsável: o PR #41 ainda nega. */
   listaPesquisador: boolean;
+  /** POST .../retirada (RF16): ainda não existe no backend (task 3957). */
+  retirada: boolean;
 };
 
-// No modo real, ficam desligados até o backend entregar o histórico e liberar o pesquisador na lista;
-// sem isso, a web chamaria uma rota negada e iria para "Acesso negado"
+// No modo real, ficam desligados até o backend entregar o histórico e a retirada e liberar o pesquisador
+// na lista; sem isso, a web chamaria uma rota negada e iria para "Acesso negado"
 export const recursosAcompanhamento: RecursosAcompanhamento = usaBackend
-  ? { historico: false, listaPesquisador: false }
-  : { historico: true, listaPesquisador: true };
+  ? { historico: false, listaPesquisador: false, retirada: false }
+  : { historico: true, listaPesquisador: true, retirada: true };
