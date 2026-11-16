@@ -13,6 +13,25 @@ jest.mock('expo-splash-screen', () => ({
   hideAsync: jest.fn(),
 }));
 
+jest.mock('expo-splash-screen', () => ({
+  preventAutoHideAsync: jest.fn(),
+  hideAsync: jest.fn(),
+}));
+
+// Simula um participante já logado: com as rotas protegidas, o app abriria no login
+jest.mock('../../contexts/AuthContext', () => ({
+  AuthProvider: ({ children }: any) => children,
+  useAuth: () => ({
+    sessao: { id: 1, nome: 'Maria Souza', email: 'maria.souza@exemplo.com', perfil: 'PARTICIPANTE' },
+    autenticado: true,
+    entrar: jest.fn(),
+    sair: jest.fn(),
+  }),
+}));
+
+// A primeira execução compila o app inteiro e pode passar de 5 segundos
+jest.setTimeout(30000);
+
 // A primeira execução compila o app inteiro e pode passar de 5 segundos
 jest.setTimeout(30000);
 
