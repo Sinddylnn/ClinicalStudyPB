@@ -18,12 +18,7 @@ export function useAuth(): AuthContextValue {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [sessao, setSessao] = useState<Sessao | null>({
-    id: 1,
-    nome: 'Maria Souza',
-    email: 'maria.souza@exemplo.com',
-    perfil: 'PARTICIPANTE',
-  });
+  const [sessao, setSessao] = useState<Sessao | null>(null);
 
   const entrar = useCallback(async (email: string, senha: string) => {
     setSessao(await auth.login(email, senha));

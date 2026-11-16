@@ -39,7 +39,7 @@ export async function login(email: string, senha: string): Promise<Sessao> {
     },
     body: JSON.stringify({ email, senha }), // LoginEntrada: email() e senha()
   });
-  if (res.status === 401) throw new CredenciaisInvalidasError();
+  if (res.status === 400 || res.status === 401) throw new CredenciaisInvalidasError();
   if (!res.ok) throw new Error('Falha no login.');
   return res.json(); // SessaoResposta devolvida pelo login
 }

@@ -16,9 +16,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { CredenciaisInvalidasError } from '../services/authService';
 
+// Mensagem do Figma: 401 CREDENCIAIS_INVALIDAS, genérica
 const MSG_CREDENCIAIS = 'E-mail ou senha inválidos. Confira os dados e tente novamente.';
-const MSG_CAMPOS = 'Informe o e-mail e a senha.';
-const MSG_EMAIL = 'Informe um e-mail válido.';
+// Sem estado no Figma: falha de conexão ou erro inesperado
 const MSG_FALHA = 'Não foi possível entrar agora. Tente novamente.';
 
 // Medidas do Figma (frame de 390 px de largura). Ajuste aqui se precisar.
@@ -39,14 +39,13 @@ export default function LoginScreen() {
 
   const enviar = async () => {
     if (carregando) return;
+
+    // Campos vazios: mesma mensagem genérica do Figma, sem chamar a API
     if (!email.trim() || !senha) {
-      setErro(MSG_CAMPOS);
+      setErro(MSG_CREDENCIAIS);
       return;
     }
-    if (!/^\S+@\S+$/.test(email.trim())) {
-      setErro(MSG_EMAIL);
-      return;
-    }
+
     setErro('');
     setCarregando(true);
     try {
@@ -281,6 +280,7 @@ const styles = StyleSheet.create({
     borderColor: '#FECACA',
     backgroundColor: '#FEF2F2',
   },
+  
   erroText: { flex: 1, fontSize: 12, lineHeight: 17, color: '#B91C1C' },
 
   label: { fontSize: 12, fontWeight: '600', color: '#334155', marginBottom: 6 },
