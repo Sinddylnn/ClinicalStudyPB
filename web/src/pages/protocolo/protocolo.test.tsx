@@ -82,7 +82,7 @@ function criarServicos(
 function renderizar(
   servicos: ReturnType<typeof criarServicos>,
   caminho = '/estudos/1?aba=criterios',
-  recursos: RecursosAcompanhamento = { historico: true, listaPesquisador: true },
+  recursos: RecursosAcompanhamento = { historico: true, listaPesquisador: true, retirada: true },
 ) {
   render(
     <MemoryRouter initialEntries={[caminho]}>
@@ -132,6 +132,7 @@ describe('ProtocoloEstudo', () => {
     renderizar(criarServicos({ ...ESTUDO, estado: 'EXECUCAO' }), '/estudos/1', {
       historico: false,
       listaPesquisador: false,
+      retirada: false,
     });
     expect(await screen.findByRole('heading', { name: ESTUDO.titulo })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Participantes incluídos' })).not.toBeInTheDocument();

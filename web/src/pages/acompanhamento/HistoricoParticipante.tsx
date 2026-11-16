@@ -23,6 +23,8 @@ import {
   ordenarHistorico,
 } from './historico';
 import type { AvisoResultados } from './ResultadosVisita';
+import DialogoRetirada from './DialogoRetirada';
+import { podeRetirar } from './retirada';
 import '../../estilos/comum.css';
 import '../estudos/estudos.css';
 import './acompanhamento.css';
@@ -82,17 +84,21 @@ export default function HistoricoParticipante({
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Aviso de quem acabou de salvar resultados; limpa do histórico do navegador para não reaparecer
-  const [salvo] = useState<AvisoResultados | undefined>(() => location.state ?? undefined);
-  const [notificacaoVisivel, setNotificacaoVisivel] = useState(Boolean(salvo));
+  const [retirando, setRetirando] = useState(false);
+
+  // Aviso de quem acabou de salvar resultados (vem pela navegação) ou de registrar a retirada;
+  // o da navegação é limpo do histórico do navegador para não reaparecer
+  const [notificacao, setNotificacao] = useState<string | undefined>(
+    () => (location.state as AvisoResultados | null)?.aviso,
+  );
   useEffect(() => {
     if (location.state) navigate(location.pathname, { replace: true, state: null });
   }, [location, navigate]);
   useEffect(() => {
-    if (!notificacaoVisivel) return;
-    const temporizador = setTimeout(() => setNotificacaoVisivel(false), DURACAO_NOTIFICACAO_MS);
+    if (!notificacao) return;
+    const temporizador = setTimeout(() => setNotificacao(undefined), DURACAO_NOTIFICACAO_MS);
     return () => clearTimeout(temporizador);
-  }, [notificacaoVisivel]);
+  }, [notificacao]);
 
   useEffect(() => {
     let ativo = true;
@@ -122,19 +128,33 @@ export default function HistoricoParticipante({
   const caminhoParticipantes = `/estudos/${estudoId}/participacoes`;
   const acessaLista = usuario.perfil === 'COORDENADOR' || recursos.listaPesquisador;
   const caminhoVoltar = acessaLista ? caminhoParticipantes : caminhoEstudo;
-  // Só o coordenador registra resultados, e só enquanto o estudo não encerra (RF14)
-  const registraResultados = usuario.perfil === 'COORDENADOR' && dados?.estudo.estado !== 'ENCERRADO';
+  const coordenador = usuario.perfil === 'COORDENADOR';
+  // Só o coordenador registra resultados, enquanto o estudo não encerra e o participante não é retirado (RF14)
+  const registraResultados =
+    coordenador && dados?.estudo.estado !== 'ENCERRADO' && dados?.participacao.situacao !== 'RETIRADA';
   const caminhoResultados = (visitaId: number) =>
     `/estudos/${estudoId}/participacoes/${participacaoId}/visitas/${visitaId}/resultados`;
+  // Retirada (RF16): coordenador, participação ativa e estudo em recrutamento ou execução
+  const retira = Boolean(coordenador && recursos.retirada && dados && podeRetirar(dados.estudo, dados.participacao));
+  const visitasDoHistorico = dados?.itens.filter((i): i is ItemHistoricoVisita => i.tipo === 'VISITA') ?? [];
+
+  const retirar = async (motivo: string) => {
+    await acompanhamentoProp.retirarParticipante(estudoId, participacaoId, { motivo });
+    setRetirando(false);
+    setNotificacao(`Retirada de ${dados?.participacao.participanteNome ?? 'participante'} registrada.`);
+    // Recarrega sem voltar ao "Carregando": a situação e as visitas canceladas vêm do backend
+    const novos = await carregar(estudoId, participacaoId, estudosProp, acompanhamentoProp).catch(() => undefined);
+    if (novos) setTela({ tipo: 'pronto', ...novos });
+  };
 
   return (
     <div className="pagina-interna estudos-pagina">
       <BarraNavegacao usuario={usuario} />
 
-      {notificacaoVisivel && salvo && (
+      {notificacao && (
         <p className="notificacao" role="status">
           <Icone nome="sucesso" />
-          {salvo.aviso}
+          {notificacao}
         </p>
       )}
 
@@ -174,7 +194,25 @@ export default function HistoricoParticipante({
               </p>
             )}
           </div>
+          {retira && (
+            <button type="button" className="botao botao-retirar" onClick={() => setRetirando(true)}>
+              <Icone nome="usuarioX" />
+              Retirar do estudo
+            </button>
+          )}
         </header>
+
+        {retirando && dados && (
+          <DialogoRetirada
+            participanteNome={dados.participacao.participanteNome}
+            visitasAgendadas={visitasDoHistorico.filter((v) => v.situacao === 'AGENDADA').length}
+            realizadasSemResultado={
+              visitasDoHistorico.filter((v) => v.situacao === 'REALIZADA' && v.resultados.length === 0).length
+            }
+            aoRetirar={retirar}
+            aoCancelar={() => setRetirando(false)}
+          />
+        )}
 
         {tela.tipo === 'carregando' && <p className="estudos-cartao estudos-carregando">Carregando histórico…</p>}
 

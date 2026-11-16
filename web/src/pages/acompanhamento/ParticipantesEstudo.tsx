@@ -16,6 +16,7 @@ import Icone from '../../components/icones';
 import { NOMES_ESTADO } from '../estudos/formatacao';
 import { formatarDataHora } from '../recrutamento/formatacao';
 import { estadoPermiteAgendamento } from './agendamento';
+import DialogoRetirada from './DialogoRetirada';
 import { NOMES_SITUACAO_PARTICIPACAO } from './historico';
 import '../../estilos/comum.css';
 import '../estudos/estudos.css';
@@ -37,7 +38,9 @@ type EstadoTela =
   | { tipo: 'indisponivel'; estudo: Estudo }
   | { tipo: 'pronto'; estudo: Estudo; participacoes: Participacao[] };
 
-const textoContagem = (total: number) => (total === 1 ? '1 participante incluído' : `${total} participantes incluídos`);
+const DURACAO_NOTIFICACAO_MS = 6000;
+
+const textoContagem =(total: number) => (total === 1 ? '1 participante incluído' : `${total} participantes incluídos`);
 
 // <-------------------PARTICIPANTES INCLUÍDOS------------------->
 // RF12: participantes incluídos no estudo, inclusive os retirados. O coordenador vinculado agenda visitas
@@ -90,10 +93,44 @@ export default function ParticipantesEstudo({
   const caminhoEstudo = coordenador ? `/estudos/${estudoId}/recrutamento` : `/estudos/${estudoId}`;
   const agendaVisitas = coordenador && estudo !== undefined && estadoPermiteAgendamento(estudo);
   const temAcoes = recursos.historico || coordenador;
+  // Retirada (RF16): mesmas condições do agendamento, para participação ativa
+  const retiraParticipantes = agendaVisitas && recursos.retirada;
+  const [retirando, setRetirando] = useState<Participacao>();
+  const [notificacao, setNotificacao] = useState<string>();
+
+  useEffect(() => {
+    if (!notificacao) return;
+    const temporizador = setTimeout(() => setNotificacao(undefined), DURACAO_NOTIFICACAO_MS);
+    return () => clearTimeout(temporizador);
+  }, [notificacao]);
+
+  const retirar = async (participacao: Participacao, motivo: string) => {
+    await acompanhamentoProp.retirarParticipante(estudoId, participacao.id, { motivo });
+    setRetirando(undefined);
+    setNotificacao(`Retirada de ${participacao.participanteNome} registrada.`);
+    // Atualiza a situação sem voltar ao "Carregando"
+    const participacoes = await acompanhamentoProp.listarParticipacoes(estudoId).catch(() => undefined);
+    if (participacoes) setTela((atual) => (atual.tipo === 'pronto' ? { ...atual, participacoes } : atual));
+  };
 
   return (
     <div className="pagina-interna estudos-pagina">
       <BarraNavegacao usuario={usuario} />
+
+      {notificacao && (
+        <p className="notificacao" role="status">
+          <Icone nome="sucesso" />
+          {notificacao}
+        </p>
+      )}
+
+      {retirando && (
+        <DialogoRetirada
+          participanteNome={retirando.participanteNome}
+          aoRetirar={(motivo) => retirar(retirando, motivo)}
+          aoCancelar={() => setRetirando(undefined)}
+        />
+      )}
 
       <main className="estudos-conteudo">
         <nav className="estudos-trilha" aria-label="Trilha de navegação">
@@ -221,6 +258,17 @@ export default function ParticipantesEstudo({
                                   <Icone nome="calendario" />
                                   Agendar visitas
                                 </Link>
+                              )}
+                              {retiraParticipantes && p.situacao === 'ATIVA' && (
+                                <button
+                                  type="button"
+                                  className="botao botao-retirar"
+                                  onClick={() => setRetirando(p)}
+                                  aria-label={`Retirar ${p.participanteNome} do estudo`}
+                                >
+                                  <Icone nome="usuarioX" />
+                                  Retirar
+                                </button>
                               )}
                             </span>
                           </td>

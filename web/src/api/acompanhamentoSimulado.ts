@@ -14,6 +14,7 @@ import { servicoEstudosSimulado } from './estudosSimulado';
 import { servicoProtocolo, type ServicoProtocolo } from './protocolo';
 import { erroTextoResultado } from '../pages/acompanhamento/resultados';
 import { diaRecife, hojeRecife } from '../pages/acompanhamento/agendamento';
+import { MOTIVO_CANCELAMENTO_RETIRADA, erroMotivoRetirada } from '../pages/acompanhamento/retirada';
 
 // <-------------------SERVIÇO SIMULADO------------------->
 // Guarda as participações, as visitas e os resultados em memória e responde como o rascunho do
@@ -196,6 +197,10 @@ export function criarServicoAcompanhamentoSimulado(
     const encontrada = await buscarVisita(estudoId, participacaoId, visitaAgendadaId);
     if (encontrada.estudo.estado === 'ENCERRADO') {
       throw recusa('ESTADO_ESTUDO_INVALIDO', 'Não é permitido alterar resultados de um estudo encerrado.');
+    }
+    // Depois da retirada, o vínculo não aceita novas ações (modelagem, seção 3.5)
+    if (encontrada.participacao.situacao === 'RETIRADA') {
+      throw recusa('PARTICIPACAO_INVALIDA', 'Não é possível alterar resultados de participante retirado.');
     }
     if (encontrada.visita.situacao !== 'REALIZADA') {
       throw recusa('RESULTADO_INVALIDO', 'Só é possível registrar resultados em visita realizada.');
@@ -381,6 +386,49 @@ export function criarServicoAcompanhamentoSimulado(
       resultado.atualizadoPorId = ID_COORDENADOR;
       resultado.atualizadoEm = agoraInstant();
       return copiar(resultado);
+    },
+
+    // Ordem prevista para o backend: motivo (@Valid), estudo, estado, participação e retirada repetida.
+    // Marca a participação como retirada e cancela as visitas ainda agendadas; o resto fica no histórico
+    async retirarParticipante(estudoId, participacaoId, { motivo }) {
+      await aguardar();
+      const erroMotivo = erroMotivoRetirada(motivo);
+      if (erroMotivo) throw camposInvalidos({ motivo: erroMotivo });
+
+      const estudo = await buscarEstudo(estudoId);
+      if (!aceitaAgendamento(estudo)) {
+        throw recusa('ESTADO_ESTUDO_INVALIDO', 'O estudo não permite retirada de participantes.');
+      }
+      const { participacao } = await buscarParticipacao(estudoId, participacaoId);
+      if (participacao.situacao === 'RETIRADA') {
+        throw recusa('PARTICIPACAO_INVALIDA', 'O participante já foi retirado do estudo.');
+      }
+
+      const agora = agoraInstant();
+      const motivoAparado = motivo.trim();
+      for (const visita of participacao.visitas.filter((v) => v.situacao === 'AGENDADA')) {
+        visita.situacao = 'CANCELADA';
+        visita.motivo = MOTIVO_CANCELAMENTO_RETIRADA;
+        visita.registradoPorId = ID_COORDENADOR;
+        visita.registradoPorNome = NOME_COORDENADOR;
+        visita.registradoEm = agora;
+      }
+      participacao.situacao = 'RETIRADA';
+      participacao.dataRetirada = agora;
+      participacao.retirada = {
+        tipo: 'RETIRADA',
+        dataRetirada: agora,
+        motivo: motivoAparado,
+        retiradaPorId: ID_COORDENADOR,
+        retiradaPorNome: NOME_COORDENADOR,
+      };
+      return {
+        participacaoId,
+        situacao: 'RETIRADA',
+        dataRetirada: agora,
+        motivoRetirada: motivoAparado,
+        retiradaPorId: ID_COORDENADOR,
+      };
     },
   };
 }

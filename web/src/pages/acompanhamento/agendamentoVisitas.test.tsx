@@ -99,6 +99,7 @@ function criarServicos({ acompanhamento = {}, estudos = [ESTUDO], protocolo = PR
     listarResultados: vi.fn(),
     registrarResultado: vi.fn(),
     editarResultado: vi.fn(),
+    retirarParticipante: vi.fn(),
     ...acompanhamento,
   };
   const servicoProtocolo = { obter: vi.fn().mockResolvedValue(protocolo) } as unknown as ServicoProtocolo;
@@ -107,7 +108,7 @@ function criarServicos({ acompanhamento = {}, estudos = [ESTUDO], protocolo = PR
 
 function renderizar(
   servicos: ReturnType<typeof criarServicos>,
-  recursos: RecursosAcompanhamento = { historico: true, listaPesquisador: true },
+  recursos: RecursosAcompanhamento = { historico: true, listaPesquisador: true, retirada: true },
 ) {
   render(
     <MemoryRouter initialEntries={['/estudos/3/participacoes/1/visitas']}>
@@ -379,7 +380,7 @@ describe('AgendamentoVisitas', () => {
 
   it('sem o histórico no backend, mantém o agendamento e só oculta as visitas e o reagendamento', async () => {
     const servicos = criarServicos();
-    renderizar(servicos, { historico: false, listaPesquisador: false });
+    renderizar(servicos, { historico: false, listaPesquisador: false, retirada: false });
 
     expect(await screen.findByRole('heading', { name: 'Agendar visita' })).toBeInTheDocument();
     expect(screen.getByText(/A lista de visitas agendadas e o reagendamento ficarão disponíveis/)).toBeInTheDocument();

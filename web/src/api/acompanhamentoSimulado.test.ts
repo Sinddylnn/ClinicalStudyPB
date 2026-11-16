@@ -485,3 +485,78 @@ describe('servicoAcompanhamentoSimulado: agendamento de visitas', () => {
     ).rejects.toMatchObject({ codigo: 'ESTADO_ESTUDO_INVALIDO', message: 'O estudo não permite reagendamento de visitas.' });
   });
 });
+
+describe('servicoAcompanhamentoSimulado: retirada', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('retira com o motivo aparado, cancela só as visitas agendadas e registra no histórico', async () => {
+    const servico = criar();
+
+    const retirada = await executar(servico.retirarParticipante(3, 1, { motivo: '  Mudou de cidade.  ' }));
+
+    expect(retirada).toMatchObject({ participacaoId: 1, situacao: 'RETIRADA', motivoRetirada: 'Mudou de cidade.', retiradaPorId: 3 });
+    expect(retirada.dataRetirada).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+    const [participacao] = await executar(servico.listarParticipacoes(3));
+    expect(participacao).toMatchObject({ situacao: 'RETIRADA', dataRetirada: retirada.dataRetirada });
+
+    const { itens } = await executar(servico.obterHistorico(3, 1));
+    expect(itens.map((i) => (i.tipo === 'VISITA' ? i.situacao : i.tipo))).toEqual([
+      'REALIZADA',
+      'AUSENTE',
+      'REALIZADA',
+      'CANCELADA',
+      'RETIRADA',
+    ]);
+    expect(itens[3]).toMatchObject({ motivo: 'Retirada do participante', registradoPorId: 3 });
+    expect(itens[4]).toMatchObject({ motivo: 'Mudou de cidade.', retiradaPorNome: 'Carlos Coordenador' });
+  });
+
+  it('confere o motivo antes de tudo: vazio ou acima de 500 caracteres', async () => {
+    const servico = criar();
+
+    await expect(executar(servico.retirarParticipante(9, 1, { motivo: '  ' }))).rejects.toMatchObject({
+      status: 400,
+      codigo: 'VALIDACAO_INVALIDA',
+      errosCampos: { motivo: 'Informe o motivo da retirada.' },
+    });
+    await expect(executar(servico.retirarParticipante(3, 1, { motivo: 'a'.repeat(501) }))).rejects.toMatchObject({
+      errosCampos: { motivo: 'O motivo pode ter até 500 caracteres.' },
+    });
+  });
+
+  it('recusa estudo encerrado, participação fora do estudo e retirada repetida', async () => {
+    const servico = criar();
+
+    await expect(executar(servico.retirarParticipante(4, 2, { motivo: 'Ok.' }))).rejects.toMatchObject({
+      codigo: 'ESTADO_ESTUDO_INVALIDO',
+    });
+    await expect(executar(servico.retirarParticipante(3, 2, { motivo: 'Ok.' }))).rejects.toMatchObject({ status: 404 });
+
+    await executar(servico.retirarParticipante(3, 1, { motivo: 'Ok.' }));
+    await expect(executar(servico.retirarParticipante(3, 1, { motivo: 'De novo.' }))).rejects.toMatchObject({
+      codigo: 'PARTICIPACAO_INVALIDA',
+      message: 'O participante já foi retirado do estudo.',
+    });
+  });
+
+  it('depois da retirada, não aceita resultados nem agendamentos', async () => {
+    const servico = criar();
+    await executar(servico.retirarParticipante(3, 1, { motivo: 'Ok.' }));
+
+    await expect(
+      executar(servico.registrarResultado(3, 1, 4, { atividadePrevistaId: 4, texto: 'Ok.' })),
+    ).rejects.toMatchObject({ codigo: 'PARTICIPACAO_INVALIDA' });
+    await expect(executar(servico.editarResultado(3, 1, 1, 1, 'Ok.'))).rejects.toMatchObject({
+      codigo: 'PARTICIPACAO_INVALIDA',
+    });
+    await expect(
+      executar(servico.agendarVisita(3, 1, { visitaPrevistaId: 5, dataHora: '2026-12-15T13:00:00Z' })),
+    ).rejects.toMatchObject({ codigo: 'PARTICIPACAO_INVALIDA' });
+  });
+});

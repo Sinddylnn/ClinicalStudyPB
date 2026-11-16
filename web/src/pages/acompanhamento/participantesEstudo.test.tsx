@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
@@ -36,7 +36,7 @@ const PARTICIPACOES: Participacao[] = [
   },
 ];
 
-const TODOS: RecursosAcompanhamento = { historico: true, listaPesquisador: true };
+const TODOS: RecursosAcompanhamento = { historico: true, listaPesquisador: true, retirada: true };
 
 function criarServicos(parcial: Partial<ServicoAcompanhamento> = {}, estudos: Estudo[] = [ESTUDO]) {
   const servicoEstudos: ServicoEstudos = {
@@ -54,6 +54,7 @@ function criarServicos(parcial: Partial<ServicoAcompanhamento> = {}, estudos: Es
     listarResultados: vi.fn(),
     registrarResultado: vi.fn(),
     editarResultado: vi.fn(),
+    retirarParticipante: vi.fn(),
     ...parcial,
   };
   return { estudos: servicoEstudos, acompanhamento };
@@ -150,7 +151,7 @@ describe('ParticipantesEstudo', () => {
   });
 
   it('sem o histórico no backend, não mostra o link "Ver histórico"', async () => {
-    renderizar(criarServicos(), COORDENADOR, { historico: false, listaPesquisador: false });
+    renderizar(criarServicos(), COORDENADOR, { historico: false, listaPesquisador: false, retirada: false });
 
     const maria = await linhaDe('Maria Souza');
     expect(within(maria).queryByRole('link', { name: /Ver histórico/ })).not.toBeInTheDocument();
@@ -159,7 +160,7 @@ describe('ParticipantesEstudo', () => {
 
   it('sem a lista liberada ao pesquisador no backend, não chama a rota e explica', async () => {
     const servicos = criarServicos();
-    renderizar(servicos, PESQUISADORA, { historico: false, listaPesquisador: false });
+    renderizar(servicos, PESQUISADORA, { historico: false, listaPesquisador: false, retirada: false });
 
     expect(await screen.findByText(/ficará disponível quando o backend liberar/)).toBeInTheDocument();
     expect(servicos.acompanhamento.listarParticipacoes).not.toHaveBeenCalled();
@@ -204,5 +205,51 @@ describe('ParticipantesEstudo', () => {
     renderizar(criarServicos({ listarParticipacoes: vi.fn().mockRejectedValue(new Error('x')) }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar os participantes.');
+  });
+});
+
+describe('ParticipantesEstudo: retirada', () => {
+  const botaoRetirar = (nome: string) => screen.queryByRole('button', { name: `Retirar ${nome} do estudo` });
+
+  it('o coordenador retira um participante ativo e a lista atualiza a situação', async () => {
+    const retirarParticipante = vi.fn().mockResolvedValue({});
+    const retirada: Participacao = { ...PARTICIPACOES[0], situacao: 'RETIRADA', dataRetirada: '2026-11-16T15:00:00Z' };
+    const servicos = criarServicos({
+      retirarParticipante,
+      listarParticipacoes: vi.fn().mockResolvedValueOnce(PARTICIPACOES).mockResolvedValue([retirada, PARTICIPACOES[1]]),
+    });
+    renderizar(servicos);
+
+    await linhaDe('Maria Souza');
+    // A participação já retirada não tem o botão
+    expect(botaoRetirar('Joana Ribeiro')).not.toBeInTheDocument();
+    await userEvent.click(botaoRetirar('Maria Souza') as HTMLElement);
+    const dialogo = screen.getByRole('dialog', { name: 'Retirar do estudo?' });
+    expect(within(dialogo).getByText('As visitas ainda agendadas serão canceladas.')).toBeInTheDocument();
+    await userEvent.type(within(dialogo).getByLabelText('Motivo da retirada (obrigatório)'), 'Pediu para sair.');
+    await userEvent.click(within(dialogo).getByRole('button', { name: 'Retirar participante' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Retirada de Maria Souza registrada.');
+    expect(retirarParticipante).toHaveBeenCalledWith(3, 1, { motivo: 'Pediu para sair.' });
+    const linha = await linhaDe('Maria Souza');
+    expect(await within(linha).findByText('Retirado')).toBeInTheDocument();
+    expect(botaoRetirar('Maria Souza')).not.toBeInTheDocument();
+    expect(within(linha).queryByRole('link', { name: /Agendar visitas/ })).not.toBeInTheDocument();
+  });
+
+  it('não oferece a retirada ao pesquisador, com o estudo encerrado nem sem o backend', async () => {
+    renderizar(criarServicos(), PESQUISADORA);
+    await linhaDe('Maria Souza');
+    expect(botaoRetirar('Maria Souza')).not.toBeInTheDocument();
+    cleanup();
+
+    renderizar(criarServicos({}, [{ ...ESTUDO, estado: 'ENCERRADO' }]));
+    await linhaDe('Maria Souza');
+    expect(botaoRetirar('Maria Souza')).not.toBeInTheDocument();
+    cleanup();
+
+    renderizar(criarServicos(), COORDENADOR, { ...TODOS, retirada: false });
+    await linhaDe('Maria Souza');
+    expect(botaoRetirar('Maria Souza')).not.toBeInTheDocument();
   });
 });

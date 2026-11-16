@@ -242,3 +242,41 @@ describe('servicoAcompanhamentoApi', () => {
     ]);
   });
 });
+
+describe('servicoAcompanhamentoApi: retirada', () => {
+  it('retirarParticipante: POST .../retirada com o motivo, levando o token CSRF', async () => {
+    const resposta = {
+      participacaoId: 120,
+      situacao: 'RETIRADA',
+      dataRetirada: '2026-11-16T16:00:00Z',
+      motivoRetirada: 'Participante solicitou a retirada do estudo',
+      retiradaPorId: 12,
+    };
+    const chamadas = simularBackend({
+      'GET /auth/csrf': CSRF,
+      'POST /estudos/30/participacoes/120/retirada': { status: 200, data: resposta },
+    });
+
+    const entrada = { motivo: 'Participante solicitou a retirada do estudo' };
+    expect(await servicoAcompanhamentoApi.retirarParticipante(30, 120, entrada)).toEqual(resposta);
+
+    const post = chamadas.find((c) => c.method === 'post');
+    expect(JSON.parse(post?.data as string)).toEqual(entrada);
+    expect(post?.headers.get('X-CSRF-TOKEN')).toBe('abc');
+  });
+
+  it('retirarParticipante: repassa o erro de participação já retirada', async () => {
+    simularBackend({
+      'GET /auth/csrf': CSRF,
+      'POST /estudos/30/participacoes/120/retirada': {
+        status: 400,
+        data: { codigo: 'PARTICIPACAO_INVALIDA', mensagem: 'O participante já foi retirado do estudo.' },
+      },
+    });
+
+    await expect(servicoAcompanhamentoApi.retirarParticipante(30, 120, { motivo: 'Ok.' })).rejects.toMatchObject({
+      status: 400,
+      codigo: 'PARTICIPACAO_INVALIDA',
+    });
+  });
+});

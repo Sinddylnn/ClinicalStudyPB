@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
@@ -114,6 +114,7 @@ function criarServicos(parcial: Partial<ServicoAcompanhamento> = {}, estudos: Es
     listarResultados: vi.fn(),
     registrarResultado: vi.fn(),
     editarResultado: vi.fn(),
+    retirarParticipante: vi.fn(),
     ...parcial,
   };
   return { estudos: servicoEstudos, acompanhamento };
@@ -123,7 +124,7 @@ function renderizar(
   servicos: ReturnType<typeof criarServicos>,
   usuario = COORDENADOR,
   caminho: string | { pathname: string; state: unknown } = '/estudos/3/participacoes/1/historico',
-  recursos: RecursosAcompanhamento = { historico: true, listaPesquisador: true },
+  recursos: RecursosAcompanhamento = { historico: true, listaPesquisador: true, retirada: true },
 ) {
   render(
     <MemoryRouter initialEntries={[caminho]}>
@@ -278,7 +279,7 @@ describe('HistoricoParticipante', () => {
   });
 
   it('sem a lista liberada ao pesquisador, ele volta para o estudo e a trilha não mostra "Participantes"', async () => {
-    const semLista = { historico: true, listaPesquisador: false };
+    const semLista = { historico: true, listaPesquisador: false, retirada: false };
     renderizar(criarServicos(), PESQUISADORA, undefined, semLista);
     await screen.findByRole('link', { name: 'Voltar' });
 
@@ -289,7 +290,7 @@ describe('HistoricoParticipante', () => {
   });
 
   it('sem a lista liberada ao pesquisador, o coordenador continua indo para a lista', async () => {
-    renderizar(criarServicos(), COORDENADOR, undefined, { historico: true, listaPesquisador: false });
+    renderizar(criarServicos(), COORDENADOR, undefined, { historico: true, listaPesquisador: false, retirada: false });
     await screen.findByRole('link', { name: 'Voltar' });
 
     const trilha = within(screen.getByRole('navigation', { name: 'Trilha de navegação' }));
@@ -384,5 +385,84 @@ describe('HistoricoParticipante', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('HistoricoParticipante: retirada', () => {
+  const RETIRADA: Participacao = { ...PARTICIPACAO, situacao: 'RETIRADA', dataRetirada: '2026-11-16T15:00:00Z' };
+  const HISTORICO_RETIRADO: HistoricoParticipacao = {
+    participacaoId: 1,
+    itens: [
+      ...HISTORICO.itens.map((i) =>
+        i.tipo === 'VISITA' && i.situacao === 'AGENDADA'
+          ? { ...i, situacao: 'CANCELADA' as const, motivo: 'Retirada do participante', registradoPorId: 3 }
+          : i,
+      ),
+      { tipo: 'RETIRADA', dataRetirada: '2026-11-16T15:00:00Z', motivo: 'Mudou de cidade.', retiradaPorId: 3 },
+    ],
+  };
+  const botaoRetirar = () => screen.queryByRole('button', { name: 'Retirar do estudo' });
+
+  it('o coordenador retira pelo diálogo e vê a situação e a retirada atualizadas', async () => {
+    const retirarParticipante = vi.fn().mockResolvedValue({});
+    const servicos = criarServicos({
+      retirarParticipante,
+      listarParticipacoes: vi.fn().mockResolvedValueOnce([PARTICIPACAO]).mockResolvedValue([RETIRADA]),
+      obterHistorico: vi.fn().mockResolvedValueOnce(HISTORICO).mockResolvedValue(HISTORICO_RETIRADO),
+    });
+    renderizar(servicos);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Retirar do estudo' }));
+    const dialogo = screen.getByRole('dialog', { name: 'Retirar do estudo?' });
+    // Só a Visita final ainda está agendada
+    expect(within(dialogo).getByText('A visita agendada será cancelada.')).toBeInTheDocument();
+    await userEvent.type(within(dialogo).getByLabelText('Motivo da retirada (obrigatório)'), 'Mudou de cidade.');
+    await userEvent.click(within(dialogo).getByRole('button', { name: 'Retirar participante' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Retirada de Maria Souza registrada.');
+    expect(retirarParticipante).toHaveBeenCalledWith(3, 1, { motivo: 'Mudou de cidade.' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Retirada do estudo' })).toBeInTheDocument();
+    expect(screen.getByText('Retirado', { selector: '.historico-subtitulo .etiqueta' })).toBeInTheDocument();
+    expect(botaoRetirar()).not.toBeInTheDocument();
+    // Depois da retirada, nem os resultados podem ser lançados
+    expect(screen.queryByRole('link', { name: /resultados da/ })).not.toBeInTheDocument();
+  });
+
+  it('não oferece a retirada ao pesquisador, ao retirado, fora de recrutamento ou execução, nem sem o backend', async () => {
+    renderizar(criarServicos(), PESQUISADORA);
+    await screen.findByRole('heading', { name: 'Visita inicial' });
+    expect(botaoRetirar()).not.toBeInTheDocument();
+    cleanup();
+
+    renderizar(criarServicos({ listarParticipacoes: vi.fn().mockResolvedValue([RETIRADA]) }));
+    await screen.findByRole('heading', { name: 'Visita inicial' });
+    expect(botaoRetirar()).not.toBeInTheDocument();
+    cleanup();
+
+    renderizar(criarServicos({}, [{ ...ESTUDO, estado: 'ENCERRADO' }]));
+    await screen.findByRole('heading', { name: 'Visita inicial' });
+    expect(botaoRetirar()).not.toBeInTheDocument();
+    cleanup();
+
+    renderizar(criarServicos(), COORDENADOR, undefined, { historico: true, listaPesquisador: true, retirada: false });
+    await screen.findByRole('heading', { name: 'Visita inicial' });
+    expect(botaoRetirar()).not.toBeInTheDocument();
+  });
+
+  it('em estudo em Execução o coordenador também retira', async () => {
+    renderizar(criarServicos({}, [{ ...ESTUDO, estado: 'EXECUCAO' }]));
+    expect(await screen.findByRole('button', { name: 'Retirar do estudo' })).toBeInTheDocument();
+  });
+
+  it('cancelar fecha o diálogo sem retirar', async () => {
+    const servicos = criarServicos();
+    renderizar(servicos);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Retirar do estudo' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(servicos.acompanhamento.retirarParticipante).not.toHaveBeenCalled();
   });
 });
