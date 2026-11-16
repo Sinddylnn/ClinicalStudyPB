@@ -163,4 +163,42 @@ public class VisitaAgendadaController {
                 autenticado);
     }
 
+
+    // <-------CORRECAO DE SITUACAO DE VISITAS------->
+    /**
+     * Corrige a situação final de uma visita.
+     *
+     * @param estudoId identificador do estudo
+     * @param participacaoId identificador da participação
+     * @param visitaAgendadaId identificador da visita
+     * @param entrada dados da correção
+     * @param autenticado usuário autenticado
+     * @return correção registrada
+     * @since 1.0
+     */
+    @Parameter(ref = "#/components/parameters/TokenCsrf")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Correção registrada com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Correção não permitida ou dados inválidos"),
+        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+        @ApiResponse(responseCode = "403", description = "Acesso negado"),
+        @ApiResponse(responseCode = "404", description = "Estudo, participação ou visita não encontrada")
+    })
+    @PostMapping("/{visitaAgendadaId}/correcoes")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Corrigir situação de visita")
+    public CorrecaoVisitaResposta corrigirSituacao(
+            @PathVariable Long estudoId,
+            @PathVariable Long participacaoId,
+            @PathVariable Long visitaAgendadaId,
+            @Valid @RequestBody CorrecaoVisitaEntrada entrada,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal UsuarioAutenticado autenticado) {
+
+        return visitas.corrigirSituacao(
+                estudoId, participacaoId,
+                visitaAgendadaId, entrada, autenticado);
+    }
+
+
 }

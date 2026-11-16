@@ -519,6 +519,90 @@ class VisitaAgendadaControllerTest {
     }
 
 
+    // <-------TESTES DE CORRECAO DE SITUACAO------->
+    /**
+     * Verifica se o coordenador pode corrigir uma visita.
+     *
+     * @throws Exception se ocorrer erro na requisição
+     * @since 1.0
+     */
+    @Test
+    void coordenadorPodeCorrigirSituacao() throws Exception {
+        mvc.perform(post("/estudos/10/participacoes/20/visitas/40/correcoes")
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "situacao": "REALIZADA",
+                                  "justificativa": "Registro anterior incorreto"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        verify(visitas).corrigirSituacao(
+                eq(10L), eq(20L), eq(40L),
+                any(CorrecaoVisitaEntrada.class),
+                any(UsuarioAutenticado.class));
+    }
+
+    /**
+     * Impede correções por usuários sem permissão.
+     *
+     * @param perfil perfil sem permissão
+     * @throws Exception se ocorrer erro na requisição
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @EnumSource(value = PerfilUsuario.class,
+            names = {"PESQUISADOR", "ADMINISTRADOR", "PARTICIPANTE"})
+    void usuarioSemPermissaoNaoPodeCorrigirSituacao(
+            PerfilUsuario perfil) throws Exception {
+
+        Usuario usuario = criarUsuario(50L, perfil);
+
+        when(usuarios.findById(50L))
+                .thenReturn(Optional.of(usuario));
+
+        mvc.perform(post("/estudos/10/participacoes/20/visitas/40/correcoes")
+                        .with(user(new UsuarioAutenticado(usuario)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "situacao": "REALIZADA",
+                                  "justificativa": "Registro anterior incorreto"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+
+        verify(visitas, never()).corrigirSituacao(
+                any(), any(), any(), any(), any());
+    }
+
+    /**
+     * Impede correções sem token CSRF.
+     *
+     * @throws Exception se ocorrer erro na requisição
+     * @since 1.0
+     */
+    @Test
+    void correcaoSemCsrfEhBloqueada() throws Exception {
+        mvc.perform(post("/estudos/10/participacoes/20/visitas/40/correcoes")
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "situacao": "REALIZADA",
+                                  "justificativa": "Registro anterior incorreto"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+
+        verify(visitas, never()).corrigirSituacao(
+                any(), any(), any(), any(), any());
+    }
+
     /**
      * Cria um usuário com o identificador e perfil informados.
      *

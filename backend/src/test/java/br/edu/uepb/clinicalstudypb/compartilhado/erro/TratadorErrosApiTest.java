@@ -2,6 +2,7 @@ package br.edu.uepb.clinicalstudypb.compartilhado.erro;
 
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ProtocoloRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ResultadoAtividadeRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.CriterioRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaPrevistaRepository;
@@ -22,9 +23,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import br.edu.uepb.clinicalstudypb.estudos.repository.AtividadePrevistaRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.CorrecaoVisitaRepository;
 import br.edu.uepb.clinicalstudypb.recrutamento.repository.CandidatoRepository;
 import br.edu.uepb.clinicalstudypb.recrutamento.repository.AvaliacaoElegibilidadeRepository;
 import br.edu.uepb.clinicalstudypb.recrutamento.repository.RespostaElegibilidadeRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.CorrecaoVisitaRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ResultadoAtividadeRepository;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -78,6 +82,10 @@ class TratadorErrosApiTest {
     @MockitoBean private VisitaPrevistaRepository visitaPrevistaRepository;
     @MockitoBean private AtividadePrevistaRepository atividadePrevistaRepository;
     @MockitoBean private ParticipacaoRepository participacaoRepository;
+    @MockitoBean
+    private CorrecaoVisitaRepository correcaoVisitaRepository;
+    @MockitoBean
+    private ResultadoAtividadeRepository resultadoAtividadeRepository;
 
     @Autowired
     private MockMvc mockMvc;

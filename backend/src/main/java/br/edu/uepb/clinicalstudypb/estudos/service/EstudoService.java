@@ -6,6 +6,7 @@ import br.edu.uepb.clinicalstudypb.estudos.Estudo;
 import br.edu.uepb.clinicalstudypb.estudos.EstadoEstudo;
 import br.edu.uepb.clinicalstudypb.estudos.Protocolo;
 import br.edu.uepb.clinicalstudypb.estudos.TipoCriterio;
+import br.edu.uepb.clinicalstudypb.estudos.SituacaoVisita;
 import br.edu.uepb.clinicalstudypb.estudos.api.AlteracaoEstadoEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.api.EstudoCadastroEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.api.EstudoResposta;
@@ -15,6 +16,7 @@ import br.edu.uepb.clinicalstudypb.estudos.repository.ProtocoloRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.CriterioRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaPrevistaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
@@ -47,6 +49,7 @@ public class EstudoService {
     private final CriterioRepository criterios;
     private final VisitaPrevistaRepository visitas;
     private final ParticipacaoRepository participacoes;
+    private final VisitaAgendadaRepository visitasAgendadas;
 
     /**
      * Recebe os repositórios utilizados na gestão dos estudos.
@@ -57,6 +60,7 @@ public class EstudoService {
      * @param criterios critérios de inclusão e exclusão do protocolo
      * @param visitas modelos de visita e suas pendências de configuração
      * @param participacoes inclusões históricas do estudo
+     * * @param visitasAgendadas repositório de visitas dos participantes
      */
     public EstudoService(
             EstudoRepository estudos,
@@ -64,13 +68,15 @@ public class EstudoService {
             ProtocoloRepository protocolos,
             CriterioRepository criterios,
             VisitaPrevistaRepository visitas,
-            ParticipacaoRepository participacoes) {
+            ParticipacaoRepository participacoes,
+            VisitaAgendadaRepository visitasAgendadas) {
         this.estudos = estudos;
         this.usuarios = usuarios;
         this.protocolos = protocolos;
         this.criterios = criterios;
         this.visitas = visitas;
         this.participacoes = participacoes;
+        this.visitasAgendadas = visitasAgendadas;
     }
 
     // <-------------------CADASTRO------------------->
@@ -300,6 +306,20 @@ public class EstudoService {
             throw new RegraNegocioException("ESTUDO_COM_PARTICIPANTES",
                     "O estudo já possui inclusões e não pode ser encerrado antes da execução.");
         }
+
+        if (estudo.getEstado() == EstadoEstudo.EXECUCAO) {
+            long pendentes =
+                    visitasAgendadas.countByParticipacao_Estudo_IdAndSituacao(
+                            estudo.getId(), SituacaoVisita.AGENDADA);
+
+            if (pendentes > 0) {
+                throw new RegraNegocioException(
+                        "VISITAS_PENDENTES",
+                        "O estudo possui " + pendentes
+                                + " visita(s) agendada(s) pendente(s).");
+            }
+        }
+
     }
 
     // <-------------------REGRAS AUXILIARES------------------->

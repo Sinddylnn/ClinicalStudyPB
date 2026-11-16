@@ -7,6 +7,7 @@ import br.edu.uepb.clinicalstudypb.estudos.Estudo;
 import br.edu.uepb.clinicalstudypb.estudos.EstadoEstudo;
 import br.edu.uepb.clinicalstudypb.estudos.Protocolo;
 import br.edu.uepb.clinicalstudypb.estudos.TipoCriterio;
+import br.edu.uepb.clinicalstudypb.estudos.SituacaoVisita;
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ProtocoloRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.CriterioRepository;
@@ -16,6 +17,7 @@ import br.edu.uepb.clinicalstudypb.estudos.service.EstudoService;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.service.AutenticacaoService;
 import java.time.LocalDate;
 import java.util.Collection;
@@ -76,6 +78,7 @@ class EstudoControllerTest {
     @MockitoBean private CriterioRepository criterioRepository;
     @MockitoBean private VisitaPrevistaRepository visitaPrevistaRepository;
     @MockitoBean private ParticipacaoRepository participacaoRepository;
+    @MockitoBean private VisitaAgendadaRepository visitasAgendadasRepository;
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper json;
@@ -683,4 +686,51 @@ class EstudoControllerTest {
         return pedido.with(user(new UsuarioAutenticado(contas.get(id)))).with(csrf())
                 .contentType("application/json");
     }
+
+
+    /**
+     * Impede encerrar um estudo com visitas agendadas.
+     *
+     * @throws Exception se ocorrer erro na requisição
+     * @since 1.0
+     */
+    @Test
+    void impedeEncerramentoComVisitasPendentes() throws Exception {
+        ReflectionTestUtils.setField(
+                registros.get(10L), "estado", EstadoEstudo.EXECUCAO);
+
+        when(visitasAgendadasRepository
+                .countByParticipacao_Estudo_IdAndSituacao(
+                        10L, SituacaoVisita.AGENDADA))
+                .thenReturn(2L);
+
+        mvc.perform(como(1, patch("/estudos/10/estado"))
+                        .content("{\"estado\":\"ENCERRADO\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo")
+                        .value("VISITAS_PENDENTES"))
+                .andExpect(jsonPath("$.mensagem")
+                        .value(org.hamcrest.Matchers.containsString("2 visita")));
+
+        assertThat(registros.get(10L).getEstado())
+                .isEqualTo(EstadoEstudo.EXECUCAO);
+    }
+
+    /**
+     * Permite encerrar um estudo sem visitas pendentes.
+     *
+     * @throws Exception se ocorrer erro na requisição
+     * @since 1.0
+     */
+    @Test
+    void permiteEncerramentoSemVisitasPendentes() throws Exception {
+        ReflectionTestUtils.setField(
+                registros.get(10L), "estado", EstadoEstudo.EXECUCAO);
+
+        mvc.perform(como(1, patch("/estudos/10/estado"))
+                        .content("{\"estado\":\"ENCERRADO\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("ENCERRADO"));
+    }
+
 }

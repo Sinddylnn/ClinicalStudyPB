@@ -18,6 +18,8 @@ import br.edu.uepb.clinicalstudypb.estudos.repository.AtividadePrevistaRepositor
 import br.edu.uepb.clinicalstudypb.recrutamento.repository.AvaliacaoElegibilidadeRepository;
 import br.edu.uepb.clinicalstudypb.recrutamento.repository.RespostaElegibilidadeRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.CorrecaoVisitaRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ResultadoAtividadeRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -70,6 +72,10 @@ class DocumentacaoApiTest {
     private RespostaElegibilidadeRepository respostaElegibilidadeRepository;
     @MockitoBean
     private VisitaAgendadaRepository visitaAgendadaRepository;
+    @MockitoBean
+    private CorrecaoVisitaRepository correcaoVisitaRepository;
+    @MockitoBean
+    private ResultadoAtividadeRepository resultadoAtividadeRepository;
 
     /**
      * Confere rotas, DTOs e mecanismos de acesso publicados no contrato real.

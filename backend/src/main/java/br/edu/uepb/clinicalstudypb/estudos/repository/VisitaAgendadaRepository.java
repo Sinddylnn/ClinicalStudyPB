@@ -38,4 +38,15 @@ public interface VisitaAgendadaRepository extends JpaRepository<VisitaAgendada, 
      */
     List<VisitaAgendada> findByParticipacao_IdOrderByDataHoraAsc(
             Long participacaoId);
+
+    /**
+     * Conta as visitas de um estudo em determinada situação.
+     *
+     * @param estudoId identificador do estudo
+     * @param situacao situação das visitas
+     * @return quantidade de visitas encontradas
+     * @since 1.0
+     */
+    long countByParticipacao_Estudo_IdAndSituacao(
+            Long estudoId, SituacaoVisita situacao);
 }

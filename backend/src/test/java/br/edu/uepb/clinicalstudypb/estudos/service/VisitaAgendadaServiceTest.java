@@ -28,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
+import org.mockito.ArgumentCaptor;
 
 import br.edu.uepb.clinicalstudypb.compartilhado.erro.ConflitoException;
 import br.edu.uepb.clinicalstudypb.compartilhado.erro.RegraNegocioException;
@@ -40,14 +41,19 @@ import br.edu.uepb.clinicalstudypb.estudos.SituacaoParticipacao;
 import br.edu.uepb.clinicalstudypb.estudos.SituacaoVisita;
 import br.edu.uepb.clinicalstudypb.estudos.VisitaAgendada;
 import br.edu.uepb.clinicalstudypb.estudos.VisitaPrevista;
+import br.edu.uepb.clinicalstudypb.estudos.CorrecaoVisita;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaCadastroEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaReagendamentoEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaResposta;
 import br.edu.uepb.clinicalstudypb.estudos.api.VisitaAgendadaSituacaoEntrada;
+import br.edu.uepb.clinicalstudypb.estudos.api.CorrecaoVisitaEntrada;
+import br.edu.uepb.clinicalstudypb.estudos.api.CorrecaoVisitaResposta;
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaPrevistaRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.CorrecaoVisitaRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ResultadoAtividadeRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 
@@ -73,6 +79,12 @@ class VisitaAgendadaServiceTest {
 
     @Mock
     private VisitaAgendadaRepository visitasAgendadas;
+
+    @Mock
+    private CorrecaoVisitaRepository correcoes;
+
+    @Mock
+    private ResultadoAtividadeRepository resultados;
 
     @InjectMocks
     private VisitaAgendadaService servico;
@@ -507,6 +519,236 @@ class VisitaAgendadaServiceTest {
 
         verify(visitasAgendadas, never())
                 .save(any(VisitaAgendada.class));
+    }
+
+
+    // <-------TESTES DE CORRECAO DE SITUACAO------->
+    /**
+     * Verifica a correção de ausência para realização,
+     * preservando os dados anteriores no histórico.
+     *
+     * @since 1.0
+     */
+    @Test
+    void corrigeAusenciaParaRealizada() {
+        Instant ontem = Instant.now().minus(1, ChronoUnit.DAYS);
+
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, ontem);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        visita.registrarSituacao(
+                SituacaoVisita.AUSENTE,
+                "Participante não compareceu",
+                estudo.getCoordenador(),
+                ontem);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        when(correcoes.save(any(CorrecaoVisita.class)))
+                .thenAnswer(chamada -> chamada.getArgument(0));
+
+        CorrecaoVisitaEntrada entrada = new CorrecaoVisitaEntrada(
+                SituacaoVisita.REALIZADA,
+                "A visita ocorreu, mas foi registrada incorretamente",
+                null);
+
+        CorrecaoVisitaResposta resposta = servico.corrigirSituacao(
+                10L, 20L, 40L, entrada, coordenador);
+
+        assertThat(resposta.situacaoAnterior())
+                .isEqualTo(SituacaoVisita.AUSENTE);
+        assertThat(resposta.situacaoNova())
+                .isEqualTo(SituacaoVisita.REALIZADA);
+        assertThat(resposta.corrigidaPorId()).isEqualTo(1L);
+        assertThat(resposta.corrigidaEm()).isNotNull();
+
+        assertThat(visita.getSituacao())
+                .isEqualTo(SituacaoVisita.REALIZADA);
+        assertThat(visita.getMotivo()).isNull();
+
+        ArgumentCaptor<CorrecaoVisita> capturador =
+                ArgumentCaptor.forClass(CorrecaoVisita.class);
+
+        verify(correcoes).save(capturador.capture());
+
+        CorrecaoVisita historico = capturador.getValue();
+
+        assertThat(historico.getSituacaoAnterior())
+                .isEqualTo(SituacaoVisita.AUSENTE);
+        assertThat(historico.getMotivoAnterior())
+                .isEqualTo("Participante não compareceu");
+        assertThat(historico.getMotivoNovo()).isNull();
+        assertThat(historico.getJustificativa())
+                .isEqualTo(entrada.justificativa());
+
+        verify(resultados).existsByVisitaAgendada_Id(40L);
+        verify(visitasAgendadas).save(visita);
+    }
+
+
+    /**
+     * Impede corrigir uma visita que possui resultados registrados.
+     *
+     * @since 1.0
+     */
+    @Test
+    void impedeCorrecaoDeVisitaComResultados() {
+        Instant ontem = Instant.now().minus(1, ChronoUnit.DAYS);
+
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, ontem);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        visita.registrarSituacao(
+                SituacaoVisita.AUSENTE,
+                "Participante não compareceu",
+                estudo.getCoordenador(),
+                ontem);
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        when(resultados.existsByVisitaAgendada_Id(40L))
+                .thenReturn(true);
+
+        CorrecaoVisitaEntrada entrada = new CorrecaoVisitaEntrada(
+                SituacaoVisita.REALIZADA,
+                "Registro anterior incorreto",
+                null);
+
+        assertThatThrownBy(() -> servico.corrigirSituacao(
+                10L, 20L, 40L, entrada, coordenador))
+                .isInstanceOfSatisfying(
+                        RegraNegocioException.class, erro -> {
+                            assertThat(erro.getCodigo())
+                                    .isEqualTo("CORRECAO_BLOQUEADA");
+                        });
+
+        assertThat(visita.getSituacao())
+                .isEqualTo(SituacaoVisita.AUSENTE);
+
+        assertThat(visita.getMotivo())
+                .isEqualTo("Participante não compareceu");
+
+        verify(resultados).existsByVisitaAgendada_Id(40L);
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+
+        verify(correcoes, never())
+                .save(any(CorrecaoVisita.class));
+    }
+
+
+    /**
+     * Impede que uma correção retorne a visita para AGENDADA.
+     *
+     * @since 1.0
+     */
+    @Test
+    void impedeCorrecaoParaAgendada() {
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, dataVisita);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        visita.registrarSituacao(
+                SituacaoVisita.CANCELADA,
+                "Cancelamento solicitado",
+                estudo.getCoordenador(),
+                Instant.now());
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        CorrecaoVisitaEntrada entrada = new CorrecaoVisitaEntrada(
+                SituacaoVisita.AGENDADA,
+                "Tentativa de reabrir o agendamento",
+                null);
+
+        assertThatThrownBy(() -> servico.corrigirSituacao(
+                10L, 20L, 40L, entrada, coordenador))
+                .isInstanceOfSatisfying(
+                        RegraNegocioException.class, erro -> {
+                            assertThat(erro.getCodigo())
+                                    .isEqualTo("TRANSICAO_VISITA_INVALIDA");
+                        });
+
+        assertThat(visita.getSituacao())
+                .isEqualTo(SituacaoVisita.CANCELADA);
+
+        assertThat(visita.getMotivo())
+                .isEqualTo("Cancelamento solicitado");
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+
+        verify(correcoes, never())
+                .save(any(CorrecaoVisita.class));
+    }
+
+
+    /**
+     * Impede corrigir uma visita para a mesma situação.
+     *
+     * @since 1.0
+     */
+    @Test
+    void impedeCorrecaoParaMesmaSituacao() {
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, dataVisita);
+
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        visita.registrarSituacao(
+                SituacaoVisita.CANCELADA,
+                "Cancelamento solicitado",
+                estudo.getCoordenador(),
+                Instant.now());
+
+        when(estudos.bloquearPorIdECoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        CorrecaoVisitaEntrada entrada = new CorrecaoVisitaEntrada(
+                SituacaoVisita.CANCELADA,
+                "Tentativa de corrigir sem alterar a situação",
+                "Novo motivo de cancelamento");
+
+        assertThatThrownBy(() -> servico.corrigirSituacao(
+                10L, 20L, 40L, entrada, coordenador))
+                .isInstanceOfSatisfying(
+                        RegraNegocioException.class, erro -> {
+                            assertThat(erro.getCodigo())
+                                    .isEqualTo("TRANSICAO_VISITA_INVALIDA");
+                        });
+
+        assertThat(visita.getSituacao())
+                .isEqualTo(SituacaoVisita.CANCELADA);
+
+        assertThat(visita.getMotivo())
+                .isEqualTo("Cancelamento solicitado");
+
+        verify(visitasAgendadas, never())
+                .save(any(VisitaAgendada.class));
+
+        verify(correcoes, never())
+                .save(any(CorrecaoVisita.class));
     }
 
 

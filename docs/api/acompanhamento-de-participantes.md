@@ -59,7 +59,11 @@ Todos os caminhos de gestão começam com `/estudos/{estudoId}`. As operações 
 | POST | `/estudos/{estudoId}/participacoes/{participacaoId}/retirada` | Registrar retirada | `200` |
 | GET | `/estudos/{estudoId}/participacoes/{participacaoId}/historico` | Consultar histórico completo | `200` |
 
-Já implementadas na task 3964 (PR #41): `GET /estudos/{estudoId}/participacoes`, `POST .../visitas` e `PUT .../visitas/{visitaAgendadaId}`. As demais continuam propostas.
+Já implementadas na task 3964 (PR #41): `GET /estudos/{estudoId}/participacoes`, `POST .../visitas` e `PUT .../visitas/{visitaAgendadaId}`.
+
+Na task 3965 (RF13), foram implementados o registro de situação da visita (`PATCH .../situacao`) e a correção com histórico (`POST .../correcoes`). Também foi adicionada uma validação que impede o encerramento de estudos em execução enquanto existirem visitas `AGENDADA`.
+
+As rotas dos demais requisitos continuam propostas.
 
 ### Listar participantes incluídos
 
