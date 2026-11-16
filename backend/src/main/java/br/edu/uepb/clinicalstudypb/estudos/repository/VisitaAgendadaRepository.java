@@ -4,6 +4,8 @@ import br.edu.uepb.clinicalstudypb.estudos.SituacaoVisita;
 import br.edu.uepb.clinicalstudypb.estudos.VisitaAgendada;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * Repositório responsável pelas consultas de visitas agendadas.
@@ -49,4 +51,26 @@ public interface VisitaAgendadaRepository extends JpaRepository<VisitaAgendada, 
      */
     long countByParticipacao_Estudo_IdAndSituacao(
             Long estudoId, SituacaoVisita situacao);
+
+    /**
+     * Lista os IDs dos participantes que possuem visitas em determinada situação no estudo.
+     * A consulta não repete participantes com mais de uma visita pendente.
+     *
+     * @param estudoId identificador do estudo
+     * @param situacao situação das visitas
+     * @return IDs dos participantes encontrados, em ordem crescente
+     * @since 1.0
+     */
+    @Query("""
+            SELECT DISTINCT participante.id
+            FROM VisitaAgendada visita
+            JOIN visita.participacao participacao
+            JOIN participacao.participante participante
+            WHERE participacao.estudo.id = :estudoId
+              AND visita.situacao = :situacao
+            ORDER BY participante.id
+            """)
+    List<Long> findIdsParticipantesComVisitasNaSituacao(
+            @Param("estudoId") Long estudoId,
+            @Param("situacao") SituacaoVisita situacao);
 }

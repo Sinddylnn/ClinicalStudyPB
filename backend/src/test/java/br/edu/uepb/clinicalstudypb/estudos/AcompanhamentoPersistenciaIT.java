@@ -1,5 +1,6 @@
 package br.edu.uepb.clinicalstudypb.estudos;
 
+import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import jakarta.persistence.EntityManager;
@@ -35,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AcompanhamentoPersistenciaIT {
 
     @Autowired private EntityManager entidades;
+    @Autowired private VisitaAgendadaRepository visitasAgendadas;
 
     /**
      * Configura o banco explicitamente destinado aos testes de persistência.
@@ -197,6 +199,80 @@ class AcompanhamentoPersistenciaIT {
         assertThat(correcaoPersistida.getSituacaoNova()).isEqualTo(SituacaoVisita.REALIZADA);
         assertThat(correcaoPersistida.getMotivoAnterior()).isEqualTo("Ausência registrada");
         assertThat(correcaoPersistida.getMotivoNovo()).isNull();
+    }
+
+    /**
+     * Confere no PostgreSQL a contagem de visitas por estudo e situação.
+     * Também verifica se a consulta de participantes não repete quem tem mais de uma pendência.
+     *
+     * @since 1.0
+     */
+    @Test
+    void contaVisitasPendentesPorEstudoEIdentificaParticipantes() {
+        Instant data = Instant.parse("2026-11-20T12:00:00Z");
+        Usuario coordenador = conta(PerfilUsuario.COORDENADOR);
+        Usuario participante1 = conta(PerfilUsuario.PARTICIPANTE);
+        Usuario participante2 = conta(PerfilUsuario.PARTICIPANTE);
+        Usuario participanteOutroEstudo = conta(PerfilUsuario.PARTICIPANTE);
+
+        Estudo estudo = new Estudo("Estudo com visitas pendentes", "Objetivo fictício",
+                coordenador, LocalDate.of(2026, 11, 1), LocalDate.of(2026, 12, 31), 10);
+        Estudo outroEstudo = new Estudo("Outro estudo", "Objetivo fictício",
+                coordenador, LocalDate.of(2026, 11, 1), LocalDate.of(2026, 12, 31), 10);
+        entidades.persist(estudo);
+        entidades.persist(outroEstudo);
+
+        Protocolo protocolo = new Protocolo(estudo, false);
+        Protocolo outroProtocolo = new Protocolo(outroEstudo, false);
+        entidades.persist(protocolo);
+        entidades.persist(outroProtocolo);
+
+        VisitaPrevista primeira = new VisitaPrevista(protocolo, "Primeira visita", null, 1);
+        VisitaPrevista segunda = new VisitaPrevista(protocolo, "Segunda visita", null, 2);
+        VisitaPrevista previstaOutroEstudo =
+                new VisitaPrevista(outroProtocolo, "Visita externa", null, 1);
+        entidades.persist(primeira);
+        entidades.persist(segunda);
+        entidades.persist(previstaOutroEstudo);
+
+        Participacao primeiraParticipacao = new Participacao(estudo, participante1, data);
+        Participacao segundaParticipacao = new Participacao(estudo, participante2, data);
+        Participacao participacaoOutroEstudo =
+                new Participacao(outroEstudo, participanteOutroEstudo, data);
+        entidades.persist(primeiraParticipacao);
+        entidades.persist(segundaParticipacao);
+        entidades.persist(participacaoOutroEstudo);
+
+        // Duas visitas pendentes para o primeiro participante, sem duplicar seu ID na lista.
+        entidades.persist(new VisitaAgendada(primeiraParticipacao, primeira, data));
+        entidades.persist(new VisitaAgendada(primeiraParticipacao, segunda, data.plusSeconds(3600)));
+        entidades.persist(new VisitaAgendada(segundaParticipacao, primeira, data));
+
+        VisitaAgendada finalizada = new VisitaAgendada(
+                segundaParticipacao, segunda, data.plusSeconds(3600));
+        finalizada.registrarSituacao(SituacaoVisita.CANCELADA,
+                "Cancelamento solicitado", coordenador, data);
+        entidades.persist(finalizada);
+        entidades.persist(new VisitaAgendada(
+                participacaoOutroEstudo, previstaOutroEstudo, data));
+        entidades.flush();
+        entidades.clear();
+
+        assertThat(visitasAgendadas.countByParticipacao_Estudo_IdAndSituacao(
+                estudo.getId(), SituacaoVisita.AGENDADA)).isEqualTo(3L);
+        assertThat(visitasAgendadas.countByParticipacao_Estudo_IdAndSituacao(
+                estudo.getId(), SituacaoVisita.CANCELADA)).isEqualTo(1L);
+        assertThat(visitasAgendadas.countByParticipacao_Estudo_IdAndSituacao(
+                outroEstudo.getId(), SituacaoVisita.AGENDADA)).isEqualTo(1L);
+        assertThat(visitasAgendadas.countByParticipacao_Estudo_IdAndSituacao(
+                outroEstudo.getId(), SituacaoVisita.CANCELADA)).isZero();
+
+        assertThat(visitasAgendadas.findIdsParticipantesComVisitasNaSituacao(
+                estudo.getId(), SituacaoVisita.AGENDADA))
+                .containsExactlyInAnyOrder(participante1.getId(), participante2.getId());
+        assertThat(visitasAgendadas.findIdsParticipantesComVisitasNaSituacao(
+                outroEstudo.getId(), SituacaoVisita.AGENDADA))
+                .containsExactly(participanteOutroEstudo.getId());
     }
 
     /**

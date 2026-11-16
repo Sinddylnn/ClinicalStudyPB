@@ -60,7 +60,7 @@ public class EstudoService {
      * @param criterios critérios de inclusão e exclusão do protocolo
      * @param visitas modelos de visita e suas pendências de configuração
      * @param participacoes inclusões históricas do estudo
-     * * @param visitasAgendadas repositório de visitas dos participantes
+     * @param visitasAgendadas repositório de visitas dos participantes
      */
     public EstudoService(
             EstudoRepository estudos,
@@ -291,14 +291,16 @@ public class EstudoService {
     }
 
     /**
-     * Impede o encerramento antecipado de estudos que já tiveram inclusões.
+     * Valida as condições para encerrar um estudo.
      *
-     * <p>Na Release 1 ainda não há visitas agendadas nem solicitações. Ao introduzir
-     * esses módulos na Release 2, verificar suas pendências reais neste método para
-     * EXECUCAO -> ENCERRADO, dentro do mesmo bloqueio. Visitas previstas não são pendências.</p>
+     * <p>Antes da execução, impede o encerramento de estudos que já possuem
+     * participantes incluídos, mesmo que tenham sido retirados. Durante a execução,
+     * impede o encerramento enquanto existirem visitas agendadas com situação
+     * {@link SituacaoVisita#AGENDADA}. Visitas previstas no protocolo não são pendências.</p>
      *
      * @param estudo estudo já bloqueado na transação
-     * @throws RegraNegocioException quando houver inclusão antes do encerramento antecipado
+     * @throws RegraNegocioException quando houver inclusões antes da execução
+     *         ou visitas agendadas pendentes durante a execução
      */
     private void validarEncerramento(Estudo estudo) {
         // Considera todo o histórico de inclusões, mesmo se houver retirada depois
@@ -313,10 +315,18 @@ public class EstudoService {
                             estudo.getId(), SituacaoVisita.AGENDADA);
 
             if (pendentes > 0) {
-                throw new RegraNegocioException(
-                        "VISITAS_PENDENTES",
-                        "O estudo possui " + pendentes
-                                + " visita(s) agendada(s) pendente(s).");
+                List<Long> idsParticipantes =
+                        visitasAgendadas.findIdsParticipantesComVisitasNaSituacao(
+                                estudo.getId(), SituacaoVisita.AGENDADA);
+
+                String mensagem = "O estudo possui " + pendentes
+                        + " visita(s) agendada(s) pendente(s).";
+                if (!idsParticipantes.isEmpty()) {
+                    mensagem += " Participantes com pendências (IDs): "
+                            + idsParticipantes.toString() + ".";
+                }
+
+                throw new RegraNegocioException("VISITAS_PENDENTES", mensagem);
             }
         }
 

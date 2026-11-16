@@ -1,7 +1,6 @@
-# Contrato preliminar de acompanhamento de participantes
+# Contrato de acompanhamento de participantes (RF12 a RF18)
 
-> **Estado: rascunho para alinhamento no início da Sprint 3.** Os caminhos e códigos abaixo são propostas de contrato. As operações ainda precisam ser confrontadas com as rotas que forem implementadas no backend. 
-> Este documento não significa que essas rotas já estejam disponíveis no Swagger.
+> **Estado em 16/11/2026:** rotas de agendamento e reagendamento (RF12, task #3964) e de registro e correção de situação de visitas (RF13, task #3965) implementadas no backend. As rotas dos RF14 a RF18 continuam propostas e não devem ser consideradas disponíveis até sua implementação.
 
 Este documento descreve a proposta de API para agendamento e registro de visitas, resultados de avaliações, retirada de participantes e consultas do participante no aplicativo. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
 
@@ -28,11 +27,11 @@ As respostas de erro usam o formato já adotado pelo projeto:
 
 `errosCampos` é omitido quando o problema não está associado a campos específicos. No código atual, cada campo está associado a uma mensagem textual.
 
-## Perfis e permissões propostas
+## Perfis e permissões
 
 | Operação | Perfil permitido |
 |---|---|
-| Agendar, reagendar e registrar visitas | Coordenador vinculado ao estudo |
+| Agendar, reagendar, registrar e corrigir a situação de visitas | Coordenador vinculado ao estudo |
 | Registrar e editar resultados | Coordenador vinculado ao estudo |
 | Registrar retirada | Coordenador vinculado ao estudo |
 | Consultar histórico completo | Pesquisador responsável ou coordenador vinculado |
@@ -43,11 +42,11 @@ As respostas de erro usam o formato já adotado pelo projeto:
 
 Uma sessão ausente ou inválida retorna `401`. Perfil sem permissão ou falha de CSRF retorna `403`. Recursos inexistentes ou fora do vínculo autorizado retornam `404`, evitando revelar dados de outro estudo ou participante.
 
-## Rotas web propostas
+## Rotas web: implementadas e propostas
 
 Todos os caminhos de gestão começam com `/estudos/{estudoId}`. As operações de escrita exigem sessão, permissão e CSRF.
 
-| Método | Caminho | Finalidade | Sucesso proposto |
+| Método | Caminho | Finalidade | Sucesso |
 |---|---|---|---|
 | GET | `/estudos/{estudoId}/participacoes` | Listar participantes incluídos e suas situações | `200` |
 | POST | `/estudos/{estudoId}/participacoes/{participacaoId}/visitas` | Agendar visita | `201` |
@@ -168,11 +167,11 @@ Somente o coordenador vinculado reagenda, com o estudo em `RECRUTAMENTO` ou `EXE
 Não há `409` no reagendamento.
 
 
-### Registrar situação da visita
+### Registrar situação da visita (RF13 — implementado)
 
 `PATCH /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/situacao`
 
-Requisição para registrar realização ou ausência:
+Requisição para registrar realização:
 
 ```json
 {
@@ -180,7 +179,7 @@ Requisição para registrar realização ou ausência:
 }
 ```
 
-Requisição para registrar ausência com motivo:
+Requisição para registrar ausência com motivo opcional:
 
 ```json
 {
@@ -198,37 +197,84 @@ Requisição para cancelar:
 }
 ```
 
-A visita precisa estar `AGENDADA`. `REALIZADA` e `AUSENTE` só podem ser registradas a partir do dia agendado. `CANCELADA` pode ser registrada antes desse dia e exige motivo. Resposta `200` com a visita atualizada e os dados de quem registrou e quando.
+Somente o **coordenador vinculado ao estudo** pode registrar a situação. O estudo precisa estar em `RECRUTAMENTO` ou `EXECUCAO`, a participação precisa estar `ATIVA` e a visita deve pertencer à participação e ao estudo informados na rota. A visita deve estar `AGENDADA`.
 
+`REALIZADA` e `AUSENTE` são permitidas a partir do **dia agendado**, incluindo o próprio dia, considerando o fuso `America/Recife`. `CANCELADA` é permitida mesmo antes da data da visita, desde que tenha `motivo`. O motivo é opcional em `AUSENTE`, proibido em `REALIZADA` e tem limite de 500 caracteres quando informado. Uma situação final não pode ser registrada novamente pelo `PATCH`; para alterar uma situação final, utiliza-se a rota de correções.
 
-### Corrigir situação da visita
+A resposta é `200 OK`, com a representação atualizada da visita, incluindo `situacao`, `motivo`, `registradoPorId` e `registradoEm`.
+
+| HTTP | Código / retorno | Quando ocorre |
+|---|---|---|
+| `400` | `ESTADO_ESTUDO_INVALIDO` | Estudo em `PLANEJAMENTO` ou `ENCERRADO` |
+| `400` | `PARTICIPACAO_INVALIDA` | Participação `RETIRADA` |
+| `400` | `TRANSICAO_VISITA_INVALIDA` | Visita já finalizada, alvo `AGENDADA` ou realização/ausência antes do dia previsto |
+| `400` | `VALIDACAO_INVALIDA` | Situação ausente ou motivo ausente, excessivo ou incompatível com a situação |
+| `401` | Não autenticado | Sessão ausente ou inválida |
+| `403` | Acesso negado | Perfil sem permissão ou CSRF ausente/inválido |
+| `404` | `RECURSO_NAO_ENCONTRADO` | Estudo, participação ou visita inexistente ou fora do vínculo da rota |
+
+### Corrigir situação da visita (RF13 — implementado)
 
 `POST /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/correcoes`
 
-Requisição:
+Requisição para corrigir `CANCELADA` para `REALIZADA`:
 
 ```json
 {
   "situacao": "REALIZADA",
-  "justificativa": "Registro anterior foi feito incorretamente"
+  "justificativa": "A visita ocorreu, mas havia sido registrada como cancelada",
+  "motivo": null
 }
 ```
 
-A correção troca uma situação final por outra e não pode voltar para `AGENDADA`. A justificativa é obrigatória, de 1 a 500 caracteres após remover espaços das pontas. A proposta é bloquear a correção se a visita já tiver resultados, se o estudo estiver encerrado ou se a participação estiver retirada.
+Requisição para corrigir uma situação final para `CANCELADA`:
 
-Resposta `201`:
+```json
+{
+  "situacao": "CANCELADA",
+  "justificativa": "O registro anterior estava incorreto",
+  "motivo": "Participante solicitou o cancelamento"
+}
+```
+
+A correção exige **`situacao` e `justificativa`**, que deve ter de 1 a 500 caracteres após remover os espaços das pontas. O campo **`motivo` faz parte da requisição**: é obrigatório para nova situação `CANCELADA`, opcional para `AUSENTE` e deve ficar vazio para `REALIZADA` (limite de 500 caracteres quando informado).
+
+Somente o **coordenador vinculado** pode corrigir, com o estudo em `RECRUTAMENTO` ou `EXECUCAO` e a participação `ATIVA`. É permitido trocar apenas **uma situação final por outra situação final diferente**; não se pode corrigir uma visita ainda `AGENDADA` nem retornar para `AGENDADA`. Uma correção para `REALIZADA` ou `AUSENTE` só pode ocorrer a partir do dia agendado, no fuso `America/Recife`.
+
+Se já houver resultados vinculados à visita, a correção é bloqueada. Caso contrário, o backend atualiza a situação e registra um histórico com a situação anterior, a nova situação, a justificativa, o motivo anterior, o motivo novo, quem corrigiu e quando. Ao corrigir `CANCELADA` para `REALIZADA`, o motivo do cancelamento permanece em `motivoAnterior` no histórico, enquanto o `motivo` atual da visita passa a ser `null`.
+
+Resposta `201 Created`, contendo os dados do registro de correção (exemplo ilustrativo):
 
 ```json
 {
   "id": 901,
   "visitaAgendadaId": 501,
-  "situacaoAnterior": "AUSENTE",
+  "situacaoAnterior": "CANCELADA",
   "situacaoNova": "REALIZADA",
-  "justificativa": "Registro anterior foi feito incorretamente",
+  "justificativa": "A visita ocorreu, mas havia sido registrada como cancelada",
+  "motivoAnterior": "Participante solicitou o cancelamento",
+  "motivoNovo": null,
   "corrigidaPorId": 12,
   "corrigidaEm": "2026-11-16T15:00:00Z"
 }
 ```
+
+| HTTP | Código / retorno | Quando ocorre |
+|---|---|---|
+| `400` | `ESTADO_ESTUDO_INVALIDO` | Estudo fora de `RECRUTAMENTO` ou `EXECUCAO` |
+| `400` | `PARTICIPACAO_INVALIDA` | Participação `RETIRADA` |
+| `400` | `TRANSICAO_VISITA_INVALIDA` | Visita ainda `AGENDADA`, destino `AGENDADA`, destino igual à situação atual ou realização/ausência de visita futura |
+| `400` | `VALIDACAO_INVALIDA` | `situacao` ou `justificativa` inválidas, ou motivo incompatível com a nova situação |
+| `400` | `CORRECAO_BLOQUEADA` | Visita com resultado de atividade já registrado |
+| `401` | Não autenticado | Sessão ausente ou inválida |
+| `403` | Acesso negado | Perfil sem permissão ou CSRF ausente/inválido |
+| `404` | `RECURSO_NAO_ENCONTRADO` | Estudo, participação ou visita inexistente ou fora do vínculo da rota |
+
+### Encerramento de estudo com visitas pendentes (regra RF13)
+
+Na transição `EXECUCAO` → `ENCERRADO`, o backend verifica as visitas do estudo com situação `AGENDADA`. Se houver pendências, bloqueia o encerramento com **HTTP `400` e código `VISITAS_PENDENTES`**. Visitas previstas no protocolo que ainda não foram agendadas não entram nessa contagem.
+
+A mensagem informa a quantidade de visitas pendentes e os IDs dos participantes envolvidos, sem repetir participantes que tenham mais de uma visita pendente.
 
 ### Registrar resultado de atividade
 
@@ -400,36 +446,35 @@ Exemplo de `GET /participante/visitas/historico`:
 
 O app não recebe resultados, motivos, justificativas ou dados de quem registrou. Participante retirado continua vendo o estudo marcado como `RETIRADA`, mas não deve ter próximas visitas pendentes.
 
-## Erros propostos
+## Códigos de erro
 
-Os códigos abaixo são sugestões para o rascunho. Antes da conclusão da sprint, devem ser comparados com os códigos lançados pelos serviços e pelo tratador global de erros.
-
-Os códigos do RF12 (`ESTADO_ESTUDO_INVALIDO`, `PARTICIPACAO_INVALIDA`, `DATA_VISITA_INVALIDA`, `TRANSICAO_VISITA_INVALIDA` e `VISITA_JA_AGENDADA`) foram conferidos com a implementação na task 3964. Os demais seguem como sugestão.
+Os códigos das operações implementadas do RF12 e RF13 foram conferidos com os cenários de serviço e a modelagem. Os códigos de RF14 a RF18 ainda são propostas e precisam ser confirmados quando esses requisitos forem implementados.
 
 | HTTP | Código sugerido | Situação |
 |---|---|---|
 | `400` | `PARTICIPACAO_INVALIDA` | Participação retirada ou incompatível com a operação |
 | `400` | `ESTADO_ESTUDO_INVALIDO` | Estudo fora de recrutamento ou execução para escrita |
 | `400` | `DATA_VISITA_INVALIDA` | Data anterior ao permitido ou fora do período do estudo |
-| `400` | `TRANSICAO_VISITA_INVALIDA` | Visita não está `AGENDADA` (registro ou reagendamento) ou a data não permite o registro |
-| `400` | `CORRECAO_BLOQUEADA` | Correção vedada por resultados, retirada ou encerramento |
+| `400` | `TRANSICAO_VISITA_INVALIDA` | Registro/reagendamento fora de `AGENDADA`, correção entre situações finais inválida ou realização/ausência antes do dia agendado |
+| `400` | `CORRECAO_BLOQUEADA` | Correção impedida por resultados já vinculados à visita |
 | `400` | `RESULTADO_INVALIDO` | Visita não realizada ou atividade não pertence à visita prevista |
-| `400` | `VALIDACAO_INVALIDA` | Campo obrigatório vazio ou acima do limite |
+| `400` | `VALIDACAO_INVALIDA` | Campo obrigatório ausente/vazio, acima do limite ou motivo incompatível com a situação |
 | `401` | Conforme autenticação existente | Sessão ausente, inválida ou expirada |
 | `403` | Conforme segurança existente | Perfil sem permissão ou CSRF ausente/inválido |
 | `404` | `RECURSO_NAO_ENCONTRADO` | Estudo, participação ou visita não existe ou está fora do vínculo autorizado |
+| `400` | `VISITAS_PENDENTES` | Estudo em execução não pode ser encerrado enquanto houver visita `AGENDADA` |
 | `409` | `VISITA_JA_AGENDADA` | Já existe visita agendada para a mesma participação e visita prevista |
 | `409` | `RESULTADO_JA_REGISTRADO` | Já existe resultado para a mesma visita e atividade |
 
 
-## Conferência no fim da sprint
+## Conferência ao concluir os requisitos restantes
 
-Quando os endpoints forem implementados:
+Para novas rotas e ajustes de contrato:
 
 1. Conferir cada caminho, método, corpo, resposta e status HTTP com controllers e DTOs.
 2. Conferir perfis, sessão, CSRF e ocultação de recursos fora do vínculo autorizado.
 3. Conferir no `/v3/api-docs` que o OpenAPI gerado descreve as operações implementadas, sem rotas apenas planejadas.
-4. Atualizar este documento para remover o rótulo de rascunho e corrigir diferenças entre proposta e implementação.
+4. Atualizar as seções de RF14 a RF18 quando suas rotas estiverem implementadas.
 5. Atualizar [OpenAPI](openapi.md) e os testes do contrato, se necessário.
 
 A publicação do rascunho não significa que a integração da web ou do aplicativo já esteja concluída.

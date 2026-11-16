@@ -37,8 +37,8 @@ import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.service.AutenticacaoService;
 
 /**
- * Testa os endpoints de agendamento e reagendamento,
- * incluindo validações e permissões de acesso.
+ * Testa os endpoints de agendamento, reagendamento, registro
+ * e correção de situação das visitas, incluindo validações e permissões.
  *
  * @author Luiz
  * @version 1.0
@@ -598,6 +598,81 @@ class VisitaAgendadaControllerTest {
                                 }
                                 """))
                 .andExpect(status().isForbidden());
+
+        verify(visitas, never()).corrigirSituacao(
+                any(), any(), any(), any(), any());
+    }
+
+    /**
+     * Impede a correção de situação quando não há usuário autenticado.
+     *
+     * @throws Exception se ocorrer erro na requisição de teste
+     * @since 1.0
+     */
+    @Test
+    void correcaoSemLoginEhBloqueada() throws Exception {
+        mvc.perform(post("/estudos/10/participacoes/20/visitas/40/correcoes")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "situacao": "REALIZADA",
+                                  "justificativa": "Registro anterior incorreto"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+
+        verify(visitas, never()).corrigirSituacao(
+                any(), any(), any(), any(), any());
+    }
+
+    /**
+     * Rejeita a correção quando a justificativa é nula ou vazia.
+     *
+     * @param justificativa valor inválido enviado no JSON
+     * @throws Exception se ocorrer erro na requisição de teste
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"null", "\"\"", "\"   \""})
+    void correcaoComJustificativaInvalidaRetorna400(String justificativa) throws Exception {
+        String corpo = """
+                {
+                  "situacao": "REALIZADA",
+                  "justificativa": %s
+                }
+                """.formatted(justificativa);
+
+        mvc.perform(post("/estudos/10/participacoes/20/visitas/40/correcoes")
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo))
+                .andExpect(status().isBadRequest());
+
+        verify(visitas, never()).corrigirSituacao(
+                any(), any(), any(), any(), any());
+    }
+
+    /**
+     * Rejeita a correção quando a situação de destino não é informada.
+     *
+     * @throws Exception se ocorrer erro na requisição de teste
+     * @since 1.0
+     */
+    @Test
+    void correcaoComSituacaoNulaRetorna400() throws Exception {
+        mvc.perform(post("/estudos/10/participacoes/20/visitas/40/correcoes")
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "situacao": null,
+                                  "justificativa": "Registro anterior incorreto"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
 
         verify(visitas, never()).corrigirSituacao(
                 any(), any(), any(), any(), any());
