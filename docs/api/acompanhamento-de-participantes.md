@@ -167,7 +167,7 @@ Somente o coordenador vinculado reagenda, com o estudo em `RECRUTAMENTO` ou `EXE
 Não há `409` no reagendamento.
 
 
-### Registrar situação da visita (RF13 — implementado)
+### Registrar situação da visita (RF13: implementado)
 
 `PATCH /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/situacao`
 
@@ -213,7 +213,7 @@ A resposta é `200 OK`, com a representação atualizada da visita, incluindo `s
 | `403` | Acesso negado | Perfil sem permissão ou CSRF ausente/inválido |
 | `404` | `RECURSO_NAO_ENCONTRADO` | Estudo, participação ou visita inexistente ou fora do vínculo da rota |
 
-### Corrigir situação da visita (RF13 — implementado)
+### Corrigir situação da visita (RF13: implementado)
 
 `POST /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/correcoes`
 
@@ -252,12 +252,12 @@ Resposta `201 Created`, contendo os dados do registro de correção (exemplo ilu
   "situacaoAnterior": "CANCELADA",
   "situacaoNova": "REALIZADA",
   "justificativa": "A visita ocorreu, mas havia sido registrada como cancelada",
-  "motivoAnterior": "Participante solicitou o cancelamento",
-  "motivoNovo": null,
   "corrigidaPorId": 12,
   "corrigidaEm": "2026-11-16T15:00:00Z"
 }
 ```
+
+A resposta não inclui `motivoAnterior` e `motivoNovo`; ambos ficam guardados no histórico da correção.
 
 | HTTP | Código / retorno | Quando ocorre |
 |---|---|---|
@@ -459,10 +459,10 @@ Os códigos das operações implementadas do RF12 e RF13 foram conferidos com os
 | `400` | `CORRECAO_BLOQUEADA` | Correção impedida por resultados já vinculados à visita |
 | `400` | `RESULTADO_INVALIDO` | Visita não realizada ou atividade não pertence à visita prevista |
 | `400` | `VALIDACAO_INVALIDA` | Campo obrigatório ausente/vazio, acima do limite ou motivo incompatível com a situação |
+| `400` | `VISITAS_PENDENTES` | Estudo em execução não pode ser encerrado enquanto houver visita `AGENDADA` |
 | `401` | Conforme autenticação existente | Sessão ausente, inválida ou expirada |
 | `403` | Conforme segurança existente | Perfil sem permissão ou CSRF ausente/inválido |
 | `404` | `RECURSO_NAO_ENCONTRADO` | Estudo, participação ou visita não existe ou está fora do vínculo autorizado |
-| `400` | `VISITAS_PENDENTES` | Estudo em execução não pode ser encerrado enquanto houver visita `AGENDADA` |
 | `409` | `VISITA_JA_AGENDADA` | Já existe visita agendada para a mesma participação e visita prevista |
 | `409` | `RESULTADO_JA_REGISTRADO` | Já existe resultado para a mesma visita e atividade |
 
@@ -477,4 +477,4 @@ Para novas rotas e ajustes de contrato:
 4. Atualizar as seções de RF14 a RF18 quando suas rotas estiverem implementadas.
 5. Atualizar [OpenAPI](openapi.md) e os testes do contrato, se necessário.
 
-A publicação do rascunho não significa que a integração da web ou do aplicativo já esteja concluída.
+As rotas dos RF14 a RF18 continuam propostas, e a integração da web e do aplicativo depende da implementação de cada uma.
