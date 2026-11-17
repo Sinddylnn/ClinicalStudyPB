@@ -1,8 +1,8 @@
 # Contrato de acompanhamento de participantes (RF12 a RF18)
 
-> **Estado em 16/11/2026:** rotas de agendamento e reagendamento (RF12, task #3964) e de registro e correção de situação de visitas (RF13, task #3965) implementadas no backend. As rotas dos RF14 a RF18 continuam propostas e não devem ser consideradas disponíveis até sua implementação.
+> **Estado em 16/11/2026:** rotas de consulta, agendamento e reagendamento (RF12, task #3964), de registro e correção de situação de visitas (RF13, task #3965) e de retirada de participante (RF16, task #3957) implementadas no backend. As rotas dos RF14, RF15, RF17 e RF18 continuam propostas e não devem ser consideradas disponíveis até sua implementação.
 
-Este documento descreve a proposta de API para agendamento e registro de visitas, resultados de avaliações, retirada de participantes e consultas do participante no aplicativo. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
+Este documento descreve o contrato implementado para RF12, RF13 e RF16, além das propostas de API para resultados de avaliações e consultas do participante no aplicativo. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
 
 A modelagem do domínio está em [RF12 a RF18](../modelagem/RF12-RF18.md). A documentação geral sobre Swagger e OpenAPI está em [OpenAPI](openapi.md).
 
@@ -62,7 +62,9 @@ Já implementadas na task 3964 (PR #41): `GET /estudos/{estudoId}/participacoes`
 
 Na task 3965 (RF13), foram implementados o registro de situação da visita (`PATCH .../situacao`) e a correção com histórico (`POST .../correcoes`). Também foi adicionada uma validação que impede o encerramento de estudos em execução enquanto existirem visitas `AGENDADA`.
 
-As rotas dos demais requisitos continuam propostas.
+O registro de retirada do RF16 também está implementado: `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`.
+
+As rotas dos RF14, RF15, RF17 e RF18 continuam propostas.
 
 ### Listar participantes incluídos
 
@@ -321,7 +323,7 @@ Requisição:
 
 A edição não remove o resultado original do histórico de auditoria definido para a entidade. A proposta permite editar enquanto o estudo não estiver encerrado. Resposta `200` com os dados atualizados.
 
-### Registrar retirada
+### Registrar retirada (RF16, implementado)
 
 `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`
 
@@ -333,7 +335,9 @@ Requisição:
 }
 ```
 
-A retirada é irreversível, exige motivo de 1 a 500 caracteres e registra data e usuário no backend. A participação permanece no histórico e continua contando como inclusão histórica. A proposta cancela as visitas `AGENDADA`, preservando visitas já realizadas e seus resultados.
+Somente o **coordenador vinculado ao estudo** registra a retirada, com o estudo em `RECRUTAMENTO` ou `EXECUCAO` e a participação `ATIVA`. O motivo é obrigatório, de 1 a 500 caracteres após remover os espaços das pontas. A participação deve pertencer ao estudo da rota.
+
+A retirada é **irreversível**. Na mesma transação, o backend marca a participação como `RETIRADA` (com data, motivo e responsável) e cancela as visitas `AGENDADA` da participação, com o motivo automático "Retirada do participante". Visitas já finalizadas e seus resultados são preservados. A participação continua contando como inclusão histórica, portanto **a vaga não é liberada**. A conta do participante e seus outros estudos não são afetados.
 
 Resposta `200`:
 
@@ -346,6 +350,17 @@ Resposta `200`:
   "retiradaPorId": 12
 }
 ```
+
+| HTTP | Código / retorno | Quando ocorre |
+|---|---|---|
+| `400` | `ESTADO_ESTUDO_INVALIDO` | Estudo fora de `RECRUTAMENTO` ou `EXECUCAO` |
+| `400` | `PARTICIPACAO_JA_RETIRADA` | Participação já está `RETIRADA` |
+| `400` | `VALIDACAO_INVALIDA` | `motivo` ausente, em branco ou acima de 500 caracteres, com erro de campo em `errosCampos` |
+| `401` | Não autenticado | Sessão ausente ou inválida |
+| `403` | Acesso negado | Perfil sem permissão ou CSRF ausente ou inválido |
+| `404` | `RECURSO_NAO_ENCONTRADO` | Estudo ou participação inexistente ou fora do vínculo da rota |
+
+Os pedidos pendentes de reagendamento ligados às visitas canceladas serão cancelados quando o RF19 existir, na Sprint 4. A solicitação de retirada pelo app (RF20) não processa a retirada; o coordenador a conclui por esta operação.
 
 ### Consultar histórico completo
 
@@ -448,11 +463,12 @@ O app não recebe resultados, motivos, justificativas ou dados de quem registrou
 
 ## Códigos de erro
 
-Os códigos das operações implementadas do RF12 e RF13 foram conferidos com os cenários de serviço e a modelagem. Os códigos de RF14 a RF18 ainda são propostas e precisam ser confirmados quando esses requisitos forem implementados.
+Os códigos das operações implementadas do RF12, RF13 e RF16 foram conferidos com os cenários de serviço e a modelagem. Os códigos de RF14, RF15, RF17 e RF18 ainda são propostas e precisam ser confirmados quando esses requisitos forem implementados.
 
-| HTTP | Código sugerido | Situação |
+| HTTP | Código / retorno | Situação |
 |---|---|---|
 | `400` | `PARTICIPACAO_INVALIDA` | Participação retirada ou incompatível com a operação |
+| `400` | `PARTICIPACAO_JA_RETIRADA` | Tentativa de retirar novamente uma participação já retirada |
 | `400` | `ESTADO_ESTUDO_INVALIDO` | Estudo fora de recrutamento ou execução para escrita |
 | `400` | `DATA_VISITA_INVALIDA` | Data anterior ao permitido ou fora do período do estudo |
 | `400` | `TRANSICAO_VISITA_INVALIDA` | Registro/reagendamento fora de `AGENDADA`, correção entre situações finais inválida ou realização/ausência antes do dia agendado |
@@ -477,4 +493,4 @@ Para novas rotas e ajustes de contrato:
 4. Atualizar as seções de RF14 a RF18 quando suas rotas estiverem implementadas.
 5. Atualizar [OpenAPI](openapi.md) e os testes do contrato, se necessário.
 
-As rotas dos RF14 a RF18 continuam propostas, e a integração da web e do aplicativo depende da implementação de cada uma.
+As rotas dos RF14, RF15, RF17 e RF18 continuam propostas, e a integração da web e do aplicativo depende da implementação de cada uma.

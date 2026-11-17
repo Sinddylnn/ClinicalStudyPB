@@ -1,6 +1,10 @@
 package br.edu.uepb.clinicalstudypb.estudos;
 
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
+import br.edu.uepb.clinicalstudypb.estudos.service.RetiradaParticipanteService;
+import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
+import br.edu.uepb.clinicalstudypb.estudos.api.RetiradaEntrada;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import jakarta.persistence.EntityManager;
@@ -37,6 +41,8 @@ class AcompanhamentoPersistenciaIT {
 
     @Autowired private EntityManager entidades;
     @Autowired private VisitaAgendadaRepository visitasAgendadas;
+    @Autowired private ParticipacaoRepository participacoes;
+    @Autowired private RetiradaParticipanteService retiradas;
 
     /**
      * Configura o banco explicitamente destinado aos testes de persistência.
@@ -273,6 +279,71 @@ class AcompanhamentoPersistenciaIT {
         assertThat(visitasAgendadas.findIdsParticipantesComVisitasNaSituacao(
                 outroEstudo.getId(), SituacaoVisita.AGENDADA))
                 .containsExactly(participanteOutroEstudo.getId());
+    }
+
+    // <-------------------RETIRADA COM CANCELAMENTO DAS PENDENTES------------------->
+
+    /**
+     * Registra a retirada no PostgreSQL e confere que somente visitas AGENDADA são canceladas.
+     *
+     * @since 1.1
+     */
+    @Test
+    void retiradaCancelaSomenteVisitasAgendadasEPreservaHistorico() {
+        Instant agora = Instant.now();
+        Usuario participante = conta(PerfilUsuario.PARTICIPANTE);
+        Usuario coordenador = conta(PerfilUsuario.COORDENADOR);
+        Estudo estudo = new Estudo("Estudo de retirada", "Objetivo fictício", coordenador,
+                LocalDate.now().minusDays(5), LocalDate.now().plusDays(60), 10);
+        estudo.atribuirCoordenador(coordenador);
+        estudo.alterarEstado(EstadoEstudo.RECRUTAMENTO, null);
+        entidades.persist(estudo);
+
+        Protocolo protocolo = new Protocolo(estudo, false);
+        entidades.persist(protocolo);
+        VisitaPrevista primeira = new VisitaPrevista(protocolo, "Primeira", null, 1);
+        VisitaPrevista segunda = new VisitaPrevista(protocolo, "Segunda", null, 2);
+        entidades.persist(primeira);
+        entidades.persist(segunda);
+
+        Participacao participacao = new Participacao(estudo, participante, agora);
+        entidades.persist(participacao);
+
+        VisitaAgendada realizada = new VisitaAgendada(
+                participacao, primeira, agora.minusSeconds(86_400));
+        realizada.registrarSituacao(
+                SituacaoVisita.REALIZADA, null, coordenador, agora);
+        VisitaAgendada pendente1 = new VisitaAgendada(
+                participacao, segunda, agora.plusSeconds(86_400));
+        VisitaAgendada pendente2 = new VisitaAgendada(
+                participacao, primeira, agora.plusSeconds(172_800));
+        entidades.persist(realizada);
+        entidades.persist(pendente1);
+        entidades.persist(pendente2);
+        entidades.flush();
+        entidades.clear();
+
+        var resposta = retiradas.registrar(
+                estudo.getId(),
+                participacao.getId(),
+                new RetiradaEntrada("Desistência"),
+                new UsuarioAutenticado(coordenador));
+        entidades.flush();
+        entidades.clear();
+
+        assertThat(resposta.situacao()).isEqualTo(SituacaoParticipacao.RETIRADA);
+        Participacao persistida = entidades.find(Participacao.class, participacao.getId());
+        assertThat(persistida.getSituacao()).isEqualTo(SituacaoParticipacao.RETIRADA);
+        assertThat(persistida.getMotivoRetirada()).isEqualTo("Desistência");
+        assertThat(persistida.getRetiradaPor().getId()).isEqualTo(coordenador.getId());
+
+        assertThat(entidades.find(VisitaAgendada.class, pendente1.getId()).getSituacao())
+                .isEqualTo(SituacaoVisita.CANCELADA);
+        assertThat(entidades.find(VisitaAgendada.class, pendente2.getId()).getSituacao())
+                .isEqualTo(SituacaoVisita.CANCELADA);
+        assertThat(entidades.find(VisitaAgendada.class, realizada.getId()).getSituacao())
+                .isEqualTo(SituacaoVisita.REALIZADA);
+        assertThat(participacoes.countByEstudoId(estudo.getId())).isEqualTo(1L);
     }
 
     /**

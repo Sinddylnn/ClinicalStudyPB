@@ -41,7 +41,7 @@ Retornos, saltos, repetição do estado atual e reabertura são rejeitados. Depo
 
 O protocolo está completo quando possui uma inclusão, exclusões cadastradas ou a declaração de ausência, e pelo menos uma visita prevista. Todas as visitas devem ter alguma atividade. Não é permitido declarar ausência de exclusões enquanto existem critérios desse tipo.
 
-Visita prevista é um modelo do protocolo, portanto não representa uma pendência de agendamento. As participações são contadas pelo histórico; uma retirada futura não deverá excluir a participação ou liberar outra vaga.
+Visita prevista é um modelo do protocolo, portanto não representa uma pendência de agendamento. As participações são contadas pelo histórico; a retirada de participante não exclui a participação nem libera outra vaga.
 
 ## Base acrescentada e integração com as próximas tasks
 

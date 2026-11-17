@@ -74,9 +74,9 @@ Assim, duas inclusões não ocupam a última vaga ao mesmo tempo. Se o estado ou
 perfil da conta mudar enquanto a operação aguarda o bloqueio, as condições atuais
 são verificadas antes de gravar.
 
-Uma retirada futura deve preservar a participação. Ela não libera vaga nem
-permite uma segunda inclusão no mesmo estudo. A conta pode participar de outros
-estudos, desde que cumpra as condições de cada um.
+A retirada de participante preserva a participação histórica. Ela não libera
+vaga nem permite uma segunda inclusão no mesmo estudo. A conta pode participar
+de outros estudos, desde que cumpra as condições de cada um.
 
 A gestão de usuários agora impede retirar o perfil PARTICIPANTE de contas que
 possuem inclusões históricas. Desativar uma conta continua preservando seus dados.
