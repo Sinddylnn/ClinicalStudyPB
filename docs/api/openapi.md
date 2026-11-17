@@ -351,12 +351,12 @@ Os contratos, os erros e os exemplos estão em
 
 ## Acompanhamento de participantes, RF12 a RF18
 
-O contrato preliminar de agendamento e registro de visitas, resultados, retirada
-e consultas do participante está em
+O contrato de acompanhamento, com agendamento, registro de visitas e retirada
+implementados, além das propostas para resultados e consultas do participante, está em
 [Acompanhamento de participantes](acompanhamento-de-participantes.md).
 
-No início da Sprint 3, esse documento é um rascunho para alinhar web, backend e
-mobile. Ele não representa rotas já disponíveis no Swagger. O OpenAPI é gerado a
-partir dos controllers e DTOs existentes; quando as operações forem implementadas,
-este contrato deverá ser conferido com o `/v3/api-docs`, atualizado e coberto pelos
-testes do contrato.
+A retirada de participante (`POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`, RF16)
+já está implementada e publicada no Swagger. O OpenAPI é gerado a partir dos
+controllers e DTOs existentes, e o contrato implementado é conferido pelos testes
+da API. As operações propostas dos RF14, RF15, RF17 e RF18 ainda não estão
+disponíveis até sua implementação.
