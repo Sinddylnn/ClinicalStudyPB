@@ -55,7 +55,7 @@ export default function ParticipantesEstudo({
   const { id } = useParams();
   const estudoId = Number(id);
   const coordenador = usuario.perfil === 'COORDENADOR';
-  // Enquanto o backend nega a lista ao pesquisador, a tela nem pede (iria para "Acesso negado")
+  // Com a lista do pesquisador desligada nos recursos, a tela nem pede (iria para "Acesso negado")
   const consultaLiberada = coordenador || recursos.listaPesquisador;
   const [tela, setTela] = useState<EstadoTela>({ tipo: 'carregando' });
   const [tentativa, setTentativa] = useState(0);

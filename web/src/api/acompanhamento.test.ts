@@ -232,14 +232,142 @@ describe('servicoAcompanhamentoApi', () => {
           resultados: [],
           correcoes: [],
         },
+        {
+          tipo: 'VISITA',
+          visitaAgendadaId: 8,
+          nomeVisita: 'Visita de acompanhamento',
+          dataHora: '2026-11-05T12:00:00Z',
+          situacao: 'REALIZADA',
+          motivo: null,
+          registradoPorId: 12,
+          registradoEm: '2026-11-05T13:00:00Z',
+          resultados: [{ atividadePrevistaId: 5, descricaoAtividade: 'Medir a pressão.', texto: 'Ok.' }],
+          correcoes: [],
+        },
+        {
+          tipo: 'VISITA',
+          visitaAgendadaId: 9,
+          nomeVisita: 'Visita final',
+          dataHora: '2026-11-20T12:00:00Z',
+          situacao: 'CANCELADA',
+          motivo: 'Unidade fechada.',
+          registradoPorId: 12,
+          registradoEm: '2026-11-10T13:00:00Z',
+          resultados: [],
+          correcoes: [],
+        },
         ...HISTORICO.itens,
       ],
     };
     simularBackend({ 'GET /estudos/30/participacoes/120/historico': { status: 200, data: historico } });
 
     expect(await servicoAcompanhamentoApi.listarVisitas(30, 120)).toEqual([
-      { id: 7, nomeVisita: 'Visita inicial', dataHora: '2026-11-12T12:00:00Z', situacao: 'AGENDADA' },
+      {
+        id: 7,
+        nomeVisita: 'Visita inicial',
+        dataHora: '2026-11-12T12:00:00Z',
+        situacao: 'AGENDADA',
+        motivo: null,
+        possuiResultados: false,
+      },
+      {
+        id: 8,
+        nomeVisita: 'Visita de acompanhamento',
+        dataHora: '2026-11-05T12:00:00Z',
+        situacao: 'REALIZADA',
+        motivo: null,
+        possuiResultados: true,
+      },
+      {
+        id: 9,
+        nomeVisita: 'Visita final',
+        dataHora: '2026-11-20T12:00:00Z',
+        situacao: 'CANCELADA',
+        motivo: 'Unidade fechada.',
+        possuiResultados: false,
+      },
     ]);
+  });
+});
+
+describe('servicoAcompanhamentoApi: registro da situação da visita (RF13)', () => {
+  it('registrarSituacao: PATCH .../situacao com a situação e o motivo, levando o token CSRF', async () => {
+    const cancelada: VisitaAgendada = {
+      ...VISITA,
+      situacao: 'CANCELADA',
+      motivo: 'Unidade de atendimento indisponível',
+      registradoEm: '2026-11-16T15:00:00Z',
+    };
+    const chamadas = simularBackend({
+      'GET /auth/csrf': CSRF,
+      [`PATCH ${VISITA_URL}/situacao`]: { status: 200, data: cancelada },
+    });
+
+    const entrada = { situacao: 'CANCELADA' as const, motivo: 'Unidade de atendimento indisponível' };
+    expect(await servicoAcompanhamentoApi.registrarSituacao(30, 120, 7, entrada)).toEqual(cancelada);
+
+    const patch = chamadas.find((c) => c.method === 'patch');
+    expect(JSON.parse(patch?.data as string)).toEqual(entrada);
+    expect(patch?.headers.get('X-CSRF-TOKEN')).toBe('abc');
+  });
+
+  it('registrarSituacao: repassa a recusa de realização antes do dia da visita', async () => {
+    simularBackend({
+      'GET /auth/csrf': CSRF,
+      [`PATCH ${VISITA_URL}/situacao`]: {
+        status: 400,
+        data: { codigo: 'TRANSICAO_VISITA_INVALIDA', mensagem: 'A visita ainda não pode ser registrada.' },
+      },
+    });
+
+    await expect(
+      servicoAcompanhamentoApi.registrarSituacao(30, 120, 7, { situacao: 'REALIZADA' }),
+    ).rejects.toMatchObject({
+      status: 400,
+      codigo: 'TRANSICAO_VISITA_INVALIDA',
+      message: 'A visita ainda não pode ser registrada.',
+    });
+  });
+
+  it('corrigirSituacao: POST .../correcoes com situação, justificativa e motivo, devolvendo a correção', async () => {
+    const correcao = {
+      id: 901,
+      visitaAgendadaId: 7,
+      situacaoAnterior: 'CANCELADA',
+      situacaoNova: 'REALIZADA',
+      justificativa: 'A visita ocorreu, mas havia sido registrada como cancelada',
+      corrigidaPorId: 12,
+      corrigidaEm: '2026-11-16T15:00:00Z',
+    };
+    const chamadas = simularBackend({
+      'GET /auth/csrf': CSRF,
+      [`POST ${VISITA_URL}/correcoes`]: { status: 201, data: correcao },
+    });
+
+    const entrada = {
+      situacao: 'REALIZADA' as const,
+      justificativa: 'A visita ocorreu, mas havia sido registrada como cancelada',
+      motivo: null,
+    };
+    expect(await servicoAcompanhamentoApi.corrigirSituacao(30, 120, 7, entrada)).toEqual(correcao);
+
+    const post = chamadas.find((c) => c.method === 'post');
+    expect(JSON.parse(post?.data as string)).toEqual(entrada);
+    expect(post?.headers.get('X-CSRF-TOKEN')).toBe('abc');
+  });
+
+  it('corrigirSituacao: repassa CORRECAO_BLOQUEADA de visita com resultados', async () => {
+    simularBackend({
+      'GET /auth/csrf': CSRF,
+      [`POST ${VISITA_URL}/correcoes`]: {
+        status: 400,
+        data: { codigo: 'CORRECAO_BLOQUEADA', mensagem: 'A visita possui resultados registrados.' },
+      },
+    });
+
+    await expect(
+      servicoAcompanhamentoApi.corrigirSituacao(30, 120, 7, { situacao: 'AUSENTE', justificativa: 'Erro.' }),
+    ).rejects.toMatchObject({ status: 400, codigo: 'CORRECAO_BLOQUEADA' });
   });
 });
 
@@ -270,13 +398,14 @@ describe('servicoAcompanhamentoApi: retirada', () => {
       'GET /auth/csrf': CSRF,
       'POST /estudos/30/participacoes/120/retirada': {
         status: 400,
-        data: { codigo: 'PARTICIPACAO_INVALIDA', mensagem: 'O participante já foi retirado do estudo.' },
+        data: { codigo: 'PARTICIPACAO_JA_RETIRADA', mensagem: 'A participação já foi retirada.' },
       },
     });
 
     await expect(servicoAcompanhamentoApi.retirarParticipante(30, 120, { motivo: 'Ok.' })).rejects.toMatchObject({
       status: 400,
-      codigo: 'PARTICIPACAO_INVALIDA',
+      codigo: 'PARTICIPACAO_JA_RETIRADA',
+      message: 'A participação já foi retirada.',
     });
   });
 });

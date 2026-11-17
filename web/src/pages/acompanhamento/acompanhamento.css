@@ -292,6 +292,24 @@
   color: var(--texto);
 }
 
+/* Motivo da ausência ou do cancelamento (RF13), quebrando linha em textos longos */
+.agendamento-visita-motivo {
+  overflow-wrap: anywhere;
+}
+
+/* Reagendar, registrar (RF13) e corrigir: quebram linha no celular sem estourar a largura */
+.agendamento-visita-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.agendamento-visita-bloqueio {
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
 /* <-------------------ETIQUETAS-------------------> */
 .etiqueta-visita-agendada {
   color: #1d4ed8;

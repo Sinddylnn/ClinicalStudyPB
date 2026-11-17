@@ -97,6 +97,8 @@ function criarServicos({ acompanhamento = {}, estudos = [ESTUDO], resultados = [
     listarVisitas: vi.fn(),
     agendarVisita: vi.fn(),
     reagendarVisita: vi.fn(),
+    registrarSituacao: vi.fn(),
+    corrigirSituacao: vi.fn(),
     obterVisita: vi.fn().mockResolvedValue(VISITA),
     listarResultados: vi.fn().mockResolvedValue(resultados),
     registrarResultado: vi.fn().mockImplementation((_e, _p, _v, entrada) => Promise.resolve({ ...SALVO, ...entrada })),

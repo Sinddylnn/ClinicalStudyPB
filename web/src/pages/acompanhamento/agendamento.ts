@@ -64,10 +64,10 @@ export function motivoSemAgendamento(
   participacao: Pick<Participacao, 'situacao'>,
 ): string | undefined {
   if (participacao.situacao === 'RETIRADA') {
-    return 'O participante foi retirado do estudo: não é possível agendar nem reagendar visitas.';
+    return 'O participante foi retirado do estudo: não é possível agendar, reagendar nem registrar visitas.';
   }
   if (!estadoPermiteAgendamento(estudo)) {
-    return 'O agendamento de visitas só fica disponível com o estudo em Recrutamento ou Execução.';
+    return 'O agendamento e o registro de visitas só ficam disponíveis com o estudo em Recrutamento ou Execução.';
   }
   return undefined;
 }

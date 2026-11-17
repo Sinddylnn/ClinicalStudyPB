@@ -5,8 +5,10 @@ import {
   servicoAcompanhamento,
   type Participacao,
   type RecursosAcompanhamento,
+  type CorrecaoVisitaEntrada,
   type ResumoVisitaAgendada,
   type ServicoAcompanhamento,
+  type SituacaoFinal,
 } from '../../api/acompanhamento';
 import type { UsuarioSessao } from '../../api/autenticacao';
 import { ErroRequisicao } from '../../api/erros';
@@ -26,7 +28,15 @@ import {
   type ErrosAgendamento,
   type ValoresAgendamento,
 } from './agendamento';
+import DialogoCorrecaoVisita from './DialogoCorrecaoVisita';
+import DialogoRegistroVisita from './DialogoRegistroVisita';
 import { NOMES_SITUACAO_PARTICIPACAO, NOMES_SITUACAO_VISITA } from './historico';
+import {
+  NOMES_SITUACAO_MINUSCULO,
+  motivoCorrecaoBloqueada,
+  situacoesCorrigiveis,
+  situacoesRegistraveis,
+} from './registroVisita';
 import '../../estilos/comum.css';
 import '../estudos/estudos.css';
 import './acompanhamento.css';
@@ -58,12 +68,32 @@ type EstadoTela =
 /** Agendar uma visita prevista nova ou mudar a data de uma visita que ainda está agendada. */
 type Modo = { tipo: 'agendar' } | { tipo: 'reagendar'; visita: ResumoVisitaAgendada };
 
+/** Diálogo aberto sobre uma visita da lista: registrar a situação (RF13) ou corrigi-la. */
+type Acao =
+  | { tipo: 'registrar'; visita: ResumoVisitaAgendada; situacao: SituacaoFinal }
+  | { tipo: 'corrigir'; visita: ResumoVisitaAgendada; opcoes: SituacaoFinal[] };
+
+/**
+ * Texto, começo do nome acessível e estilo do botão de cada situação na lista. O cancelamento usa o
+ * contorno vermelho das ações de perigo da lista de participantes (botao-retirar)
+ */
+const BOTOES_REGISTRO: Record<SituacaoFinal, { texto: string; acao: string; estilo: string }> = {
+  REALIZADA: { texto: 'Realizada', acao: 'Registrar realização da', estilo: 'botao-secundario' },
+  AUSENTE: { texto: 'Ausente', acao: 'Registrar ausência na', estilo: 'botao-secundario' },
+  CANCELADA: { texto: 'Cancelar visita', acao: 'Cancelar a', estilo: 'botao-retirar' },
+};
+
 const VAZIO: ValoresAgendamento = { visitaPrevistaId: '', data: '', hora: '' };
 
 const DURACAO_NOTIFICACAO_MS = 6000;
 
 // Erros do backend que mudam o que a tela pode oferecer: mostra a mensagem e recarrega os dados
-const CODIGOS_RECARREGAM = ['ESTADO_ESTUDO_INVALIDO', 'PARTICIPACAO_INVALIDA', 'TRANSICAO_VISITA_INVALIDA'];
+const CODIGOS_RECARREGAM = [
+  'ESTADO_ESTUDO_INVALIDO',
+  'PARTICIPACAO_INVALIDA',
+  'TRANSICAO_VISITA_INVALIDA',
+  'CORRECAO_BLOQUEADA',
+];
 
 /** Fora da lista da sessão é "não encontrado", sem nem pedir as participações (como nas outras telas). */
 async function carregar(
@@ -90,7 +120,9 @@ async function carregar(
 
 // <-------------------AGENDAMENTO DE VISITAS------------------->
 // RF12: o coordenador vinculado agenda as visitas previstas do protocolo para um participante ativo,
-// com o estudo em Recrutamento ou Execução, e reagenda as que ainda estão agendadas. Datas em Recife
+// com o estudo em Recrutamento ou Execução, e reagenda as que ainda estão agendadas. Datas em Recife.
+// RF13: nas mesmas condições, registra a realização, a ausência ou o cancelamento das visitas agendadas
+// e corrige as situações já registradas, com justificativa
 export default function AgendamentoVisitas({
   servicoEstudos: estudosProp = servicoEstudos,
   servicoAcompanhamento: acompanhamentoProp = servicoAcompanhamento,
@@ -110,6 +142,7 @@ export default function AgendamentoVisitas({
   const [erroGeral, setErroGeral] = useState<string>();
   const [enviando, setEnviando] = useState(false);
   const [notificacao, setNotificacao] = useState<string>();
+  const [acao, setAcao] = useState<Acao>();
 
   const buscar = useCallback(
     () => carregar(estudoId, participacaoId, estudosProp, acompanhamentoProp, protocoloProp, recursos.historico),
@@ -153,6 +186,8 @@ export default function AgendamentoVisitas({
   const limites = dados ? limitesData(dados.estudo, hoje) : undefined;
   const bloqueio = dados ? motivoSemAgendamento(dados.estudo, dados.participacao) : undefined;
   const caminhoLista = `/estudos/${estudoId}/participacoes`;
+  // RF13: só o coordenador registra e corrige, nas mesmas condições do agendamento (a rota já é dele)
+  const registraVisitas = usuario.perfil === 'COORDENADOR' && !bloqueio;
 
   const alterar = (campo: keyof ValoresAgendamento, valor: string) => {
     setValores((atual) => ({ ...atual, [campo]: valor }));
@@ -194,6 +229,53 @@ export default function AgendamentoVisitas({
       // Depois de voltarAoAgendamento, que limpa o aviso
       setErroGeral(erro.message);
     }
+  };
+
+  /**
+   * Erros do registro e da correção que mudam a lista: fecha o diálogo, avisa e recarrega. Os demais
+   * voltam ao diálogo, que mostra a mensagem ou o erro do campo.
+   */
+  const tratarErroAcao = (erro: unknown) => {
+    if (erro instanceof ErroRequisicao && CODIGOS_RECARREGAM.includes(erro.codigo)) {
+      setAcao(undefined);
+      setErroGeral(erro.message);
+      void atualizar();
+      return;
+    }
+    throw erro;
+  };
+
+  const registrarSituacao = async (visita: ResumoVisitaAgendada, situacao: SituacaoFinal, motivo: string | null) => {
+    try {
+      await acompanhamentoProp.registrarSituacao(estudoId, participacaoId, visita.id, {
+        situacao,
+        ...(motivo ? { motivo } : {}),
+      });
+    } catch (erro) {
+      tratarErroAcao(erro);
+      return;
+    }
+    setAcao(undefined);
+    setErroGeral(undefined);
+    setNotificacao(`${visita.nomeVisita} registrada como ${NOMES_SITUACAO_MINUSCULO[situacao]}.`);
+    // A visita que estava em reagendamento deixou de estar agendada
+    if (modo.tipo === 'reagendar' && modo.visita.id === visita.id) voltarAoAgendamento();
+    await atualizar();
+  };
+
+  const corrigirSituacao = async (visita: ResumoVisitaAgendada, entrada: CorrecaoVisitaEntrada) => {
+    try {
+      await acompanhamentoProp.corrigirSituacao(estudoId, participacaoId, visita.id, entrada);
+    } catch (erro) {
+      tratarErroAcao(erro);
+      return;
+    }
+    setAcao(undefined);
+    setErroGeral(undefined);
+    setNotificacao(
+      `Correção registrada: ${visita.nomeVisita} passou de ${NOMES_SITUACAO_MINUSCULO[visita.situacao]} para ${NOMES_SITUACAO_MINUSCULO[entrada.situacao]}.`,
+    );
+    await atualizar();
   };
 
   const enviar = async (evento: FormEvent<HTMLFormElement>) => {
@@ -421,8 +503,8 @@ export default function AgendamentoVisitas({
             {dados.visitas === null ? (
               <p className="aviso aviso-informacao">
                 <Icone nome="info" />
-                A lista de visitas agendadas e o reagendamento ficarão disponíveis quando o histórico do participante
-                estiver no backend.
+                A lista de visitas agendadas, o reagendamento e o registro da situação das visitas ficarão disponíveis
+                quando o histórico do participante estiver no backend.
               </p>
             ) : (
               <section className="estudos-cartao agendamento-visitas" aria-labelledby="titulo-visitas">
@@ -431,29 +513,69 @@ export default function AgendamentoVisitas({
                   <p className="campo-ajuda">Nenhuma visita agendada para este participante.</p>
                 ) : (
                   <ul>
-                    {dados.visitas.map((v) => (
-                      <li key={v.id}>
-                        <span className="agendamento-visita-dados">
-                          <span className="agendamento-visita-nome">{v.nomeVisita}</span>
-                          <span>{formatarDataHora(v.dataHora)}</span>
-                        </span>
-                        <span className={`etiqueta etiqueta-visita-${v.situacao.toLowerCase()}`}>
-                          {NOMES_SITUACAO_VISITA[v.situacao]}
-                        </span>
-                        {v.situacao === 'AGENDADA' && !bloqueio && (
-                          <button
-                            type="button"
-                            className="botao botao-secundario"
-                            aria-label={`Reagendar ${v.nomeVisita}`}
-                            disabled={enviando}
-                            onClick={() => iniciarReagendamento(v)}
-                          >
-                            <Icone nome="lapis" />
-                            Reagendar
-                          </button>
-                        )}
-                      </li>
-                    ))}
+                    {dados.visitas.map((v) => {
+                      const reagenda = v.situacao === 'AGENDADA' && !bloqueio;
+                      const registraveis = registraVisitas ? situacoesRegistraveis(v, hoje) : [];
+                      const corrigiveis = registraVisitas ? situacoesCorrigiveis(v, hoje) : [];
+                      const bloqueioCorrecao = motivoCorrecaoBloqueada(v);
+                      const descricaoVisita = `${v.nomeVisita} de ${formatarDataHora(v.dataHora)}`;
+                      const temAcoes = reagenda || registraveis.length > 0 || corrigiveis.length > 0;
+                      return (
+                        <li key={v.id}>
+                          <span className="agendamento-visita-dados">
+                            <span className="agendamento-visita-nome">{v.nomeVisita}</span>
+                            <span>{formatarDataHora(v.dataHora)}</span>
+                            {v.motivo && <span className="agendamento-visita-motivo">Motivo: {v.motivo}</span>}
+                          </span>
+                          <span className={`etiqueta etiqueta-visita-${v.situacao.toLowerCase()}`}>
+                            {NOMES_SITUACAO_VISITA[v.situacao]}
+                          </span>
+                          {temAcoes && (
+                            <span className="agendamento-visita-acoes">
+                              {reagenda && (
+                                <button
+                                  type="button"
+                                  className="botao botao-secundario"
+                                  aria-label={`Reagendar ${v.nomeVisita}`}
+                                  disabled={enviando}
+                                  onClick={() => iniciarReagendamento(v)}
+                                >
+                                  <Icone nome="lapis" />
+                                  Reagendar
+                                </button>
+                              )}
+                              {registraveis.map((situacao) => (
+                                <button
+                                  key={situacao}
+                                  type="button"
+                                  className={`botao ${BOTOES_REGISTRO[situacao].estilo}`}
+                                  aria-label={`${BOTOES_REGISTRO[situacao].acao} ${descricaoVisita}`}
+                                  disabled={enviando}
+                                  onClick={() => setAcao({ tipo: 'registrar', visita: v, situacao })}
+                                >
+                                  {BOTOES_REGISTRO[situacao].texto}
+                                </button>
+                              ))}
+                              {corrigiveis.length > 0 &&
+                                (bloqueioCorrecao ? (
+                                  <span className="agendamento-visita-bloqueio">{bloqueioCorrecao}</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="botao botao-secundario"
+                                    aria-label={`Corrigir a situação da ${descricaoVisita}`}
+                                    disabled={enviando}
+                                    onClick={() => setAcao({ tipo: 'corrigir', visita: v, opcoes: corrigiveis })}
+                                  >
+                                    <Icone nome="lapis" />
+                                    Corrigir
+                                  </button>
+                                ))}
+                            </span>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </section>
@@ -467,6 +589,23 @@ export default function AgendamentoVisitas({
           </>
         )}
       </main>
+
+      {acao?.tipo === 'registrar' && (
+        <DialogoRegistroVisita
+          visita={acao.visita}
+          situacao={acao.situacao}
+          aoRegistrar={(motivo) => registrarSituacao(acao.visita, acao.situacao, motivo)}
+          aoCancelar={() => setAcao(undefined)}
+        />
+      )}
+      {acao?.tipo === 'corrigir' && (
+        <DialogoCorrecaoVisita
+          visita={acao.visita}
+          opcoes={acao.opcoes}
+          aoCorrigir={(entrada) => corrigirSituacao(acao.visita, entrada)}
+          aoCancelar={() => setAcao(undefined)}
+        />
+      )}
     </div>
   );
 }

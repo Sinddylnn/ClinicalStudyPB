@@ -1,10 +1,13 @@
 import type {
   CorrecaoVisita,
+  CorrecaoVisitaRegistrada,
   HistoricoParticipacao,
   ItemHistoricoRetirada,
   Participacao,
   ResultadoAtividade,
   ServicoAcompanhamento,
+  SituacaoFinal,
+  SituacaoVisita,
   VisitaAgendada,
 } from './acompanhamento';
 import type { Estudo } from './estudos';
@@ -15,13 +18,21 @@ import { servicoProtocolo, type ServicoProtocolo } from './protocolo';
 import { erroTextoResultado } from '../pages/acompanhamento/resultados';
 import { diaRecife, hojeRecife } from '../pages/acompanhamento/agendamento';
 import { MOTIVO_CANCELAMENTO_RETIRADA, erroMotivoRetirada } from '../pages/acompanhamento/retirada';
+import {
+  LIMITE_TEXTO_VISITA,
+  MENSAGENS_REGISTRO,
+  apararMotivo,
+  diaChegou,
+  regraMotivo,
+} from '../pages/acompanhamento/registroVisita';
 
 // <-------------------SERVIÇO SIMULADO------------------->
 // Guarda as participações, as visitas e os resultados em memória e responde como o rascunho do
 // contrato: 404 para estudo fora da lista da sessão, participação de outro estudo ou visita de outra
 // participação; 400 para texto inválido, visita não realizada, atividade de outra visita ou estudo
 // encerrado; 409 para segundo resultado na mesma atividade. As atividades vêm do protocolo em uso.
-// O agendamento e o reagendamento seguem as regras e os códigos do PR #41 (VisitaAgendadaService).
+// O agendamento e o reagendamento seguem as regras e os códigos do PR #41 (VisitaAgendadaService); o
+// registro e a correção da situação das visitas, os do PR #46 (RF13).
 // Os dados são fictícios e voltam ao estado inicial ao recarregar a página.
 const ATRASO_MS = 300;
 
@@ -45,8 +56,9 @@ export type ParticipacaoSimulada = Participacao & {
 };
 
 // Visitas do protocolo simulado do estudo 3 (IDs 3, 4 e 5): a inicial foi realizada e tem
-// resultado; a de acompanhamento teve ausência, foi remarcada e realizada sem resultados; a final
-// ainda está agendada
+// resultado; a de acompanhamento teve ausência, foi remarcada e realizada sem resultados, e há uma nova
+// de acompanhamento com data passada ainda sem registro (permite "Realizada" e "Ausente"); a final
+// ainda está agendada para dezembro (só permite "Cancelar")
 export const PARTICIPACOES_INICIAIS: ParticipacaoSimulada[] = [
   {
     id: 1,
@@ -109,6 +121,19 @@ export const PARTICIPACOES_INICIAIS: ParticipacaoSimulada[] = [
         correcoes: [],
       },
       {
+        // Data já passada e ainda sem registro: a situação pode ser registrada
+        id: 5,
+        visitaPrevistaId: 4,
+        nomeVisita: 'Visita de acompanhamento',
+        dataHora: '2026-11-16T12:00:00Z',
+        situacao: 'AGENDADA',
+        motivo: null,
+        registradoPorId: null,
+        registradoEm: null,
+        resultados: [],
+        correcoes: [],
+      },
+      {
         id: 3,
         visitaPrevistaId: 5,
         nomeVisita: 'Visita final',
@@ -163,6 +188,8 @@ export function criarServicoAcompanhamentoSimulado(
   const participacoes = copiar(iniciais);
   let proximaVisita = Math.max(0, ...participacoes.flatMap((p) => p.visitas.map((v) => v.id))) + 1;
   let proximoResultado = Math.max(0, ...participacoes.flatMap((p) => p.visitas.flatMap((v) => v.resultados.map((r) => r.id)))) + 1;
+  let proximaCorrecao =
+    Math.max(0, ...participacoes.flatMap((p) => p.visitas.flatMap((v) => v.correcoes.map((c) => c.id ?? 0)))) + 1;
 
   async function buscarEstudo(estudoId: number) {
     const estudo = (await estudos.listar()).find((e) => e.id === estudoId);
@@ -206,6 +233,29 @@ export function criarServicoAcompanhamentoSimulado(
       throw recusa('RESULTADO_INVALIDO', 'Só é possível registrar resultados em visita realizada.');
     }
     return encontrada;
+  }
+
+  // Regras do motivo e do dia, comuns ao registro e à correção, na ordem do backend: cancelamento sem
+  // motivo, realização ou ausência antes do dia da visita e realização com motivo
+  function conferirMotivoEData(situacao: SituacaoFinal, motivo: string | null, dataHora: string) {
+    if (regraMotivo(situacao) === 'obrigatorio' && !motivo) {
+      throw recusa('VALIDACAO_INVALIDA', MENSAGENS_REGISTRO.motivoObrigatorio);
+    }
+    if (situacao !== 'CANCELADA' && !diaChegou(dataHora, hojeRecife())) {
+      throw recusa('TRANSICAO_VISITA_INVALIDA', MENSAGENS_REGISTRO.visitaFutura);
+    }
+    if (regraMotivo(situacao) === 'proibido' && motivo) {
+      throw recusa('VALIDACAO_INVALIDA', MENSAGENS_REGISTRO.motivoProibido);
+    }
+  }
+
+  // Grava a situação como o backend: o último registro ou correção prevalece
+  function registrar(visita: VisitaSimulada, situacao: SituacaoFinal, motivo: string | null, agora: string) {
+    visita.situacao = situacao;
+    visita.motivo = motivo;
+    visita.registradoPorId = ID_COORDENADOR;
+    visita.registradoPorNome = NOME_COORDENADOR;
+    visita.registradoEm = agora;
   }
 
   const paraVisitaAgendada = (participacaoId: number, visita: VisitaSimulada): VisitaAgendada => ({
@@ -264,7 +314,14 @@ export function criarServicoAcompanhamentoSimulado(
     async listarVisitas(estudoId, participacaoId) {
       await aguardar();
       const { participacao } = await buscarParticipacao(estudoId, participacaoId);
-      return participacao.visitas.map((v) => ({ id: v.id, nomeVisita: v.nomeVisita, dataHora: v.dataHora, situacao: v.situacao }));
+      return participacao.visitas.map((v) => ({
+        id: v.id,
+        nomeVisita: v.nomeVisita,
+        dataHora: v.dataHora,
+        situacao: v.situacao,
+        motivo: v.motivo,
+        possuiResultados: v.resultados.length > 0,
+      }));
     },
 
     // Mesma ordem do backend: campos (@Valid), estudo, estado, participação, retirada, visita prevista,
@@ -334,6 +391,96 @@ export function criarServicoAcompanhamentoSimulado(
       conferirData(estudo, dataHora);
       visita.dataHora = dataHora;
       return paraVisitaAgendada(participacaoId, visita);
+    },
+
+    // Mesma ordem do backend: campos (@Valid), estudo, estado, visita da participação, retirada, situação
+    // atual, situação pedida, motivo do cancelamento, dia da visita e motivo da realização
+    async registrarSituacao(estudoId, participacaoId, visitaAgendadaId, { situacao, motivo }) {
+      await aguardar();
+      const motivoAparado = apararMotivo(motivo);
+      const errosCampos: Record<string, string> = {};
+      if (!situacao) errosCampos.situacao = 'Informe a situação da visita.';
+      if (motivoAparado && motivoAparado.length > LIMITE_TEXTO_VISITA) errosCampos.motivo = MENSAGENS_REGISTRO.motivoLongo;
+      if (Object.keys(errosCampos).length > 0) throw camposInvalidos(errosCampos);
+
+      const estudo = await buscarEstudo(estudoId);
+      if (!aceitaAgendamento(estudo)) {
+        throw recusa('ESTADO_ESTUDO_INVALIDO', 'O estudo não permite registrar visitas.');
+      }
+      const { participacao, visita } = await buscarVisita(estudoId, participacaoId, visitaAgendadaId);
+      if (participacao.situacao !== 'ATIVA') {
+        throw recusa('PARTICIPACAO_INVALIDA', 'Não é possível registrar visita de participante retirado.');
+      }
+      if (visita.situacao !== 'AGENDADA') {
+        throw recusa('TRANSICAO_VISITA_INVALIDA', 'Apenas visitas agendadas podem ser registradas.');
+      }
+      // O backend recebe qualquer SituacaoVisita: AGENDADA não é situação final
+      if ((situacao as SituacaoVisita) === 'AGENDADA') {
+        throw recusa('TRANSICAO_VISITA_INVALIDA', 'Informe uma situação final válida.');
+      }
+      conferirMotivoEData(situacao, motivoAparado, visita.dataHora);
+
+      registrar(visita, situacao, motivoAparado, agoraInstant());
+      return paraVisitaAgendada(participacaoId, visita);
+    },
+
+    // Mesma ordem do backend: campos (@Valid), estudo, estado, visita da participação, retirada, transição,
+    // motivo, dia da visita e, por último, resultados registrados (CORRECAO_BLOQUEADA). O motivo anterior
+    // fica guardado na correção, que aparece no histórico
+    async corrigirSituacao(estudoId, participacaoId, visitaAgendadaId, { situacao, justificativa, motivo }) {
+      await aguardar();
+      const motivoAparado = apararMotivo(motivo);
+      const justificativaAparada = justificativa?.trim() ?? '';
+      const errosCampos: Record<string, string> = {};
+      if (!situacao) errosCampos.situacao = 'Informe a nova situação.';
+      if (!justificativaAparada) {
+        errosCampos.justificativa = MENSAGENS_REGISTRO.justificativaVazia;
+      } else if (justificativaAparada.length > LIMITE_TEXTO_VISITA) {
+        errosCampos.justificativa = MENSAGENS_REGISTRO.justificativaLonga;
+      }
+      if (motivoAparado && motivoAparado.length > LIMITE_TEXTO_VISITA) errosCampos.motivo = MENSAGENS_REGISTRO.motivoLongo;
+      if (Object.keys(errosCampos).length > 0) throw camposInvalidos(errosCampos);
+
+      const estudo = await buscarEstudo(estudoId);
+      if (!aceitaAgendamento(estudo)) {
+        throw recusa('ESTADO_ESTUDO_INVALIDO', 'O estudo não permite corrigir visitas.');
+      }
+      const { participacao, visita } = await buscarVisita(estudoId, participacaoId, visitaAgendadaId);
+      if (participacao.situacao !== 'ATIVA') {
+        throw recusa('PARTICIPACAO_INVALIDA', 'Não é possível corrigir visita de participante retirado.');
+      }
+      const anterior = visita.situacao;
+      if (anterior === 'AGENDADA' || (situacao as SituacaoVisita) === 'AGENDADA' || situacao === anterior) {
+        throw recusa('TRANSICAO_VISITA_INVALIDA', 'A correção deve alterar uma situação final para outra.');
+      }
+      conferirMotivoEData(situacao, motivoAparado, visita.dataHora);
+      if (visita.resultados.length > 0) {
+        throw recusa('CORRECAO_BLOQUEADA', 'A visita possui resultados registrados.');
+      }
+
+      const agora = agoraInstant();
+      const correcao: CorrecaoVisitaRegistrada = {
+        id: proximaCorrecao++,
+        visitaAgendadaId,
+        situacaoAnterior: anterior,
+        situacaoNova: situacao,
+        justificativa: justificativaAparada,
+        corrigidaPorId: ID_COORDENADOR,
+        corrigidaEm: agora,
+      };
+      visita.correcoes.push({
+        id: correcao.id,
+        situacaoAnterior: anterior,
+        situacaoNova: situacao,
+        justificativa: justificativaAparada,
+        corrigidaPorId: ID_COORDENADOR,
+        corrigidaPorNome: NOME_COORDENADOR,
+        corrigidaEm: agora,
+        motivoAnterior: visita.motivo,
+        motivoNovo: motivoAparado,
+      });
+      registrar(visita, situacao, motivoAparado, agora);
+      return correcao;
     },
 
     async obterVisita(estudoId, participacaoId, visitaAgendadaId) {
