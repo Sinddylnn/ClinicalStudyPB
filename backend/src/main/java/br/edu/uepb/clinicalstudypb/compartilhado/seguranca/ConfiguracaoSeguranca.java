@@ -307,6 +307,20 @@ public SecurityFilterChain securityFilterChain(
                     )
                     .hasRole("COORDENADOR")
 
+                    // Registro de situação de visitas
+                    .requestMatchers(
+                            HttpMethod.PATCH,
+                            "/estudos/*/participacoes/*/visitas/*/situacao"
+                    )
+                    .hasRole("COORDENADOR")
+
+                    // Correção de situação de visitas
+                    .requestMatchers(
+                            HttpMethod.POST,
+                            "/estudos/*/participacoes/*/visitas/*/correcoes"
+                    )
+                    .hasRole("COORDENADOR")
+
                     // Tudo que não foi declarado acima fica bloqueado
                     .anyRequest()
                     .denyAll()
