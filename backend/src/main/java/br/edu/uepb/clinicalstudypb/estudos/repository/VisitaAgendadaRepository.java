@@ -32,6 +32,17 @@ public interface VisitaAgendadaRepository extends JpaRepository<VisitaAgendada, 
             SituacaoVisita situacao);
 
     /**
+     * Lista as visitas de uma participação em determinada situação.
+     *
+     * @param participacaoId identificador da participação
+     * @param situacao situação procurada
+     * @return visitas encontradas, ou lista vazia
+     * @since 1.1
+     */
+    List<VisitaAgendada> findByParticipacao_IdAndSituacao(
+            Long participacaoId, SituacaoVisita situacao);
+
+    /**
      * Lista as visitas de uma participação em ordem de data e hora.
      *
      * @param participacaoId identificador da participação
