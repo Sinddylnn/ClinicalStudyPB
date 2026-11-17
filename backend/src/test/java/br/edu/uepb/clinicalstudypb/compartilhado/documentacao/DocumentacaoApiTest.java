@@ -372,5 +372,13 @@ class DocumentacaoApiTest {
         JsonNode motivo = contrato.path("components").path("schemas")
                 .path("RetiradaEntrada").path("properties").path("motivo");
         assertThat(motivo.path("maxLength").asInt()).isEqualTo(500);
+
+        JsonNode resposta = contrato.path("components").path("schemas")
+                .path("RetiradaResposta").path("properties");
+        assertThat(resposta.has("participacaoId")).isTrue();
+        assertThat(resposta.has("situacao")).isTrue();
+        assertThat(resposta.has("dataRetirada")).isTrue();
+        assertThat(resposta.has("motivoRetirada")).isTrue();
+        assertThat(resposta.has("retiradaPorId")).isTrue();
     }
 }

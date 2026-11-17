@@ -24,8 +24,8 @@ houver uma participação, retorna 400 com `CANDIDATO_JA_INCLUIDO`, preservando 
 respostas, a situação de elegibilidade, o coordenador e a data da avaliação.
 
 O bloqueio vale mesmo que o estudo ainda esteja recrutando outras pessoas.
-As consultas permanecem disponíveis. Uma futura retirada deve preservar a
-participação e, portanto, também preservar esse bloqueio.
+As consultas permanecem disponíveis. A retirada de participante preserva a
+participação e, portanto, também preserva esse bloqueio.
 
 ## Integração com a task AB#3423
 

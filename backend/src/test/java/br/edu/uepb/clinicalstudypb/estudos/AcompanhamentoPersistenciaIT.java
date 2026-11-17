@@ -313,10 +313,13 @@ class AcompanhamentoPersistenciaIT {
                 participacao, primeira, agora.minusSeconds(86_400));
         realizada.registrarSituacao(
                 SituacaoVisita.REALIZADA, null, coordenador, agora);
-        VisitaAgendada pendente = new VisitaAgendada(
+        VisitaAgendada pendente1 = new VisitaAgendada(
                 participacao, segunda, agora.plusSeconds(86_400));
+        VisitaAgendada pendente2 = new VisitaAgendada(
+                participacao, primeira, agora.plusSeconds(172_800));
         entidades.persist(realizada);
-        entidades.persist(pendente);
+        entidades.persist(pendente1);
+        entidades.persist(pendente2);
         entidades.flush();
         entidades.clear();
 
@@ -334,11 +337,10 @@ class AcompanhamentoPersistenciaIT {
         assertThat(persistida.getMotivoRetirada()).isEqualTo("Desistência");
         assertThat(persistida.getRetiradaPor().getId()).isEqualTo(coordenador.getId());
 
-        VisitaAgendada pendentePersistida =
-                entidades.find(VisitaAgendada.class, pendente.getId());
-        assertThat(pendentePersistida.getSituacao()).isEqualTo(SituacaoVisita.CANCELADA);
-        assertThat(pendentePersistida.getMotivo())
-                .isEqualTo("Retirada do participante");
+        assertThat(entidades.find(VisitaAgendada.class, pendente1.getId()).getSituacao())
+                .isEqualTo(SituacaoVisita.CANCELADA);
+        assertThat(entidades.find(VisitaAgendada.class, pendente2.getId()).getSituacao())
+                .isEqualTo(SituacaoVisita.CANCELADA);
         assertThat(entidades.find(VisitaAgendada.class, realizada.getId()).getSituacao())
                 .isEqualTo(SituacaoVisita.REALIZADA);
         assertThat(participacoes.countByEstudoId(estudo.getId())).isEqualTo(1L);

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -176,6 +177,26 @@ class RetiradaParticipanteControllerTest {
 
         verify(retiradas).registrar(eq(10L), eq(20L),
                 any(RetiradaEntrada.class), any(UsuarioAutenticado.class));
+    }
+
+    @Test
+    void motivoComEspacosNasPontasEhNormalizadoAntesDoServico() throws Exception {
+        when(retiradas.registrar(eq(10L), eq(20L), any(RetiradaEntrada.class),
+                any(UsuarioAutenticado.class)))
+                .thenReturn(new RetiradaResposta(20L, SituacaoParticipacao.RETIRADA,
+                        Instant.parse("2026-11-16T16:00:00Z"), "Participante desistiu", 1L));
+
+        mvc.perform(post(URL)
+                        .with(user(new UsuarioAutenticado(coordenador)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"motivo\":\"   Participante desistiu   \"}"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<RetiradaEntrada> captor = ArgumentCaptor.forClass(RetiradaEntrada.class);
+        verify(retiradas).registrar(eq(10L), eq(20L), captor.capture(), any(UsuarioAutenticado.class));
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().motivo())
+                .isEqualTo("Participante desistiu");
     }
 
     private Usuario conta(Long id, PerfilUsuario perfil) {
