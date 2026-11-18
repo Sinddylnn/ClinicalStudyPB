@@ -50,7 +50,7 @@ describe('podeAgendar e motivoSemAgendamento', () => {
     expect(motivoSemAgendamento({ estado: 'RECRUTAMENTO' }, { situacao: 'ATIVA' })).toBeUndefined();
     expect(motivoSemAgendamento({ estado: 'ENCERRADO' }, { situacao: 'RETIRADA' })).toMatch(/retirado do estudo/);
     expect(motivoSemAgendamento({ estado: 'PLANEJAMENTO' }, { situacao: 'ATIVA' })).toBe(
-      'O agendamento de visitas só fica disponível com o estudo em Recrutamento ou Execução.',
+      'O agendamento e o registro de visitas só ficam disponíveis com o estudo em Recrutamento ou Execução.',
     );
   });
 });

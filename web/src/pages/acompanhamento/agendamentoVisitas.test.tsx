@@ -56,9 +56,24 @@ const PROTOCOLO = {
   ],
 } as Protocolo;
 
+// A visita inicial já tem resultados: a correção dela fica bloqueada
 const VISITAS: ResumoVisitaAgendada[] = [
-  { id: 3, nomeVisita: 'Visita final', dataHora: '2026-12-10T12:00:00Z', situacao: 'AGENDADA' },
-  { id: 1, nomeVisita: 'Visita inicial', dataHora: '2026-10-30T12:00:00Z', situacao: 'REALIZADA' },
+  {
+    id: 3,
+    nomeVisita: 'Visita final',
+    dataHora: '2026-12-10T12:00:00Z',
+    situacao: 'AGENDADA',
+    motivo: null,
+    possuiResultados: false,
+  },
+  {
+    id: 1,
+    nomeVisita: 'Visita inicial',
+    dataHora: '2026-10-30T12:00:00Z',
+    situacao: 'REALIZADA',
+    motivo: null,
+    possuiResultados: true,
+  },
 ];
 
 const resposta = (parcial: Partial<VisitaAgendada>): VisitaAgendada => ({
@@ -95,6 +110,8 @@ function criarServicos({ acompanhamento = {}, estudos = [ESTUDO], protocolo = PR
     listarVisitas: vi.fn().mockResolvedValue(VISITAS),
     agendarVisita: vi.fn().mockResolvedValue(resposta({})),
     reagendarVisita: vi.fn(),
+    registrarSituacao: vi.fn().mockResolvedValue(resposta({})),
+    corrigirSituacao: vi.fn().mockResolvedValue({}),
     obterVisita: vi.fn(),
     listarResultados: vi.fn(),
     registrarResultado: vi.fn(),
@@ -109,13 +126,14 @@ function criarServicos({ acompanhamento = {}, estudos = [ESTUDO], protocolo = PR
 function renderizar(
   servicos: ReturnType<typeof criarServicos>,
   recursos: RecursosAcompanhamento = { historico: true, listaPesquisador: true, retirada: true },
+  usuario: UsuarioSessao = COORDENADOR,
 ) {
   render(
     <MemoryRouter initialEntries={['/estudos/3/participacoes/1/visitas']}>
       <Routes>
         <Route
           path="/estudos/:id/participacoes/:participacaoId/visitas"
-          element={<AgendamentoVisitas {...servicos} recursos={recursos} usuario={COORDENADOR} />}
+          element={<AgendamentoVisitas {...servicos} recursos={recursos} usuario={usuario} />}
         />
         <Route path="/estudos/:id/participacoes" element={<h1>Participantes</h1>} />
       </Routes>
@@ -163,8 +181,9 @@ describe('AgendamentoVisitas', () => {
     ]);
     expect(within(itens[1]).getByText('10/12/2026 às 09:00')).toBeInTheDocument();
     expect(within(itens[1]).getByText('Agendada')).toHaveClass('etiqueta-visita-agendada');
-    // Só a visita ainda agendada pode ser reagendada
+    // Só a visita ainda agendada pode ser reagendada; a realizada com resultados não pode ser corrigida
     expect(within(itens[0]).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(itens[0]).getByText('Correção bloqueada: a visita já tem resultados registrados.')).toBeInTheDocument();
     expect(within(itens[1]).getByRole('button', { name: 'Reagendar Visita final' })).toBeInTheDocument();
   });
 
@@ -356,14 +375,14 @@ describe('AgendamentoVisitas', () => {
     expect(await screen.findByText(/foi retirado do estudo/)).toBeInTheDocument();
     expect(screen.getByText('Retirado')).toHaveClass('etiqueta-participacao-retirada');
     expect(screen.queryByRole('heading', { name: 'Agendar visita' })).not.toBeInTheDocument();
-    expect(within(listaVisitas()).queryByRole('button', { name: /Reagendar/ })).not.toBeInTheDocument();
+    expect(within(listaVisitas()).queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('não oferece agendamento com o estudo fora de Recrutamento ou Execução', async () => {
     renderizar(criarServicos({ estudos: [{ ...ESTUDO, estado: 'ENCERRADO' }] }));
 
     expect(
-      await screen.findByText('O agendamento de visitas só fica disponível com o estudo em Recrutamento ou Execução.'),
+      await screen.findByText('O agendamento e o registro de visitas só ficam disponíveis com o estudo em Recrutamento ou Execução.'),
     ).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Agendar visita' })).not.toBeInTheDocument();
   });
@@ -378,13 +397,16 @@ describe('AgendamentoVisitas', () => {
     expect(await screen.findByText('O protocolo do estudo não tem visitas previstas para agendar.')).toBeInTheDocument();
   });
 
-  it('sem o histórico no backend, mantém o agendamento e só oculta as visitas e o reagendamento', async () => {
+  it('sem o histórico no backend, mantém o agendamento e oculta as visitas, o reagendamento e o registro', async () => {
     const servicos = criarServicos();
-    renderizar(servicos, { historico: false, listaPesquisador: false, retirada: false });
+    renderizar(servicos, { historico: false, listaPesquisador: true, retirada: true });
 
     expect(await screen.findByRole('heading', { name: 'Agendar visita' })).toBeInTheDocument();
-    expect(screen.getByText(/A lista de visitas agendadas e o reagendamento ficarão disponíveis/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/A lista de visitas agendadas, o reagendamento e o registro da situação das visitas ficarão disponíveis/),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Visitas agendadas' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Cancelar a|Registrar|Corrigir/ })).not.toBeInTheDocument();
     expect(servicos.servicoAcompanhamento.listarVisitas).not.toHaveBeenCalled();
   });
 
@@ -434,5 +456,352 @@ describe('AgendamentoVisitas', () => {
     await screen.findByRole('heading', { name: 'Agendar visita' });
     await usuario.click(screen.getByRole('link', { name: 'Voltar' }));
     expect(await screen.findByRole('heading', { name: 'Participantes' })).toBeInTheDocument();
+  });
+});
+
+// <-------------------REGISTRO DA SITUAÇÃO DAS VISITAS (RF13)------------------->
+// Hoje é 14/11: a visita de hoje (09:00 em Recife) aceita as três situações; a final, em dezembro, só o
+// cancelamento; a ausente pode ser corrigida; a cancelada em dezembro ainda não tem para onde ser corrigida
+const HOJE: ResumoVisitaAgendada = {
+  id: 2,
+  nomeVisita: 'Visita de acompanhamento',
+  dataHora: '2026-11-14T12:00:00Z',
+  situacao: 'AGENDADA',
+  motivo: null,
+  possuiResultados: false,
+};
+const AUSENTE: ResumoVisitaAgendada = {
+  id: 4,
+  nomeVisita: 'Visita inicial',
+  dataHora: '2026-11-06T12:00:00Z',
+  situacao: 'AUSENTE',
+  motivo: 'Participante não compareceu.',
+  possuiResultados: false,
+};
+const CANCELADA_FUTURA: ResumoVisitaAgendada = {
+  id: 5,
+  nomeVisita: 'Visita extra',
+  dataHora: '2026-12-01T12:00:00Z',
+  situacao: 'CANCELADA',
+  motivo: 'Unidade fechada.',
+  possuiResultados: false,
+};
+const VISITAS_REGISTRO = [VISITAS[0], HOJE, AUSENTE, CANCELADA_FUTURA];
+
+const NOME_HOJE = 'Visita de acompanhamento de 14/11/2026 às 09:00';
+const NOME_FINAL = 'Visita final de 10/12/2026 às 09:00';
+const NOME_AUSENTE = 'Visita inicial de 06/11/2026 às 09:00';
+
+function criarServicosRegistro(acompanhamento: Partial<ServicoAcompanhamento> = {}, estudos?: Estudo[]) {
+  return criarServicos({
+    acompanhamento: { listarVisitas: vi.fn().mockResolvedValue(VISITAS_REGISTRO), ...acompanhamento },
+    estudos,
+  });
+}
+
+const itemDa = (nome: string) =>
+  within(listaVisitas())
+    .getAllByRole('listitem')
+    .find((i) => i.textContent?.includes(nome)) as HTMLElement;
+
+describe('AgendamentoVisitas: registro da situação das visitas (RF13)', () => {
+  it('oferece só as ações que a data e a situação permitem e mostra o motivo das visitas registradas', async () => {
+    renderizar(criarServicosRegistro());
+    await screen.findByRole('region', { name: 'Visitas agendadas' });
+
+    const botoes = (item: HTMLElement) => within(item).queryAllByRole('button').map((b) => b.textContent);
+    expect(botoes(itemDa('14/11/2026'))).toEqual(['Reagendar', 'Realizada', 'Ausente', 'Cancelar visita']);
+    expect(botoes(itemDa('10/12/2026'))).toEqual(['Reagendar', 'Cancelar visita']);
+    expect(botoes(itemDa('06/11/2026'))).toEqual(['Corrigir']);
+    expect(botoes(itemDa('01/12/2026'))).toEqual([]);
+
+    expect(within(itemDa('06/11/2026')).getByText('Motivo: Participante não compareceu.')).toBeInTheDocument();
+    expect(within(itemDa('01/12/2026')).getByText('Motivo: Unidade fechada.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: `Registrar realização da ${NOME_HOJE}` })).toBeInTheDocument();
+    // O cancelamento usa o estilo de perigo; registrar realização e ausência continuam secundários
+    expect(screen.getByRole('button', { name: `Cancelar a ${NOME_FINAL}` })).toHaveClass('botao', 'botao-retirar');
+    expect(screen.getByRole('button', { name: `Cancelar a ${NOME_FINAL}` })).not.toHaveClass('botao-secundario');
+    expect(screen.getByRole('button', { name: `Registrar ausência na ${NOME_HOJE}` })).toHaveClass('botao-secundario');
+  });
+
+  it('registra a realização sem motivo, avisa e recarrega a lista', async () => {
+    const usuario = userEvent.setup();
+    const servicos = criarServicosRegistro();
+    renderizar(servicos);
+
+    await usuario.click(await screen.findByRole('button', { name: `Registrar realização da ${NOME_HOJE}` }));
+    const dialogo = screen.getByRole('dialog', { name: 'Registrar a visita como realizada?' });
+    expect(dialogo).toHaveAccessibleDescription('Visita de acompanhamento, agendada para 14/11/2026 às 09:00.');
+    expect(within(dialogo).queryByRole('textbox')).not.toBeInTheDocument();
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Registrar realização' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Visita de acompanhamento registrada como realizada.');
+    expect(servicos.servicoAcompanhamento.registrarSituacao).toHaveBeenCalledWith(3, 1, 2, { situacao: 'REALIZADA' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(servicos.servicoAcompanhamento.listarVisitas).toHaveBeenCalledTimes(2);
+  });
+
+  it('registra a ausência com o motivo opcional aparado', async () => {
+    const usuario = userEvent.setup();
+    const servicos = criarServicosRegistro();
+    renderizar(servicos);
+
+    await usuario.click(await screen.findByRole('button', { name: `Registrar ausência na ${NOME_HOJE}` }));
+    await usuario.type(screen.getByLabelText('Motivo da ausência (opcional)'), '  Não compareceu.  ');
+    await usuario.click(screen.getByRole('button', { name: 'Registrar ausência' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Visita de acompanhamento registrada como ausente.');
+    expect(servicos.servicoAcompanhamento.registrarSituacao).toHaveBeenCalledWith(3, 1, 2, {
+      situacao: 'AUSENTE',
+      motivo: 'Não compareceu.',
+    });
+  });
+
+  it('registra a ausência sem motivo', async () => {
+    const usuario = userEvent.setup();
+    const servicos = criarServicosRegistro();
+    renderizar(servicos);
+
+    await usuario.click(await screen.findByRole('button', { name: `Registrar ausência na ${NOME_HOJE}` }));
+    await usuario.click(screen.getByRole('button', { name: 'Registrar ausência' }));
+
+    await screen.findByRole('status');
+    expect(servicos.servicoAcompanhamento.registrarSituacao).toHaveBeenCalledWith(3, 1, 2, { situacao: 'AUSENTE' });
+  });
+
+  it('exige o motivo do cancelamento antes de enviar, mesmo para visita futura', async () => {
+    const usuario = userEvent.setup();
+    const servicos = criarServicosRegistro();
+    renderizar(servicos);
+
+    await usuario.click(await screen.findByRole('button', { name: `Cancelar a ${NOME_FINAL}` }));
+    const campo = screen.getByLabelText('Motivo do cancelamento (obrigatório)');
+    await usuario.click(screen.getByRole('button', { name: 'Cancelar visita' }));
+
+    expect(screen.getByText('Informe o motivo do cancelamento.')).toHaveClass('campo-erro');
+    expect(campo).toHaveAttribute('aria-invalid', 'true');
+    expect(campo).toHaveFocus();
+    expect(servicos.servicoAcompanhamento.registrarSituacao).not.toHaveBeenCalled();
+
+    await usuario.type(campo, 'Unidade indisponível.');
+    expect(screen.queryByText('Informe o motivo do cancelamento.')).not.toBeInTheDocument();
+    await usuario.click(screen.getByRole('button', { name: 'Cancelar visita' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Visita final registrada como cancelada.');
+    expect(servicos.servicoAcompanhamento.registrarSituacao).toHaveBeenCalledWith(3, 1, 3, {
+      situacao: 'CANCELADA',
+      motivo: 'Unidade indisponível.',
+    });
+  });
+
+  it('fecha o diálogo sem registrar ao escolher Cancelar', async () => {
+    const usuario = userEvent.setup();
+    const servicos = criarServicosRegistro();
+    renderizar(servicos);
+
+    await usuario.click(await screen.findByRole('button', { name: `Cancelar a ${NOME_FINAL}` }));
+    await usuario.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(servicos.servicoAcompanhamento.registrarSituacao).not.toHaveBeenCalled();
+  });
+
+  it('sai do reagendamento quando a visita em reagendamento é registrada', async () => {
+    const usuario = userEvent.setup();
+    renderizar(criarServicosRegistro());
+
+    await usuario.click(await screen.findByRole('button', { name: 'Reagendar Visita de acompanhamento' }));
+    expect(screen.getByRole('heading', { name: 'Reagendar visita' })).toBeInTheDocument();
+    await usuario.click(screen.getByRole('button', { name: `Registrar realização da ${NOME_HOJE}` }));
+    await usuario.click(screen.getByRole('button', { name: 'Registrar realização' }));
+
+    await screen.findByRole('status');
+    expect(screen.getByRole('heading', { name: 'Agendar visita' })).toBeInTheDocument();
+  });
+
+  it('mostra no campo o erro de motivo do backend e no diálogo os erros sem campo', async () => {
+    const usuario = userEvent.setup();
+    const registrarSituacao = vi
+      .fn()
+      .mockRejectedValueOnce(
+        erroApi(400, 'VALIDACAO_INVALIDA', 'Confira os campos informados.', {
+          motivo: 'O motivo deve ter no máximo 500 caracteres.',
+        }),
+      )
+      .mockRejectedValueOnce(erroApi(400, 'VALIDACAO_INVALIDA', 'Informe o motivo do cancelamento.'))
+      .mockRejectedValueOnce(new Error('x'));
+    renderizar(criarServicosRegistro({ registrarSituacao }));
+
+    await usuario.click(await screen.findByRole('button', { name: `Cancelar a ${NOME_FINAL}` }));
+    await usuario.type(screen.getByLabelText('Motivo do cancelamento (obrigatório)'), 'Motivo.');
+    await usuario.click(screen.getByRole('button', { name: 'Cancelar visita' }));
+    expect(await screen.findByText('O motivo deve ter no máximo 500 caracteres.')).toHaveClass('campo-erro');
+    await vi.waitFor(() => expect(screen.getByLabelText('Motivo do cancelamento (obrigatório)')).toHaveFocus());
+
+    await usuario.click(screen.getByRole('button', { name: 'Cancelar visita' }));
+    const dialogo = screen.getByRole('dialog');
+    expect(await within(dialogo).findByRole('alert')).toHaveTextContent('Informe o motivo do cancelamento.');
+
+    await usuario.click(screen.getByRole('button', { name: 'Cancelar visita' }));
+    expect(await within(dialogo).findByRole('alert')).toHaveTextContent('Não foi possível registrar a visita.');
+  });
+
+  it('com TRANSICAO_VISITA_INVALIDA, fecha o diálogo, avisa na tela e recarrega as visitas', async () => {
+    const usuario = userEvent.setup();
+    const erro = erroApi(400, 'TRANSICAO_VISITA_INVALIDA', 'A visita ainda não pode ser registrada.');
+    const servicos = criarServicosRegistro({ registrarSituacao: vi.fn().mockRejectedValue(erro) });
+    renderizar(servicos);
+
+    await usuario.click(await screen.findByRole('button', { name: `Registrar realização da ${NOME_HOJE}` }));
+    await usuario.click(screen.getByRole('button', { name: 'Registrar realização' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('A visita ainda não pode ser registrada.');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await vi.waitFor(() => expect(servicos.servicoAcompanhamento.listarVisitas).toHaveBeenCalledTimes(2));
+  });
+
+  it('corrige a ausência para cancelada com justificativa e o novo motivo', async () => {
+    const usuario = userEvent.setup();
+    const servicos = criarServicosRegistro();
+    renderizar(servicos);
+
+    await usuario.click(await screen.findByRole('button', { name: `Corrigir a situação da ${NOME_AUSENTE}` }));
+    const dialogo = screen.getByRole('dialog', { name: 'Corrigir a situação da visita?' });
+    expect(dialogo).toHaveAccessibleDescription(
+      'Visita inicial, agendada para 06/11/2026 às 09:00, está registrada como ausente.',
+    );
+    expect(within(dialogo).getByText('Motivo atual: Participante não compareceu.')).toBeInTheDocument();
+    const opcoes = within(screen.getByLabelText('Nova situação')).getAllByRole('option').map((o) => o.textContent);
+    expect(opcoes).toEqual(['Selecione a situação', 'Realizada', 'Cancelada']);
+
+    // Tudo vazio: a tela confere antes de enviar
+    await usuario.click(screen.getByRole('button', { name: 'Salvar correção' }));
+    expect(screen.getByText('Selecione a nova situação.')).toBeInTheDocument();
+    expect(screen.getByText('Informe a justificativa da correção.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nova situação')).toHaveFocus();
+
+    await usuario.selectOptions(screen.getByLabelText('Nova situação'), 'Cancelada');
+    await usuario.type(screen.getByLabelText('Justificativa da correção (obrigatória)'), 'Foi cancelada antes.');
+    await usuario.click(screen.getByRole('button', { name: 'Salvar correção' }));
+    expect(screen.getByText('Informe o motivo do cancelamento.')).toBeInTheDocument();
+    expect(servicos.servicoAcompanhamento.corrigirSituacao).not.toHaveBeenCalled();
+
+    await usuario.type(screen.getByLabelText('Motivo do cancelamento (obrigatório)'), ' Pedido do participante. ');
+    await usuario.click(screen.getByRole('button', { name: 'Salvar correção' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Correção registrada: Visita inicial passou de ausente para cancelada.',
+    );
+    expect(servicos.servicoAcompanhamento.corrigirSituacao).toHaveBeenCalledWith(3, 1, 4, {
+      situacao: 'CANCELADA',
+      justificativa: 'Foi cancelada antes.',
+      motivo: 'Pedido do participante.',
+    });
+    expect(servicos.servicoAcompanhamento.listarVisitas).toHaveBeenCalledTimes(2);
+  });
+
+  it('corrige para realizada sem campo de motivo, enviando motivo vazio', async () => {
+    const usuario = userEvent.setup();
+    const servicos = criarServicosRegistro();
+    renderizar(servicos);
+
+    await usuario.click(await screen.findByRole('button', { name: `Corrigir a situação da ${NOME_AUSENTE}` }));
+    await usuario.selectOptions(screen.getByLabelText('Nova situação'), 'Cancelada');
+    await usuario.type(screen.getByLabelText('Motivo do cancelamento (obrigatório)'), 'Motivo.');
+    // Ao trocar para realizada, o motivo some e não é enviado
+    await usuario.selectOptions(screen.getByLabelText('Nova situação'), 'Realizada');
+    expect(screen.queryByLabelText(/Motivo/)).not.toBeInTheDocument();
+    await usuario.type(screen.getByLabelText('Justificativa da correção (obrigatória)'), 'A visita ocorreu.');
+    await usuario.click(screen.getByRole('button', { name: 'Salvar correção' }));
+
+    await screen.findByRole('status');
+    expect(servicos.servicoAcompanhamento.corrigirSituacao).toHaveBeenCalledWith(3, 1, 4, {
+      situacao: 'REALIZADA',
+      justificativa: 'A visita ocorreu.',
+      motivo: null,
+    });
+  });
+
+  it('corrige para ausente com motivo opcional', async () => {
+    const usuario = userEvent.setup();
+    const realizada: ResumoVisitaAgendada = { ...AUSENTE, situacao: 'REALIZADA', motivo: null };
+    const servicos = criarServicosRegistro({ listarVisitas: vi.fn().mockResolvedValue([realizada]) });
+    renderizar(servicos);
+
+    await usuario.click(await screen.findByRole('button', { name: `Corrigir a situação da ${NOME_AUSENTE}` }));
+    await usuario.selectOptions(screen.getByLabelText('Nova situação'), 'Ausente');
+    expect(screen.getByLabelText('Motivo da ausência (opcional)')).toBeInTheDocument();
+    await usuario.type(screen.getByLabelText('Justificativa da correção (obrigatória)'), 'Não veio.');
+    await usuario.click(screen.getByRole('button', { name: 'Salvar correção' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('passou de realizada para ausente.');
+    expect(servicos.servicoAcompanhamento.corrigirSituacao).toHaveBeenCalledWith(3, 1, 4, {
+      situacao: 'AUSENTE',
+      justificativa: 'Não veio.',
+      motivo: null,
+    });
+  });
+
+  it('mostra nos campos os erros da correção vindos do backend e no diálogo os demais', async () => {
+    const usuario = userEvent.setup();
+    const corrigirSituacao = vi
+      .fn()
+      .mockRejectedValueOnce(
+        erroApi(400, 'VALIDACAO_INVALIDA', 'Confira os campos informados.', {
+          justificativa: 'A justificativa deve ter no máximo 500 caracteres.',
+        }),
+      )
+      .mockRejectedValueOnce(erroApi(404, 'RECURSO_NAO_ENCONTRADO', 'Visita agendada não encontrada.'))
+      .mockRejectedValueOnce(new Error('x'));
+    renderizar(criarServicosRegistro({ corrigirSituacao }));
+
+    await usuario.click(await screen.findByRole('button', { name: `Corrigir a situação da ${NOME_AUSENTE}` }));
+    await usuario.selectOptions(screen.getByLabelText('Nova situação'), 'Realizada');
+    await usuario.type(screen.getByLabelText('Justificativa da correção (obrigatória)'), 'Texto.');
+    await usuario.click(screen.getByRole('button', { name: 'Salvar correção' }));
+    expect(await screen.findByText('A justificativa deve ter no máximo 500 caracteres.')).toHaveClass('campo-erro');
+    await vi.waitFor(() =>
+      expect(screen.getByLabelText('Justificativa da correção (obrigatória)')).toHaveFocus(),
+    );
+
+    const dialogo = screen.getByRole('dialog');
+    await usuario.click(screen.getByRole('button', { name: 'Salvar correção' }));
+    expect(await within(dialogo).findByRole('alert')).toHaveTextContent('Visita agendada não encontrada.');
+
+    await usuario.click(screen.getByRole('button', { name: 'Salvar correção' }));
+    expect(await within(dialogo).findByRole('alert')).toHaveTextContent('Não foi possível registrar a correção.');
+  });
+
+  it('com CORRECAO_BLOQUEADA, fecha o diálogo, avisa na tela e recarrega as visitas', async () => {
+    const usuario = userEvent.setup();
+    const erro = erroApi(400, 'CORRECAO_BLOQUEADA', 'A visita possui resultados registrados.');
+    const servicos = criarServicosRegistro({ corrigirSituacao: vi.fn().mockRejectedValue(erro) });
+    renderizar(servicos);
+
+    await usuario.click(await screen.findByRole('button', { name: `Corrigir a situação da ${NOME_AUSENTE}` }));
+    await usuario.selectOptions(screen.getByLabelText('Nova situação'), 'Realizada');
+    await usuario.type(screen.getByLabelText('Justificativa da correção (obrigatória)'), 'A visita ocorreu.');
+    await usuario.click(screen.getByRole('button', { name: 'Salvar correção' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('A visita possui resultados registrados.');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await vi.waitFor(() => expect(servicos.servicoAcompanhamento.listarVisitas).toHaveBeenCalledTimes(2));
+  });
+
+  it('não oferece registro nem correção com o estudo encerrado, mas mostra a situação e o motivo', async () => {
+    renderizar(criarServicosRegistro({}, [{ ...ESTUDO, estado: 'ENCERRADO' }]));
+
+    expect(await screen.findByText(/só ficam disponíveis com o estudo em Recrutamento ou Execução/)).toBeInTheDocument();
+    expect(within(listaVisitas()).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(itemDa('06/11/2026')).getByText('Ausente')).toBeInTheDocument();
+    expect(within(itemDa('06/11/2026')).getByText('Motivo: Participante não compareceu.')).toBeInTheDocument();
+  });
+
+  it('não oferece registro nem correção a quem não é coordenador', async () => {
+    const pesquisadora: UsuarioSessao = { ...COORDENADOR, id: 2, nome: 'Paula', perfil: 'PESQUISADOR' };
+    renderizar(criarServicosRegistro(), undefined, pesquisadora);
+
+    await screen.findByRole('region', { name: 'Visitas agendadas' });
+    expect(screen.queryByRole('button', { name: /Registrar|Cancelar a|Corrigir/ })).not.toBeInTheDocument();
   });
 });

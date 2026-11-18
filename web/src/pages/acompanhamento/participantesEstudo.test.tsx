@@ -50,6 +50,8 @@ function criarServicos(parcial: Partial<ServicoAcompanhamento> = {}, estudos: Es
     listarVisitas: vi.fn(),
     agendarVisita: vi.fn(),
     reagendarVisita: vi.fn(),
+    registrarSituacao: vi.fn(),
+    corrigirSituacao: vi.fn(),
     obterVisita: vi.fn(),
     listarResultados: vi.fn(),
     registrarResultado: vi.fn(),

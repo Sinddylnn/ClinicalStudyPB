@@ -2,9 +2,10 @@ import { api } from './cliente';
 import { servicoAcompanhamentoSimulado } from './acompanhamentoSimulado';
 
 // <-------------------CONTRATO DE ACOMPANHAMENTO------------------->
-// Segue o rascunho do contrato da Sprint 3 (docs/api/acompanhamento-de-participantes.md).
-// A lista de participações, o agendamento e o reagendamento seguem o PR #41 (task 3964). As demais
-// rotas ainda não existem no backend: conferir campos e códigos quando forem implementadas.
+// Segue o contrato da Sprint 3 (docs/api/acompanhamento-de-participantes.md).
+// A lista de participações, o agendamento e o reagendamento seguem o PR #41 (task 3964); o registro e a
+// correção da situação das visitas, o PR #46 (RF13); a retirada, o PR #48 (RF16). O histórico (RF15) e os
+// resultados (RF14) ainda não existem no backend: conferir campos e códigos quando forem implementados.
 
 /** Situação da participação no estudo: a retirada é irreversível (RF16). */
 export type SituacaoParticipacao = 'ATIVA' | 'RETIRADA';
@@ -24,6 +25,9 @@ export type Participacao = {
 /** Situação de uma visita agendada (RF13). */
 export type SituacaoVisita = 'AGENDADA' | 'REALIZADA' | 'AUSENTE' | 'CANCELADA';
 
+/** Situação registrada ao fim da visita: uma visita nunca volta para AGENDADA (RF13). */
+export type SituacaoFinal = Exclude<SituacaoVisita, 'AGENDADA'>;
+
 /** Resultado fictício de uma atividade prevista (RF14). */
 export type ResultadoHistorico = {
   atividadePrevistaId: number;
@@ -33,12 +37,18 @@ export type ResultadoHistorico = {
 
 /** Correção de uma situação final, guardada sem apagar o registro anterior. */
 export type CorrecaoVisita = {
+  /** Os campos opcionais abaixo ainda não estão confirmados no contrato do histórico (RF15). */
+  id?: number;
   situacaoAnterior: SituacaoVisita;
   situacaoNova: SituacaoVisita;
   justificativa: string;
   corrigidaPorId: number;
   corrigidaPorNome?: string;
   corrigidaEm: string;
+  /** Motivo que a visita tinha antes da correção; null quando não tinha. */
+  motivoAnterior?: string | null;
+  /** Motivo da visita depois da correção; null quando não há. */
+  motivoNovo?: string | null;
 };
 
 export type ItemHistoricoVisita = {
@@ -129,7 +139,38 @@ export type ReagendamentoEntrada = {
  * Visita agendada como a tela de agendamento lista. Só usa campos que o item do histórico também traz:
  * o histórico do contrato não devolve o visitaPrevistaId, que o reagendamento não precisa.
  */
-export type ResumoVisitaAgendada = Pick<VisitaAgendada, 'id' | 'nomeVisita' | 'dataHora' | 'situacao'>;
+export type ResumoVisitaAgendada = Pick<VisitaAgendada, 'id' | 'nomeVisita' | 'dataHora' | 'situacao' | 'motivo'> & {
+  /** Visita com resultado de atividade (RF14): a correção da situação fica bloqueada. */
+  possuiResultados: boolean;
+};
+
+// <-------------------REGISTRO DA SITUAÇÃO DA VISITA (RF13)------------------->
+/** Dados enviados em PATCH .../visitas/{visitaAgendadaId}/situacao (VisitaAgendadaSituacaoEntrada do backend). */
+export type SituacaoVisitaEntrada = {
+  situacao: SituacaoFinal;
+  /** Obrigatório em CANCELADA, opcional em AUSENTE e proibido em REALIZADA; até 500 caracteres. */
+  motivo?: string | null;
+};
+
+/** Dados enviados em POST .../visitas/{visitaAgendadaId}/correcoes (CorrecaoVisitaEntrada do backend). */
+export type CorrecaoVisitaEntrada = {
+  situacao: SituacaoFinal;
+  /** De 1 a 500 caracteres depois de aparar: explica por que o registro anterior estava errado. */
+  justificativa: string;
+  /** Mesma regra do registro, conforme a nova situação. */
+  motivo?: string | null;
+};
+
+/** Resposta 201 da correção (CorrecaoVisitaResposta do backend): sem o motivo anterior nem o novo. */
+export type CorrecaoVisitaRegistrada = {
+  id: number;
+  visitaAgendadaId: number;
+  situacaoAnterior: SituacaoFinal;
+  situacaoNova: SituacaoFinal;
+  justificativa: string;
+  corrigidaPorId: number;
+  corrigidaEm: string;
+};
 
 // <-------------------RETIRADA DO PARTICIPANTE (RF16)------------------->
 /** Dados enviados em POST .../retirada: motivo de 1 a 500 caracteres depois de aparar. */
@@ -162,6 +203,26 @@ export type ServicoAcompanhamento = {
     entrada: ReagendamentoEntrada,
   ): Promise<VisitaAgendada>;
   /**
+   * PATCH .../visitas/{visitaAgendadaId}/situacao (RF13): registra a realização, a ausência ou o
+   * cancelamento de uma visita AGENDADA. Devolve a visita atualizada.
+   */
+  registrarSituacao(
+    estudoId: number,
+    participacaoId: number,
+    visitaAgendadaId: number,
+    entrada: SituacaoVisitaEntrada,
+  ): Promise<VisitaAgendada>;
+  /**
+   * POST .../visitas/{visitaAgendadaId}/correcoes (RF13): troca uma situação final por outra, com
+   * justificativa. Devolve o registro da correção.
+   */
+  corrigirSituacao(
+    estudoId: number,
+    participacaoId: number,
+    visitaAgendadaId: number,
+    entrada: CorrecaoVisitaEntrada,
+  ): Promise<CorrecaoVisitaRegistrada>;
+  /**
    * GET .../visitas/{visitaAgendadaId}. Não está no rascunho do contrato: a tela de resultados
    * precisa da visita prevista e da situação. Pedido ao backend junto com a listagem abaixo.
    */
@@ -183,7 +244,7 @@ export type ServicoAcompanhamento = {
   ): Promise<ResultadoAtividade>;
   /**
    * POST .../retirada (RF16), irreversível. Só deve ser chamada quando recursosAcompanhamento.retirada
-   * for verdadeiro: a rota ainda não existe no backend.
+   * for verdadeiro.
    */
   retirarParticipante(estudoId: number, participacaoId: number, entrada: RetiradaEntrada): Promise<RetiradaParticipacao>;
 };
@@ -213,7 +274,14 @@ export const servicoAcompanhamentoApi: ServicoAcompanhamento = {
     const { itens } = await servicoAcompanhamentoApi.obterHistorico(estudoId, participacaoId);
     return itens
       .filter((item): item is ItemHistoricoVisita => item.tipo === 'VISITA')
-      .map((v) => ({ id: v.visitaAgendadaId, nomeVisita: v.nomeVisita, dataHora: v.dataHora, situacao: v.situacao }));
+      .map((v) => ({
+        id: v.visitaAgendadaId,
+        nomeVisita: v.nomeVisita,
+        dataHora: v.dataHora,
+        situacao: v.situacao,
+        motivo: v.motivo,
+        possuiResultados: v.resultados.length > 0,
+      }));
   },
   // Só o coordenador vinculado, com CSRF (PR #41). 400 VALIDACAO_INVALIDA (errosCampos visitaPrevistaId
   // ou dataHora), ESTADO_ESTUDO_INVALIDO (estudo fora de recrutamento ou execução), PARTICIPACAO_INVALIDA
@@ -228,6 +296,29 @@ export const servicoAcompanhamentoApi: ServicoAcompanhamento = {
   // AGENDADA. A visita continua com o mesmo ID e a mesma visita prevista
   async reagendarVisita(estudoId, participacaoId, visitaAgendadaId, entrada) {
     const { data } = await api.put<VisitaAgendada>(caminhoVisita(estudoId, participacaoId, visitaAgendadaId), entrada);
+    return data;
+  },
+  // Só o coordenador vinculado, com CSRF (PR #46). 400 VALIDACAO_INVALIDA (errosCampos situacao ou
+  // motivo acima de 500; sem errosCampos: cancelamento sem motivo ou realização com motivo),
+  // ESTADO_ESTUDO_INVALIDO (estudo fora de recrutamento ou execução), PARTICIPACAO_INVALIDA (participação
+  // retirada) e TRANSICAO_VISITA_INVALIDA (visita que não está AGENDADA, ou realização/ausência antes do
+  // dia da visita no fuso de Recife); 404 RECURSO_NAO_ENCONTRADO (estudo, participação ou visita fora do
+  // vínculo). Não usa DATA_VISITA_INVALIDA, que é só do agendamento
+  async registrarSituacao(estudoId, participacaoId, visitaAgendadaId, entrada) {
+    const { data } = await api.patch<VisitaAgendada>(
+      `${caminhoVisita(estudoId, participacaoId, visitaAgendadaId)}/situacao`,
+      entrada,
+    );
+    return data;
+  },
+  // Mesmos códigos do registro, com errosCampos também em justificativa (vazia ou acima de 500).
+  // TRANSICAO_VISITA_INVALIDA também para visita ainda AGENDADA ou nova situação igual à atual, e
+  // CORRECAO_BLOQUEADA para visita com resultado registrado (última conferência do backend)
+  async corrigirSituacao(estudoId, participacaoId, visitaAgendadaId, entrada) {
+    const { data } = await api.post<CorrecaoVisitaRegistrada>(
+      `${caminhoVisita(estudoId, participacaoId, visitaAgendadaId)}/correcoes`,
+      entrada,
+    );
     return data;
   },
   async obterVisita(estudoId, participacaoId, visitaAgendadaId) {
@@ -257,9 +348,9 @@ export const servicoAcompanhamentoApi: ServicoAcompanhamento = {
     );
     return data;
   },
-  // Só o coordenador vinculado, com CSRF, e com o estudo em recrutamento ou execução. 400
-  // VALIDACAO_INVALIDA (errosCampos motivo), ESTADO_ESTUDO_INVALIDO e PARTICIPACAO_INVALIDA (já retirada);
-  // 404 para estudo ou participação fora do vínculo. Cancela as visitas ainda agendadas
+  // Só o coordenador vinculado, com CSRF, e com o estudo em recrutamento ou execução (PR #48). 400
+  // VALIDACAO_INVALIDA (errosCampos motivo), ESTADO_ESTUDO_INVALIDO e PARTICIPACAO_JA_RETIRADA (retirada
+  // repetida); 404 para estudo ou participação fora do vínculo. Cancela as visitas ainda agendadas
   async retirarParticipante(estudoId, participacaoId, entrada) {
     const { data } = await api.post<RetiradaParticipacao>(
       `/estudos/${estudoId}/participacoes/${participacaoId}/retirada`,
@@ -282,14 +373,14 @@ export const servicoAcompanhamento: ServicoAcompanhamento = usaBackend
 export type RecursosAcompanhamento = {
   /** GET .../historico (RF15): ainda não existe no backend. */
   historico: boolean;
-  /** GET /estudos/{estudoId}/participacoes pelo pesquisador responsável: o PR #41 ainda nega. */
+  /** GET /estudos/{estudoId}/participacoes pelo pesquisador responsável: liberado no backend (PR #41). */
   listaPesquisador: boolean;
-  /** POST .../retirada (RF16): ainda não existe no backend (task 3957). */
+  /** POST .../retirada (RF16): entregue no backend (PR #48). */
   retirada: boolean;
 };
 
-// No modo real, ficam desligados até o backend entregar o histórico e a retirada e liberar o pesquisador
-// na lista; sem isso, a web chamaria uma rota negada e iria para "Acesso negado"
+// No modo real, só o histórico continua desligado até o backend entregá-lo: sem ele, a web chamaria
+// uma rota negada e iria para "Acesso negado". A lista do pesquisador e a retirada já existem no backend
 export const recursosAcompanhamento: RecursosAcompanhamento = usaBackend
-  ? { historico: false, listaPesquisador: false, retirada: false }
+  ? { historico: false, listaPesquisador: true, retirada: true }
   : { historico: true, listaPesquisador: true, retirada: true };
