@@ -351,12 +351,18 @@ Os contratos, os erros e os exemplos estão em
 
 ## Acompanhamento de participantes, RF12 a RF18
 
-O contrato preliminar de agendamento e registro de visitas, resultados, retirada
+O contrato de agendamento e registro de visitas, resultados, retirada
 e consultas do participante está em
 [Acompanhamento de participantes](acompanhamento-de-participantes.md).
 
-No início da Sprint 3, esse documento é um rascunho para alinhar web, backend e
-mobile. Ele não representa rotas já disponíveis no Swagger. O OpenAPI é gerado a
-partir dos controllers e DTOs existentes; quando as operações forem implementadas,
-este contrato deverá ser conferido com o `/v3/api-docs`, atualizado e coberto pelos
-testes do contrato.
+As rotas `POST .../resultados` e `PUT .../resultados/{resultadoId}` da RF14
+foram implementadas na task #3958. Exigem sessão de coordenador vinculado,
+token CSRF, participação
+ativa e visita realizada. O cadastro retorna `201`, e a edição retorna `200`.
+As regras, os exemplos JSON e os erros estão no contrato de acompanhamento.
+
+O OpenAPI é gerado a partir dos controllers e DTOs presentes no backend em
+execução. A RF14 possui testes de service, HTTP e persistência com PostgreSQL,
+mas a geração do contrato deve ser conferida no `/v3/api-docs` antes da PR.
+As demais operações ainda descritas como propostas no contrato de acompanhamento
+não devem ser consideradas disponíveis somente por constarem do documento.

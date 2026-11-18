@@ -1,8 +1,8 @@
 # Contrato de acompanhamento de participantes (RF12 a RF18)
 
-> **Estado em 16/11/2026:** rotas de agendamento e reagendamento (RF12, task #3964) e de registro e correção de situação de visitas (RF13, task #3965) implementadas no backend. As rotas dos RF14 a RF18 continuam propostas e não devem ser consideradas disponíveis até sua implementação.
+> **Atualização da RF14 em 17/11/2026:** o cadastro e a edição de resultados de atividades foram implementados na task #3958. RF12 e RF13 seguem descritos conforme as entregas anteriores; as demais funcionalidades permanecem apresentadas como propostas neste documento.
 
-Este documento descreve a proposta de API para agendamento e registro de visitas, resultados de avaliações, retirada de participantes e consultas do participante no aplicativo. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
+Este documento reúne o contrato de agendamento e registro de visitas, resultados de avaliações, retirada de participantes e consultas do participante no aplicativo. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
 
 A modelagem do domínio está em [RF12 a RF18](../modelagem/RF12-RF18.md). A documentação geral sobre Swagger e OpenAPI está em [OpenAPI](openapi.md).
 
@@ -62,7 +62,7 @@ Já implementadas na task 3964 (PR #41): `GET /estudos/{estudoId}/participacoes`
 
 Na task 3965 (RF13), foram implementados o registro de situação da visita (`PATCH .../situacao`) e a correção com histórico (`POST .../correcoes`). Também foi adicionada uma validação que impede o encerramento de estudos em execução enquanto existirem visitas `AGENDADA`.
 
-As rotas dos demais requisitos continuam propostas.
+As rotas de cadastro e edição de resultados da RF14 foram implementadas na task #3958. As demais rotas continuam descritas como propostas nesta versão.
 
 ### Listar participantes incluídos
 
@@ -276,7 +276,7 @@ Na transição `EXECUCAO` → `ENCERRADO`, o backend verifica as visitas do estu
 
 A mensagem informa a quantidade de visitas pendentes e os IDs dos participantes envolvidos, sem repetir participantes que tenham mais de uma visita pendente.
 
-### Registrar resultado de atividade
+### Registrar resultado de atividade (RF14)
 
 `POST /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados`
 
@@ -289,7 +289,7 @@ Requisição:
 }
 ```
 
-Só é permitido registrar resultado em visita `REALIZADA`. A atividade precisa pertencer à visita prevista associada à visita agendada. O resultado deve ter de 1 a 1.000 caracteres após remover espaços das pontas. O preenchimento pode ser parcial, com no máximo um resultado por atividade prevista em cada visita.
+O cadastro é exclusivo do coordenador vinculado ao estudo. O estudo deve estar em `RECRUTAMENTO` ou `EXECUCAO`, a participação deve estar `ATIVA` e a visita deve estar `REALIZADA`. A atividade precisa pertencer à visita prevista associada à visita agendada. O resultado deve ter de 1 a 1.000 caracteres após remover os espaços das pontas. O preenchimento pode ser parcial, com no máximo um resultado por atividade prevista em cada visita. Depois do primeiro resultado, a correção da situação da visita é bloqueada.
 
 Resposta `201`:
 
@@ -307,7 +307,7 @@ Resposta `201`:
 }
 ```
 
-### Editar resultado
+### Editar resultado (RF14)
 
 `PUT /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados/{resultadoId}`
 
@@ -319,7 +319,38 @@ Requisição:
 }
 ```
 
-A edição não remove o resultado original do histórico de auditoria definido para a entidade. A proposta permite editar enquanto o estudo não estiver encerrado. Resposta `200` com os dados atualizados.
+A edição altera apenas o campo `texto`, sem trocar a atividade prevista ou excluir o resultado. Exige coordenador vinculado, estudo em `RECRUTAMENTO` ou `EXECUCAO`, participação `ATIVA` e visita `REALIZADA`. O resultado precisa pertencer à visita informada na URL. O texto continua obrigatório, com 1 a 1.000 caracteres depois de remover os espaços das pontas.
+
+Os campos `registradoPorId` e `registradoEm` permanecem com os valores do cadastro. Os campos `atualizadoPorId` e `atualizadoEm` identificam a última edição. **A entidade atual não guarda versões anteriores do texto:** ao editar, o campo `texto` passa a conter o valor atualizado.
+
+Resposta `200`:
+
+```json
+{
+  "id": 701,
+  "visitaAgendadaId": 501,
+  "atividadePrevistaId": 31,
+  "descricaoAtividade": "Avaliação inicial",
+  "texto": "Resultado fictício corrigido",
+  "registradoPorId": 12,
+  "registradoEm": "2026-11-16T15:10:00Z",
+  "atualizadoPorId": 12,
+  "atualizadoEm": "2026-11-17T20:05:00Z"
+}
+```
+
+**Erros das operações de resultados (RF14)**
+
+| HTTP | Código / retorno | Quando ocorre |
+|---|---|---|
+| `400` | `ESTADO_ESTUDO_INVALIDO` | Estudo fora de `RECRUTAMENTO` ou `EXECUCAO` |
+| `400` | `PARTICIPACAO_INVALIDA` | Participação `RETIRADA` |
+| `400` | `RESULTADO_INVALIDO` | Visita não realizada ou atividade sem vínculo com a visita prevista |
+| `400` | `VALIDACAO_INVALIDA` | Atividade ausente/não positiva no cadastro ou texto ausente, vazio ou com mais de 1.000 caracteres |
+| `401` | Não autenticado | Sessão ausente ou inválida |
+| `403` | Acesso negado | Perfil sem permissão ou CSRF ausente/inválido |
+| `404` | `RECURSO_NAO_ENCONTRADO` | Estudo, visita ou resultado inexistente ou fora dos vínculos da URL |
+| `409` | `RESULTADO_JA_REGISTRADO` | Cadastro de resultado duplicado para a mesma visita e atividade |
 
 ### Registrar retirada
 
@@ -448,7 +479,7 @@ O app não recebe resultados, motivos, justificativas ou dados de quem registrou
 
 ## Códigos de erro
 
-Os códigos das operações implementadas do RF12 e RF13 foram conferidos com os cenários de serviço e a modelagem. Os códigos de RF14 a RF18 ainda são propostas e precisam ser confirmados quando esses requisitos forem implementados.
+Os códigos de RF12 e RF13 seguem as entregas anteriores. Para RF14, os cenários de service, controller HTTP e persistência foram verificados para a task #3958. Os códigos das demais funcionalidades propostas devem ser confirmados quando forem implementadas.
 
 | HTTP | Código sugerido | Situação |
 |---|---|---|
@@ -462,7 +493,7 @@ Os códigos das operações implementadas do RF12 e RF13 foram conferidos com os
 | `400` | `VISITAS_PENDENTES` | Estudo em execução não pode ser encerrado enquanto houver visita `AGENDADA` |
 | `401` | Conforme autenticação existente | Sessão ausente, inválida ou expirada |
 | `403` | Conforme segurança existente | Perfil sem permissão ou CSRF ausente/inválido |
-| `404` | `RECURSO_NAO_ENCONTRADO` | Estudo, participação ou visita não existe ou está fora do vínculo autorizado |
+| `404` | `RECURSO_NAO_ENCONTRADO` | Estudo, participação, visita ou resultado não existe ou está fora do vínculo autorizado |
 | `409` | `VISITA_JA_AGENDADA` | Já existe visita agendada para a mesma participação e visita prevista |
 | `409` | `RESULTADO_JA_REGISTRADO` | Já existe resultado para a mesma visita e atividade |
 
@@ -474,7 +505,7 @@ Para novas rotas e ajustes de contrato:
 1. Conferir cada caminho, método, corpo, resposta e status HTTP com controllers e DTOs.
 2. Conferir perfis, sessão, CSRF e ocultação de recursos fora do vínculo autorizado.
 3. Conferir no `/v3/api-docs` que o OpenAPI gerado descreve as operações implementadas, sem rotas apenas planejadas.
-4. Atualizar as seções de RF14 a RF18 quando suas rotas estiverem implementadas.
+4. Atualizar as seções dos demais requisitos quando suas rotas estiverem implementadas.
 5. Atualizar [OpenAPI](openapi.md) e os testes do contrato, se necessário.
 
-As rotas dos RF14 a RF18 continuam propostas, e a integração da web e do aplicativo depende da implementação de cada uma.
+As rotas da RF14 foram implementadas na task #3958. A integração com a web é uma etapa independente. As demais rotas seguem descritas como propostas nesta versão.
