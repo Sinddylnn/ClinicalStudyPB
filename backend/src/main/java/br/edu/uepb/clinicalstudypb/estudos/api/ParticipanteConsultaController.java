@@ -83,6 +83,8 @@ public class ParticipanteConsultaController {
                     + "sem motivos nem resultados. estudoId é opcional e validado contra as participações.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Próximas visitas; pode ser lista vazia."),
+        @ApiResponse(responseCode = "400", description = "Parâmetro estudoId inválido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
         @ApiResponse(responseCode = "404", description = "Estudo sem participação da conta autenticada.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class)))
     })
@@ -108,6 +110,8 @@ public class ParticipanteConsultaController {
                     + "sem motivos, justificativas nem resultados. estudoId é opcional e validado contra as participações.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Histórico; pode ser lista vazia."),
+        @ApiResponse(responseCode = "400", description = "Parâmetro estudoId inválido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
         @ApiResponse(responseCode = "404", description = "Estudo sem participação da conta autenticada.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class)))
     })

@@ -129,7 +129,8 @@ class ParticipanteConsultaControllerTest {
 
         mvc.perform(get("/participante/visitas/proximas").param("estudoId", "99")
                         .with(user(new UsuarioAutenticado(participante))))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.codigo").value("RECURSO_NAO_ENCONTRADO"));
     }
 
     @Test

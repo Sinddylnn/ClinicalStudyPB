@@ -407,6 +407,7 @@ class DocumentacaoApiTest {
                 "/participante/visitas/historico"}) {
             JsonNode operacao = rotas.path(caminho).path("get");
             assertThat(operacao.path("parameters").toString()).contains("estudoId");
+            assertThat(operacao.path("responses").has("400")).isTrue();
             assertThat(operacao.path("responses").has("404")).isTrue();
         }
     }

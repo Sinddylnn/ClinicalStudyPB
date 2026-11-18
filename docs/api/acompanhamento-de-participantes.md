@@ -451,7 +451,7 @@ Exemplo de `GET /participante/visitas/proximas`:
     "estudoId": 30,
     "tituloEstudo": "Estudo de acompanhamento",
     "nomeVisita": "Visita inicial",
-    "dataHora": "2026-11-15T13:30:00Z"
+    "dataHora": "2027-02-20T13:30:00Z"
   }
 ]
 ```
