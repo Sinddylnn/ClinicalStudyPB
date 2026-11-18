@@ -76,7 +76,7 @@ public class ResultadoAtividadeController {
         @ApiResponse(responseCode = "201", description = "Resultado registrado com sucesso."),
         @ApiResponse(responseCode = "400", description = "Dados inválidos ou regra de negócio não atendida.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class))),
-        @ApiResponse(responseCode = "404", description = "Estudo, visita ou atividade fora do vínculo esperado.",
+        @ApiResponse(responseCode = "404", description = "Estudo, participação ou visita inexistente ou fora do vínculo esperado.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class))),
         @ApiResponse(responseCode = "409", description = "Resultado já registrado para a atividade nesta visita.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class)))
