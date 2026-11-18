@@ -381,4 +381,33 @@ class DocumentacaoApiTest {
         assertThat(resposta.has("motivoRetirada")).isTrue();
         assertThat(resposta.has("retiradaPorId")).isTrue();
     }
+
+    /** Confere que as consultas do participante estão publicadas, sem exigir CSRF. */
+    @Test
+    void documentaConsultasDoParticipante() throws Exception {
+        JsonNode contrato = json.readTree(mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        JsonNode rotas = contrato.path("paths");
+
+        for (String caminho : new String[]{
+                "/participante/estudos",
+                "/participante/visitas/proximas",
+                "/participante/visitas/historico"}) {
+            JsonNode operacao = rotas.path(caminho).path("get");
+            assertThat(operacao.isMissingNode()).as(caminho).isFalse();
+            assertThat(operacao.path("security").toString()).contains("sessao");
+            assertThat(operacao.path("parameters").toString()).doesNotContain("TokenCsrf");
+            for (String codigo : new String[]{"200", "401", "403"}) {
+                assertThat(operacao.path("responses").has(codigo)).isTrue();
+            }
+        }
+
+        for (String caminho : new String[]{
+                "/participante/visitas/proximas",
+                "/participante/visitas/historico"}) {
+            JsonNode operacao = rotas.path(caminho).path("get");
+            assertThat(operacao.path("parameters").toString()).contains("estudoId");
+            assertThat(operacao.path("responses").has("404")).isTrue();
+        }
+    }
 }
