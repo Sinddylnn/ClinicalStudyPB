@@ -2,6 +2,8 @@ package br.edu.uepb.clinicalstudypb.estudos.repository;
 
 import br.edu.uepb.clinicalstudypb.estudos.SituacaoVisita;
 import br.edu.uepb.clinicalstudypb.estudos.VisitaAgendada;
+import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,6 +32,17 @@ public interface VisitaAgendadaRepository extends JpaRepository<VisitaAgendada, 
             Long participacaoId,
             Long visitaPrevistaId,
             SituacaoVisita situacao);
+
+    /**
+     * Lista as visitas de uma participação em determinada situação.
+     *
+     * @param participacaoId identificador da participação
+     * @param situacao situação procurada
+     * @return visitas encontradas, ou lista vazia
+     * @since 1.1
+     */
+    List<VisitaAgendada> findByParticipacao_IdAndSituacao(
+            Long participacaoId, SituacaoVisita situacao);
 
     /**
      * Lista as visitas de uma participação em ordem de data e hora.
@@ -73,4 +86,51 @@ public interface VisitaAgendadaRepository extends JpaRepository<VisitaAgendada, 
     List<Long> findIdsParticipantesComVisitasNaSituacao(
             @Param("estudoId") Long estudoId,
             @Param("situacao") SituacaoVisita situacao);
+
+    // <-------------------CONSULTAS DO PARTICIPANTE------------------->
+
+    /**
+     * Lista as visitas pendentes das participações a partir do instante informado.
+     *
+     * @param participacaoIds participações da conta autenticada
+     * @param situacao situação procurada, normalmente AGENDADA
+     * @param inicio instante inicial de consulta
+     * @return visitas da mais próxima para a mais distante
+     * @since 1.1
+     */
+    @Query("""
+            SELECT v FROM VisitaAgendada v
+            JOIN FETCH v.visitaPrevista
+            JOIN FETCH v.participacao p
+            JOIN FETCH p.estudo
+            WHERE p.id IN :participacaoIds
+              AND v.situacao = :situacao
+              AND v.dataHora >= :inicio
+            ORDER BY v.dataHora ASC, v.id ASC
+            """)
+    List<VisitaAgendada> buscarProximasDasParticipacoes(
+            @Param("participacaoIds") Collection<Long> participacaoIds,
+            @Param("situacao") SituacaoVisita situacao,
+            @Param("inicio") Instant inicio);
+
+    /**
+     * Lista as visitas registradas nas situações incluídas no histórico.
+     *
+     * @param participacaoIds participações da conta autenticada
+     * @param situacoes situações que fazem parte do histórico
+     * @return visitas da mais recente para a mais antiga
+     * @since 1.1
+     */
+    @Query("""
+            SELECT v FROM VisitaAgendada v
+            JOIN FETCH v.visitaPrevista
+            JOIN FETCH v.participacao p
+            JOIN FETCH p.estudo
+            WHERE p.id IN :participacaoIds
+              AND v.situacao IN :situacoes
+            ORDER BY v.dataHora DESC, v.id DESC
+            """)
+    List<VisitaAgendada> buscarHistoricoDasParticipacoes(
+            @Param("participacaoIds") Collection<Long> participacaoIds,
+            @Param("situacoes") Collection<SituacaoVisita> situacoes);
 }

@@ -334,6 +334,22 @@ public SecurityFilterChain securityFilterChain(
                     )
                     .hasRole("COORDENADOR")
 
+                    // Retirada de participantes
+                    .requestMatchers(
+                            HttpMethod.POST,
+                            "/estudos/*/participacoes/*/retirada"
+                    )
+                    .hasRole("COORDENADOR")
+
+                    // Consultas do aplicativo do participante
+                    .requestMatchers(
+                            HttpMethod.GET,
+                            "/participante/estudos",
+                            "/participante/visitas/proximas",
+                            "/participante/visitas/historico"
+                    )
+                    .hasRole("PARTICIPANTE")
+
                     // Tudo que não foi declarado acima fica bloqueado
                     .anyRequest()
                     .denyAll()

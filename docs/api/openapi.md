@@ -351,18 +351,26 @@ Os contratos, os erros e os exemplos estão em
 
 ## Acompanhamento de participantes, RF12 a RF18
 
-O contrato de agendamento e registro de visitas, resultados, retirada
-e consultas do participante está em
+O contrato de acompanhamento inclui agendamento e registro de visitas (RF12 e RF13),
+resultados de atividades (RF14), retirada de participantes (RF16), consultas do
+participante (RF17 e RF18) e a proposta de histórico completo de gestão (RF15).
+As regras, exemplos JSON e códigos de erro estão em
 [Acompanhamento de participantes](acompanhamento-de-participantes.md).
 
-As rotas `POST .../resultados` e `PUT .../resultados/{resultadoId}` da RF14
-foram implementadas na task #3958. Exigem sessão de coordenador vinculado,
-token CSRF, participação
-ativa e visita realizada. O cadastro retorna `201`, e a edição retorna `200`.
-As regras, os exemplos JSON e os erros estão no contrato de acompanhamento.
+O cadastro (`POST .../resultados`) e a edição (`PUT .../resultados/{resultadoId}`)
+de resultados da RF14 foram implementados na task #3958. Exigem sessão do
+coordenador vinculado, token CSRF, estudo em `RECRUTAMENTO` ou `EXECUCAO`,
+participação `ATIVA` e visita `REALIZADA`. O cadastro retorna `201`, e a edição
+retorna `200`. A RF14 possui testes de service, HTTP e persistência com PostgreSQL.
 
-O OpenAPI é gerado a partir dos controllers e DTOs presentes no backend em
-execução. A RF14 possui testes de service, HTTP e persistência com PostgreSQL,
-mas a geração do contrato deve ser conferida no `/v3/api-docs` antes da PR.
-As demais operações ainda descritas como propostas no contrato de acompanhamento
-não devem ser consideradas disponíveis somente por constarem do documento.
+A retirada de participante
+(`POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`, RF16)
+foi implementada e está documentada no Swagger. As consultas do participante
+(`GET /participante/estudos`, `GET /participante/visitas/proximas` e
+`GET /participante/visitas/historico`, RF17 e RF18) também estão implementadas
+e documentadas no Swagger e exigem uma conta com perfil `PARTICIPANTE`.
+
+O OpenAPI é gerado a partir dos controllers e DTOs existentes. As operações
+implementadas são verificadas pelos testes da API, mas o contrato gerado deve ser
+conferido no `/v3/api-docs` após integrar as alterações. O histórico completo de
+gestão da RF15 permanece como proposta e não deve ser considerado disponível.

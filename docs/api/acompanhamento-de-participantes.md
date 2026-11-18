@@ -1,8 +1,8 @@
 # Contrato de acompanhamento de participantes (RF12 a RF18)
 
-> **Atualização da RF14 em 17/11/2026:** o cadastro e a edição de resultados de atividades foram implementados na task #3958. RF12 e RF13 seguem descritos conforme as entregas anteriores; as demais funcionalidades permanecem apresentadas como propostas neste documento.
+> **Estado em 18/11/2026:** rotas de consulta, agendamento e reagendamento (RF12, task #3964), registro e correção da situação de visitas (RF13, task #3965), cadastro e edição de resultados de atividades (RF14, task #3958), retirada de participante (RF16, task #3957) e consultas do aplicativo (RF17 e RF18, task #3951) implementadas no backend. A consulta de histórico completo de gestão (RF15) continua proposta.
 
-Este documento reúne o contrato de agendamento e registro de visitas, resultados de avaliações, retirada de participantes e consultas do participante no aplicativo. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
+Este documento reúne os contratos implementados para RF12, RF13, RF14, RF16, RF17 e RF18, além da proposta de consulta do histórico completo (RF15). A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
 
 A modelagem do domínio está em [RF12 a RF18](../modelagem/RF12-RF18.md). A documentação geral sobre Swagger e OpenAPI está em [OpenAPI](openapi.md).
 
@@ -36,7 +36,7 @@ As respostas de erro usam o formato já adotado pelo projeto:
 | Registrar retirada | Coordenador vinculado ao estudo |
 | Consultar histórico completo | Pesquisador responsável ou coordenador vinculado |
 | Listar as participações do estudo | Pesquisador responsável ou coordenador vinculado, somente leitura |
-| Consultar estudos, próximas visitas e comparecimento no app | Participante autenticado, apenas para seus próprios dados |
+| Consultar estudos, próximas visitas e comparecimento no app | Participante autenticado, apenas para seus próprios dados, implementado |
 | Acessar estas operações | Administrador, não permitido |
 
 
@@ -62,7 +62,7 @@ Já implementadas na task 3964 (PR #41): `GET /estudos/{estudoId}/participacoes`
 
 Na task 3965 (RF13), foram implementados o registro de situação da visita (`PATCH .../situacao`) e a correção com histórico (`POST .../correcoes`). Também foi adicionada uma validação que impede o encerramento de estudos em execução enquanto existirem visitas `AGENDADA`.
 
-As rotas de cadastro e edição de resultados da RF14 foram implementadas na task #3958. As demais rotas continuam descritas como propostas nesta versão.
+Na task #3957 (RF16), foi implementado o registro de retirada: `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`. Na task #3958 (RF14), foram implementados o cadastro e a edição de resultados de atividades. As consultas do participante para o aplicativo (RF17 e RF18, task #3951) também estão implementadas. A consulta de histórico completo de gestão (RF15) permanece proposta.
 
 ### Listar participantes incluídos
 
@@ -352,7 +352,7 @@ Resposta `200`:
 | `404` | `RECURSO_NAO_ENCONTRADO` | Estudo, visita ou resultado inexistente ou fora dos vínculos da URL |
 | `409` | `RESULTADO_JA_REGISTRADO` | Cadastro de resultado duplicado para a mesma visita e atividade |
 
-### Registrar retirada
+### Registrar retirada (RF16, implementado)
 
 `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`
 
@@ -364,7 +364,9 @@ Requisição:
 }
 ```
 
-A retirada é irreversível, exige motivo de 1 a 500 caracteres e registra data e usuário no backend. A participação permanece no histórico e continua contando como inclusão histórica. A proposta cancela as visitas `AGENDADA`, preservando visitas já realizadas e seus resultados.
+Somente o **coordenador vinculado ao estudo** registra a retirada, com o estudo em `RECRUTAMENTO` ou `EXECUCAO` e a participação `ATIVA`. O motivo é obrigatório, de 1 a 500 caracteres após remover os espaços das pontas. A participação deve pertencer ao estudo da rota.
+
+A retirada é **irreversível**. Na mesma transação, o backend marca a participação como `RETIRADA` (com data, motivo e responsável) e cancela as visitas `AGENDADA` da participação, com o motivo automático "Retirada do participante". Visitas já finalizadas e seus resultados são preservados. A participação continua contando como inclusão histórica, portanto **a vaga não é liberada**. A conta do participante e seus outros estudos não são afetados.
 
 Resposta `200`:
 
@@ -377,6 +379,17 @@ Resposta `200`:
   "retiradaPorId": 12
 }
 ```
+
+| HTTP | Código / retorno | Quando ocorre |
+|---|---|---|
+| `400` | `ESTADO_ESTUDO_INVALIDO` | Estudo fora de `RECRUTAMENTO` ou `EXECUCAO` |
+| `400` | `PARTICIPACAO_JA_RETIRADA` | Participação já está `RETIRADA` |
+| `400` | `VALIDACAO_INVALIDA` | `motivo` ausente, em branco ou acima de 500 caracteres, com erro de campo em `errosCampos` |
+| `401` | Não autenticado | Sessão ausente ou inválida |
+| `403` | Acesso negado | Perfil sem permissão ou CSRF ausente ou inválido |
+| `404` | `RECURSO_NAO_ENCONTRADO` | Estudo ou participação inexistente ou fora do vínculo da rota |
+
+Os pedidos pendentes de reagendamento ligados às visitas canceladas serão cancelados quando o RF19 existir, na Sprint 4. A solicitação de retirada pelo app (RF20) não processa a retirada; o coordenador a conclui por esta operação.
 
 ### Consultar histórico completo
 
@@ -418,17 +431,29 @@ Exemplo de resposta:
 }
 ```
 
-## Rotas propostas para o aplicativo
+## Rotas do aplicativo (RF17 e RF18: implementadas)
 
-Estas consultas se baseiam na sessão e não recebem identificador de participante na URL. O participante só acessa os próprios dados.
+Estas consultas se baseiam na sessão e não recebem identificador de participante na URL: a conta vem do cookie de sessão. Exigem perfil `PARTICIPANTE`, são somente leitura e não exigem CSRF. O participante só acessa os próprios dados.
 
 | Método | Caminho | Conteúdo |
 |---|---|---|
-| GET | `/participante/estudos` | Estudos em que está incluído, inclusive os retirados |
-| GET | `/participante/visitas/proximas` | Visitas `AGENDADA` de hoje em diante, em ordem crescente |
-| GET | `/participante/visitas/historico` | Visitas realizadas, ausências e cancelamentos, da mais recente para a mais antiga |
+| GET | `/participante/estudos` | Estudos em que está incluído, inclusive os retirados, em ordem crescente do id da participação |
+| GET | `/participante/visitas/proximas` | Visitas `AGENDADA` com dia de hoje em diante (fuso `America/Recife`), em ordem crescente de data |
+| GET | `/participante/visitas/historico` | Visitas `REALIZADA`, `AUSENTE` e `CANCELADA`, da mais recente para a mais antiga |
 
-Nas duas consultas de visitas, `estudoId` pode ser usado como parâmetro opcional. Se informado para estudo sem participação do usuário autenticado, a resposta proposta é `404`.
+Nas duas consultas de visitas, `estudoId` é um parâmetro de consulta opcional (`?estudoId=30`). Se o estudo não estiver entre as participações da conta, a resposta é `404`, sem revelar se ele existe. Um valor não numérico retorna `400`.
+
+Uma visita `AGENDADA` cuja data já passou continua pendente: não aparece nas próximas nem no histórico até o coordenador registrá-la.
+
+O app não recebe resultados, motivos, justificativas, correções nem dados de quem registrou. Participante retirado continua vendo o estudo com `situacaoParticipacao` igual a `RETIRADA`; suas visitas pendentes foram canceladas na retirada e aparecem no histórico como `CANCELADA`.
+
+| HTTP | Situação |
+|---|---|
+| `200` | Consulta concluída; lista vazia quando não há dados |
+| `400` | `estudoId` com formato inválido |
+| `401` | Sessão ausente, expirada ou conta desativada |
+| `403` | Perfil diferente de participante |
+| `404` | `estudoId` sem participação da conta autenticada |
 
 Exemplo de `GET /participante/estudos`:
 
@@ -475,15 +500,14 @@ Exemplo de `GET /participante/visitas/historico`:
 ]
 ```
 
-O app não recebe resultados, motivos, justificativas ou dados de quem registrou. Participante retirado continua vendo o estudo marcado como `RETIRADA`, mas não deve ter próximas visitas pendentes.
-
 ## Códigos de erro
 
-Os códigos de RF12 e RF13 seguem as entregas anteriores. Para RF14, os cenários de service, controller HTTP e persistência foram verificados para a task #3958. Os códigos das demais funcionalidades propostas devem ser confirmados quando forem implementadas.
+Os códigos das operações implementadas de RF12, RF13, RF14, RF16, RF17 e RF18 foram conferidos com os cenários de teste e a modelagem. Os códigos da RF15 continuam propostos e precisam ser confirmados quando sua rota for implementada.
 
-| HTTP | Código sugerido | Situação |
+| HTTP | Código / retorno | Situação |
 |---|---|---|
 | `400` | `PARTICIPACAO_INVALIDA` | Participação retirada ou incompatível com a operação |
+| `400` | `PARTICIPACAO_JA_RETIRADA` | Tentativa de retirar novamente uma participação já retirada |
 | `400` | `ESTADO_ESTUDO_INVALIDO` | Estudo fora de recrutamento ou execução para escrita |
 | `400` | `DATA_VISITA_INVALIDA` | Data anterior ao permitido ou fora do período do estudo |
 | `400` | `TRANSICAO_VISITA_INVALIDA` | Registro/reagendamento fora de `AGENDADA`, correção entre situações finais inválida ou realização/ausência antes do dia agendado |
@@ -505,7 +529,7 @@ Para novas rotas e ajustes de contrato:
 1. Conferir cada caminho, método, corpo, resposta e status HTTP com controllers e DTOs.
 2. Conferir perfis, sessão, CSRF e ocultação de recursos fora do vínculo autorizado.
 3. Conferir no `/v3/api-docs` que o OpenAPI gerado descreve as operações implementadas, sem rotas apenas planejadas.
-4. Atualizar as seções dos demais requisitos quando suas rotas estiverem implementadas.
+4. Atualizar a seção da RF15 quando sua rota for implementada.
 5. Atualizar [OpenAPI](openapi.md) e os testes do contrato, se necessário.
 
-As rotas da RF14 foram implementadas na task #3958. A integração com a web é uma etapa independente. As demais rotas seguem descritas como propostas nesta versão.
+As rotas de RF12, RF13, RF14, RF16, RF17 e RF18 estão implementadas no backend. A integração da web com a RF14 é uma etapa independente; a consulta de histórico completo de gestão (RF15) permanece proposta.
