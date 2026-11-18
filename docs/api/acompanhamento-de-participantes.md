@@ -1,8 +1,8 @@
 # Contrato de acompanhamento de participantes (RF12 a RF18)
 
-> **Estado em 16/11/2026:** rotas de consulta, agendamento e reagendamento (RF12, task #3964), de registro e correção de situação de visitas (RF13, task #3965) e de retirada de participante (RF16, task #3957) implementadas no backend. As rotas dos RF14, RF15, RF17 e RF18 continuam propostas e não devem ser consideradas disponíveis até sua implementação.
+> **Estado em 17/11/2026:** rotas de consulta, agendamento e reagendamento (RF12, task #3964), de registro e correção de situação de visitas (RF13, task #3965), de retirada de participante (RF16, task #3957) e as consultas do participante para o aplicativo (RF17 e RF18, task #3951) implementadas no backend. As rotas dos RF14 e RF15 continuam propostas e não devem ser consideradas disponíveis até sua implementação.
 
-Este documento descreve o contrato implementado para RF12, RF13 e RF16, além das propostas de API para resultados de avaliações e consultas do participante no aplicativo. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
+Este documento descreve o contrato implementado para RF12, RF13, RF16, RF17 e RF18, além das propostas de API para resultados de avaliações e histórico completo de gestão. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
 
 A modelagem do domínio está em [RF12 a RF18](../modelagem/RF12-RF18.md). A documentação geral sobre Swagger e OpenAPI está em [OpenAPI](openapi.md).
 
@@ -36,7 +36,7 @@ As respostas de erro usam o formato já adotado pelo projeto:
 | Registrar retirada | Coordenador vinculado ao estudo |
 | Consultar histórico completo | Pesquisador responsável ou coordenador vinculado |
 | Listar as participações do estudo | Pesquisador responsável ou coordenador vinculado, somente leitura |
-| Consultar estudos, próximas visitas e comparecimento no app | Participante autenticado, apenas para seus próprios dados |
+| Consultar estudos, próximas visitas e comparecimento no app | Participante autenticado, apenas para seus próprios dados, implementado |
 | Acessar estas operações | Administrador, não permitido |
 
 
@@ -64,7 +64,7 @@ Na task 3965 (RF13), foram implementados o registro de situação da visita (`PA
 
 O registro de retirada do RF16 também está implementado: `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`.
 
-As rotas dos RF14, RF15, RF17 e RF18 continuam propostas.
+As rotas dos RF14 e RF15 continuam propostas.
 
 ### Listar participantes incluídos
 
@@ -402,17 +402,29 @@ Exemplo de resposta:
 }
 ```
 
-## Rotas propostas para o aplicativo
+## Rotas do aplicativo (RF17 e RF18: implementadas)
 
-Estas consultas se baseiam na sessão e não recebem identificador de participante na URL. O participante só acessa os próprios dados.
+Estas consultas se baseiam na sessão e não recebem identificador de participante na URL: a conta vem do cookie de sessão. Exigem perfil `PARTICIPANTE`, são somente leitura e não exigem CSRF. O participante só acessa os próprios dados.
 
 | Método | Caminho | Conteúdo |
 |---|---|---|
-| GET | `/participante/estudos` | Estudos em que está incluído, inclusive os retirados |
-| GET | `/participante/visitas/proximas` | Visitas `AGENDADA` de hoje em diante, em ordem crescente |
-| GET | `/participante/visitas/historico` | Visitas realizadas, ausências e cancelamentos, da mais recente para a mais antiga |
+| GET | `/participante/estudos` | Estudos em que está incluído, inclusive os retirados, em ordem crescente do id da participação |
+| GET | `/participante/visitas/proximas` | Visitas `AGENDADA` com dia de hoje em diante (fuso `America/Recife`), em ordem crescente de data |
+| GET | `/participante/visitas/historico` | Visitas `REALIZADA`, `AUSENTE` e `CANCELADA`, da mais recente para a mais antiga |
 
-Nas duas consultas de visitas, `estudoId` pode ser usado como parâmetro opcional. Se informado para estudo sem participação do usuário autenticado, a resposta proposta é `404`.
+Nas duas consultas de visitas, `estudoId` é um parâmetro de consulta opcional (`?estudoId=30`). Se o estudo não estiver entre as participações da conta, a resposta é `404`, sem revelar se ele existe. Um valor não numérico retorna `400`.
+
+Uma visita `AGENDADA` cuja data já passou continua pendente: não aparece nas próximas nem no histórico até o coordenador registrá-la.
+
+O app não recebe resultados, motivos, justificativas, correções nem dados de quem registrou. Participante retirado continua vendo o estudo com `situacaoParticipacao` igual a `RETIRADA`; suas visitas pendentes foram canceladas na retirada e aparecem no histórico como `CANCELADA`.
+
+| HTTP | Situação |
+|---|---|
+| `200` | Consulta concluída; lista vazia quando não há dados |
+| `400` | `estudoId` com formato inválido |
+| `401` | Sessão ausente, expirada ou conta desativada |
+| `403` | Perfil diferente de participante |
+| `404` | `estudoId` sem participação da conta autenticada |
 
 Exemplo de `GET /participante/estudos`:
 
@@ -459,11 +471,9 @@ Exemplo de `GET /participante/visitas/historico`:
 ]
 ```
 
-O app não recebe resultados, motivos, justificativas ou dados de quem registrou. Participante retirado continua vendo o estudo marcado como `RETIRADA`, mas não deve ter próximas visitas pendentes.
-
 ## Códigos de erro
 
-Os códigos das operações implementadas do RF12, RF13 e RF16 foram conferidos com os cenários de serviço e a modelagem. Os códigos de RF14, RF15, RF17 e RF18 ainda são propostas e precisam ser confirmados quando esses requisitos forem implementados.
+Os códigos das operações implementadas do RF12, RF13, RF16, RF17 e RF18 foram conferidos com os cenários de serviço e a modelagem. Os códigos de RF14 e RF15 continuam sujeitos à consolidação até sua implementação.
 
 | HTTP | Código / retorno | Situação |
 |---|---|---|
@@ -490,7 +500,7 @@ Para novas rotas e ajustes de contrato:
 1. Conferir cada caminho, método, corpo, resposta e status HTTP com controllers e DTOs.
 2. Conferir perfis, sessão, CSRF e ocultação de recursos fora do vínculo autorizado.
 3. Conferir no `/v3/api-docs` que o OpenAPI gerado descreve as operações implementadas, sem rotas apenas planejadas.
-4. Atualizar as seções de RF14 a RF18 quando suas rotas estiverem implementadas.
+4. Atualizar as seções de RF14 e RF15 quando suas rotas estiverem implementadas.
 5. Atualizar [OpenAPI](openapi.md) e os testes do contrato, se necessário.
 
-As rotas dos RF14, RF15, RF17 e RF18 continuam propostas, e a integração da web e do aplicativo depende da implementação de cada uma.
+As rotas dos RF14 e RF15 continuam propostas, e a integração da web depende da implementação de cada uma.

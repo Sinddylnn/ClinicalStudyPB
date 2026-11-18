@@ -351,12 +351,15 @@ Os contratos, os erros e os exemplos estão em
 
 ## Acompanhamento de participantes, RF12 a RF18
 
-O contrato de acompanhamento, com agendamento, registro de visitas e retirada
-implementados, além das propostas para resultados e consultas do participante, está em
+O contrato de acompanhamento, com agendamento, registro de visitas, retirada e
+consultas do participante implementados, além das propostas para resultados e histórico completo, está em
 [Acompanhamento de participantes](acompanhamento-de-participantes.md).
 
 A retirada de participante (`POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`, RF16)
 já está implementada e publicada no Swagger. O OpenAPI é gerado a partir dos
 controllers e DTOs existentes, e o contrato implementado é conferido pelos testes
-da API. As operações propostas dos RF14, RF15, RF17 e RF18 ainda não estão
-disponíveis até sua implementação.
+da API. As consultas do participante (`GET /participante/estudos`,
+`/participante/visitas/proximas` e `/participante/visitas/historico`, RF17 e RF18)
+já estão implementadas e publicadas no Swagger, e exigem uma conta com perfil
+`PARTICIPANTE`. As operações propostas dos RF14 e RF15 ainda não estão disponíveis
+até sua implementação.
