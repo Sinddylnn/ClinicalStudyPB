@@ -321,12 +321,34 @@ public SecurityFilterChain securityFilterChain(
                     )
                     .hasRole("COORDENADOR")
 
+                    // Cadastro e edição de resultados de atividades
+                    .requestMatchers(
+                            HttpMethod.POST,
+                            "/estudos/*/participacoes/*/visitas/*/resultados"
+                    )
+                    .hasRole("COORDENADOR")
+
+                    .requestMatchers(
+                            HttpMethod.PUT,
+                            "/estudos/*/participacoes/*/visitas/*/resultados/*"
+                    )
+                    .hasRole("COORDENADOR")
+
                     // Retirada de participantes
                     .requestMatchers(
                             HttpMethod.POST,
                             "/estudos/*/participacoes/*/retirada"
                     )
                     .hasRole("COORDENADOR")
+
+                    // Consultas do aplicativo do participante
+                    .requestMatchers(
+                            HttpMethod.GET,
+                            "/participante/estudos",
+                            "/participante/visitas/proximas",
+                            "/participante/visitas/historico"
+                    )
+                    .hasRole("PARTICIPANTE")
 
                     // Tudo que não foi declarado acima fica bloqueado
                     .anyRequest()

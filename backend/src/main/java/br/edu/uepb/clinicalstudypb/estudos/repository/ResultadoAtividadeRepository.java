@@ -1,6 +1,7 @@
 package br.edu.uepb.clinicalstudypb.estudos.repository;
 
 import br.edu.uepb.clinicalstudypb.estudos.ResultadoAtividade;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -21,4 +22,26 @@ public interface ResultadoAtividadeRepository
      * @since 1.0
      */
     boolean existsByVisitaAgendada_Id(Long visitaAgendadaId);
+
+    /**
+     * Verifica se uma atividade já possui resultado na visita.
+     *
+     * @param visitaAgendadaId identificador da visita
+     * @param atividadePrevistaId identificador da atividade prevista
+     * @return true se já existir resultado para a atividade na visita
+     * @since 1.0
+     */
+    boolean existsByVisitaAgendada_IdAndAtividadePrevista_Id(
+            Long visitaAgendadaId, Long atividadePrevistaId);
+
+    /**
+     * Busca um resultado vinculado à visita informada.
+     *
+     * @param id identificador do resultado
+     * @param visitaAgendadaId identificador da visita
+     * @return resultado encontrado, quando pertencer à visita
+     * @since 1.0
+     */
+    Optional<ResultadoAtividade> findByIdAndVisitaAgendada_Id(
+            Long id, Long visitaAgendadaId);
 }

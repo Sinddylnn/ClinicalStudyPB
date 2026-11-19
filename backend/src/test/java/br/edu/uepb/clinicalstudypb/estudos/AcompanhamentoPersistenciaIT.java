@@ -3,6 +3,7 @@ package br.edu.uepb.clinicalstudypb.estudos;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.service.RetiradaParticipanteService;
+import br.edu.uepb.clinicalstudypb.estudos.service.ParticipanteConsultaService;
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
 import br.edu.uepb.clinicalstudypb.estudos.api.RetiradaEntrada;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
@@ -11,6 +12,7 @@ import jakarta.persistence.EntityManager;
 import java.sql.DriverManager;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 // <-------------------PERSISTÊNCIA DO ACOMPANHAMENTO EM POSTGRESQL------------------->
 /**
@@ -43,6 +46,7 @@ class AcompanhamentoPersistenciaIT {
     @Autowired private VisitaAgendadaRepository visitasAgendadas;
     @Autowired private ParticipacaoRepository participacoes;
     @Autowired private RetiradaParticipanteService retiradas;
+    @Autowired private ParticipanteConsultaService consultasParticipante;
 
     /**
      * Configura o banco explicitamente destinado aos testes de persistência.
@@ -344,6 +348,90 @@ class AcompanhamentoPersistenciaIT {
         assertThat(entidades.find(VisitaAgendada.class, realizada.getId()).getSituacao())
                 .isEqualTo(SituacaoVisita.REALIZADA);
         assertThat(participacoes.countByEstudoId(estudo.getId())).isEqualTo(1L);
+
+        // O app remove visitas pendentes das próximas e as inclui no histórico como canceladas
+        UsuarioAutenticado app = new UsuarioAutenticado(participante);
+        assertThat(consultasParticipante.listarProximasVisitas(null, app)).isEmpty();
+        assertThat(consultasParticipante.listarHistorico(null, app)).hasSize(3);
+    }
+
+    // <-------------------CONSULTAS DO PARTICIPANTE------------------->
+
+    /**
+     * Confere no PostgreSQL o filtro por conta, situação, ordenação e data de corte.
+     *
+     * @since 1.2
+     */
+    @Test
+    void consultasDoParticipanteFiltramPorContaSituacaoEData() {
+        Instant agora = Instant.now();
+        Usuario coordenador = conta(PerfilUsuario.COORDENADOR);
+        Usuario participante = conta(PerfilUsuario.PARTICIPANTE);
+        Usuario outroParticipante = conta(PerfilUsuario.PARTICIPANTE);
+
+        Estudo estudo = new Estudo("Estudo do app", "Objetivo fictício", coordenador,
+                LocalDate.now().minusDays(10), LocalDate.now().plusDays(60), 10);
+        Estudo estudoSemVinculo = new Estudo("Estudo sem vínculo", "Objetivo fictício", coordenador,
+                LocalDate.now().minusDays(10), LocalDate.now().plusDays(60), 10);
+        entidades.persist(estudo);
+        entidades.persist(estudoSemVinculo);
+
+        Protocolo protocolo = new Protocolo(estudo, false);
+        entidades.persist(protocolo);
+        VisitaPrevista primeira = new VisitaPrevista(protocolo, "Primeira", null, 1);
+        VisitaPrevista segunda = new VisitaPrevista(protocolo, "Segunda", null, 2);
+        VisitaPrevista terceira = new VisitaPrevista(protocolo, "Terceira", null, 3);
+        entidades.persist(primeira);
+        entidades.persist(segunda);
+        entidades.persist(terceira);
+
+        Participacao minha = new Participacao(estudo, participante, agora);
+        Participacao deOutro = new Participacao(estudo, outroParticipante, agora);
+        entidades.persist(minha);
+        entidades.persist(deOutro);
+
+        VisitaAgendada futura = new VisitaAgendada(
+                minha, primeira, agora.plus(2, ChronoUnit.DAYS));
+        VisitaAgendada agendadaVencida = new VisitaAgendada(
+                minha, segunda, agora.minus(2, ChronoUnit.DAYS));
+        VisitaAgendada realizada = new VisitaAgendada(
+                minha, primeira, agora.minus(4, ChronoUnit.DAYS));
+        realizada.registrarSituacao(SituacaoVisita.REALIZADA, null, coordenador, agora);
+        VisitaAgendada ausente = new VisitaAgendada(
+                minha, segunda, agora.minus(3, ChronoUnit.DAYS));
+        ausente.registrarSituacao(SituacaoVisita.AUSENTE, "Motivo interno", coordenador, agora);
+        VisitaAgendada cancelada = new VisitaAgendada(
+                minha, terceira, agora.minus(1, ChronoUnit.DAYS));
+        cancelada.registrarSituacao(SituacaoVisita.CANCELADA, "Motivo interno", coordenador, agora);
+        VisitaAgendada visitaDeOutro = new VisitaAgendada(
+                deOutro, primeira, agora.plus(3, ChronoUnit.DAYS));
+        for (VisitaAgendada visita : new VisitaAgendada[]{
+                futura, agendadaVencida, realizada, ausente, cancelada, visitaDeOutro}) {
+            entidades.persist(visita);
+        }
+        entidades.flush();
+        entidades.clear();
+
+        UsuarioAutenticado autenticado = new UsuarioAutenticado(participante);
+
+        assertThat(consultasParticipante.listarEstudos(autenticado))
+                .extracting(resposta -> resposta.estudoId())
+                .containsExactly(estudo.getId());
+        assertThat(consultasParticipante.listarProximasVisitas(null, autenticado))
+                .extracting(resposta -> resposta.visitaAgendadaId())
+                .containsExactly(futura.getId());
+        assertThat(consultasParticipante.listarHistorico(null, autenticado))
+                .extracting(resposta -> resposta.visitaAgendadaId())
+                .containsExactly(cancelada.getId(), ausente.getId(), realizada.getId());
+        assertThat(consultasParticipante.listarHistorico(estudo.getId(), autenticado))
+                .extracting(resposta -> resposta.situacao())
+                .containsExactly(
+                        SituacaoVisita.CANCELADA,
+                        SituacaoVisita.AUSENTE,
+                        SituacaoVisita.REALIZADA);
+        assertThatThrownBy(() ->
+                consultasParticipante.listarHistorico(estudoSemVinculo.getId(), autenticado))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
     }
 
     /**

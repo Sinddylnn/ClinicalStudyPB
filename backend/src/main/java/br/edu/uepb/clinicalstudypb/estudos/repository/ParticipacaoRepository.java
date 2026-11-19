@@ -3,6 +3,7 @@ package br.edu.uepb.clinicalstudypb.estudos.repository;
 import br.edu.uepb.clinicalstudypb.estudos.Participacao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 // <-------------------HISTÓRICO DE INCLUSÕES------------------->
 /**
@@ -33,4 +34,16 @@ public interface ParticipacaoRepository extends JpaRepository<Participacao, Long
 
     /** Lista as participações de um estudo, incluindo as retiradas. */
     List<Participacao> findByEstudoIdOrderByIdAsc(Long estudoId);
+
+    // <-------------------CONSULTAS DO PARTICIPANTE------------------->
+
+    /**
+     * Lista as participações da conta, incluindo as retiradas, com o estudo já carregado.
+     *
+     * @param participanteId identificador da conta de participante
+     * @return participações em ordem crescente de identificador
+     * @since 1.1
+     */
+    @EntityGraph(attributePaths = "estudo")
+    List<Participacao> findByParticipanteIdOrderByIdAsc(Long participanteId);
 }
