@@ -15,11 +15,16 @@ import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { CredenciaisInvalidasError } from '../services/authService';
+const { entrar, aviso, limparAviso } = useAuth();
 
 // Mensagem do Figma: 401 CREDENCIAIS_INVALIDAS, genérica
 const MSG_CREDENCIAIS = 'E-mail ou senha inválidos. Confira os dados e tente novamente.';
 // Sem estado no Figma: falha de conexão ou erro inesperado
 const MSG_FALHA = 'Não foi possível entrar agora. Tente novamente.';
+// Mensagem do Figma
+const MSG_PERFIL = 'Este aplicativo é para participantes. Use o sistema web.';
+// Texto do Figma
+const MSG_SESSAO_EXPIRADA = 'Sua sessão expirou após 30 minutos sem uso. Entre novamente.';
 
 // Medidas do Figma (frame de 390 px de largura). Ajuste aqui se precisar.
 const HERO_ALTURA = 431; // altura do bloco escuro
@@ -38,23 +43,27 @@ export default function LoginScreen() {
   const [carregando, setCarregando] = useState(false);
 
   const enviar = async () => {
-    if (carregando) return;
+  if (carregando) return;
+  limparAviso();
 
-    // Campos vazios: mesma mensagem genérica do Figma, sem chamar a API
-    if (!email.trim() || !senha) {
-      setErro(MSG_CREDENCIAIS);
-      return;
-    }
+  // Campos vazios: mesma mensagem genérica do Figma, sem chamar a API
+  if (!email.trim() || !senha) {
+    setErro(MSG_CREDENCIAIS);
+    return;
+  }
 
-    setErro('');
-    setCarregando(true);
-    try {
-      await entrar(email.trim(), senha);
-    } catch (e) {
-      setErro(e instanceof CredenciaisInvalidasError ? MSG_CREDENCIAIS : MSG_FALHA);
-      setCarregando(false);
-    }
-  };
+  setErro('');
+  setCarregando(true);
+  try {
+    await entrar(email.trim(), senha);
+  } catch (e) {
+    setErro(e instanceof CredenciaisInvalidasError ? MSG_CREDENCIAIS : MSG_FALHA);
+  } finally {
+    setCarregando(false);
+  }
+};
+
+  const mensagemErro = erro || (aviso === 'PERFIL_NAO_PARTICIPANTE' ? MSG_PERFIL : '');
 
   return (
     <KeyboardAvoidingView
@@ -102,10 +111,17 @@ export default function LoginScreen() {
             Use o e-mail e a senha recebidos da equipe do estudo.
           </Text>
 
-          {!!erro && (
+          {!!mensagemErro && (
             <View style={styles.erroBox} accessibilityRole="alert" testID="erro-login">
               <Ionicons name="alert-circle-outline" size={16} color="#DC2626" />
-              <Text style={styles.erroText}>{erro}</Text>
+              <Text style={styles.erroText}>{mensagemErro}</Text>
+            </View>
+          )}
+
+          {!mensagemErro && aviso === 'SESSAO_EXPIRADA' && (
+            <View style={styles.avisoBox} accessibilityRole="alert" testID="aviso-sessao-expirada">
+              <Ionicons name="information-circle-outline" size={16} color="#0E7C86" />
+              <Text style={styles.avisoText}>{MSG_SESSAO_EXPIRADA}</Text>
             </View>
           )}
 
@@ -282,6 +298,19 @@ const styles = StyleSheet.create({
   },
   
   erroText: { flex: 1, fontSize: 12, lineHeight: 17, color: '#B91C1C' },
+
+  avisoBox: {
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  gap: 8,
+  padding: 12,
+  marginBottom: 16,
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: '#BFE3E6',
+  backgroundColor: '#E8F5F6',
+},
+avisoText: { flex: 1, fontSize: 12, lineHeight: 17, color: '#0E5F67' },
 
   label: { fontSize: 12, fontWeight: '600', color: '#334155', marginBottom: 6 },
   required: { color: '#DC2626' },
