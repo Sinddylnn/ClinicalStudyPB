@@ -58,14 +58,22 @@ export async function logout(): Promise<void> {
 }
 
 
+// null = não há sessão ativa (401)
 export async function consultarSessao(): Promise<Sessao | null> {
-  const res = await fetch(`${API_URL}/auth/sessao`, {
-    credentials: 'include',
-    headers: { Accept: 'application/json' },
-  });
-  if (res.status === 401) return null;
-  if (!res.ok) throw new Error('Falha ao consultar a sessão.');
-  return res.json();
+  const controle = new AbortController();
+  const limite = setTimeout(() => controle.abort(), 5000); // 5 s
+  try {
+    const res = await fetch(`${API_URL}/auth/sessao`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+      signal: controle.signal,
+    });
+    if (res.status === 401) return null;
+    if (!res.ok) throw new Error('Falha ao consultar a sessão.');
+    return res.json();
+  } finally {
+    clearTimeout(limite);
+  }
 }
 
 

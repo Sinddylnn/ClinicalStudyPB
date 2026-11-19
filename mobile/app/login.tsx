@@ -15,7 +15,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { CredenciaisInvalidasError } from '../services/authService';
-const { entrar, aviso, limparAviso } = useAuth();
+
 
 // Mensagem do Figma: 401 CREDENCIAIS_INVALIDAS, genérica
 const MSG_CREDENCIAIS = 'E-mail ou senha inválidos. Confira os dados e tente novamente.';
@@ -33,9 +33,8 @@ const HERO_RODAPE = 124; // distância entre os chips e o fim do bloco escuro
 const ESPACO_TITULO_CHIPS = 18; // espaço entre o título e os chips
 
 export default function LoginScreen() {
-  const { entrar } = useAuth();
+  const { entrar, aviso, limparAviso } = useAuth();
   const insets = useSafeAreaInsets();
-
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [foco, setFoco] = useState<'email' | 'senha' | null>(null);
