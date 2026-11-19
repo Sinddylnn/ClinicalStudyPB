@@ -132,6 +132,7 @@ class HistoricoParticipacaoServiceTest {
         assertThat(itemVisita.nomeVisita()).isEqualTo("Visita inicial");
         assertThat(itemVisita.situacao()).isEqualTo(SituacaoVisita.REALIZADA);
         assertThat(itemVisita.registradoPorId()).isEqualTo(2L);
+        assertThat(itemVisita.registradoPorNome()).isEqualTo("Coordenador");
         assertThat(itemVisita.registradoEm()).isEqualTo(Instant.parse("2026-11-10T14:00:00Z"));
         assertThat(itemVisita.resultados()).hasSize(1);
         assertThat(itemVisita.resultados().get(0).atividadePrevistaId()).isEqualTo(50L);
@@ -142,17 +143,22 @@ class HistoricoParticipacaoServiceTest {
         assertThat(itemVisita.correcoes().get(0).situacaoNova()).isEqualTo(SituacaoVisita.REALIZADA);
         assertThat(itemVisita.correcoes().get(0).justificativa())
                 .isEqualTo("Registro de ausência incorreto");
+        assertThat(itemVisita.correcoes().get(0).motivoAnterior()).isEqualTo("Não compareceu");
+        assertThat(itemVisita.correcoes().get(0).motivoNovo()).isNull();
         assertThat(itemVisita.correcoes().get(0).corrigidaPorId()).isEqualTo(2L);
+        assertThat(itemVisita.correcoes().get(0).corrigidaPorNome()).isEqualTo("Coordenador");
 
         var itemRetirada = (ItemHistoricoRetiradaResposta) resposta.itens().get(1);
         assertThat(itemRetirada.tipo()).isEqualTo("RETIRADA");
         assertThat(itemRetirada.dataRetirada()).isEqualTo(Instant.parse("2026-11-15T12:00:00Z"));
         assertThat(itemRetirada.motivo()).isEqualTo("Solicitação do participante");
         assertThat(itemRetirada.retiradaPorId()).isEqualTo(2L);
+        assertThat(itemRetirada.retiradaPorNome()).isEqualTo("Coordenador");
 
         var itemFuturo = (ItemHistoricoVisitaResposta) resposta.itens().get(2);
         assertThat(itemFuturo.visitaAgendadaId()).isEqualTo(41L);
         assertThat(itemFuturo.motivo()).isEqualTo("Retirada do participante");
+        assertThat(itemFuturo.registradoPorNome()).isEqualTo("Coordenador");
         assertThat(itemFuturo.resultados()).isEmpty();
         assertThat(itemFuturo.correcoes()).isEmpty();
     }
@@ -175,6 +181,7 @@ class HistoricoParticipacaoServiceTest {
         assertThat(item.situacao()).isEqualTo(SituacaoVisita.AGENDADA);
         assertThat(item.motivo()).isNull();
         assertThat(item.registradoPorId()).isNull();
+        assertThat(item.registradoPorNome()).isNull();
         assertThat(item.registradoEm()).isNull();
         assertThat(item.resultados()).isEmpty();
         assertThat(item.correcoes()).isEmpty();

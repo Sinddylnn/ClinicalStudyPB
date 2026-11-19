@@ -1,6 +1,6 @@
 # Contrato de acompanhamento de participantes (RF12 a RF18)
 
-> **Estado em 19/11/2026:** agendamento e reagendamento (RF12, task #3964), registro e correção de visitas (RF13, task #3965), resultados de atividades (RF14, task #3958), retirada de participante (RF16, task #3957) e consultas do aplicativo (RF17 e RF18, task #3951) implementadas. A consulta de histórico completo de gestão (RF15, task #3959) foi implementada na branch de desenvolvimento e está em validação final.
+> **Estado em 19/11/2026:** agendamento e reagendamento (RF12, task #3964), registro e correção de visitas (RF13, task #3965), resultados de atividades (RF14, task #3958), retirada de participante (RF16, task #3957) e consultas do aplicativo (RF17 e RF18, task #3951) implementadas. A consulta de histórico completo de gestão (RF15, task #3959) está implementada no backend.
 
 Este documento reúne os contratos de acompanhamento dos RF12 a RF18. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
 
@@ -62,7 +62,7 @@ Já implementadas na task 3964 (PR #41): `GET /estudos/{estudoId}/participacoes`
 
 Na task 3965 (RF13), foram implementados o registro de situação da visita (`PATCH .../situacao`) e a correção com histórico (`POST .../correcoes`). Também foi adicionada uma validação que impede o encerramento de estudos em execução enquanto existirem visitas `AGENDADA`.
 
-Na task #3957 (RF16), foi implementado o registro de retirada: `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`. Na task #3958 (RF14), foram implementados o cadastro e a edição de resultados de atividades. As consultas do participante para o aplicativo (RF17 e RF18, task #3951) também estão implementadas. A consulta de histórico completo de gestão (RF15, task #3959) foi implementada na branch de desenvolvimento.
+Na task #3957 (RF16), foi implementado o registro de retirada: `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`. Na task #3958 (RF14), foram implementados o cadastro e a edição de resultados de atividades. As consultas do participante para o aplicativo (RF17 e RF18, task #3951) também estão implementadas. A consulta de histórico completo de gestão também está implementada (RF15, task #3959).
 
 ### Listar participantes incluídos
 
@@ -252,12 +252,15 @@ Resposta `201 Created`, contendo os dados do registro de correção (exemplo ilu
   "situacaoAnterior": "CANCELADA",
   "situacaoNova": "REALIZADA",
   "justificativa": "A visita ocorreu, mas havia sido registrada como cancelada",
+  "motivoAnterior": "Unidade de atendimento indisponível",
+  "motivoNovo": null,
   "corrigidaPorId": 12,
+  "corrigidaPorNome": "Maria Coordenadora",
   "corrigidaEm": "2026-11-16T15:00:00Z"
 }
 ```
 
-A resposta não inclui `motivoAnterior` e `motivoNovo`; ambos ficam guardados no histórico da correção.
+A resposta inclui `motivoAnterior` e `motivoNovo`, preservando os motivos antes e depois da correção. Também retorna `corrigidaPorId` e `corrigidaPorNome`. Esses dados ficam registrados na entidade e são reutilizados no histórico completo da participação.
 
 | HTTP | Código / retorno | Quando ocorre |
 |---|---|---|
@@ -391,7 +394,7 @@ Resposta `200`:
 
 Os pedidos pendentes de reagendamento ligados às visitas canceladas serão cancelados quando o RF19 existir, na Sprint 4. A solicitação de retirada pelo app (RF20) não processa a retirada; o coordenador a conclui por esta operação.
 
-### Consultar histórico completo (RF15: implementado na branch de desenvolvimento)
+### Consultar histórico completo (RF15: implementado)
 
 `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico`
 
@@ -399,7 +402,7 @@ Consulta somente de leitura para o **pesquisador responsável pelo estudo** ou o
 
 A resposta `200` contém `participacaoId` e `itens`, uma lista de ocorrências ordenada da mais antiga para a mais recente. O tipo `VISITA` é posicionado pela `dataHora` agendada, e `RETIRADA`, quando presente, pela `dataRetirada`. Visitas ainda `AGENDADA` também são incluídas. Se a participação não tiver visitas nem retirada, `itens` é `[]`.
 
-Cada visita contém a situação atual, o motivo (quando aplicável), quem registrou e quando, os resultados por atividade e as correções. Visitas ainda não registradas têm `registradoPorId` e `registradoEm` nulos. Os resultados exibem `atividadePrevistaId`, `descricaoAtividade` e `texto`. As correções exibem a situação anterior e a nova, a justificativa, o responsável e a data da correção; os campos de motivos anterior e novo armazenados na entidade não são expostos por esse DTO.
+Cada item possui o campo `tipo`, com os valores `VISITA` ou `RETIRADA`. No OpenAPI, o discriminador `tipo` identifica a variante correspondente. Cada visita contém a situação atual, o motivo (quando aplicável), `registradoPorId`, `registradoPorNome`, `registradoEm`, os resultados das atividades e as correções. Visitas ainda não registradas têm os três campos de registro nulos. Os resultados exibem `atividadePrevistaId`, `descricaoAtividade` e `texto`. As correções exibem as situações anterior e nova, a justificativa, `motivoAnterior`, `motivoNovo`, `corrigidaPorId`, `corrigidaPorNome` e `corrigidaEm`. O item de retirada informa `dataRetirada`, `motivo`, `retiradaPorId` e `retiradaPorNome`.
 
 Exemplo de resposta `200`:
 
@@ -415,6 +418,7 @@ Exemplo de resposta `200`:
       "situacao": "REALIZADA",
       "motivo": null,
       "registradoPorId": 12,
+      "registradoPorNome": "Maria Coordenadora",
       "registradoEm": "2026-11-15T14:00:00Z",
       "resultados": [
         {
@@ -430,7 +434,10 @@ Exemplo de resposta `200`:
           "situacaoAnterior": "AUSENTE",
           "situacaoNova": "REALIZADA",
           "justificativa": "Registro anterior incorreto",
+          "motivoAnterior": "Participante não compareceu",
+          "motivoNovo": null,
           "corrigidaPorId": 12,
+          "corrigidaPorNome": "Maria Coordenadora",
           "corrigidaEm": "2026-11-15T14:05:00Z"
         }
       ]
@@ -439,7 +446,8 @@ Exemplo de resposta `200`:
       "tipo": "RETIRADA",
       "dataRetirada": "2026-11-20T14:00:00Z",
       "motivo": "Retirada solicitada",
-      "retiradaPorId": 12
+      "retiradaPorId": 12,
+      "retiradaPorNome": "Maria Coordenadora"
     }
   ]
 }
@@ -555,4 +563,4 @@ Para novas rotas e ajustes de contrato:
 4. Conferir se a seção de RF15 permanece coerente com os DTOs e testes.
 5. Atualizar [OpenAPI](openapi.md) e os testes do contrato, quando necessário.
 
-As rotas de RF12, RF13, RF14, RF16, RF17 e RF18 estão implementadas no backend. A consulta de histórico completo (RF15) foi adicionada na branch de desenvolvimento e depende da conclusão da validação e integração. A integração da web com a RF14 é uma etapa independente.
+As rotas de RF12 a RF18 estão implementadas no backend, incluindo o histórico completo de gestão (RF15, task #3959). A validação dos testes e a integração das telas web são etapas independentes da implementação do contrato da API.

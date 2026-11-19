@@ -258,8 +258,9 @@ essa operação existente ao contrato. Esse código não implementa um segundo l
 - Confira exemplos, formatos de erro e perfis junto de quem implementa a web.
   Uma operação aparecer no Swagger não comprova que a tela está integrada.
 - Atualize os testes do contrato quando novos endpoints entrarem. O teste atual
-  confere as operações de autenticação, usuários e estudos, sem limitar o total de caminhos.
-  Assim, novas rotas podem ser adicionadas sem quebrar uma contagem fixa.
+  confere autenticação, usuários, estudos e contratos de funcionalidades de recrutamento
+  e acompanhamento, sem limitar o total de caminhos. Assim, novas rotas podem ser
+  adicionadas sem quebrar uma contagem fixa.
 
 As versões e as decisões aprovadas estão em [decisões e versões](../decisoes-e-versoes.md).
 Os contratos de estudos descritos acima já têm implementação no backend.
@@ -353,8 +354,8 @@ Os contratos, os erros e os exemplos estão em
 
 O contrato de acompanhamento inclui agendamento e registro de visitas (RF12 e RF13),
 resultados de atividades (RF14), retirada de participantes (RF16), consultas do
-participante (RF17 e RF18) e o histórico completo de gestão (RF15), implementado
-na branch de desenvolvimento.
+participante (RF17 e RF18) e o histórico completo de gestão (RF15, task #3959),
+implementado no backend.
 As regras, exemplos JSON e códigos de erro estão em
 [Acompanhamento de participantes](acompanhamento-de-participantes.md).
 
@@ -374,7 +375,11 @@ e documentadas no Swagger e exigem uma conta com perfil `PARTICIPANTE`.
 O histórico completo de gestão (RF15) utiliza
 `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico` e retorna `200`
 com `participacaoId` e `itens`. A lista reúne as visitas (com resultados e correções)
-e a eventual retirada em ordem cronológica. É uma consulta somente de leitura,
+e a eventual retirada em ordem cronológica. O campo `tipo` distingue `VISITA`
+de `RETIRADA` e é declarado como discriminador no OpenAPI. Os itens expõem
+os nomes dos responsáveis (`registradoPorNome`, `corrigidaPorNome` e
+`retiradaPorNome`), além de seus IDs, e as correções apresentam os campos
+`motivoAnterior` e `motivoNovo`. É uma consulta somente de leitura,
 permitida ao pesquisador responsável e ao coordenador vinculado, inclusive para
 estudos encerrados e participações retiradas. A operação exige sessão, não exige
 CSRF e documenta também os retornos `401`, `403` e `404`. Não se confunde com
@@ -385,5 +390,8 @@ O OpenAPI é gerado a partir dos controllers e DTOs existentes. O teste
 `documentaHistoricoCompletoDaParticipacao` consulta `/v3/api-docs` e verifica a
 operação do RF15, a segurança por sessão, os códigos `200`, `401`, `403` e `404`,
 o schema `HistoricoParticipacaoResposta`, as variantes `ItemHistoricoVisitaResposta`
-e `ItemHistoricoRetiradaResposta` e seus principais campos. Os testes de API também
-verificam as permissões e a resposta JSON do endpoint.
+e `ItemHistoricoRetiradaResposta`, o discriminador `tipo` com seus dois mapeamentos
+e os campos de responsáveis e motivos das correções. Os testes de API também
+verificam as permissões e a resposta JSON do endpoint. A resposta de
+`POST .../correcoes` utiliza `CorrecaoVisitaResposta` e inclui os mesmos campos
+`motivoAnterior`, `motivoNovo` e `corrigidaPorNome`.

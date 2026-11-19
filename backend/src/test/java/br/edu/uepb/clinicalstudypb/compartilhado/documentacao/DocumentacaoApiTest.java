@@ -448,13 +448,30 @@ class DocumentacaoApiTest {
         assertThat(tipos.path("oneOf").toString())
                 .contains("ItemHistoricoVisitaResposta", "ItemHistoricoRetiradaResposta");
 
+        // O discriminador permite identificar a variante pelo campo "tipo".
+        JsonNode discriminador = tipos.path("discriminator");
+        assertThat(discriminador.path("propertyName").asText()).isEqualTo("tipo");
+        JsonNode mapeamento = discriminador.path("mapping");
+        assertThat(mapeamento.size()).isEqualTo(2);
+        assertThat(mapeamento.path("VISITA").asText())
+                .isEqualTo("#/components/schemas/ItemHistoricoVisitaResposta");
+        assertThat(mapeamento.path("RETIRADA").asText())
+                .isEqualTo("#/components/schemas/ItemHistoricoRetiradaResposta");
+
         JsonNode visita = schemas.path("ItemHistoricoVisitaResposta").path("properties");
         for (String campo : new String[]{"tipo", "visitaAgendadaId", "nomeVisita", "dataHora",
-                "situacao", "motivo", "registradoPorId", "registradoEm", "resultados", "correcoes"}) {
+                "situacao", "motivo", "registradoPorId", "registradoPorNome", "registradoEm",
+                "resultados", "correcoes"}) {
             assertThat(visita.has(campo)).as("Campo da visita: %s", campo).isTrue();
         }
+
+        JsonNode correcao = schemas.path("CorrecaoVisitaResposta").path("properties");
+        for (String campo : new String[]{"motivoAnterior", "motivoNovo", "corrigidaPorId", "corrigidaPorNome"}) {
+            assertThat(correcao.has(campo)).as("Campo da correção: %s", campo).isTrue();
+        }
+
         JsonNode retirada = schemas.path("ItemHistoricoRetiradaResposta").path("properties");
-        for (String campo : new String[]{"tipo", "dataRetirada", "motivo", "retiradaPorId"}) {
+        for (String campo : new String[]{"tipo", "dataRetirada", "motivo", "retiradaPorId", "retiradaPorNome"}) {
             assertThat(retirada.has(campo)).as("Campo da retirada: %s", campo).isTrue();
         }
     }

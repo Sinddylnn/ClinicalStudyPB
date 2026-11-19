@@ -119,6 +119,7 @@ public class HistoricoParticipacaoService {
 
         List<ItemHistoricoResposta> itens = new ArrayList<>();
         for (VisitaAgendada visita : visitas.findByParticipacao_IdOrderByDataHoraAsc(participacaoId)) {
+            var registradoPor = visita.getRegistradoPor();
             itens.add(new ItemHistoricoVisitaResposta(
                     "VISITA",
                     visita.getId(),
@@ -126,7 +127,8 @@ public class HistoricoParticipacaoService {
                     visita.getDataHora(),
                     visita.getSituacao(),
                     visita.getMotivo(),
-                    visita.getRegistradoPor() == null ? null : visita.getRegistradoPor().getId(),
+                    registradoPor == null ? null : registradoPor.getId(),
+                    registradoPor == null ? null : registradoPor.getNome(),
                     visita.getRegistradoEm(),
                     resultadosPorVisita.getOrDefault(visita.getId(), List.of()),
                     correcoesPorVisita.getOrDefault(visita.getId(), List.of())

@@ -441,6 +441,67 @@ class AcompanhamentoPersistenciaIT {
     // <-------------------CONSULTAS DE HISTÓRICO COMPLETO RF15------------------->
 
     /**
+     * Confere no PostgreSQL a ordem das visitas e o carregamento da visita prevista
+     * na mesma consulta, evitando buscas adicionais durante a montagem do histórico.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaVisitasDoHistoricoCarregaVisitasPrevistasSemNMaisUm() {
+        Instant inicio = Instant.parse("2026-11-15T12:00:00Z");
+        Usuario coordenador = conta(PerfilUsuario.COORDENADOR);
+        Usuario participante = conta(PerfilUsuario.PARTICIPANTE);
+        Usuario outroParticipante = conta(PerfilUsuario.PARTICIPANTE);
+
+        Estudo estudo = new Estudo("Estudo das visitas do histórico", "Objetivo fictício", coordenador,
+                LocalDate.of(2026, 11, 1), LocalDate.of(2026, 12, 31), 10);
+        entidades.persist(estudo);
+
+        Protocolo protocolo = new Protocolo(estudo, false);
+        entidades.persist(protocolo);
+        VisitaPrevista prevista1 = new VisitaPrevista(protocolo, "Visita inicial", null, 1);
+        VisitaPrevista prevista2 = new VisitaPrevista(protocolo, "Visita intermediária", null, 2);
+        VisitaPrevista prevista3 = new VisitaPrevista(protocolo, "Visita final", null, 3);
+        entidades.persist(prevista1);
+        entidades.persist(prevista2);
+        entidades.persist(prevista3);
+
+        Participacao participacao = new Participacao(estudo, participante, inicio);
+        Participacao outraParticipacao = new Participacao(estudo, outroParticipante, inicio);
+        entidades.persist(participacao);
+        entidades.persist(outraParticipacao);
+
+        VisitaAgendada segunda = new VisitaAgendada(participacao, prevista2, inicio);
+        VisitaAgendada primeira = new VisitaAgendada(participacao, prevista1, inicio);
+        VisitaAgendada terceira = new VisitaAgendada(participacao, prevista3, inicio.plusSeconds(3600));
+        VisitaAgendada externa = new VisitaAgendada(outraParticipacao, prevista1, inicio);
+        entidades.persist(segunda);
+        entidades.persist(primeira);
+        entidades.persist(terceira);
+        entidades.persist(externa);
+        entidades.flush();
+        entidades.clear();
+
+        var encontradas = visitasAgendadas.findByParticipacao_IdOrderByDataHoraAsc(participacao.getId());
+        assertThat(encontradas)
+                .extracting(VisitaAgendada::getId)
+                .containsExactly(segunda.getId(), primeira.getId(), terceira.getId());
+
+        // A associação deve estar carregada antes de qualquer acesso ao nome.
+        var utilPersistencia = entidades.getEntityManagerFactory().getPersistenceUnitUtil();
+        assertThat(encontradas)
+                .allSatisfy(visita -> assertThat(utilPersistencia.isLoaded(visita, "visitaPrevista")).isTrue());
+        assertThat(encontradas)
+                .extracting(visita -> visita.getVisitaPrevista().getNome())
+                .containsExactly("Visita intermediária", "Visita inicial", "Visita final");
+
+        assertThat(visitasAgendadas.findByParticipacao_IdOrderByDataHoraAsc(outraParticipacao.getId()))
+                .extracting(VisitaAgendada::getId)
+                .containsExactly(externa.getId());
+        assertThat(visitasAgendadas.findByParticipacao_IdOrderByDataHoraAsc(-1L)).isEmpty();
+    }
+
+    /**
      * Confere o filtro por participação e a ordem das correções e dos resultados.
      *
      * @since 1.0
