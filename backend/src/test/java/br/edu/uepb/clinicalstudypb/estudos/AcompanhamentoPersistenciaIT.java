@@ -348,6 +348,11 @@ class AcompanhamentoPersistenciaIT {
         assertThat(entidades.find(VisitaAgendada.class, realizada.getId()).getSituacao())
                 .isEqualTo(SituacaoVisita.REALIZADA);
         assertThat(participacoes.countByEstudoId(estudo.getId())).isEqualTo(1L);
+
+        // O app remove visitas pendentes das próximas e as inclui no histórico como canceladas
+        UsuarioAutenticado app = new UsuarioAutenticado(participante);
+        assertThat(consultasParticipante.listarProximasVisitas(null, app)).isEmpty();
+        assertThat(consultasParticipante.listarHistorico(null, app)).hasSize(3);
     }
 
     // <-------------------CONSULTAS DO PARTICIPANTE------------------->

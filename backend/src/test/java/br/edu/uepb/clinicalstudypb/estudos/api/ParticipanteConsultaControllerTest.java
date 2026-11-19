@@ -137,7 +137,8 @@ class ParticipanteConsultaControllerTest {
     void estudoIdNaoNumericoRecebe400() throws Exception {
         mvc.perform(get("/participante/visitas/historico").param("estudoId", "abc")
                         .with(user(new UsuarioAutenticado(participante))))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"));
     }
 
     @ParameterizedTest
