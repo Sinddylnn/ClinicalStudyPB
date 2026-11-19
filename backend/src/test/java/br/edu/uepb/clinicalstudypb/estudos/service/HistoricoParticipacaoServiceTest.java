@@ -157,6 +157,29 @@ class HistoricoParticipacaoServiceTest {
         assertThat(itemFuturo.correcoes()).isEmpty();
     }
 
+    /** Uma visita agendada não possui registro de realização, resultados nem correções. */
+    @Test
+    void visitaAgendadaRetornaCamposDeRegistroNulosEListasVazias() {
+        permitirPesquisador();
+        VisitaAgendada agendada = visita(42L, "2026-11-20T13:00:00Z");
+        when(visitas.findByParticipacao_IdOrderByDataHoraAsc(20L))
+                .thenReturn(List.of(agendada));
+
+        var resposta = servico.consultar(10L, 20L, autenticado(pesquisador));
+
+        assertThat(resposta.itens()).hasSize(1);
+        assertThat(resposta.itens().get(0)).isInstanceOf(ItemHistoricoVisitaResposta.class);
+        var item = (ItemHistoricoVisitaResposta) resposta.itens().get(0);
+        assertThat(item.tipo()).isEqualTo("VISITA");
+        assertThat(item.visitaAgendadaId()).isEqualTo(42L);
+        assertThat(item.situacao()).isEqualTo(SituacaoVisita.AGENDADA);
+        assertThat(item.motivo()).isNull();
+        assertThat(item.registradoPorId()).isNull();
+        assertThat(item.registradoEm()).isNull();
+        assertThat(item.resultados()).isEmpty();
+        assertThat(item.correcoes()).isEmpty();
+    }
+
     /** Confirma a leitura pelo coordenador vinculado, inclusive em estudo encerrado. */
     @Test
     void coordenadorVinculadoConsultaHistoricoDeEstudoEncerrado() {

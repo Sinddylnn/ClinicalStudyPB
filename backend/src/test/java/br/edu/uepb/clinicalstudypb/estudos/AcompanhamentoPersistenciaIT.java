@@ -443,7 +443,7 @@ class AcompanhamentoPersistenciaIT {
     /**
      * Confere o filtro por participação e a ordem das correções e dos resultados.
      *
-     * @since 1.2
+     * @since 1.0
      */
     @Test
     void consultasDoHistoricoFiltramParticipacaoEOrdenamRegistros() {

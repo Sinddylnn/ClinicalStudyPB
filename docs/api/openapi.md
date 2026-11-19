@@ -381,8 +381,9 @@ CSRF e documenta também os retornos `401`, `403` e `404`. Não se confunde com
 `GET /participante/visitas/historico`, que retorna apenas o comparecimento do
 próprio participante, sem resultados, motivos ou correções.
 
-O OpenAPI é gerado a partir dos controllers e DTOs existentes. Os testes de API
-da RF15 verificaram a autorização e a resposta JSON, mas ainda é necessário
-conferir o schema de `HistoricoParticipacaoResposta` e dos dois tipos de item em
-`/v3/api-docs`. A documentação do endpoint e seus tipos deve corresponder ao JSON
-real antes da entrega da PR.
+O OpenAPI é gerado a partir dos controllers e DTOs existentes. O teste
+`documentaHistoricoCompletoDaParticipacao` consulta `/v3/api-docs` e verifica a
+operação do RF15, a segurança por sessão, os códigos `200`, `401`, `403` e `404`,
+o schema `HistoricoParticipacaoResposta`, as variantes `ItemHistoricoVisitaResposta`
+e `ItemHistoricoRetiradaResposta` e seus principais campos. Os testes de API também
+verificam as permissões e a resposta JSON do endpoint.
