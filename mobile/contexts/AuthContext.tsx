@@ -42,11 +42,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Só participantes usam o app: qualquer outro perfil tem a sessão encerrada
   const aceitar = useCallback(async (nova: Sessao) => {
     if (nova.perfil !== 'PARTICIPANTE') {
-      try {
-        await auth.logout();
-      } catch {
+      auth.logout().catch(() => {
         // a sessão no servidor expira sozinha
-      }
+      });
       setSessao(null);
       setAviso('PERFIL_NAO_PARTICIPANTE');
       return;

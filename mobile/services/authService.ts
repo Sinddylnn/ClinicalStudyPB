@@ -18,10 +18,11 @@ type Csrf = { headerName: string; token: string };
 // Os cookies da sessão (JSESSIONID) ficam no armazenamento nativo do sistema
 // e são reenviados com credentials: 'include'.
 async function obterCsrf(): Promise<Csrf> {
-  const res = await fetch(`${API_URL}/auth/csrf`, {
+  const res = await fetchComTimeout(`${API_URL}/auth/csrf`, {
     credentials: 'include',
     headers: { Accept: 'application/json' },
   });
+  console.log('[csrf] ok');
   if (!res.ok) throw new Error('Falha ao obter o CSRF.');
   const dados = await res.json(); // CsrfResposta: { token, headerName }
   return { headerName: dados.headerName ?? 'X-CSRF-TOKEN', token: dados.token };
@@ -30,7 +31,7 @@ async function obterCsrf(): Promise<Csrf> {
 
 export async function login(email: string, senha: string): Promise<Sessao> {
   const csrf = await obterCsrf();
-  const res = await fetch(`${API_URL}/auth/login`, {
+  const res = await fetchComTimeout(`${API_URL}/auth/login`, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -49,7 +50,7 @@ export async function login(email: string, senha: string): Promise<Sessao> {
 export async function logout(): Promise<void> {
   // O login renova a sessão e descarta o token anterior: busca um novo.
   const csrf = await obterCsrf();
-  const res = await fetch(`${API_URL}/auth/logout`, {
+  const res = await fetchComTimeout(`${API_URL}/auth/logout`, {
     method: 'POST',
     credentials: 'include',
     headers: { [csrf.headerName]: csrf.token },
@@ -84,11 +85,25 @@ export function definirAoExpirar(fn: (() => void) | null) {
 
 
 export async function requisitar(caminho: string, init: RequestInit = {}): Promise<Response> {
-  const res = await fetch(`${API_URL}${caminho}`, {
+  const res = await fetchComTimeout(`${API_URL}${caminho}`, {
     ...init,
     credentials: 'include',
     headers: { Accept: 'application/json', ...(init.headers as Record<string, string>) },
   });
   if (res.status === 401) aoExpirar?.();
   return res;
+}
+
+async function fetchComTimeout(
+  url: string,
+  init: RequestInit = {},
+  ms = 10000
+): Promise<Response> {
+  const controle = new AbortController();
+  const limite = setTimeout(() => controle.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: controle.signal });
+  } finally {
+    clearTimeout(limite);
+  }
 }
