@@ -45,14 +45,22 @@ public interface VisitaAgendadaRepository extends JpaRepository<VisitaAgendada, 
             Long participacaoId, SituacaoVisita situacao);
 
     /**
-     * Lista as visitas de uma participação em ordem de data e hora.
+     * Lista as visitas de uma participação em ordem de data e hora,
+     * carregando a visita prevista e o responsável pelo registro na mesma consulta.
      *
      * @param participacaoId identificador da participação
-     * @return lista de visitas ordenadas por data e hora
+     * @return lista de visitas ordenadas por data, hora e ID
      * @since 1.0
      */
+    @Query("""
+            SELECT v FROM VisitaAgendada v
+            JOIN FETCH v.visitaPrevista
+            LEFT JOIN FETCH v.registradoPor
+            WHERE v.participacao.id = :participacaoId
+            ORDER BY v.dataHora ASC, v.id ASC
+            """)
     List<VisitaAgendada> findByParticipacao_IdOrderByDataHoraAsc(
-            Long participacaoId);
+            @Param("participacaoId") Long participacaoId);
 
     /**
      * Conta as visitas de um estudo em determinada situação.

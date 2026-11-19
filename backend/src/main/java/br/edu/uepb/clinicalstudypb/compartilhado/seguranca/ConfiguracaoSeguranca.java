@@ -295,6 +295,13 @@ public SecurityFilterChain securityFilterChain(
                     )
                     .hasAnyRole("PESQUISADOR", "COORDENADOR")
 
+                    // Histórico completo de visitas e avaliações (RF15)
+                    .requestMatchers(
+                            HttpMethod.GET,
+                            "/estudos/*/participacoes/*/historico"
+                    )
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+
                     // Agendamento e reagendamento de visitas
                     .requestMatchers(
                             HttpMethod.POST,

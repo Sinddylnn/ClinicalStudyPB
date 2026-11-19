@@ -1,5 +1,7 @@
 package br.edu.uepb.clinicalstudypb.estudos;
 
+import br.edu.uepb.clinicalstudypb.estudos.repository.CorrecaoVisitaRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.ResultadoAtividadeRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.service.RetiradaParticipanteService;
@@ -44,6 +46,8 @@ class AcompanhamentoPersistenciaIT {
 
     @Autowired private EntityManager entidades;
     @Autowired private VisitaAgendadaRepository visitasAgendadas;
+    @Autowired private CorrecaoVisitaRepository correcoes;
+    @Autowired private ResultadoAtividadeRepository resultados;
     @Autowired private ParticipacaoRepository participacoes;
     @Autowired private RetiradaParticipanteService retiradas;
     @Autowired private ParticipanteConsultaService consultasParticipante;
@@ -432,6 +436,164 @@ class AcompanhamentoPersistenciaIT {
         assertThatThrownBy(() ->
                 consultasParticipante.listarHistorico(estudoSemVinculo.getId(), autenticado))
                 .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
+    }
+
+    // <-------------------CONSULTAS DE HISTÓRICO COMPLETO RF15------------------->
+
+    /**
+     * Confere no PostgreSQL a ordem das visitas e o carregamento da visita prevista
+     * na mesma consulta, evitando buscas adicionais durante a montagem do histórico.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaVisitasDoHistoricoCarregaVisitasPrevistasSemNMaisUm() {
+        Instant inicio = Instant.parse("2026-11-15T12:00:00Z");
+        Usuario coordenador = conta(PerfilUsuario.COORDENADOR);
+        Usuario participante = conta(PerfilUsuario.PARTICIPANTE);
+        Usuario outroParticipante = conta(PerfilUsuario.PARTICIPANTE);
+
+        Estudo estudo = new Estudo("Estudo das visitas do histórico", "Objetivo fictício", coordenador,
+                LocalDate.of(2026, 11, 1), LocalDate.of(2026, 12, 31), 10);
+        entidades.persist(estudo);
+
+        Protocolo protocolo = new Protocolo(estudo, false);
+        entidades.persist(protocolo);
+        VisitaPrevista prevista1 = new VisitaPrevista(protocolo, "Visita inicial", null, 1);
+        VisitaPrevista prevista2 = new VisitaPrevista(protocolo, "Visita intermediária", null, 2);
+        VisitaPrevista prevista3 = new VisitaPrevista(protocolo, "Visita final", null, 3);
+        entidades.persist(prevista1);
+        entidades.persist(prevista2);
+        entidades.persist(prevista3);
+
+        Participacao participacao = new Participacao(estudo, participante, inicio);
+        Participacao outraParticipacao = new Participacao(estudo, outroParticipante, inicio);
+        entidades.persist(participacao);
+        entidades.persist(outraParticipacao);
+
+        VisitaAgendada segunda = new VisitaAgendada(participacao, prevista2, inicio);
+        VisitaAgendada primeira = new VisitaAgendada(participacao, prevista1, inicio);
+        VisitaAgendada terceira = new VisitaAgendada(participacao, prevista3, inicio.plusSeconds(3600));
+        VisitaAgendada externa = new VisitaAgendada(outraParticipacao, prevista1, inicio);
+        entidades.persist(segunda);
+        entidades.persist(primeira);
+        entidades.persist(terceira);
+        entidades.persist(externa);
+        entidades.flush();
+        entidades.clear();
+
+        var encontradas = visitasAgendadas.findByParticipacao_IdOrderByDataHoraAsc(participacao.getId());
+        assertThat(encontradas)
+                .extracting(VisitaAgendada::getId)
+                .containsExactly(segunda.getId(), primeira.getId(), terceira.getId());
+
+        // A associação deve estar carregada antes de qualquer acesso ao nome.
+        var utilPersistencia = entidades.getEntityManagerFactory().getPersistenceUnitUtil();
+        assertThat(encontradas)
+                .allSatisfy(visita -> assertThat(utilPersistencia.isLoaded(visita, "visitaPrevista")).isTrue());
+        assertThat(encontradas)
+                .extracting(visita -> visita.getVisitaPrevista().getNome())
+                .containsExactly("Visita intermediária", "Visita inicial", "Visita final");
+
+        assertThat(visitasAgendadas.findByParticipacao_IdOrderByDataHoraAsc(outraParticipacao.getId()))
+                .extracting(VisitaAgendada::getId)
+                .containsExactly(externa.getId());
+        assertThat(visitasAgendadas.findByParticipacao_IdOrderByDataHoraAsc(-1L)).isEmpty();
+    }
+
+    /**
+     * Confere o filtro por participação e a ordem das correções e dos resultados.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultasDoHistoricoFiltramParticipacaoEOrdenamRegistros() {
+        Instant inicio = Instant.parse("2026-11-15T12:00:00Z");
+        Usuario coordenador = conta(PerfilUsuario.COORDENADOR);
+        Usuario participante = conta(PerfilUsuario.PARTICIPANTE);
+        Usuario outroParticipante = conta(PerfilUsuario.PARTICIPANTE);
+
+        Estudo estudo = new Estudo("Estudo do histórico", "Objetivo fictício", coordenador,
+                LocalDate.of(2026, 11, 1), LocalDate.of(2026, 12, 31), 10);
+        entidades.persist(estudo);
+        Protocolo protocolo = new Protocolo(estudo, false);
+        entidades.persist(protocolo);
+        VisitaPrevista prevista = new VisitaPrevista(protocolo, "Avaliação geral", null, 1);
+        entidades.persist(prevista);
+        AtividadePrevista atividadeA = new AtividadePrevista(prevista, "Avaliação A");
+        AtividadePrevista atividadeB = new AtividadePrevista(prevista, "Avaliação B");
+        entidades.persist(atividadeA);
+        entidades.persist(atividadeB);
+
+        Participacao participacao = new Participacao(estudo, participante, inicio);
+        Participacao outraParticipacao = new Participacao(estudo, outroParticipante, inicio);
+        entidades.persist(participacao);
+        entidades.persist(outraParticipacao);
+
+        VisitaAgendada primeira = new VisitaAgendada(participacao, prevista, inicio);
+        VisitaAgendada segunda = new VisitaAgendada(participacao, prevista, inicio.plusSeconds(86_400));
+        VisitaAgendada externa = new VisitaAgendada(outraParticipacao, prevista, inicio);
+        primeira.registrarSituacao(SituacaoVisita.REALIZADA, null, coordenador, inicio.plusSeconds(600));
+        segunda.registrarSituacao(SituacaoVisita.REALIZADA, null, coordenador, inicio.plusSeconds(86_500));
+        externa.registrarSituacao(SituacaoVisita.REALIZADA, null, coordenador, inicio.plusSeconds(600));
+        entidades.persist(primeira);
+        entidades.persist(segunda);
+        entidades.persist(externa);
+
+        // Grava os resultados em ordem diferente da atividade para conferir o ORDER BY.
+        ResultadoAtividade resultadoB = new ResultadoAtividade(
+                primeira, atividadeB, "Resultado B", coordenador, inicio.plusSeconds(650));
+        ResultadoAtividade resultadoA = new ResultadoAtividade(
+                primeira, atividadeA, "Resultado A", coordenador, inicio.plusSeconds(660));
+        ResultadoAtividade resultadoSegunda = new ResultadoAtividade(
+                segunda, atividadeA, "Resultado segunda", coordenador, inicio.plusSeconds(86_600));
+        ResultadoAtividade resultadoExterno = new ResultadoAtividade(
+                externa, atividadeA, "Resultado externo", coordenador, inicio.plusSeconds(700));
+        entidades.persist(resultadoB);
+        entidades.persist(resultadoA);
+        entidades.persist(resultadoSegunda);
+        entidades.persist(resultadoExterno);
+
+        // Grava as correções fora da ordem temporal para testar a ordenação por data.
+        CorrecaoVisita posterior = new CorrecaoVisita(
+                primeira, SituacaoVisita.CANCELADA, SituacaoVisita.REALIZADA,
+                "Revisão do cancelamento", "Cancelamento incorreto", null,
+                coordenador, inicio.plusSeconds(500));
+        CorrecaoVisita anterior = new CorrecaoVisita(
+                primeira, SituacaoVisita.AUSENTE, SituacaoVisita.CANCELADA,
+                "Revisão da ausência", null, "Cancelamento incorreto",
+                coordenador, inicio.plusSeconds(300));
+        CorrecaoVisita correcaoExterna = new CorrecaoVisita(
+                externa, SituacaoVisita.AUSENTE, SituacaoVisita.REALIZADA,
+                "Revisão externa", null, null,
+                coordenador, inicio.plusSeconds(400));
+        entidades.persist(posterior);
+        entidades.persist(anterior);
+        entidades.persist(correcaoExterna);
+        entidades.flush();
+        entidades.clear();
+
+        var correcoesEncontradas = correcoes.buscarCorrecoesDaParticipacao(participacao.getId());
+        assertThat(correcoesEncontradas)
+                .extracting(CorrecaoVisita::getId)
+                .containsExactly(anterior.getId(), posterior.getId());
+        assertThat(correcoesEncontradas.get(0).getCorrigidaPor().getId())
+                .isEqualTo(coordenador.getId());
+        assertThat(correcoes.buscarCorrecoesDaParticipacao(outraParticipacao.getId()))
+                .extracting(CorrecaoVisita::getId)
+                .containsExactly(correcaoExterna.getId());
+
+        var resultadosEncontrados = resultados.buscarResultadosDaParticipacao(participacao.getId());
+        assertThat(resultadosEncontrados)
+                .extracting(ResultadoAtividade::getId)
+                .containsExactly(resultadoA.getId(), resultadoB.getId(), resultadoSegunda.getId());
+        assertThat(resultadosEncontrados.get(0).getAtividadePrevista().getDescricao())
+                .isEqualTo("Avaliação A");
+        assertThat(resultados.buscarResultadosDaParticipacao(outraParticipacao.getId()))
+                .extracting(ResultadoAtividade::getId)
+                .containsExactly(resultadoExterno.getId());
+        assertThat(correcoes.buscarCorrecoesDaParticipacao(-1L)).isEmpty();
+        assertThat(resultados.buscarResultadosDaParticipacao(-1L)).isEmpty();
     }
 
     /**

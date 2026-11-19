@@ -411,4 +411,68 @@ class DocumentacaoApiTest {
             assertThat(operacao.path("responses").has("404")).isTrue();
         }
     }
+
+    /**
+     * Confere a publicação da consulta do histórico completo de gestão (RF15).
+     *
+     * @throws Exception se a consulta ou a leitura do contrato falhar
+     * @since 1.0
+     */
+    @Test
+    void documentaHistoricoCompletoDaParticipacao() throws Exception {
+        JsonNode contrato = json.readTree(mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+
+        JsonNode operacao = contrato.path("paths")
+                .path("/estudos/{estudoId}/participacoes/{participacaoId}/historico")
+                .path("get");
+        assertThat(operacao.isMissingNode()).isFalse();
+        assertThat(operacao.path("security").toString()).contains("sessao");
+        assertThat(operacao.path("parameters").toString()).doesNotContain("TokenCsrf");
+        assertThat(operacao.path("description").asText())
+                .containsIgnoringCase("pesquisador")
+                .containsIgnoringCase("coordenador");
+        for (String codigo : new String[]{"200", "401", "403", "404"}) {
+            assertThat(operacao.path("responses").has(codigo)).isTrue();
+        }
+        assertThat(operacao.path("responses").path("200").path("content").toString())
+                .contains("HistoricoParticipacaoResposta");
+
+        JsonNode schemas = contrato.path("components").path("schemas");
+        JsonNode resposta = schemas.path("HistoricoParticipacaoResposta").path("properties");
+        assertThat(resposta.has("participacaoId")).isTrue();
+        assertThat(resposta.has("itens")).isTrue();
+
+        // As duas variantes devem aparecer no OpenAPI, não apenas a interface vazia.
+        JsonNode tipos = schemas.path("ItemHistoricoResposta");
+        assertThat(tipos.path("oneOf").toString())
+                .contains("ItemHistoricoVisitaResposta", "ItemHistoricoRetiradaResposta");
+
+        // O discriminador permite identificar a variante pelo campo "tipo".
+        JsonNode discriminador = tipos.path("discriminator");
+        assertThat(discriminador.path("propertyName").asText()).isEqualTo("tipo");
+        JsonNode mapeamento = discriminador.path("mapping");
+        assertThat(mapeamento.size()).isEqualTo(2);
+        assertThat(mapeamento.path("VISITA").asText())
+                .isEqualTo("#/components/schemas/ItemHistoricoVisitaResposta");
+        assertThat(mapeamento.path("RETIRADA").asText())
+                .isEqualTo("#/components/schemas/ItemHistoricoRetiradaResposta");
+
+        JsonNode visita = schemas.path("ItemHistoricoVisitaResposta").path("properties");
+        for (String campo : new String[]{"tipo", "visitaAgendadaId", "nomeVisita", "dataHora",
+                "situacao", "motivo", "registradoPorId", "registradoPorNome", "registradoEm",
+                "resultados", "correcoes"}) {
+            assertThat(visita.has(campo)).as("Campo da visita: %s", campo).isTrue();
+        }
+
+        JsonNode correcao = schemas.path("CorrecaoVisitaResposta").path("properties");
+        for (String campo : new String[]{"motivoAnterior", "motivoNovo", "corrigidaPorId", "corrigidaPorNome"}) {
+            assertThat(correcao.has(campo)).as("Campo da correção: %s", campo).isTrue();
+        }
+
+        JsonNode retirada = schemas.path("ItemHistoricoRetiradaResposta").path("properties");
+        for (String campo : new String[]{"tipo", "dataRetirada", "motivo", "retiradaPorId", "retiradaPorNome"}) {
+            assertThat(retirada.has(campo)).as("Campo da retirada: %s", campo).isTrue();
+        }
+    }
 }
