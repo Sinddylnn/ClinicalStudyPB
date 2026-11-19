@@ -27,6 +27,7 @@ async function obterCsrf(): Promise<Csrf> {
   return { headerName: dados.headerName ?? 'X-CSRF-TOKEN', token: dados.token };
 }
 
+
 export async function login(email: string, senha: string): Promise<Sessao> {
   const csrf = await obterCsrf();
   const res = await fetch(`${API_URL}/auth/login`, {
@@ -44,6 +45,7 @@ export async function login(email: string, senha: string): Promise<Sessao> {
   return res.json(); // SessaoResposta devolvida pelo login
 }
 
+
 export async function logout(): Promise<void> {
   // O login renova a sessão e descarta o token anterior: busca um novo.
   const csrf = await obterCsrf();
@@ -53,4 +55,32 @@ export async function logout(): Promise<void> {
     headers: { [csrf.headerName]: csrf.token },
   });
   if (!res.ok) throw new Error('Falha no logout.');
+}
+
+
+export async function consultarSessao(): Promise<Sessao | null> {
+  const res = await fetch(`${API_URL}/auth/sessao`, {
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
+  });
+  if (res.status === 401) return null;
+  if (!res.ok) throw new Error('Falha ao consultar a sessão.');
+  return res.json();
+}
+
+
+let aoExpirar: (() => void) | null = null;
+export function definirAoExpirar(fn: (() => void) | null) {
+  aoExpirar = fn;
+}
+
+
+export async function requisitar(caminho: string, init: RequestInit = {}): Promise<Response> {
+  const res = await fetch(`${API_URL}${caminho}`, {
+    ...init,
+    credentials: 'include',
+    headers: { Accept: 'application/json', ...(init.headers as Record<string, string>) },
+  });
+  if (res.status === 401) aoExpirar?.();
+  return res;
 }
