@@ -1,8 +1,8 @@
 # Contrato de acompanhamento de participantes (RF12 a RF18)
 
-> **Estado em 18/11/2026:** rotas de consulta, agendamento e reagendamento (RF12, task #3964), registro e correção da situação de visitas (RF13, task #3965), cadastro e edição de resultados de atividades (RF14, task #3958), retirada de participante (RF16, task #3957) e consultas do aplicativo (RF17 e RF18, task #3951) implementadas no backend. A consulta de histórico completo de gestão (RF15) continua proposta.
+> **Estado em 19/11/2026:** agendamento e reagendamento (RF12, task #3964), registro e correção de visitas (RF13, task #3965), resultados de atividades (RF14, task #3958), retirada de participante (RF16, task #3957) e consultas do aplicativo (RF17 e RF18, task #3951) implementadas. A consulta de histórico completo de gestão (RF15, task #3959) foi implementada na branch de desenvolvimento e está em validação final.
 
-Este documento reúne os contratos implementados para RF12, RF13, RF14, RF16, RF17 e RF18, além da proposta de consulta do histórico completo (RF15). A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
+Este documento reúne os contratos de acompanhamento dos RF12 a RF18. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
 
 A modelagem do domínio está em [RF12 a RF18](../modelagem/RF12-RF18.md). A documentação geral sobre Swagger e OpenAPI está em [OpenAPI](openapi.md).
 
@@ -42,7 +42,7 @@ As respostas de erro usam o formato já adotado pelo projeto:
 
 Uma sessão ausente ou inválida retorna `401`. Perfil sem permissão ou falha de CSRF retorna `403`. Recursos inexistentes ou fora do vínculo autorizado retornam `404`, evitando revelar dados de outro estudo ou participante.
 
-## Rotas web: implementadas e propostas
+## Rotas web
 
 Todos os caminhos de gestão começam com `/estudos/{estudoId}`. As operações de escrita exigem sessão, permissão e CSRF.
 
@@ -62,7 +62,7 @@ Já implementadas na task 3964 (PR #41): `GET /estudos/{estudoId}/participacoes`
 
 Na task 3965 (RF13), foram implementados o registro de situação da visita (`PATCH .../situacao`) e a correção com histórico (`POST .../correcoes`). Também foi adicionada uma validação que impede o encerramento de estudos em execução enquanto existirem visitas `AGENDADA`.
 
-Na task #3957 (RF16), foi implementado o registro de retirada: `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`. Na task #3958 (RF14), foram implementados o cadastro e a edição de resultados de atividades. As consultas do participante para o aplicativo (RF17 e RF18, task #3951) também estão implementadas. A consulta de histórico completo de gestão (RF15) permanece proposta.
+Na task #3957 (RF16), foi implementado o registro de retirada: `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`. Na task #3958 (RF14), foram implementados o cadastro e a edição de resultados de atividades. As consultas do participante para o aplicativo (RF17 e RF18, task #3951) também estão implementadas. A consulta de histórico completo de gestão (RF15, task #3959) foi implementada na branch de desenvolvimento.
 
 ### Listar participantes incluídos
 
@@ -391,13 +391,17 @@ Resposta `200`:
 
 Os pedidos pendentes de reagendamento ligados às visitas canceladas serão cancelados quando o RF19 existir, na Sprint 4. A solicitação de retirada pelo app (RF20) não processa a retirada; o coordenador a conclui por esta operação.
 
-### Consultar histórico completo
+### Consultar histórico completo (RF15: implementado na branch de desenvolvimento)
 
 `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico`
 
-Disponível para pesquisador responsável e coordenador vinculado, inclusive quando o estudo está encerrado ou a participação está retirada. A proposta retorna visitas e retirada em ordem cronológica, da mais antiga para a mais recente.
+Consulta somente de leitura para o **pesquisador responsável pelo estudo** ou o **coordenador vinculado**. Pode ser realizada com o estudo `ENCERRADO` e com a participação `RETIRADA`. A participação precisa pertencer ao estudo informado na rota.
 
-Exemplo de resposta:
+A resposta `200` contém `participacaoId` e `itens`, uma lista de ocorrências ordenada da mais antiga para a mais recente. O tipo `VISITA` é posicionado pela `dataHora` agendada, e `RETIRADA`, quando presente, pela `dataRetirada`. Visitas ainda `AGENDADA` também são incluídas. Se a participação não tiver visitas nem retirada, `itens` é `[]`.
+
+Cada visita contém a situação atual, o motivo (quando aplicável), quem registrou e quando, os resultados por atividade e as correções. Visitas ainda não registradas têm `registradoPorId` e `registradoEm` nulos. Os resultados exibem `atividadePrevistaId`, `descricaoAtividade` e `texto`. As correções exibem a situação anterior e a nova, a justificativa, o responsável e a data da correção; os campos de motivos anterior e novo armazenados na entidade não são expostos por esse DTO.
+
+Exemplo de resposta `200`:
 
 ```json
 {
@@ -419,7 +423,17 @@ Exemplo de resposta:
           "texto": "Resultado fictício"
         }
       ],
-      "correcoes": []
+      "correcoes": [
+        {
+          "id": 901,
+          "visitaAgendadaId": 501,
+          "situacaoAnterior": "AUSENTE",
+          "situacaoNova": "REALIZADA",
+          "justificativa": "Registro anterior incorreto",
+          "corrigidaPorId": 12,
+          "corrigidaEm": "2026-11-15T14:05:00Z"
+        }
+      ]
     },
     {
       "tipo": "RETIRADA",
@@ -430,6 +444,15 @@ Exemplo de resposta:
   ]
 }
 ```
+
+| HTTP | Código / retorno | Quando ocorre |
+|---|---|---|
+| `200` | Histórico da participação | Consulta autorizada, inclusive sem itens |
+| `401` | Não autenticado | Sessão ausente ou inválida |
+| `403` | Acesso negado | Administrador, participante ou outro perfil sem permissão |
+| `404` | `RECURSO_NAO_ENCONTRADO` | Estudo ou participação inexistente ou fora do vínculo do pesquisador ou coordenador |
+
+Este endpoint não exige CSRF, pois não modifica dados. O histórico completo de gestão não deve ser confundido com `GET /participante/visitas/historico` (RF18), que é limitado aos dados de comparecimento do próprio participante.
 
 ## Rotas do aplicativo (RF17 e RF18: implementadas)
 
@@ -502,7 +525,7 @@ Exemplo de `GET /participante/visitas/historico`:
 
 ## Códigos de erro
 
-Os códigos das operações implementadas de RF12, RF13, RF14, RF16, RF17 e RF18 foram conferidos com os cenários de teste e a modelagem. Os códigos da RF15 continuam propostos e precisam ser confirmados quando sua rota for implementada.
+Os códigos das operações de RF12 a RF18 seguem os cenários de teste e a modelagem. A consulta de gestão do RF15 utiliza `401` para ausência de sessão, `403` para perfil sem permissão e `404` com `RECURSO_NAO_ENCONTRADO` para estudo ou participação inexistente ou fora do vínculo.
 
 | HTTP | Código / retorno | Situação |
 |---|---|---|
@@ -529,7 +552,7 @@ Para novas rotas e ajustes de contrato:
 1. Conferir cada caminho, método, corpo, resposta e status HTTP com controllers e DTOs.
 2. Conferir perfis, sessão, CSRF e ocultação de recursos fora do vínculo autorizado.
 3. Conferir no `/v3/api-docs` que o OpenAPI gerado descreve as operações implementadas, sem rotas apenas planejadas.
-4. Atualizar a seção da RF15 quando sua rota for implementada.
-5. Atualizar [OpenAPI](openapi.md) e os testes do contrato, se necessário.
+4. Conferir se a seção de RF15 permanece coerente com os DTOs e testes.
+5. Atualizar [OpenAPI](openapi.md) e os testes do contrato, quando necessário.
 
-As rotas de RF12, RF13, RF14, RF16, RF17 e RF18 estão implementadas no backend. A integração da web com a RF14 é uma etapa independente; a consulta de histórico completo de gestão (RF15) permanece proposta.
+As rotas de RF12, RF13, RF14, RF16, RF17 e RF18 estão implementadas no backend. A consulta de histórico completo (RF15) foi adicionada na branch de desenvolvimento e depende da conclusão da validação e integração. A integração da web com a RF14 é uma etapa independente.

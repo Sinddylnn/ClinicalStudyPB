@@ -353,7 +353,8 @@ Os contratos, os erros e os exemplos estão em
 
 O contrato de acompanhamento inclui agendamento e registro de visitas (RF12 e RF13),
 resultados de atividades (RF14), retirada de participantes (RF16), consultas do
-participante (RF17 e RF18) e a proposta de histórico completo de gestão (RF15).
+participante (RF17 e RF18) e o histórico completo de gestão (RF15), implementado
+na branch de desenvolvimento.
 As regras, exemplos JSON e códigos de erro estão em
 [Acompanhamento de participantes](acompanhamento-de-participantes.md).
 
@@ -370,7 +371,18 @@ foi implementada e está documentada no Swagger. As consultas do participante
 `GET /participante/visitas/historico`, RF17 e RF18) também estão implementadas
 e documentadas no Swagger e exigem uma conta com perfil `PARTICIPANTE`.
 
-O OpenAPI é gerado a partir dos controllers e DTOs existentes. As operações
-implementadas são verificadas pelos testes da API, mas o contrato gerado deve ser
-conferido no `/v3/api-docs` após integrar as alterações. O histórico completo de
-gestão da RF15 permanece como proposta e não deve ser considerado disponível.
+O histórico completo de gestão (RF15) utiliza
+`GET /estudos/{estudoId}/participacoes/{participacaoId}/historico` e retorna `200`
+com `participacaoId` e `itens`. A lista reúne as visitas (com resultados e correções)
+e a eventual retirada em ordem cronológica. É uma consulta somente de leitura,
+permitida ao pesquisador responsável e ao coordenador vinculado, inclusive para
+estudos encerrados e participações retiradas. A operação exige sessão, não exige
+CSRF e documenta também os retornos `401`, `403` e `404`. Não se confunde com
+`GET /participante/visitas/historico`, que retorna apenas o comparecimento do
+próprio participante, sem resultados, motivos ou correções.
+
+O OpenAPI é gerado a partir dos controllers e DTOs existentes. Os testes de API
+da RF15 verificaram a autorização e a resposta JSON, mas ainda é necessário
+conferir o schema de `HistoricoParticipacaoResposta` e dos dois tipos de item em
+`/v3/api-docs`. A documentação do endpoint e seus tipos deve corresponder ao JSON
+real antes da entrega da PR.
