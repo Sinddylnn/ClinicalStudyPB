@@ -112,11 +112,14 @@ public class ResultadoAtividadeController {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Resultado registrado com sucesso."),
-        @ApiResponse(responseCode = "400", description = "Dados inválidos ou regra de negócio não atendida.",
+        @ApiResponse(responseCode = "400",
+                description = "ESTADO_ESTUDO_INVALIDO, PARTICIPACAO_INVALIDA, RESULTADO_INVALIDO ou VALIDACAO_INVALIDA.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class))),
-        @ApiResponse(responseCode = "404", description = "Estudo, participação ou visita inexistente ou fora do vínculo esperado.",
+        @ApiResponse(responseCode = "404",
+                description = "RECURSO_NAO_ENCONTRADO: estudo, participação ou visita inexistente ou fora do vínculo esperado.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class))),
-        @ApiResponse(responseCode = "409", description = "Resultado já registrado para a atividade nesta visita.",
+        @ApiResponse(responseCode = "409",
+                description = "RESULTADO_JA_REGISTRADO: resultado já registrado para a atividade nesta visita.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class)))
     })
     public ResultadoAtividadeResposta registrar(
@@ -153,9 +156,11 @@ public class ResultadoAtividadeController {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Resultado editado com sucesso."),
-        @ApiResponse(responseCode = "400", description = "Texto inválido ou regra de negócio não atendida.",
+        @ApiResponse(responseCode = "400",
+                description = "ESTADO_ESTUDO_INVALIDO, PARTICIPACAO_INVALIDA, RESULTADO_INVALIDO ou VALIDACAO_INVALIDA.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class))),
-        @ApiResponse(responseCode = "404", description = "Estudo, visita ou resultado fora do vínculo esperado.",
+        @ApiResponse(responseCode = "404",
+                description = "RECURSO_NAO_ENCONTRADO: estudo, visita ou resultado inexistente ou fora do vínculo esperado.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class)))
     })
     public ResultadoAtividadeResposta editar(
