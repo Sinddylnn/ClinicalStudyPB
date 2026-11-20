@@ -549,8 +549,8 @@ describe('servicoAcompanhamentoSimulado: retirada', () => {
 
     await executar(servico.retirarParticipante(3, 1, { motivo: 'Ok.' }));
     await expect(executar(servico.retirarParticipante(3, 1, { motivo: 'De novo.' }))).rejects.toMatchObject({
-      codigo: 'PARTICIPACAO_INVALIDA',
-      message: 'O participante já foi retirado do estudo.',
+      codigo: 'PARTICIPACAO_JA_RETIRADA',
+      message: 'A participação já foi retirada.',
     });
   });
 
