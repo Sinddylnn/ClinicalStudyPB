@@ -24,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -77,7 +78,9 @@ class ParticipacaoConsultaControllerTest {
                 .andExpect(jsonPath("$[0].id").value(120))
                 .andExpect(jsonPath("$[0].participanteId").value(45))
                 .andExpect(jsonPath("$[0].participanteNome").value("Ana Participante"))
-                .andExpect(jsonPath("$[0].situacao").value("ATIVA"));
+                .andExpect(jsonPath("$[0].situacao").value("ATIVA"))
+                .andExpect(jsonPath("$[0].dataRetirada").hasJsonPath())
+                .andExpect(jsonPath("$[0].dataRetirada").value(nullValue()));
 
         verify(visitas).listarParticipacoes(
                 eq(10L), any(UsuarioAutenticado.class));

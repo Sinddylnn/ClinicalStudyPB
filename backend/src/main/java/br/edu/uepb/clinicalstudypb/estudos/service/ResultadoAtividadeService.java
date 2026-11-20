@@ -1,6 +1,7 @@
 package br.edu.uepb.clinicalstudypb.estudos.service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 
 import org.springframework.http.HttpStatus;
@@ -29,7 +30,7 @@ import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 
 /**
- * Gerencia o registro e a edição de resultados fictícios das atividades.
+ * Gerencia o registro, a edição e a consulta de resultados fictícios das atividades.
  *
  * @author Luiz
  * @version 1.0
@@ -60,6 +61,54 @@ public class ResultadoAtividadeService {
         this.visitasAgendadas = visitasAgendadas;
         this.atividadesPrevistas = atividadesPrevistas;
         this.resultados = resultados;
+    }
+
+    /**
+     * Lista os resultados registrados em uma visita do estudo.
+     *
+     * @param estudoId identificador do estudo
+     * @param participacaoId identificador da participação
+     * @param visitaAgendadaId identificador da visita
+     * @param autenticado usuário autenticado
+     * @return resultados da visita, ou lista vazia quando não houver registros
+     * @throws AccessDeniedException se o usuário não for coordenador
+     * @throws ResponseStatusException se o estudo ou a visita não estiver no vínculo
+     * @since 1.0
+     */
+    @Transactional(readOnly = true)
+    public List<ResultadoAtividadeResposta> listarResultados(
+            Long estudoId,
+            Long participacaoId,
+            Long visitaAgendadaId,
+            UsuarioAutenticado autenticado) {
+
+        if (autenticado == null
+                || autenticado.getPerfil() != PerfilUsuario.COORDENADOR) {
+            throw new AccessDeniedException(
+                    "Apenas coordenadores podem consultar resultados.");
+        }
+
+        estudos.findByIdAndCoordenadorId(estudoId, autenticado.getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Estudo não encontrado."));
+
+        // Confere os vínculos da visita antes de consultar seus resultados.
+        visitasAgendadas.findById(visitaAgendadaId)
+                .filter(v -> Objects.equals(
+                        v.getParticipacao().getId(), participacaoId))
+                .filter(v -> Objects.equals(
+                        v.getParticipacao().getEstudo().getId(), estudoId))
+                .filter(v -> Objects.equals(
+                        v.getVisitaPrevista().getProtocolo()
+                                .getEstudo().getId(), estudoId))
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Visita agendada não encontrada."));
+
+        return resultados.buscarResultadosDaVisita(visitaAgendadaId)
+                .stream()
+                .map(ResultadoAtividadeResposta::de)
+                .toList();
     }
 
     /**

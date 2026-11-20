@@ -1,6 +1,6 @@
 # Contrato de acompanhamento de participantes (RF12 a RF18)
 
-> **Estado em 19/11/2026:** agendamento e reagendamento (RF12, task #3964), registro e correção de visitas (RF13, task #3965), resultados de atividades (RF14, task #3958), retirada de participante (RF16, task #3957) e consultas do aplicativo (RF17 e RF18, task #3951) implementadas. A consulta de histórico completo de gestão (RF15, task #3959) está implementada no backend.
+> **Estado em 20/11/2026:** agendamento e reagendamento (RF12, task #3964), registro e correção de visitas (RF13, task #3965), resultados de atividades (RF14, task #3958), retirada de participante (RF16, task #3957) e consultas do aplicativo (RF17 e RF18, task #3951) implementadas. A consulta de histórico completo de gestão (RF15, task #3959) está implementada no backend. Também foram adicionadas as consultas individuais de visita agendada e de resultados da visita para a tela web de acompanhamento.
 
 Este documento reúne os contratos de acompanhamento dos RF12 a RF18. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
 
@@ -32,7 +32,9 @@ As respostas de erro usam o formato já adotado pelo projeto:
 | Operação | Perfil permitido |
 |---|---|
 | Agendar, reagendar, registrar e corrigir a situação de visitas | Coordenador vinculado ao estudo |
+| Consultar uma visita agendada e seus dados | Coordenador vinculado ao estudo, somente leitura |
 | Registrar e editar resultados | Coordenador vinculado ao estudo |
+| Consultar resultados de uma visita | Coordenador vinculado ao estudo, somente leitura |
 | Registrar retirada | Coordenador vinculado ao estudo |
 | Consultar histórico completo | Pesquisador responsável ou coordenador vinculado |
 | Listar as participações do estudo | Pesquisador responsável ou coordenador vinculado, somente leitura |
@@ -49,10 +51,12 @@ Todos os caminhos de gestão começam com `/estudos/{estudoId}`. As operações 
 | Método | Caminho | Finalidade | Sucesso |
 |---|---|---|---|
 | GET | `/estudos/{estudoId}/participacoes` | Listar participantes incluídos e suas situações | `200` |
+| GET | `/estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}` | Consultar os dados de uma visita agendada | `200` |
 | POST | `/estudos/{estudoId}/participacoes/{participacaoId}/visitas` | Agendar visita | `201` |
 | PUT | `/estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}` | Reagendar visita ainda pendente | `200` |
 | PATCH | `/estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/situacao` | Registrar realização, ausência ou cancelamento | `200` |
 | POST | `/estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/correcoes` | Corrigir situação final, preservando o histórico | `201` |
+| GET | `/estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados` | Listar resultados registrados na visita | `200` |
 | POST | `/estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados` | Registrar resultado de uma atividade prevista | `201` |
 | PUT | `/estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados/{resultadoId}` | Editar resultado existente | `200` |
 | POST | `/estudos/{estudoId}/participacoes/{participacaoId}/retirada` | Registrar retirada | `200` |
@@ -64,11 +68,13 @@ Na task 3965 (RF13), foram implementados o registro de situação da visita (`PA
 
 Na task #3957 (RF16), foi implementado o registro de retirada: `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`. Na task #3958 (RF14), foram implementados o cadastro e a edição de resultados de atividades. As consultas do participante para o aplicativo (RF17 e RF18, task #3951) também estão implementadas. A consulta de histórico completo de gestão também está implementada (RF15, task #3959).
 
+Em 20/11/2026, foram adicionados dois endpoints de leitura para a tela de acompanhamento: a consulta de uma visita agendada e a listagem de resultados dessa visita. Ambos são exclusivos do coordenador vinculado ao estudo e não exigem CSRF.
+
 ### Listar participantes incluídos
 
 `GET /estudos/{estudoId}/participacoes`
 
-Leitura permitida ao coordenador vinculado e ao pesquisador responsável pelo estudo. A lista vem em ordem crescente de `id`, e `dataRetirada` aparece só nas participações retiradas. Um estudo sem participações devolve `[]`.
+Leitura permitida ao coordenador vinculado e ao pesquisador responsável pelo estudo. A lista vem em ordem crescente de `id`. O campo `dataRetirada` é incluído como `null` enquanto a participação estiver `ATIVA` e contém a data e hora da retirada quando estiver `RETIRADA`. Um estudo sem participações devolve `[]`.
 
 | HTTP | Situação |
 |---|---|
@@ -86,7 +92,8 @@ Exemplo de resposta:
     "participanteId": 45,
     "participanteNome": "Ana Participante",
     "dataInclusao": "2026-11-10T12:00:00Z",
-    "situacao": "ATIVA"
+    "situacao": "ATIVA",
+    "dataRetirada": null
   },
   {
     "id": 121,
@@ -98,6 +105,37 @@ Exemplo de resposta:
   }
 ]
 ```
+
+### Consultar visita agendada
+
+`GET /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}`
+
+Consulta os dados de uma visita específica, sem modificar seu estado. É permitida apenas ao **coordenador vinculado ao estudo**. Antes de retornar a visita, o backend verifica se ela pertence à participação informada e se tanto a participação quanto o protocolo da visita pertencem ao estudo da URL.
+
+A leitura também é permitida quando o estudo está `ENCERRADO` ou a participação está `RETIRADA`; as restrições de estado aplicadas ao agendamento e ao registro não se aplicam à consulta. Não é necessário enviar corpo nem token CSRF.
+
+Resposta `200` (exemplo ilustrativo):
+
+```json
+{
+  "id": 501,
+  "participacaoId": 120,
+  "visitaPrevistaId": 18,
+  "nomeVisita": "Visita inicial",
+  "dataHora": "2026-11-15T13:30:00Z",
+  "situacao": "REALIZADA",
+  "motivo": null,
+  "registradoPorId": 12,
+  "registradoEm": "2026-11-15T14:00:00Z"
+}
+```
+
+| HTTP | Código / retorno | Quando ocorre |
+|---|---|---|
+| `200` | Dados da visita | Visita encontrada e vinculada ao estudo e à participação |
+| `401` | Não autenticado | Sessão ausente ou inválida |
+| `403` | Acesso negado | Perfil diferente de coordenador |
+| `404` | `RECURSO_NAO_ENCONTRADO` | Estudo não vinculado ao coordenador, visita inexistente ou vínculo de participação/protocolo incorreto |
 
 ### Agendar visita
 
@@ -279,6 +317,47 @@ Na transição `EXECUCAO` → `ENCERRADO`, o backend verifica as visitas do estu
 
 A mensagem informa a quantidade de visitas pendentes e os IDs dos participantes envolvidos, sem repetir participantes que tenham mais de uma visita pendente.
 
+### Consultar resultados da visita (RF14)
+
+`GET /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados`
+
+Lista os resultados de atividades registrados na visita, para uso na tela de acompanhamento. É uma consulta somente de leitura, permitida ao **coordenador vinculado ao estudo**. O backend valida o estudo, a participação, a visita e o vínculo do protocolo antes de consultar os resultados.
+
+Os registros são ordenados pelo `atividadePrevistaId` crescente e, em caso de empate, pelo `id` do resultado. A resposta é um **array de `ResultadoAtividadeResposta`**, com os mesmos campos dos resultados cadastrados ou editados. Quando a visita existe e não há resultados registrados, a resposta é `200` com `[]`, e não `404`.
+
+A consulta pode ser feita mesmo se o estudo estiver `ENCERRADO`, a participação estiver `RETIRADA` ou a visita não estiver `REALIZADA`. Essas condições restringem o cadastro e a edição, mas não a leitura de dados existentes. Não é necessário enviar corpo nem token CSRF.
+
+Resposta `200` com resultados (exemplo ilustrativo):
+
+```json
+[
+  {
+    "id": 701,
+    "visitaAgendadaId": 501,
+    "atividadePrevistaId": 31,
+    "descricaoAtividade": "Avaliação inicial",
+    "texto": "Resultado fictício da avaliação",
+    "registradoPorId": 12,
+    "registradoEm": "2026-11-16T15:10:00Z",
+    "atualizadoPorId": null,
+    "atualizadoEm": null
+  }
+]
+```
+
+Resposta `200` para visita sem resultados:
+
+```json
+[]
+```
+
+| HTTP | Código / retorno | Quando ocorre |
+|---|---|---|
+| `200` | Lista de resultados, inclusive `[]` | Visita válida e consulta autorizada |
+| `401` | Não autenticado | Sessão ausente ou inválida |
+| `403` | Acesso negado | Perfil diferente de coordenador |
+| `404` | `RECURSO_NAO_ENCONTRADO` | Estudo não vinculado ao coordenador, visita inexistente ou vínculo de participação/protocolo incorreto |
+
 ### Registrar resultado de atividade (RF14)
 
 `POST /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados`
@@ -342,7 +421,7 @@ Resposta `200`:
 }
 ```
 
-**Erros das operações de resultados (RF14)**
+**Erros do cadastro e da edição de resultados (RF14)**
 
 | HTTP | Código / retorno | Quando ocorre |
 |---|---|---|
@@ -563,4 +642,4 @@ Para novas rotas e ajustes de contrato:
 4. Conferir se a seção de RF15 permanece coerente com os DTOs e testes.
 5. Atualizar [OpenAPI](openapi.md) e os testes do contrato, quando necessário.
 
-As rotas de RF12 a RF18 estão implementadas no backend, incluindo o histórico completo de gestão (RF15, task #3959). A validação dos testes e a integração das telas web são etapas independentes da implementação do contrato da API.
+As rotas de RF12 a RF18 estão implementadas no backend, incluindo o histórico completo de gestão (RF15, task #3959) e as consultas individuais de visita e de resultados. As anotações OpenAPI das duas novas operações estão no código; a conferência do documento gerado em `/v3/api-docs` e a integração das telas web são etapas independentes.

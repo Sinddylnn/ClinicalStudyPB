@@ -2,6 +2,7 @@ package br.edu.uepb.clinicalstudypb.estudos.api;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -12,9 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PatchMapping;
 
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
+import br.edu.uepb.clinicalstudypb.compartilhado.erro.ErroApi;
 import br.edu.uepb.clinicalstudypb.estudos.service.VisitaAgendadaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -22,7 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 /**
- * Disponibiliza os endpoints de agendamento, reagendamento
+ * Disponibiliza os endpoints de consulta, agendamento, reagendamento
  * e registro da situação das visitas.
  *
  * @author Luiz
@@ -46,6 +50,39 @@ public class VisitaAgendadaController {
         this.visitas = visitas;
     }
 
+    // <-------CONSULTA DE VISITA------->
+    /**
+     * Consulta os dados de uma visita agendada.
+     *
+     * @param estudoId identificador do estudo
+     * @param participacaoId identificador da participação
+     * @param visitaAgendadaId identificador da visita
+     * @param autenticado usuário autenticado
+     * @return dados da visita
+     * @since 1.0
+     */
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Visita encontrada"),
+        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+        @ApiResponse(responseCode = "403", description = "Acesso negado"),
+        @ApiResponse(responseCode = "404", description = "Estudo, participação ou visita não encontrada")
+    })
+    @GetMapping("/{visitaAgendadaId}")
+    @Operation(summary = "Consultar visita agendada")
+    public VisitaAgendadaResposta consultarVisita(
+            @PathVariable Long estudoId,
+            @PathVariable Long participacaoId,
+            @PathVariable Long visitaAgendadaId,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal UsuarioAutenticado autenticado) {
+
+        return visitas.consultarVisita(
+                estudoId,
+                participacaoId,
+                visitaAgendadaId,
+                autenticado);
+    }
+
     // <-------AGENDAMENTO DE VISITAS------->
     /**
      * Recebe uma solicitação de agendamento de visita.
@@ -60,11 +97,18 @@ public class VisitaAgendadaController {
     @Parameter(ref = "#/components/parameters/TokenCsrf")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Visita agendada com sucesso"),
-        @ApiResponse(responseCode = "400", description = "Dados inválidos ou regra de negócio não atendida"),
-        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
-        @ApiResponse(responseCode = "403", description = "Acesso negado"),
-        @ApiResponse(responseCode = "404", description = "Estudo, participação ou visita não encontrada"),
-        @ApiResponse(responseCode = "409", description = "Agendamento duplicado")
+        @ApiResponse(responseCode = "400",
+                description = "VALIDACAO_INVALIDA, ESTADO_ESTUDO_INVALIDO, PARTICIPACAO_INVALIDA ou DATA_VISITA_INVALIDA.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "401", description = "Usuário não autenticado.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "403", description = "Acesso negado ou CSRF inválido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404",
+                description = "RECURSO_NAO_ENCONTRADO: estudo, participação ou visita prevista não encontrada.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "409", description = "VISITA_JA_AGENDADA: já existe agendamento pendente.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
     })
 
     @PostMapping
@@ -99,10 +143,16 @@ public class VisitaAgendadaController {
     @Parameter(ref = "#/components/parameters/TokenCsrf")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Visita reagendada com sucesso"),
-        @ApiResponse(responseCode = "400", description = "Dados inválidos ou regra de negócio não atendida"),
-        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
-        @ApiResponse(responseCode = "403", description = "Acesso negado"),
-        @ApiResponse(responseCode = "404", description = "Visita agendada não encontrada"),
+        @ApiResponse(responseCode = "400",
+                description = "ESTADO_ESTUDO_INVALIDO, PARTICIPACAO_INVALIDA, TRANSICAO_VISITA_INVALIDA, "
+                        + "DATA_VISITA_INVALIDA ou VALIDACAO_INVALIDA.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "401", description = "Usuário não autenticado.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "403", description = "Acesso negado ou CSRF inválido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404", description = "RECURSO_NAO_ENCONTRADO: visita agendada não encontrada.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
     })
 
     // Altera a data de uma visita agendada
@@ -140,10 +190,16 @@ public class VisitaAgendadaController {
     @Parameter(ref = "#/components/parameters/TokenCsrf")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Situação registrada com sucesso"),
-        @ApiResponse(responseCode = "400", description = "Dados inválidos ou transição não permitida"),
-        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
-        @ApiResponse(responseCode = "403", description = "Acesso negado"),
-        @ApiResponse(responseCode = "404", description = "Estudo, participação ou visita não encontrada")
+        @ApiResponse(responseCode = "400",
+                description = "ESTADO_ESTUDO_INVALIDO, PARTICIPACAO_INVALIDA, TRANSICAO_VISITA_INVALIDA ou VALIDACAO_INVALIDA.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "401", description = "Usuário não autenticado.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "403", description = "Acesso negado ou CSRF inválido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404",
+                description = "RECURSO_NAO_ENCONTRADO: estudo, participação ou visita não encontrada.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
     })
     @PatchMapping("/{visitaAgendadaId}/situacao")
     @Operation(summary = "Registrar situação de visita")
@@ -179,10 +235,17 @@ public class VisitaAgendadaController {
     @Parameter(ref = "#/components/parameters/TokenCsrf")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Correção registrada com sucesso"),
-        @ApiResponse(responseCode = "400", description = "Correção não permitida ou dados inválidos"),
-        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
-        @ApiResponse(responseCode = "403", description = "Acesso negado"),
-        @ApiResponse(responseCode = "404", description = "Estudo, participação ou visita não encontrada")
+        @ApiResponse(responseCode = "400",
+                description = "ESTADO_ESTUDO_INVALIDO, PARTICIPACAO_INVALIDA, TRANSICAO_VISITA_INVALIDA, "
+                        + "VALIDACAO_INVALIDA ou CORRECAO_BLOQUEADA.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "401", description = "Usuário não autenticado.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "403", description = "Acesso negado ou CSRF inválido.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404",
+                description = "RECURSO_NAO_ENCONTRADO: estudo, participação ou visita não encontrada.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
     })
     @PostMapping("/{visitaAgendadaId}/correcoes")
     @ResponseStatus(HttpStatus.CREATED)

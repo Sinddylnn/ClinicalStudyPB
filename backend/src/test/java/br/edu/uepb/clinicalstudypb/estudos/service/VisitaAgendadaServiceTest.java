@@ -60,8 +60,8 @@ import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 
 /**
- * Testa as regras de agendamento, reagendamento, registro
- * e correção de situação das visitas dos participantes.
+ * Testa as regras de agendamento, reagendamento, registro,
+ * correção e consulta de visitas dos participantes.
  *
  * @author Luiz
  * @version 1.0
@@ -1535,6 +1535,29 @@ class VisitaAgendadaServiceTest {
         verifyNoInteractions(visitasAgendadas);
     }
 
+    /**
+     * Impede o reagendamento de visitas por pesquisadores.
+     *
+     * @since 1.0
+     */
+    @Test
+    void impedeReagendamentoPorPesquisador() {
+        Usuario usuario = new Usuario(
+                "Pesquisador", "pesquisador@teste.com",
+                "senha", PerfilUsuario.PESQUISADOR);
+
+        UsuarioAutenticado pesquisador = new UsuarioAutenticado(usuario);
+
+        assertThatThrownBy(() -> servico.reagendar(
+                10L, 20L, 40L,
+                new VisitaAgendadaReagendamentoEntrada(
+                        dataVisita.plus(1, ChronoUnit.DAYS)),
+                pesquisador))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("Apenas coordenadores");
+
+        verifyNoInteractions(estudos, visitasAgendadas);
+    }
 
     /**
      * Verifica o reagendamento de uma visita pendente.
@@ -2007,6 +2030,269 @@ class VisitaAgendadaServiceTest {
 
         verify(visitasAgendadas)
                 .save(any(VisitaAgendada.class));
+    }
+
+    // <-------CONSULTA DE VISITA------->
+
+    /**
+     * Prepara uma visita existente e os vínculos necessários para a consulta.
+     *
+     * @return visita agendada com identificador definido
+     * @since 1.0
+     */
+    private VisitaAgendada prepararVisitaParaConsulta() {
+        VisitaAgendada visita = new VisitaAgendada(
+                participacao, visitaPrevista, dataVisita);
+        ReflectionTestUtils.setField(visita, "id", 40L);
+
+        when(estudos.findByIdAndCoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+
+        return visita;
+    }
+
+    /**
+     * Confere os dados da visita e o uso de consultas sem bloqueio ou escrita.
+     *
+     * @since 1.0
+     */
+    @Test
+    void coordenadorConsultaVisitaAgendadaSemAlterarDados() {
+        VisitaAgendada visita = prepararVisitaParaConsulta();
+
+        VisitaAgendadaResposta resposta = servico.consultarVisita(
+                10L, 20L, 40L, coordenador);
+
+        assertThat(resposta.id()).isEqualTo(40L);
+        assertThat(resposta.participacaoId()).isEqualTo(20L);
+        assertThat(resposta.visitaPrevistaId()).isEqualTo(30L);
+        assertThat(resposta.nomeVisita()).isEqualTo("Visita inicial");
+        assertThat(resposta.dataHora()).isEqualTo(dataVisita);
+        assertThat(resposta.situacao()).isEqualTo(SituacaoVisita.AGENDADA);
+        assertThat(resposta.motivo()).isNull();
+        assertThat(resposta.registradoPorId()).isNull();
+        assertThat(resposta.registradoEm()).isNull();
+        assertThat(visita.getSituacao()).isEqualTo(SituacaoVisita.AGENDADA);
+
+        verify(estudos).findByIdAndCoordenadorId(10L, 1L);
+        verify(estudos, never()).bloquearPorIdECoordenadorId(10L, 1L);
+        verify(visitasAgendadas).findById(40L);
+        verify(visitasAgendadas, never()).save(any(VisitaAgendada.class));
+        verifyNoInteractions(participacoes, visitasPrevistas, correcoes, resultados);
+    }
+
+    /**
+     * Permite consultar visitas finalizadas e devolve os dados de registro.
+     *
+     * @param situacao situação final registrada
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @EnumSource(value = SituacaoVisita.class,
+            names = {"REALIZADA", "AUSENTE", "CANCELADA"})
+    void consultaVisitaFinalizadaComDadosDeRegistro(SituacaoVisita situacao) {
+        VisitaAgendada visita = prepararVisitaParaConsulta();
+        Instant registradoEm = Instant.parse("2026-11-18T15:00:00Z");
+        String motivo = situacao == SituacaoVisita.REALIZADA
+                ? null : "Situação registrada pelo coordenador";
+        visita.registrarSituacao(situacao, motivo, estudo.getCoordenador(), registradoEm);
+
+        VisitaAgendadaResposta resposta = servico.consultarVisita(
+                10L, 20L, 40L, coordenador);
+
+        assertThat(resposta.situacao()).isEqualTo(situacao);
+        assertThat(resposta.motivo()).isEqualTo(motivo);
+        assertThat(resposta.registradoPorId()).isEqualTo(1L);
+        assertThat(resposta.registradoEm()).isEqualTo(registradoEm);
+        verify(visitasAgendadas, never()).save(any(VisitaAgendada.class));
+    }
+
+    /**
+     * Mantém a consulta disponível após o encerramento do estudo.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaVisitaEmEstudoEncerrado() {
+        estudo.alterarEstado(
+                EstadoEstudo.ENCERRADO, "Encerramento antecipado do estudo.");
+        prepararVisitaParaConsulta();
+
+        VisitaAgendadaResposta resposta = servico.consultarVisita(
+                10L, 20L, 40L, coordenador);
+
+        assertThat(resposta.id()).isEqualTo(40L);
+        verify(visitasAgendadas, never()).save(any(VisitaAgendada.class));
+    }
+
+    /**
+     * Permite consultar uma visita histórica de participação retirada.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaVisitaDeParticipanteRetirado() {
+        participacao.registrarRetirada(
+                "Retirada solicitada", Instant.now(), estudo.getCoordenador());
+        prepararVisitaParaConsulta();
+
+        VisitaAgendadaResposta resposta = servico.consultarVisita(
+                10L, 20L, 40L, coordenador);
+
+        assertThat(resposta.participacaoId()).isEqualTo(20L);
+        verify(visitasAgendadas, never()).save(any(VisitaAgendada.class));
+    }
+
+    /**
+     * Bloqueia a consulta quando não existe usuário autenticado.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaVisitaSemAutenticacaoRecebeAcessoNegado() {
+        assertThatThrownBy(() -> servico.consultarVisita(
+                10L, 20L, 40L, null))
+                .isInstanceOf(AccessDeniedException.class);
+
+        verifyNoInteractions(estudos, participacoes, visitasPrevistas,
+                visitasAgendadas, correcoes, resultados);
+    }
+
+    /**
+     * Recusa a consulta por perfis diferentes de coordenador.
+     *
+     * @param perfil perfil sem permissão
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @EnumSource(value = PerfilUsuario.class,
+            names = {"PESQUISADOR", "ADMINISTRADOR", "PARTICIPANTE"})
+    void perfilSemPermissaoNaoPodeConsultarVisita(PerfilUsuario perfil) {
+        Usuario usuario = new Usuario(
+                "Sem permissão", "consulta.visita@teste.com", "senha", perfil);
+
+        assertThatThrownBy(() -> servico.consultarVisita(
+                10L, 20L, 40L, new UsuarioAutenticado(usuario)))
+                .isInstanceOf(AccessDeniedException.class);
+
+        verifyNoInteractions(estudos, participacoes, visitasPrevistas,
+                visitasAgendadas, correcoes, resultados);
+    }
+
+    /**
+     * Oculta visitas de estudo não vinculado ao coordenador da consulta.
+     *
+     * @since 1.0
+     */
+    @Test
+    void coordenadorDeOutroEstudoNaoPodeConsultarVisita() {
+        when(estudos.findByIdAndCoordenadorId(10L, 1L))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servico.consultarVisita(
+                10L, 20L, 40L, coordenador))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        erro -> assertThat(erro.getStatusCode().value()).isEqualTo(404));
+
+        verifyNoInteractions(participacoes, visitasPrevistas,
+                visitasAgendadas, correcoes, resultados);
+    }
+
+    /**
+     * Devolve HTTP 404 quando a visita solicitada não existe.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaVisitaInexistenteRecebe404() {
+        when(estudos.findByIdAndCoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servico.consultarVisita(
+                10L, 20L, 40L, coordenador))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        erro -> assertThat(erro.getStatusCode().value()).isEqualTo(404));
+
+        verify(visitasAgendadas, never()).save(any(VisitaAgendada.class));
+    }
+
+    /**
+     * Impede consultar visita vinculada a outra participação da URL.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaVisitaDeOutraParticipacaoRecebe404() {
+        prepararVisitaParaConsulta();
+
+        assertThatThrownBy(() -> servico.consultarVisita(
+                10L, 99L, 40L, coordenador))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        erro -> assertThat(erro.getStatusCode().value()).isEqualTo(404));
+
+        verify(visitasAgendadas, never()).save(any(VisitaAgendada.class));
+    }
+
+    /**
+     * Impede consultar visita cuja participação pertence a outro estudo.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaVisitaDeParticipacaoDeOutroEstudoRecebe404() {
+        VisitaAgendada visitaEstranha = mock(VisitaAgendada.class);
+        Participacao outraParticipacao = mock(Participacao.class);
+        Estudo outroEstudo = mock(Estudo.class);
+
+        when(estudos.findByIdAndCoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visitaEstranha));
+        when(visitaEstranha.getParticipacao()).thenReturn(outraParticipacao);
+        when(outraParticipacao.getId()).thenReturn(20L);
+        when(outraParticipacao.getEstudo()).thenReturn(outroEstudo);
+        when(outroEstudo.getId()).thenReturn(99L);
+
+        assertThatThrownBy(() -> servico.consultarVisita(
+                10L, 20L, 40L, coordenador))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        erro -> assertThat(erro.getStatusCode().value()).isEqualTo(404));
+
+        verify(visitasAgendadas, never()).save(any(VisitaAgendada.class));
+    }
+
+    /**
+     * Impede consultar visita prevista ligada ao protocolo de outro estudo.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaVisitaComProtocoloDeOutroEstudoRecebe404() {
+        VisitaAgendada visitaEstranha = mock(VisitaAgendada.class);
+        VisitaPrevista previstaEstranha = mock(VisitaPrevista.class);
+        Protocolo protocoloEstranho = mock(Protocolo.class);
+        Estudo outroEstudo = mock(Estudo.class);
+
+        when(estudos.findByIdAndCoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visitaEstranha));
+        when(visitaEstranha.getParticipacao()).thenReturn(participacao);
+        when(visitaEstranha.getVisitaPrevista()).thenReturn(previstaEstranha);
+        when(previstaEstranha.getProtocolo()).thenReturn(protocoloEstranho);
+        when(protocoloEstranho.getEstudo()).thenReturn(outroEstudo);
+        when(outroEstudo.getId()).thenReturn(99L);
+
+        assertThatThrownBy(() -> servico.consultarVisita(
+                10L, 20L, 40L, coordenador))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        erro -> assertThat(erro.getStatusCode().value()).isEqualTo(404));
+
+        verify(visitasAgendadas, never()).save(any(VisitaAgendada.class));
     }
 
     // <-------CONSULTA DE PARTICIPACOES------->

@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -54,7 +55,7 @@ import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 
 /**
- * Testa as regras de cadastro e edição dos resultados fictícios das atividades.
+ * Testa as regras de consulta, cadastro e edição dos resultados fictícios das atividades.
  *
  * @author Luiz
  * @version 1.0
@@ -1122,6 +1123,279 @@ class ResultadoAtividadeServiceTest {
 
         assertThat(resposta.texto()).isEqualTo("Texto ajustado.");
         verify(resultados).save(resultado);
+    }
+
+
+    // Consulta de resultados
+
+    /**
+     * Prepara o vínculo do coordenador com o estudo e a visita consultada.
+     *
+     * @since 1.0
+     */
+    private void prepararConsultaValida() {
+        when(estudos.findByIdAndCoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visita));
+    }
+
+    /**
+     * Consulta resultados de uma visita, mantendo a ordem retornada pelo repositório.
+     *
+     * @since 1.0
+     */
+    @Test
+    void listaResultadosDaVisita() {
+        prepararConsultaValida();
+        ResultadoAtividade primeiro = resultadoExistente();
+        AtividadePrevista segundaAtividade = new AtividadePrevista(
+                visita.getVisitaPrevista(), "Avaliação de frequência cardíaca");
+        ReflectionTestUtils.setField(segundaAtividade, "id", 51L);
+        ResultadoAtividade segundo = new ResultadoAtividade(
+                visita, segundaAtividade, "Frequência cardíaca normal.",
+                estudo.getCoordenador(), Instant.parse("2026-11-15T13:00:00Z"));
+        ReflectionTestUtils.setField(segundo, "id", 61L);
+
+        when(resultados.buscarResultadosDaVisita(40L))
+                .thenReturn(List.of(primeiro, segundo));
+
+        List<ResultadoAtividadeResposta> respostas = servico.listarResultados(
+                10L, 20L, 40L, coordenador);
+
+        assertThat(respostas).hasSize(2);
+        assertThat(respostas).extracting(ResultadoAtividadeResposta::id)
+                .containsExactly(60L, 61L);
+        assertThat(respostas).extracting(ResultadoAtividadeResposta::atividadePrevistaId)
+                .containsExactly(50L, 51L);
+        assertThat(respostas.get(0).descricaoAtividade())
+                .isEqualTo("Avaliação de pressão arterial");
+        assertThat(respostas.get(1).texto())
+                .isEqualTo("Frequência cardíaca normal.");
+        verify(resultados).buscarResultadosDaVisita(40L);
+        verify(resultados, never()).save(any(ResultadoAtividade.class));
+    }
+
+    /**
+     * Retorna lista vazia quando a visita não possui resultados registrados.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaSemResultadosRetornaListaVazia() {
+        prepararConsultaValida();
+        when(resultados.buscarResultadosDaVisita(40L)).thenReturn(List.of());
+
+        List<ResultadoAtividadeResposta> respostas = servico.listarResultados(
+                10L, 20L, 40L, coordenador);
+
+        assertThat(respostas).isEmpty();
+        verify(resultados).buscarResultadosDaVisita(40L);
+    }
+
+    /**
+     * Permite consultar resultados antigos após o encerramento do estudo.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaResultadosDeEstudoEncerrado() {
+        estudo.alterarEstado(EstadoEstudo.ENCERRADO, "Fim do estudo.");
+        prepararConsultaValida();
+        when(resultados.buscarResultadosDaVisita(40L))
+                .thenReturn(List.of(resultadoExistente()));
+
+        List<ResultadoAtividadeResposta> respostas = servico.listarResultados(
+                10L, 20L, 40L, coordenador);
+
+        assertThat(respostas).hasSize(1);
+        assertThat(respostas.get(0).id()).isEqualTo(60L);
+        verify(resultados, never()).save(any(ResultadoAtividade.class));
+    }
+
+    /**
+     * Mantém a consulta do histórico para participantes retirados.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaResultadosDeParticipanteRetirado() {
+        visita.getParticipacao().registrarRetirada(
+                "Saída voluntária.", Instant.now(), estudo.getCoordenador());
+        prepararConsultaValida();
+        when(resultados.buscarResultadosDaVisita(40L))
+                .thenReturn(List.of(resultadoExistente()));
+
+        List<ResultadoAtividadeResposta> respostas = servico.listarResultados(
+                10L, 20L, 40L, coordenador);
+
+        assertThat(respostas).hasSize(1);
+        assertThat(respostas.get(0).texto()).isEqualTo("Texto original.");
+        verify(resultados, never()).save(any(ResultadoAtividade.class));
+    }
+
+    /**
+     * Permite consultar uma visita ainda agendada, mesmo sem resultados.
+     *
+     * @since 1.0
+     */
+    @Test
+    void consultaVisitaAgendadaSemResultados() {
+        visita = new VisitaAgendada(
+                visita.getParticipacao(), visita.getVisitaPrevista(), visita.getDataHora());
+        ReflectionTestUtils.setField(visita, "id", 40L);
+        prepararConsultaValida();
+        when(resultados.buscarResultadosDaVisita(40L)).thenReturn(List.of());
+
+        assertThat(servico.listarResultados(10L, 20L, 40L, coordenador))
+                .isEmpty();
+        verify(resultados).buscarResultadosDaVisita(40L);
+    }
+
+    /**
+     * Impede consultar resultados sem um usuário autenticado.
+     *
+     * @since 1.0
+     */
+    @Test
+    void rejeitaConsultaSemAutenticacao() {
+        assertThatThrownBy(() -> servico.listarResultados(
+                10L, 20L, 40L, null))
+                .isInstanceOf(AccessDeniedException.class);
+
+        verifyNoInteractions(estudos, visitasAgendadas, atividadesPrevistas, resultados);
+    }
+
+    /**
+     * Impede a consulta de resultados por perfis diferentes de coordenador.
+     *
+     * @param perfil perfil sem autorização de consulta
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @EnumSource(value = PerfilUsuario.class,
+            names = {"PESQUISADOR", "ADMINISTRADOR", "PARTICIPANTE"})
+    void rejeitaConsultaPorPerfilSemPermissao(PerfilUsuario perfil) {
+        Usuario usuario = new Usuario(
+                "Sem permissão", "consulta.sem.permissao@teste.com",
+                "senha", perfil);
+
+        assertThatThrownBy(() -> servico.listarResultados(
+                10L, 20L, 40L, new UsuarioAutenticado(usuario)))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("Apenas coordenadores");
+
+        verifyNoInteractions(estudos, visitasAgendadas, atividadesPrevistas, resultados);
+    }
+
+    /**
+     * Impede a consulta por coordenador não vinculado ao estudo.
+     *
+     * @since 1.0
+     */
+    @Test
+    void rejeitaConsultaPorCoordenadorDeOutroEstudo() {
+        when(estudos.findByIdAndCoordenadorId(10L, 1L))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servico.listarResultados(
+                10L, 20L, 40L, coordenador))
+                .isInstanceOfSatisfying(ResponseStatusException.class, erro ->
+                        assertThat(erro.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+
+        verifyNoInteractions(visitasAgendadas, atividadesPrevistas, resultados);
+    }
+
+    /**
+     * Impede consultar resultados de uma visita inexistente.
+     *
+     * @since 1.0
+     */
+    @Test
+    void rejeitaConsultaDeVisitaInexistente() {
+        when(estudos.findByIdAndCoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+        when(visitasAgendadas.findById(40L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> servico.listarResultados(
+                10L, 20L, 40L, coordenador))
+                .isInstanceOfSatisfying(ResponseStatusException.class, erro ->
+                        assertThat(erro.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+
+        verifyNoInteractions(atividadesPrevistas, resultados);
+    }
+
+    /**
+     * Impede consultar a visita usando o ID de outra participação.
+     *
+     * @since 1.0
+     */
+    @Test
+    void rejeitaConsultaDeVisitaDeOutraParticipacao() {
+        prepararConsultaValida();
+
+        assertThatThrownBy(() -> servico.listarResultados(
+                10L, 99L, 40L, coordenador))
+                .isInstanceOfSatisfying(ResponseStatusException.class, erro ->
+                        assertThat(erro.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+
+        verifyNoInteractions(atividadesPrevistas, resultados);
+    }
+
+    /**
+     * Impede consultar a visita de uma participação de outro estudo.
+     *
+     * @since 1.0
+     */
+    @Test
+    void rejeitaConsultaDeParticipacaoDeOutroEstudo() {
+        VisitaAgendada visitaEstranha = mock(VisitaAgendada.class);
+        Participacao outraParticipacao = mock(Participacao.class);
+        Estudo outroEstudo = mock(Estudo.class);
+        when(estudos.findByIdAndCoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visitaEstranha));
+        when(visitaEstranha.getParticipacao()).thenReturn(outraParticipacao);
+        when(outraParticipacao.getId()).thenReturn(20L);
+        when(outraParticipacao.getEstudo()).thenReturn(outroEstudo);
+        when(outroEstudo.getId()).thenReturn(99L);
+
+        assertThatThrownBy(() -> servico.listarResultados(
+                10L, 20L, 40L, coordenador))
+                .isInstanceOfSatisfying(ResponseStatusException.class, erro ->
+                        assertThat(erro.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+
+        verifyNoInteractions(atividadesPrevistas, resultados);
+    }
+
+    /**
+     * Impede consultar resultados vinculados ao protocolo de outro estudo.
+     *
+     * @since 1.0
+     */
+    @Test
+    void rejeitaConsultaDeVisitaPrevistaDeOutroEstudo() {
+        VisitaAgendada visitaEstranha = mock(VisitaAgendada.class);
+        VisitaPrevista outraVisita = mock(VisitaPrevista.class);
+        Protocolo outroProtocolo = mock(Protocolo.class);
+        Estudo outroEstudo = mock(Estudo.class);
+        when(estudos.findByIdAndCoordenadorId(10L, 1L))
+                .thenReturn(Optional.of(estudo));
+        when(visitasAgendadas.findById(40L))
+                .thenReturn(Optional.of(visitaEstranha));
+        when(visitaEstranha.getParticipacao()).thenReturn(visita.getParticipacao());
+        when(visitaEstranha.getVisitaPrevista()).thenReturn(outraVisita);
+        when(outraVisita.getProtocolo()).thenReturn(outroProtocolo);
+        when(outroProtocolo.getEstudo()).thenReturn(outroEstudo);
+        when(outroEstudo.getId()).thenReturn(99L);
+
+        assertThatThrownBy(() -> servico.listarResultados(
+                10L, 20L, 40L, coordenador))
+                .isInstanceOfSatisfying(ResponseStatusException.class, erro ->
+                        assertThat(erro.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+
+        verifyNoInteractions(atividadesPrevistas, resultados);
     }
 
 }

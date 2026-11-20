@@ -353,6 +353,167 @@ class DocumentacaoApiTest {
         assertThat(rotas.path(base + "/inclusao").path("post").path("responses").has("409")).isTrue();
     }
 
+    /** Confere rotas, corpos, respostas, segurança e códigos documentados das visitas. */
+    @Test
+    void documentaOperacoesDeVisita() throws Exception {
+        JsonNode contrato = json.readTree(mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        JsonNode rotas = contrato.path("paths");
+        String base = "/estudos/{estudoId}/participacoes/{participacaoId}/visitas";
+
+        for (String[] item : new String[][]{
+                {base, "post", "201", "VisitaAgendadaResposta", "400", "401", "403", "404", "409"},
+                {base + "/{visitaAgendadaId}", "put", "200", "VisitaAgendadaResposta",
+                    "400", "401", "403", "404"},
+                {base + "/{visitaAgendadaId}/situacao", "patch", "200", "VisitaAgendadaResposta",
+                    "400", "401", "403", "404"},
+                {base + "/{visitaAgendadaId}/correcoes", "post", "201", "CorrecaoVisitaResposta",
+                    "400", "401", "403", "404"}}) {
+            JsonNode operacao = rotas.path(item[0]).path(item[1]);
+            assertThat(operacao.isMissingNode()).as("%s %s", item[1], item[0]).isFalse();
+            assertThat(operacao.path("security").toString()).contains("sessao");
+            assertThat(operacao.path("parameters").toString()).contains("TokenCsrf");
+            assertThat(operacao.path("responses").path(item[2]).path("content")
+                    .path("*/*").path("schema").path("$ref").asText())
+                    .endsWith("/" + item[3]);
+            for (int i = 4; i < item.length; i++) {
+                assertThat(operacao.path("responses").has(item[i]))
+                        .as("%s %s documenta %s", item[1], item[0], item[i]).isTrue();
+            }
+            for (String codigo : new String[]{"400", "401", "403", "404"}) {
+                assertThat(operacao.path("responses").path(codigo).path("content")
+                        .path("*/*").path("schema").path("$ref").asText())
+                        .as("%s %s descreve o erro %s", item[1], item[0], codigo)
+                        .endsWith("/ErroApi");
+            }
+        }
+
+        assertThat(rotas.path(base).path("post").path("requestBody").path("content")
+                .path("application/json").path("schema").path("$ref").asText())
+                .endsWith("/VisitaAgendadaCadastroEntrada");
+        assertThat(rotas.path(base + "/{visitaAgendadaId}").path("put").path("requestBody")
+                .path("content").path("application/json").path("schema").path("$ref").asText())
+                .endsWith("/VisitaAgendadaReagendamentoEntrada");
+        assertThat(rotas.path(base + "/{visitaAgendadaId}/situacao").path("patch")
+                .path("requestBody").path("content").path("application/json")
+                .path("schema").path("$ref").asText()).endsWith("/VisitaAgendadaSituacaoEntrada");
+        assertThat(rotas.path(base + "/{visitaAgendadaId}/correcoes").path("post")
+                .path("requestBody").path("content").path("application/json")
+                .path("schema").path("$ref").asText()).endsWith("/CorrecaoVisitaEntrada");
+
+        JsonNode schemas = contrato.path("components").path("schemas");
+        for (String nome : new String[]{"VisitaAgendadaCadastroEntrada",
+                "VisitaAgendadaReagendamentoEntrada", "VisitaAgendadaSituacaoEntrada",
+                "CorrecaoVisitaEntrada"}) {
+            assertThat(schemas.path(nome).path("properties").isEmpty())
+                    .as("Campos publicados em %s", nome).isFalse();
+        }
+        assertThat(rotas.path(base).path("post").path("responses").path("409")
+                .path("description").asText()).contains("VISITA_JA_AGENDADA");
+        assertThat(rotas.path(base).path("post").path("responses").path("400")
+                .path("description").asText())
+                .contains("ESTADO_ESTUDO_INVALIDO", "PARTICIPACAO_INVALIDA",
+                        "DATA_VISITA_INVALIDA", "VALIDACAO_INVALIDA");
+        assertThat(rotas.path(base + "/{visitaAgendadaId}").path("put").path("responses")
+                .path("400").path("description").asText())
+                .contains("ESTADO_ESTUDO_INVALIDO", "TRANSICAO_VISITA_INVALIDA");
+        assertThat(rotas.path(base + "/{visitaAgendadaId}/situacao").path("patch")
+                .path("responses").path("400").path("description").asText())
+                .contains("TRANSICAO_VISITA_INVALIDA", "VALIDACAO_INVALIDA");
+        assertThat(rotas.path(base + "/{visitaAgendadaId}/correcoes").path("post")
+                .path("responses").path("400").path("description").asText())
+                .contains("CORRECAO_BLOQUEADA");
+    }
+
+    /** Confere rotas, schemas e erros publicados para cadastro e edição de resultados. */
+    @Test
+    void documentaOperacoesDeResultados() throws Exception {
+        JsonNode contrato = json.readTree(mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        JsonNode rotas = contrato.path("paths");
+        String base = "/estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados";
+
+        for (String[] item : new String[][]{
+                {base, "post", "201", "400", "401", "403", "404", "409"},
+                {base + "/{resultadoId}", "put", "200", "400", "401", "403", "404"}}) {
+            JsonNode operacao = rotas.path(item[0]).path(item[1]);
+            assertThat(operacao.isMissingNode()).as("%s %s", item[1], item[0]).isFalse();
+            assertThat(operacao.path("security").toString()).contains("sessao");
+            assertThat(operacao.path("parameters").toString()).contains("TokenCsrf");
+            for (int i = 2; i < item.length; i++) {
+                assertThat(operacao.path("responses").has(item[i]))
+                        .as("%s %s documenta %s", item[1], item[0], item[i]).isTrue();
+            }
+            for (String codigo : new String[]{"400", "401", "403", "404"}) {
+                assertThat(operacao.path("responses").path(codigo).path("content")
+                        .path("*/*").path("schema").path("$ref").asText())
+                        .as("%s %s descreve o erro %s", item[1], item[0], codigo)
+                        .endsWith("/ErroApi");
+            }
+            assertThat(operacao.path("responses").path(item[2]).path("content")
+                    .path("*/*").path("schema").path("$ref").asText())
+                    .endsWith("/ResultadoAtividadeResposta");
+        }
+
+        assertThat(rotas.path(base).path("post").path("requestBody").path("content")
+                .path("application/json").path("schema").path("$ref").asText())
+                .endsWith("/ResultadoAtividadeCadastroEntrada");
+        assertThat(rotas.path(base + "/{resultadoId}").path("put").path("requestBody")
+                .path("content").path("application/json").path("schema").path("$ref").asText())
+                .endsWith("/ResultadoAtividadeEdicaoEntrada");
+
+        JsonNode schemas = contrato.path("components").path("schemas");
+        assertThat(schemas.path("ResultadoAtividadeCadastroEntrada").path("properties")
+                .path("texto").path("maxLength").asInt()).isEqualTo(1000);
+        assertThat(schemas.path("ResultadoAtividadeEdicaoEntrada").path("properties")
+                .path("texto").path("maxLength").asInt()).isEqualTo(1000);
+        assertThat(rotas.path(base).path("post").path("responses").path("400")
+                .path("description").asText())
+                .contains("RESULTADO_INVALIDO", "VALIDACAO_INVALIDA");
+        assertThat(rotas.path(base).path("post").path("responses").path("404")
+                .path("description").asText()).contains("RECURSO_NAO_ENCONTRADO");
+        assertThat(rotas.path(base).path("post").path("responses").path("409")
+                .path("description").asText()).contains("RESULTADO_JA_REGISTRADO");
+        assertThat(rotas.path(base + "/{resultadoId}").path("put").path("responses")
+                .path("400").path("description").asText())
+                .contains("ESTADO_ESTUDO_INVALIDO", "RESULTADO_INVALIDO", "VALIDACAO_INVALIDA");
+    }
+
+    /** Confere a consulta das participações e o schema de seus dados. */
+    @Test
+    void documentaListagemDeParticipacoes() throws Exception {
+        JsonNode contrato = json.readTree(mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        JsonNode operacao = contrato.path("paths")
+                .path("/estudos/{estudoId}/participacoes").path("get");
+
+        assertThat(operacao.isMissingNode()).isFalse();
+        assertThat(operacao.path("security").toString()).contains("sessao");
+        assertThat(operacao.path("parameters").toString()).doesNotContain("TokenCsrf");
+        for (String codigo : new String[]{"200", "401", "403", "404"}) {
+            assertThat(operacao.path("responses").has(codigo)).isTrue();
+        }
+        for (String codigo : new String[]{"401", "403", "404"}) {
+            assertThat(operacao.path("responses").path(codigo).path("content")
+                    .path("*/*").path("schema").path("$ref").asText())
+                    .endsWith("/ErroApi");
+        }
+        assertThat(operacao.path("responses").path("200").path("content")
+                .path("*/*").path("schema").path("type").asText()).isEqualTo("array");
+        assertThat(operacao.path("responses").path("200").path("content")
+                .path("*/*").path("schema").path("items").path("$ref").asText())
+                .endsWith("/ParticipacaoResumoResposta");
+        assertThat(operacao.path("responses").path("404").path("description").asText())
+                .contains("RECURSO_NAO_ENCONTRADO");
+
+        JsonNode propriedades = contrato.path("components").path("schemas")
+                .path("ParticipacaoResumoResposta").path("properties");
+        for (String campo : new String[]{"id", "participanteId", "participanteNome",
+                "dataInclusao", "situacao", "dataRetirada"}) {
+            assertThat(propriedades.has(campo)).as("Campo da participação: %s", campo).isTrue();
+        }
+    }
+
     /** Confere que a retirada de participantes está publicada no contrato. */
     @Test
     void documentaRetiradaDeParticipantes() throws Exception {
@@ -409,6 +570,71 @@ class DocumentacaoApiTest {
             assertThat(operacao.path("parameters").toString()).contains("estudoId");
             assertThat(operacao.path("responses").has("400")).isTrue();
             assertThat(operacao.path("responses").has("404")).isTrue();
+        }
+    }
+
+    /**
+     * Confere os contratos GET da visita e de seus resultados para a web.
+     *
+     * @throws Exception se a consulta ou a leitura do contrato falhar
+     * @since 1.0
+     */
+    @Test
+    void documentaConsultasDaVisitaEDosResultados() throws Exception {
+        JsonNode contrato = json.readTree(mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        JsonNode rotas = contrato.path("paths");
+        String caminhoVisita = "/estudos/{estudoId}/participacoes/{participacaoId}"
+                + "/visitas/{visitaAgendadaId}";
+        String caminhoResultados = caminhoVisita + "/resultados";
+
+        for (String caminho : new String[]{caminhoVisita, caminhoResultados}) {
+            JsonNode operacao = rotas.path(caminho).path("get");
+            assertThat(operacao.isMissingNode()).as("GET %s", caminho).isFalse();
+            assertThat(operacao.path("security").toString()).contains("sessao");
+            assertThat(operacao.path("parameters").toString())
+                    .contains("estudoId", "participacaoId", "visitaAgendadaId")
+                    .doesNotContain("TokenCsrf");
+            assertThat(operacao.has("requestBody")).isFalse();
+            for (String codigo : new String[]{"200", "401", "403", "404"}) {
+                assertThat(operacao.path("responses").has(codigo))
+                        .as("GET %s documenta HTTP %s", caminho, codigo).isTrue();
+            }
+        }
+        assertThat(rotas.path(caminhoResultados).path("get").path("responses")
+                .path("403").path("description").asText())
+                .contains("Perfil sem permissão")
+                .doesNotContain("CSRF");
+
+        for (String[] escrita : new String[][]{
+                {caminhoResultados, "post"},
+                {caminhoResultados + "/{resultadoId}", "put"}}) {
+            assertThat(rotas.path(escrita[0]).path(escrita[1])
+                    .path("parameters").toString()).contains("TokenCsrf");
+        }
+
+        JsonNode respostaVisita = rotas.path(caminhoVisita).path("get")
+                .path("responses").path("200").path("content");
+        assertThat(respostaVisita.toString()).contains("VisitaAgendadaResposta");
+
+        JsonNode respostaResultados = rotas.path(caminhoResultados).path("get")
+                .path("responses").path("200").path("content");
+        assertThat(respostaResultados.toString())
+                .contains("\"type\":\"array\"", "ResultadoAtividadeResposta");
+
+        JsonNode schemas = contrato.path("components").path("schemas");
+        JsonNode camposVisita = schemas.path("VisitaAgendadaResposta").path("properties");
+        for (String campo : new String[]{"id", "participacaoId", "visitaPrevistaId",
+                "nomeVisita", "dataHora", "situacao"}) {
+            assertThat(camposVisita.has(campo)).as("Campo da visita: %s", campo).isTrue();
+        }
+
+        JsonNode camposResultado = schemas.path("ResultadoAtividadeResposta").path("properties");
+        for (String campo : new String[]{"id", "visitaAgendadaId", "atividadePrevistaId",
+                "descricaoAtividade", "texto", "registradoPorId", "registradoEm",
+                "atualizadoPorId", "atualizadoEm"}) {
+            assertThat(camposResultado.has(campo))
+                    .as("Campo do resultado: %s", campo).isTrue();
         }
     }
 
