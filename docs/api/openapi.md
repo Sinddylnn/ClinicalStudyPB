@@ -6,9 +6,10 @@ formato desse contrato; **Swagger UI** é a página que permite consultá-lo e f
 requisições. O **springdoc 3.1.1** lê os controllers e DTOs Java para gerar os dois.
 
 Essa é uma entrega da task **3191: Publicar OpenAPI e documentar decisões e versões**.
-O contrato cobre autenticação, gestão de usuários, cadastro e listagem de estudos,
-consulta de coordenadores disponíveis e atribuição de coordenador a um estudo.
-As operações descritas correspondem aos controllers implementados.
+O contrato cobre autenticação, gestão de usuários e estudos, recrutamento,
+configuração de protocolos e acompanhamento de participantes, incluindo visitas,
+resultados, retirada, histórico e consultas do aplicativo. As operações descritas
+correspondem aos controllers implementados.
 
 ## Abrir a documentação
 
@@ -233,6 +234,7 @@ códigos e o fluxo por `curl` estão em [autenticação](autenticacao.md).
 | `compartilhado/documentacao/ConfiguracaoOpenApi.java` | Define nome, versão, cookie de sessão, cabeçalho CSRF e operação de logout |
 | `usuarios/api/AutenticacaoController.java` e `UsuarioController.java` | Descrevem autenticação e gestão de usuários, resultados e requisitos de acesso |
 | `estudos/api/EstudoController.java` | Descreve cadastro, listagem, opções e atribuição de coordenadores |
+| `estudos/api/VisitaAgendadaController.java`, `ResultadoAtividadeController.java`, `ParticipacaoConsultaController.java`, `RetiradaParticipanteController.java`, `HistoricoParticipacaoController.java` e `ParticipanteConsultaController.java` | Descrevem visitas, resultados, participações, retirada, histórico e consultas do participante |
 | DTOs em `usuarios/api`, `estudos/api` e `compartilhado/erro/ErroApi.java` | Explicam os campos que entram e saem da API |
 | `compartilhado/seguranca/ConfiguracaoSeguranca.java` | Permite consultar os arquivos da documentação sem liberar as operações protegidas |
 | `application.properties` | Configura a página Swagger e a geração das respostas documentadas |
@@ -303,12 +305,12 @@ concorrência nem integração das telas. Cada integrante deve conferir seu ambi
 A integração das telas continua na task 3171, inclusive a seleção do coordenador
 pelos novos endpoints; a existência do contrato não comprova que a web já o utiliza.
 
-Na revisão de 25/10/2026, `./mvnw verify` passou com **84 testes**, incluindo os
-cinco testes do contrato OpenAPI. Separadamente, os quatro cenários de
-`EstudoPersistenciaIT` passaram em PostgreSQL **17.11** temporário. Foram
-validados tanto um banco vazio quanto a evolução de V2 para V3 com dados existentes.
-Esses resultados não representam uma execução da interface web nem testes de carga
-ou de concorrência simultânea.
+Na conferência de 20/11/2026, `./mvnw -Dtest=DocumentacaoApiTest test` passou com
+**13 testes**, incluindo verificações das rotas e schemas de visitas, resultados,
+listagem de participações, retirada, consultas do participante e histórico. Essa
+execução focada não substitui `./mvnw verify` nem a conferência de persistência no
+PostgreSQL. Também não representa uma execução da interface web nem testes de carga
+ou concorrência simultânea.
 
 
 Referências: [springdoc](https://springdoc.org/),
