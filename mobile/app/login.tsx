@@ -56,7 +56,6 @@ export default function LoginScreen() {
   try {
     await entrar(email.trim(), senha);
   } catch (e) {
-    console.log('[login] erro:', e);
     setErro(e instanceof CredenciaisInvalidasError ? MSG_CREDENCIAIS : MSG_FALHA);
   } finally {
     setCarregando(false);

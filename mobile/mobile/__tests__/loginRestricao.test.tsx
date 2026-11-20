@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
-import LoginScreen from '@/app/login'; // AJUSTE: caminho real da tela de login
+import LoginScreen from '@/app/login';
 import { useAuth } from '@/contexts/AuthContext';
 
 jest.mock('@/contexts/AuthContext', () => ({ useAuth: jest.fn() }));
