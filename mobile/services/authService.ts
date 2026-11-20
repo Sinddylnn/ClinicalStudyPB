@@ -22,7 +22,6 @@ async function obterCsrf(): Promise<Csrf> {
     credentials: 'include',
     headers: { Accept: 'application/json' },
   });
-  console.log('[csrf] ok');
   if (!res.ok) throw new Error('Falha ao obter o CSRF.');
   const dados = await res.json(); // CsrfResposta: { token, headerName }
   return { headerName: dados.headerName ?? 'X-CSRF-TOKEN', token: dados.token };
