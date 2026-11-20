@@ -1535,6 +1535,29 @@ class VisitaAgendadaServiceTest {
         verifyNoInteractions(visitasAgendadas);
     }
 
+    /**
+     * Impede o reagendamento de visitas por pesquisadores.
+     *
+     * @since 1.0
+     */
+    @Test
+    void impedeReagendamentoPorPesquisador() {
+        Usuario usuario = new Usuario(
+                "Pesquisador", "pesquisador@teste.com",
+                "senha", PerfilUsuario.PESQUISADOR);
+
+        UsuarioAutenticado pesquisador = new UsuarioAutenticado(usuario);
+
+        assertThatThrownBy(() -> servico.reagendar(
+                10L, 20L, 40L,
+                new VisitaAgendadaReagendamentoEntrada(
+                        dataVisita.plus(1, ChronoUnit.DAYS)),
+                pesquisador))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("Apenas coordenadores");
+
+        verifyNoInteractions(estudos, visitasAgendadas);
+    }
 
     /**
      * Verifica o reagendamento de uma visita pendente.
