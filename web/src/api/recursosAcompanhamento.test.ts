@@ -14,8 +14,8 @@ describe('recursosAcompanhamento', () => {
     vi.resetModules();
   });
 
-  it('no modo real, liga a retirada (PR #48) e a lista do pesquisador (PR #41), mas não o histórico', async () => {
-    expect(await carregarRecursos('real')).toEqual({ historico: false, listaPesquisador: true, retirada: true });
+  it('no modo real, liga o histórico (PR #54), a retirada (PR #48) e a lista do pesquisador (PR #41)', async () => {
+    expect(await carregarRecursos('real')).toEqual({ historico: true, listaPesquisador: true, retirada: true });
   });
 
   it('no modo simulado, liga tudo', async () => {
