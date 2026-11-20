@@ -74,7 +74,7 @@ Em 20/11/2026, foram adicionados dois endpoints de leitura para a tela de acompa
 
 `GET /estudos/{estudoId}/participacoes`
 
-Leitura permitida ao coordenador vinculado e ao pesquisador responsável pelo estudo. A lista vem em ordem crescente de `id`, e `dataRetirada` aparece só nas participações retiradas. Um estudo sem participações devolve `[]`.
+Leitura permitida ao coordenador vinculado e ao pesquisador responsável pelo estudo. A lista vem em ordem crescente de `id`. O campo `dataRetirada` é incluído como `null` enquanto a participação estiver `ATIVA` e contém a data e hora da retirada quando estiver `RETIRADA`. Um estudo sem participações devolve `[]`.
 
 | HTTP | Situação |
 |---|---|
@@ -92,7 +92,8 @@ Exemplo de resposta:
     "participanteId": 45,
     "participanteNome": "Ana Participante",
     "dataInclusao": "2026-11-10T12:00:00Z",
-    "situacao": "ATIVA"
+    "situacao": "ATIVA",
+    "dataRetirada": null
   },
   {
     "id": 121,

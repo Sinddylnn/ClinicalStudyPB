@@ -1,9 +1,12 @@
 package br.edu.uepb.clinicalstudypb.estudos.api;
 
+import br.edu.uepb.clinicalstudypb.compartilhado.erro.ErroApi;
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
 import br.edu.uepb.clinicalstudypb.estudos.service.VisitaAgendadaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -60,9 +63,13 @@ public class ParticipacaoConsultaController {
     )
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Participações listadas com sucesso"),
-        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
-        @ApiResponse(responseCode = "403", description = "Acesso negado"),
-        @ApiResponse(responseCode = "404", description = "Estudo não encontrado")
+        @ApiResponse(responseCode = "401", description = "Usuário não autenticado.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "403", description = "Perfil sem permissão.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
+        @ApiResponse(responseCode = "404",
+                description = "RECURSO_NAO_ENCONTRADO: estudo inexistente ou fora do vínculo autorizado.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class)))
     })
     public List<ParticipacaoResumoResposta> listar(
             @PathVariable Long estudoId,
