@@ -306,7 +306,7 @@ A integração das telas continua na task 3171, inclusive a seleção do coorden
 pelos novos endpoints; a existência do contrato não comprova que a web já o utiliza.
 
 Na conferência de 20/11/2026, `./mvnw -Dtest=DocumentacaoApiTest test` passou com
-**13 testes**, incluindo verificações das rotas e schemas de visitas, resultados,
+**14 testes**, incluindo verificações das rotas e schemas de visitas, resultados,
 listagem de participações, retirada, consultas do participante e histórico. Essa
 execução focada não substitui `./mvnw verify` nem a conferência de persistência no
 PostgreSQL. Também não representa uma execução da interface web nem testes de carga

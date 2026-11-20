@@ -41,7 +41,7 @@ import jakarta.validation.Valid;
 @ApiResponses({
     @ApiResponse(responseCode = "401", description = "Usuário não autenticado.",
             content = @Content(schema = @Schema(implementation = ErroApi.class))),
-    @ApiResponse(responseCode = "403", description = "Perfil sem permissão ou CSRF inválido.",
+    @ApiResponse(responseCode = "403", description = "Perfil sem permissão.",
             content = @Content(schema = @Schema(implementation = ErroApi.class)))
 })
 public class ResultadoAtividadeController {
@@ -77,6 +77,8 @@ public class ResultadoAtividadeController {
         @ApiResponse(responseCode = "200", description = "Resultados encontrados ou lista vazia.",
                 content = @Content(array = @ArraySchema(
                         schema = @Schema(implementation = ResultadoAtividadeResposta.class)))),
+        @ApiResponse(responseCode = "403", description = "Perfil sem permissão.",
+                content = @Content(schema = @Schema(implementation = ErroApi.class))),
         @ApiResponse(responseCode = "404", description = "Estudo, participação ou visita fora do vínculo esperado.",
                 content = @Content(schema = @Schema(implementation = ErroApi.class)))
     })
@@ -107,7 +109,8 @@ public class ResultadoAtividadeController {
     @Operation(
             summary = "Registrar resultado de atividade",
             description = "Exige coordenador vinculado ao estudo, participação ativa e visita realizada. "
-                    + "Aceita resultados parciais, mas apenas um por atividade em cada visita.",
+                    + "Aceita resultados parciais, mas apenas um por atividade em cada visita. "
+                    + "A operação exige token CSRF válido.",
             parameters = @Parameter(ref = "#/components/parameters/TokenCsrf")
     )
     @ApiResponses({
@@ -151,7 +154,8 @@ public class ResultadoAtividadeController {
     @Operation(
             summary = "Editar resultado de atividade",
             description = "Altera apenas o texto de um resultado já registrado, preservando os dados "
-                    + "do registro original e identificando a última atualização.",
+                    + "do registro original e identificando a última atualização. "
+                    + "A operação exige token CSRF válido.",
             parameters = @Parameter(ref = "#/components/parameters/TokenCsrf")
     )
     @ApiResponses({

@@ -601,6 +601,17 @@ class DocumentacaoApiTest {
                         .as("GET %s documenta HTTP %s", caminho, codigo).isTrue();
             }
         }
+        assertThat(rotas.path(caminhoResultados).path("get").path("responses")
+                .path("403").path("description").asText())
+                .contains("Perfil sem permissão")
+                .doesNotContain("CSRF");
+
+        for (String[] escrita : new String[][]{
+                {caminhoResultados, "post"},
+                {caminhoResultados + "/{resultadoId}", "put"}}) {
+            assertThat(rotas.path(escrita[0]).path(escrita[1])
+                    .path("parameters").toString()).contains("TokenCsrf");
+        }
 
         JsonNode respostaVisita = rotas.path(caminhoVisita).path("get")
                 .path("responses").path("200").path("content");
