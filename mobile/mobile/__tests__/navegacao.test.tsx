@@ -29,6 +29,11 @@ jest.mock('../../contexts/AuthContext', () => ({
   }),
 }));
 
+// A aba Estudos consulta a API: nos testes de navegação ela devolve lista vazia
+jest.mock('../../services/participanteService', () => ({
+  listarEstudos: jest.fn(async () => []),
+}));
+
 // A primeira execução compila o app inteiro e pode passar de 5 segundos
 jest.setTimeout(30000);
 
