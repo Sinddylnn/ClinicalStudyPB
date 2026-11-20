@@ -651,10 +651,10 @@ A retirada não pode ser desfeita: depois da evidência 22, o "Participante Demo
 
 ![Agendamento bloqueado para participante retirado](../../releases/release2/evidencias/web/23-rf16-retirada-agendamento-bloqueado.png)
 
-**Mostra:** a tela "Agendamento de visitas" do "Participante Demo", já "Retirado", com o aviso "O participante foi retirado do estudo: não é possível agendar, reagendar nem registrar visitas." e sem o formulário de agendamento. O segundo aviso indica que a lista de visitas agendadas depende da rota do histórico, que o backend ainda não oferece.
+**Mostra:** a tela "Agendamento de visitas" do "Participante Demo", já "Retirado", com o aviso "O participante foi retirado do estudo: não é possível agendar, reagendar nem registrar visitas." e sem o formulário de agendamento. O segundo aviso indica que a lista de visitas agendadas depende do histórico, que a web ainda não usa no modo real.
 **Comprova:** RF16. Um participante retirado não recebe novos agendamentos nem registros de visita.
 
-A retirada pelo botão "Retirar do estudo", na tela do histórico, e a retirada repetida (`PARTICIPACAO_JA_RETIRADA`) ficam sem captura no modo real: o histórico depende da rota do backend, e a tela não mostra o botão para quem já foi retirado. Os dois casos estão nos testes automatizados.
+A retirada pelo botão "Retirar do estudo", na tela do histórico, e a retirada repetida (`PARTICIPACAO_JA_RETIRADA`) ficam sem captura no modo real: a chave `historico` de `recursosAcompanhamento` ainda está desligada, e a tela não mostra o botão para quem já foi retirado. Os dois casos estão nos testes automatizados.
 
 ## Testes e cobertura da Sprint 3
 
