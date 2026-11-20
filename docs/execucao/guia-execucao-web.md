@@ -1,10 +1,10 @@
 # Guia de execução da aplicação web
 
-Este guia mostra como instalar, executar e testar a aplicação web do ClinicalStudyPB. No fim, reúne as evidências da Release 1 (Sprints 1 e 2).
+Este guia mostra como instalar, executar e testar a aplicação web do ClinicalStudyPB. Ele cobre a Release 1 (Sprints 1 e 2) e a Sprint 3 da Release 2. No fim, reúne as evidências da Release 1 e da Sprint 3.
 
 ## Visão geral
 
-Na Release 1, a web entrega os requisitos RF01 a RF11:
+Na Release 1, a web entrega os requisitos RF01 a RF11. Na Sprint 3 da Release 2, entrega os requisitos RF12 a RF16:
 
 | Requisito | Sprint | O que a web faz                                                                                       |
 | --------- | ------ | ----------------------------------------------------------------------------------------------------- |
@@ -19,12 +19,17 @@ Na Release 1, a web entrega os requisitos RF01 a RF11:
 | RF09      | 2      | O coordenador avalia os critérios de elegibilidade de cada candidato.                                 |
 | RF10      | 2      | O coordenador registra o consentimento simulado do candidato.                                         |
 | RF11      | 2      | O coordenador inclui candidatos elegíveis com consentimento, respeitando o limite de participantes.    |
+| RF12      | 3      | O coordenador vê os participantes incluídos e agenda ou reagenda as visitas previstas.                |
+| RF13      | 3      | O coordenador registra a visita como realizada, ausente ou cancelada e corrige um registro com justificativa. |
+| RF14      | 3      | O coordenador lança os resultados fictícios das atividades de uma visita realizada.                   |
+| RF15      | 3      | O coordenador e o pesquisador consultam o histórico de visitas e avaliações do participante.          |
+| RF16      | 3      | O coordenador registra a retirada do participante, com motivo.                                        |
 
 Quem usa a web:
 
 - **Administrador:** gerencia as contas.
-- **Pesquisador:** cadastra estudos e configura critérios, visitas e o estado de cada estudo.
-- **Coordenador:** consulta os estudos vinculados a ele e conduz o recrutamento.
+- **Pesquisador:** cadastra estudos e configura critérios, visitas e o estado de cada estudo. Também consulta a lista de participantes e o histórico de cada um, só para leitura.
+- **Coordenador:** consulta os estudos vinculados a ele, conduz o recrutamento e acompanha os participantes incluídos.
 
 A segurança é garantida pelo backend. A web organiza a navegação e mostra as respostas da API.
 
@@ -143,13 +148,14 @@ Abra **http://localhost:5173**.
 
 ### Dados reais ou simulados
 
-O login e os usuários sempre usam o backend. Estudos, protocolo e recrutamento podem usar dados simulados ou a API, conforme três variáveis do `web/.env`:
+O login e os usuários sempre usam o backend. Estudos, protocolo, recrutamento e acompanhamento podem usar dados simulados ou a API, conforme quatro variáveis do `web/.env`:
 
-| Variável              | Telas                                                             |
-| --------------------- | ----------------------------------------------------------------- |
-| `VITE_ESTUDOS_API`    | Lista e cadastro de estudos e mudança de estado                    |
-| `VITE_PROTOCOLO_API`  | Critérios de inclusão e exclusão e visitas previstas com atividades |
-| `VITE_CANDIDATOS_API` | Candidatos, elegibilidade, consentimento e inclusão                |
+| Variável                  | Telas                                                                                                         |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `VITE_ESTUDOS_API`        | Lista e cadastro de estudos e mudança de estado                                                               |
+| `VITE_PROTOCOLO_API`      | Critérios de inclusão e exclusão e visitas previstas com atividades                                           |
+| `VITE_CANDIDATOS_API`     | Candidatos, elegibilidade, consentimento e inclusão                                                           |
+| `VITE_ACOMPANHAMENTO_API` | Lista de participantes, agendamento, registro e correção de visitas, resultados, histórico e retirada         |
 
 Cada uma aceita dois valores:
 
@@ -160,11 +166,55 @@ Cada uma aceita dois valores:
 
 Para trocar, copie `web/.env.example` para `web/.env`, ajuste os valores e **reinicie o `npm run dev`**: o Vite só lê o `.env` ao iniciar.
 
+No modo `real`, a web só chama as rotas de acompanhamento que o backend já oferece. Uma parte que ainda não existe no backend fica oculta, e a tela mostra um aviso no lugar dela. Isso evita que a web chame uma rota inexistente e caia no acesso negado. O que fica disponível em cada modo é definido por `recursosAcompanhamento`, em `web/src/api/acompanhamento.ts`. Quando o backend entregar uma rota nova, basta ligar a chave correspondente nesse arquivo.
+
 Combinações mais usadas:
 
-- **Tudo `simulado`:** mostra os exemplos fictícios de cada tela, inclusive um estudo em Recrutamento com candidatos em todas as etapas.
+- **Tudo `simulado`:** mostra os exemplos fictícios de cada tela, inclusive um estudo em Recrutamento com candidatos em todas as etapas. O mesmo estudo tem um participante incluído, com visitas em várias situações.
 - **Tudo `real`:** usa só o backend; o que for cadastrado continua lá depois de recarregar.
-- **`VITE_ESTUDOS_API=real` com os outros `simulado`:** o protocolo e os candidatos simulados começam vazios, para não misturar dados fictícios com estudos reais de mesmo id.
+- **`VITE_ESTUDOS_API=real` com os outros `simulado`:** o protocolo, os candidatos e o acompanhamento simulados começam vazios, para não misturar dados fictícios com estudos reais de mesmo id.
+
+## Testar o acompanhamento (Sprint 3)
+
+O roteiro abaixo usa o modo simulado: deixe as quatro variáveis como `simulado` (ou sem o `web/.env`). O login usa as contas fictícias do backend. Os dados simulados voltam ao estado inicial ao recarregar a página.
+
+O estudo "Acompanhamento de hábitos" (id 3) está em Recrutamento e tem uma participante incluída, Maria Souza. As visitas dela estão em várias situações:
+
+| Visita                     | Data e hora          | Situação  | Observação                                                 |
+| -------------------------- | -------------------- | --------- | ---------------------------------------------------------- |
+| Visita inicial             | 30/10/2026 às 09:00  | Realizada | Já tem resultado registrado.                               |
+| Visita de acompanhamento   | 06/11/2026 às 09:00  | Ausente   | Motivo: "Participante não compareceu."                     |
+| Visita de acompanhamento   | 11/11/2026 às 09:00  | Realizada | Ainda sem resultados.                                      |
+| Visita de acompanhamento   | 16/11/2026 às 09:00  | Agendada  | Data já passada: aceita Realizada e Ausente.               |
+| Visita final               | 10/12/2026 às 09:00  | Agendada  | Data futura: entre os registros, aceita só o cancelamento. |
+
+As visitas realizadas e as ausentes só podem ser registradas a partir do dia agendado, no fuso de Recife. Por isso, os botões de cada visita dependem da data do dia do teste.
+
+### Coordenador
+
+Entre com `coordenador@clinicalstudypb.test` e a senha `Demo@123`.
+
+1. No menu "Estudos", clique em "Acompanhamento de hábitos". A tela de recrutamento do estudo abre.
+2. Clique em "Participantes incluídos". Confira a lista: Maria Souza aparece com a situação "Ativo" e as ações "Ver histórico", "Agendar visitas" e "Retirar".
+3. Clique em "Agendar visitas". Na tela "Agendamento de visitas", escolha a "Visita inicial", uma data entre hoje e 20/12/2026 e uma hora. Clique em "Agendar visita". A notificação confirma o agendamento, e a visita aparece em "Visitas agendadas" como "Agendada".
+4. Agende de novo a "Visita inicial". O campo da visita mostra "Já existe um agendamento pendente para essa visita.", porque só pode haver uma visita agendada para cada visita prevista.
+5. Na "Visita de acompanhamento" de 16/11/2026, clique em "Ausente" e confirme em "Registrar ausência". O motivo é opcional. A visita passa a "Ausente".
+6. Na "Visita final", clique em "Cancelar visita" e confirme sem preencher o motivo. O diálogo mostra "Informe o motivo do cancelamento.". Preencha o motivo e confirme de novo. A visita passa a "Cancelada".
+7. Na visita de 16/11/2026, agora "Ausente", clique em "Corrigir". Escolha "Realizada", preencha a "Justificativa da correção (obrigatória)" e clique em "Salvar correção". A notificação informa a correção, e a visita passa a "Realizada".
+8. Volte à lista e clique em "Ver histórico". A tela "Histórico do participante" mostra as visitas em ordem cronológica, com a situação, quem registrou, os resultados e as correções. A correção do passo 7 aparece em "Correções".
+9. Na visita de 16/11/2026, clique em "Registrar resultados". Na tela "Resultados da visita", preencha a avaliação e clique em "Salvar resultados". A web volta ao histórico, já com o resultado.
+10. Pela trilha, volte a "Participantes" e clique em "Agendar visitas". Na visita de 16/11/2026, o botão "Corrigir" sumiu e aparece "Correção bloqueada: a visita já tem resultados registrados.".
+11. Volte à lista e clique em "Retirar". No diálogo "Retirar do estudo?", preencha o "Motivo da retirada (obrigatório)" e clique em "Retirar participante". Maria Souza passa a "Retirado", sem as ações "Agendar visitas" e "Retirar". A visita ainda agendada é cancelada com o motivo "Retirada do participante", e a retirada aparece no histórico.
+
+A retirada também pode ser feita pelo botão "Retirar do estudo", na tela do histórico.
+
+### Pesquisador
+
+Entre com `pesquisador@clinicalstudypb.test` e a senha `Demo@123`.
+
+1. Em "Meus estudos", clique em "Acompanhamento de hábitos". Na tela do estudo, clique em "Participantes incluídos", abaixo do título.
+2. A lista mostra o aviso "Somente consulta. O agendamento de visitas é feito pelo coordenador do estudo.". A única ação é "Ver histórico", e o histórico também é só para consulta.
+3. Abra o endereço `http://localhost:5173/estudos/3/participacoes/1/visitas`. A web mostra a tela "Acesso negado", porque o agendamento é exclusivo do coordenador.
 
 ## Testes e cobertura
 
@@ -187,6 +237,7 @@ Os testes não precisam do backend nem do banco: as chamadas à API são simulad
 | ------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A web mostra só "Não foi possível verificar sua sessão. Tente novamente." | O backend está parado ou não conecta ao banco.                  | Suba o banco e o backend. Confira: `curl -i -H "Accept: application/json" http://localhost:5173/api/auth/sessao` deve responder **401** (ninguém logado). Um **502** indica backend parado. |
 | O que foi cadastrado some ao recarregar a página                          | A tela está usando dados simulados.                             | Coloque a variável correspondente como `real` no `web/.env` e reinicie o `npm run dev`.                                                                                                     |
+| No modo real, alguma parte do acompanhamento aparece oculta, com aviso    | O backend ainda não oferece essa rota.                          | Teste o fluxo completo com `VITE_ACOMPANHAMENTO_API=simulado` e reinicie o `npm run dev`.                                                                                                   |
 | Mudei o `web/.env` e nada mudou                                           | O Vite só lê o `.env` ao iniciar.                               | Pare o `npm run dev` (`Ctrl+C`) e rode de novo.                                                                                                                                             |
 | O backend não sobe: "url attribute is not specified"                      | As variáveis `SPRING_DATASOURCE_*` não foram definidas no terminal. | Defina as variáveis da seção "Backend" no mesmo terminal, ou use a opção A (Docker).                                                                                                        |
 | A porta 5173 está ocupada                                                 | A web do Docker (perfil `web`) está rodando.                    | Rode `docker compose --profile web stop web` antes do `npm run dev`.                                                                                                                        |
@@ -432,3 +483,148 @@ As capturas usam o pesquisador `pesquisador@clinicalstudypb.test`, com `VITE_EST
 A única pasta em vermelho é `src`, por causa do `App.tsx`, explicado na evidência 18.
 
 Para reproduzir, rode `npm test` e `npm run test:coverage` dentro de `web/`.
+
+## Evidências da Sprint 3
+
+As capturas foram feitas com o serviço de acompanhamento simulado (`VITE_ACOMPANHAMENTO_API=simulado`), com o login pelo backend local e só dados fictícios. Os arquivos estão em [`releases/release2/evidencias/web/`](../../releases/release2/evidencias/web/).
+
+A barra superior mostra a conta do backend ("Coordenador Demo"). Já o histórico mostra "Carlos Coordenador" como responsável pelos registros, porque esse é o nome fixo do serviço simulado.
+
+## RF12: lista e agendamento
+
+### Sucesso
+
+#### 1. Lista de participantes
+
+![Lista de participantes do coordenador](../../releases/release2/evidencias/web/01-rf12-lista-participantes.png)
+
+**Mostra:** a tela "Participantes incluídos" do coordenador, no estudo "Acompanhamento de hábitos". Maria Souza aparece com a data de inclusão, a situação "Ativo" e as ações "Ver histórico", "Agendar visitas" e "Retirar". O aviso informa que participantes retirados continuam na lista.
+**Comprova:** RF12. O coordenador vinculado vê os participantes incluídos e chega ao agendamento a partir da lista.
+
+#### 4. Visita agendada
+
+![Visita agendada com sucesso](../../releases/release2/evidencias/web/04-rf12-agendamento-sucesso.png)
+
+**Mostra:** a notificação "Visita de acompanhamento agendada para 23/11/2026 às 10:00." Na lista, as visitas anteriores da mesma visita prevista já estão como "Ausente", "Realizada" e "Cancelada".
+**Comprova:** RF12. Depois de uma situação final, a mesma visita prevista pode ser agendada de novo. A visita nova aparece na lista da evidência 7.
+
+#### 6. Visita reagendada
+
+![Visita reagendada](../../releases/release2/evidencias/web/06-rf12-reagendamento-sucesso.png)
+
+**Mostra:** a notificação "Visita final reagendada para 11/12/2026 às 09:00."
+**Comprova:** RF12. Reagendar altera a data de uma visita agendada, sem criar outra visita. A nova data aparece na lista da evidência 7.
+
+### Erro e validação
+
+#### 2. Agendamento com campos vazios
+
+![Agendamento com campos vazios](../../releases/release2/evidencias/web/02-rf12-agendamento-erro-campos-vazios.png)
+
+**Mostra:** o formulário "Agendar visita" enviado vazio, com os erros "Selecione a visita prevista.", "Informe a data da visita." e "Informe a hora da visita.".
+**Comprova:** RF12. Visita prevista, data e hora são obrigatórias, e a web valida antes de enviar.
+
+#### 3. Data anterior a hoje
+
+![Agendamento com data anterior a hoje](../../releases/release2/evidencias/web/03-rf12-agendamento-erro-data.png)
+
+**Mostra:** a data 07/11/2026 no campo destacado, com a mensagem "A data da visita não pode ser anterior a hoje.".
+**Comprova:** RF12. A data não pode ser anterior a hoje, no fuso de Recife.
+
+#### 5. Visita prevista já agendada
+
+![Agendamento duplicado](../../releases/release2/evidencias/web/05-rf12-agendamento-erro-duplicado.png)
+
+**Mostra:** a "Visita final" escolhida de novo, com a mensagem "Já existe um agendamento pendente para essa visita." no campo da visita.
+**Comprova:** RF12. Só pode haver uma visita agendada para cada visita prevista da participação (`VISITA_JA_AGENDADA`).
+
+## RF13: registro e correção
+
+### Sucesso
+
+#### 7. Ações conforme a situação e a data
+
+![Ações de cada visita agendada](../../releases/release2/evidencias/web/07-rf13-acoes-por-data.png)
+
+**Mostra:** a lista "Visitas agendadas" completa. As visitas futuras (23/11/2026 e 11/12/2026), ainda agendadas, têm só "Reagendar" e "Cancelar visita". As visitas já registradas têm só "Corrigir". A "Visita inicial", que tem resultado, mostra "Correção bloqueada: a visita já tem resultados registrados.".
+**Comprova:** RF13. "Realizada" e "Ausente" só aparecem a partir do dia agendado, e uma visita registrada não volta a ficar agendada. Também mostra a correção bloqueada quando a visita tem resultados (RF14), no lugar do botão "Corrigir". A visita de 16/11/2026, ainda agendada e com data passada, aparece no rodapé da evidência 2 com "Realizada", "Ausente" e "Cancelar visita".
+
+#### 9. Visita cancelada
+
+![Visita cancelada com motivo](../../releases/release2/evidencias/web/09-rf13-cancelamento-sucesso.png)
+
+**Mostra:** a notificação "Visita de acompanhamento registrada como cancelada." e a visita de 23/11/2026 como "Cancelada", com o motivo "Unidade de atendimento indisponível".
+**Comprova:** RF13. O cancelamento é aceito a qualquer momento, com motivo, e o motivo aparece na lista. A visita fica sem ações, porque uma visita cancelada antes do dia agendado ainda não tem para onde ser corrigida.
+
+#### 10. Correção de cancelada para ausente
+
+![Correção de cancelada para ausente](../../releases/release2/evidencias/web/10-rf13-correcao-cancelada-ausente.png)
+
+**Mostra:** a notificação "Correção registrada: Visita de acompanhamento passou de cancelada para ausente." A visita de 16/11/2026 aparece como "Ausente".
+**Comprova:** RF13. Uma situação final pode ser trocada por outra. O motivo do cancelamento sai da visita, mas fica guardado na correção, como mostra a evidência 13.
+
+#### 12. Correção de ausente para realizada
+
+![Correção registrada](../../releases/release2/evidencias/web/12-rf13-correcao-sucesso.png)
+
+**Mostra:** a notificação "Correção registrada: Visita de acompanhamento passou de ausente para realizada." e a visita de 16/11/2026 como "Realizada".
+**Comprova:** RF13. A correção troca a situação sem mudar a data agendada.
+
+#### 13. Histórico com correções
+
+![Histórico com as correções da visita](../../releases/release2/evidencias/web/13-rf13-historico-correcao.png)
+
+**Mostra:** a tela "Histórico do participante", rolada até as últimas visitas. A visita de 16/11/2026 aparece como "Realizada", com quem registrou e quando, e a seção "Correções" lista as duas trocas (de Cancelada para Ausente e de Ausente para Realizada), cada uma com autor, data e justificativa. Abaixo aparecem a visita cancelada, com o motivo, e a "Visita final", agendada.
+**Comprova:** RF13 e RF15. As correções não apagam o registro anterior, e o histórico mostra as visitas em ordem cronológica.
+
+### Erro e validação
+
+#### 8. Cancelamento sem motivo
+
+![Cancelamento sem motivo](../../releases/release2/evidencias/web/08-rf13-cancelamento-erro-motivo.png)
+
+**Mostra:** o diálogo "Cancelar a visita?" da visita de 23/11/2026, com as consequências do cancelamento e a mensagem "Informe o motivo do cancelamento." abaixo do campo vazio.
+**Comprova:** RF13. O motivo é obrigatório no cancelamento.
+
+#### 11. Correção sem justificativa
+
+![Correção sem justificativa](../../releases/release2/evidencias/web/11-rf13-correcao-erro-justificativa.png)
+
+**Mostra:** o diálogo "Corrigir a situação da visita?" da visita de 16/11/2026, registrada como ausente, com a nova situação "Realizada" e a mensagem "Informe a justificativa da correção.".
+**Comprova:** RF13. Toda correção exige justificativa.
+
+## Pesquisador
+
+#### 15. Lista somente para consulta
+
+![Lista de participantes do pesquisador](../../releases/release2/evidencias/web/15-rf12-pesquisador-somente-consulta.png)
+
+**Mostra:** a tela "Participantes incluídos" do pesquisador, no estudo "Acompanhamento de hábitos", com o aviso "Somente consulta. O agendamento de visitas é feito pelo coordenador do estudo.". A única ação é "Ver histórico".
+**Comprova:** RF12 e RF15. O pesquisador responsável consulta a lista e o histórico, mas não agenda, não registra visitas e não retira participantes.
+
+## Testes e cobertura da Sprint 3
+
+#### 16. Testes
+
+![Resultado do npm run test](../../releases/release2/evidencias/web/16-rf12-13-testes.png)
+
+**Mostra:** o fim da execução do `npm run test`: **42 arquivos e 642 testes passando**. Aparecem os testes do acompanhamento, como `agendamento`, `registroVisita`, `historico`, `resultados`, `retirada` e o serviço simulado.
+**Comprova:** as regras e as telas do acompanhamento têm testes automatizados (Vitest e Testing Library).
+
+#### 17. Cobertura
+
+![Relatório de cobertura em HTML](../../releases/release2/evidencias/web/17-rf12-13-cobertura.png)
+
+**Mostra:** o relatório em HTML do Istanbul (`web/coverage/index.html`), com o total e a cobertura de cada pasta.
+**Comprova:** a cobertura da web ao fim da Sprint 3:
+
+| Escopo                                          | Linhas cobertas |
+| ----------------------------------------------- | --------------- |
+| Toda a web                                      | **99,4%**       |
+| Acompanhamento (`src/pages/acompanhamento`)     | 99,64%          |
+| Configuração do estudo (`src/pages/protocolo`)  | 99,26%          |
+| Estudos (`src/pages/estudos`)                   | 100%            |
+| Recrutamento (`src/pages/recrutamento`)         | 99,5%           |
+| Serviços da API (`src/api`)                     | 99,85%          |
+
+A única pasta em vermelho é `src`, com 0%, por causa do `App.tsx`, explicado na evidência 18 da Release 1.
