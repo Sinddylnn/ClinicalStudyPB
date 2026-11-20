@@ -548,7 +548,8 @@ export function criarServicoAcompanhamentoSimulado(
       }
       const { participacao } = await buscarParticipacao(estudoId, participacaoId);
       if (participacao.situacao === 'RETIRADA') {
-        throw recusa('PARTICIPACAO_INVALIDA', 'O participante já foi retirado do estudo.');
+        // Mesmo código e mensagem do backend (PR #48)
+        throw recusa('PARTICIPACAO_JA_RETIRADA', 'A participação já foi retirada.');
       }
 
       const agora = agoraInstant();

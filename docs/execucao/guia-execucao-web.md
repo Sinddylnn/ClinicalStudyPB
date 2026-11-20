@@ -486,7 +486,7 @@ Para reproduzir, rode `npm test` e `npm run test:coverage` dentro de `web/`.
 
 ## Evidências da Sprint 3
 
-As capturas foram feitas com o serviço de acompanhamento simulado (`VITE_ACOMPANHAMENTO_API=simulado`), com o login pelo backend local e só dados fictícios. Os arquivos estão em [`releases/release2/evidencias/web/`](../../releases/release2/evidencias/web/).
+As capturas do RF12, do RF13 e do pesquisador foram feitas com o serviço de acompanhamento simulado (`VITE_ACOMPANHAMENTO_API=simulado`), com o login pelo backend local e só dados fictícios. As do RF16 usam a API real, como explicado na seção dele. Os arquivos estão em [`releases/release2/evidencias/web/`](../../releases/release2/evidencias/web/).
 
 A barra superior mostra a conta do backend ("Coordenador Demo"). Já o histórico mostra "Carlos Coordenador" como responsável pelos registros, porque esse é o nome fixo do serviço simulado.
 
@@ -601,6 +601,60 @@ A barra superior mostra a conta do backend ("Coordenador Demo"). Já o históric
 
 **Mostra:** a tela "Participantes incluídos" do pesquisador, no estudo "Acompanhamento de hábitos", com o aviso "Somente consulta. O agendamento de visitas é feito pelo coordenador do estudo.". A única ação é "Ver histórico".
 **Comprova:** RF12 e RF15. O pesquisador responsável consulta a lista e o histórico, mas não agenda, não registra visitas e não retira participantes.
+
+## RF16: retirada do participante
+
+Estas capturas usam a **API real**: banco e backend no Docker ([guia Docker](execucao-docker.md)) e as quatro variáveis do `web/.env` como `real`. A rota `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada` veio no PR #48. O estudo é "Atividade física (teste 3390)", em Recrutamento, com o "Participante Demo" incluído pelo recrutamento.
+
+A retirada não pode ser desfeita: depois da evidência 22, o "Participante Demo" fica retirado no banco local. Para repetir, recrie o banco do Docker ou inclua outro participante pelo recrutamento.
+
+### Sucesso
+
+#### 18. Lista com a ação Retirar
+
+![Lista de participantes com a ação Retirar](../../releases/release2/evidencias/web/18-rf16-retirada-lista-participantes.png)
+
+**Mostra:** a tela "Participantes incluídos" do coordenador, com o "Participante Demo" na situação "Ativo" e as ações "Agendar visitas" e "Retirar".
+**Comprova:** RF16. O coordenador vinculado chega à retirada a partir da lista, no modo real.
+
+#### 19. Diálogo de confirmação
+
+![Diálogo de confirmação da retirada](../../releases/release2/evidencias/web/19-rf16-retirada-dialogo-confirmacao.png)
+
+**Mostra:** o diálogo "Retirar do estudo?". Ele avisa que a retirada não pode ser desfeita, que as visitas ainda agendadas serão canceladas e que não será mais possível agendar visitas nem lançar resultados. Também informa que as visitas realizadas, os resultados e o histórico continuam disponíveis, e que a conta do participante e os outros estudos dele não são afetados.
+**Comprova:** RF16. O coordenador vê as consequências antes de confirmar.
+
+#### 21. Motivo preenchido
+
+![Motivo da retirada preenchido](../../releases/release2/evidencias/web/21-rf16-retirada-motivo-preenchido.png)
+
+**Mostra:** o campo "Motivo da retirada (obrigatório)" preenchido, com o contador de caracteres (até 500).
+**Comprova:** RF16. O motivo fica registrado no histórico, no limite de 500 caracteres do backend.
+
+#### 22. Retirada registrada
+
+![Retirada registrada](../../releases/release2/evidencias/web/22-rf16-retirada-sucesso.png)
+
+**Mostra:** a notificação "Retirada de Participante Demo registrada." e o participante na situação "Retirado", sem ações. O aviso informa que participantes retirados continuam na lista, mas não recebem novos agendamentos.
+**Comprova:** RF16. O backend registra a retirada, e o participante continua na lista.
+
+### Erro e bloqueio
+
+#### 20. Retirada sem motivo
+
+![Retirada sem motivo](../../releases/release2/evidencias/web/20-rf16-retirada-erro-motivo-obrigatorio.png)
+
+**Mostra:** o diálogo confirmado com o motivo vazio. O campo fica destacado com a mensagem "Informe o motivo da retirada." e nada é enviado ao backend.
+**Comprova:** RF16. O motivo é obrigatório.
+
+#### 23. Agendamento bloqueado para o retirado
+
+![Agendamento bloqueado para participante retirado](../../releases/release2/evidencias/web/23-rf16-retirada-agendamento-bloqueado.png)
+
+**Mostra:** a tela "Agendamento de visitas" do "Participante Demo", já "Retirado", com o aviso "O participante foi retirado do estudo: não é possível agendar, reagendar nem registrar visitas." e sem o formulário de agendamento. O segundo aviso indica que a lista de visitas agendadas depende do histórico, que a web ainda não usa no modo real.
+**Comprova:** RF16. Um participante retirado não recebe novos agendamentos nem registros de visita.
+
+A retirada pelo botão "Retirar do estudo", na tela do histórico, e a retirada repetida (`PARTICIPACAO_JA_RETIRADA`) ficam sem captura no modo real: a chave `historico` de `recursosAcompanhamento` ainda está desligada, e a tela não mostra o botão para quem já foi retirado. Os dois casos estão nos testes automatizados.
 
 ## Testes e cobertura da Sprint 3
 
