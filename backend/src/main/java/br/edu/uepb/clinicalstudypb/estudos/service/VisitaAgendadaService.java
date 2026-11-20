@@ -39,8 +39,8 @@ import br.edu.uepb.clinicalstudypb.estudos.repository.ResultadoAtividadeReposito
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 
 /**
- * Gerencia o agendamento e reagendamento de visitas
- * e a consulta de participações dos estudos.
+ * Gerencia agendamento, reagendamento, registro, correção
+ * e consulta de visitas e participações dos estudos.
  *
  * @author Luiz
  * @version 1.0
@@ -498,7 +498,50 @@ public class VisitaAgendadaService {
         return CorrecaoVisitaResposta.de(correcoes.save(correcao));
     }
 
+    // <-------CONSULTA DE VISITA------->
+    /**
+     * Consulta os dados de uma visita vinculada ao estudo e à participação.
+     *
+     * @param estudoId identificador do estudo
+     * @param participacaoId identificador da participação
+     * @param visitaAgendadaId identificador da visita
+     * @param autenticado usuário autenticado
+     * @return dados da visita
+     * @throws AccessDeniedException se o usuário não for coordenador
+     * @throws ResponseStatusException se o estudo ou a visita não estiver no vínculo
+     * @since 1.0
+     */
+    @Transactional(readOnly = true)
+    public VisitaAgendadaResposta consultarVisita(
+            Long estudoId,
+            Long participacaoId,
+            Long visitaAgendadaId,
+            UsuarioAutenticado autenticado) {
 
+        if (autenticado == null
+                || autenticado.getPerfil() != PerfilUsuario.COORDENADOR) {
+            throw new AccessDeniedException(
+                    "Apenas coordenadores podem consultar visitas.");
+        }
+
+        estudos.findByIdAndCoordenadorId(estudoId, autenticado.getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Estudo não encontrado."));
+
+        VisitaAgendada visita = visitasAgendadas.findById(visitaAgendadaId)
+                .filter(v -> Objects.equals(
+                        v.getParticipacao().getId(), participacaoId))
+                .filter(v -> Objects.equals(
+                        v.getParticipacao().getEstudo().getId(), estudoId))
+                .filter(v -> Objects.equals(
+                        v.getVisitaPrevista().getProtocolo()
+                                .getEstudo().getId(), estudoId))
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Visita agendada não encontrada."));
+
+        return VisitaAgendadaResposta.de(visita);
+    }
 
     // <-------CONSULTA DE PARTICIPACOES------->
     /**

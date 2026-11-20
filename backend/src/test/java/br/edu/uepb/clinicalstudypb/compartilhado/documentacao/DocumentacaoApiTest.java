@@ -413,6 +413,60 @@ class DocumentacaoApiTest {
     }
 
     /**
+     * Confere os contratos GET da visita e de seus resultados para a web.
+     *
+     * @throws Exception se a consulta ou a leitura do contrato falhar
+     * @since 1.0
+     */
+    @Test
+    void documentaConsultasDaVisitaEDosResultados() throws Exception {
+        JsonNode contrato = json.readTree(mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        JsonNode rotas = contrato.path("paths");
+        String caminhoVisita = "/estudos/{estudoId}/participacoes/{participacaoId}"
+                + "/visitas/{visitaAgendadaId}";
+        String caminhoResultados = caminhoVisita + "/resultados";
+
+        for (String caminho : new String[]{caminhoVisita, caminhoResultados}) {
+            JsonNode operacao = rotas.path(caminho).path("get");
+            assertThat(operacao.isMissingNode()).as("GET %s", caminho).isFalse();
+            assertThat(operacao.path("security").toString()).contains("sessao");
+            assertThat(operacao.path("parameters").toString())
+                    .contains("estudoId", "participacaoId", "visitaAgendadaId")
+                    .doesNotContain("TokenCsrf");
+            assertThat(operacao.has("requestBody")).isFalse();
+            for (String codigo : new String[]{"200", "401", "403", "404"}) {
+                assertThat(operacao.path("responses").has(codigo))
+                        .as("GET %s documenta HTTP %s", caminho, codigo).isTrue();
+            }
+        }
+
+        JsonNode respostaVisita = rotas.path(caminhoVisita).path("get")
+                .path("responses").path("200").path("content");
+        assertThat(respostaVisita.toString()).contains("VisitaAgendadaResposta");
+
+        JsonNode respostaResultados = rotas.path(caminhoResultados).path("get")
+                .path("responses").path("200").path("content");
+        assertThat(respostaResultados.toString())
+                .contains("\"type\":\"array\"", "ResultadoAtividadeResposta");
+
+        JsonNode schemas = contrato.path("components").path("schemas");
+        JsonNode camposVisita = schemas.path("VisitaAgendadaResposta").path("properties");
+        for (String campo : new String[]{"id", "participacaoId", "visitaPrevistaId",
+                "nomeVisita", "dataHora", "situacao"}) {
+            assertThat(camposVisita.has(campo)).as("Campo da visita: %s", campo).isTrue();
+        }
+
+        JsonNode camposResultado = schemas.path("ResultadoAtividadeResposta").path("properties");
+        for (String campo : new String[]{"id", "visitaAgendadaId", "atividadePrevistaId",
+                "descricaoAtividade", "texto", "registradoPorId", "registradoEm",
+                "atualizadoPorId", "atualizadoEm"}) {
+            assertThat(camposResultado.has(campo))
+                    .as("Campo do resultado: %s", campo).isTrue();
+        }
+    }
+
+    /**
      * Confere a publicação da consulta do histórico completo de gestão (RF15).
      *
      * @throws Exception se a consulta ou a leitura do contrato falhar

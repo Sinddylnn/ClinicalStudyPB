@@ -8,12 +8,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +48,7 @@ import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.service.AutenticacaoService;
 
 /**
- * Testa os endpoints HTTP de cadastro e edição de resultados fictícios,
+ * Testa os endpoints HTTP de consulta, cadastro e edição de resultados fictícios,
  * incluindo contrato JSON, validações, autenticação, permissões e CSRF.
  *
  * @author Luiz
@@ -89,6 +92,145 @@ class ResultadoAtividadeControllerTest {
     void prepararDados() {
         coordenador = criarUsuario(1L, PerfilUsuario.COORDENADOR);
         when(usuarios.findById(1L)).thenReturn(Optional.of(coordenador));
+    }
+
+    // <-------------------CONSULTA------------------->
+
+    /**
+     * Confere a listagem e o contrato JSON dos resultados da visita.
+     *
+     * @throws Exception se a requisição simulada não puder ser executada
+     * @since 1.0
+     */
+    @Test
+    void coordenadorListaResultadosComResposta200() throws Exception {
+        ResultadoAtividadeResposta primeiro = new ResultadoAtividadeResposta(
+                60L, 40L, 50L, "Avaliação de pressão arterial",
+                "Pressão arterial normal.", 1L,
+                Instant.parse("2026-11-17T15:00:00Z"), null, null);
+        ResultadoAtividadeResposta segundo = new ResultadoAtividadeResposta(
+                61L, 40L, 51L, "Avaliação de frequência cardíaca",
+                "Frequência cardíaca normal.", 1L,
+                Instant.parse("2026-11-17T15:05:00Z"), null, null);
+
+        when(resultados.listarResultados(eq(10L), eq(20L), eq(40L),
+                any(UsuarioAutenticado.class)))
+                .thenReturn(List.of(primeiro, segundo));
+
+        mvc.perform(get(URL)
+                        .with(user(new UsuarioAutenticado(coordenador))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(60))
+                .andExpect(jsonPath("$[0].visitaAgendadaId").value(40))
+                .andExpect(jsonPath("$[0].atividadePrevistaId").value(50))
+                .andExpect(jsonPath("$[0].descricaoAtividade")
+                        .value("Avaliação de pressão arterial"))
+                .andExpect(jsonPath("$[0].texto").value("Pressão arterial normal."))
+                .andExpect(jsonPath("$[1].id").value(61))
+                .andExpect(jsonPath("$[1].atividadePrevistaId").value(51))
+                .andExpect(jsonPath("$[1].texto").value("Frequência cardíaca normal."));
+
+        verify(resultados).listarResultados(eq(10L), eq(20L), eq(40L),
+                any(UsuarioAutenticado.class));
+    }
+
+    /**
+     * Retorna uma lista vazia quando a visita não possui resultados.
+     *
+     * @throws Exception se a requisição simulada não puder ser executada
+     * @since 1.0
+     */
+    @Test
+    void consultaSemResultadosRetornaListaVazia() throws Exception {
+        when(resultados.listarResultados(eq(10L), eq(20L), eq(40L),
+                any(UsuarioAutenticado.class)))
+                .thenReturn(List.of());
+
+        mvc.perform(get(URL)
+                        .with(user(new UsuarioAutenticado(coordenador))))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+
+        verify(resultados).listarResultados(eq(10L), eq(20L), eq(40L),
+                any(UsuarioAutenticado.class));
+    }
+
+    /**
+     * Recusa consultas sem autenticação.
+     *
+     * @throws Exception se a requisição simulada não puder ser executada
+     * @since 1.0
+     */
+    @Test
+    void consultaSemLoginRecebe401() throws Exception {
+        mvc.perform(get(URL))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo").value("AUTENTICACAO_NECESSARIA"));
+
+        verify(resultados, never()).listarResultados(any(), any(), any(), any());
+    }
+
+    /**
+     * Recusa consultas por perfis sem permissão.
+     *
+     * @param perfil perfil não autorizado
+     * @throws Exception se a requisição simulada não puder ser executada
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @EnumSource(value = PerfilUsuario.class,
+            names = {"PESQUISADOR", "ADMINISTRADOR", "PARTICIPANTE"})
+    void perfilSemPermissaoNaoConsultaResultados(PerfilUsuario perfil)
+            throws Exception {
+        Usuario usuario = criarUsuario(2L, perfil);
+        when(usuarios.findById(2L)).thenReturn(Optional.of(usuario));
+
+        mvc.perform(get(URL)
+                        .with(user(new UsuarioAutenticado(usuario))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("ACESSO_NEGADO"));
+
+        verify(resultados, never()).listarResultados(any(), any(), any(), any());
+    }
+
+    /**
+     * Retorna HTTP 404 quando a visita não existe no vínculo informado.
+     *
+     * @throws Exception se a requisição simulada não puder ser executada
+     * @since 1.0
+     */
+    @Test
+    void consultaDeVisitaForaDoVinculoRetorna404() throws Exception {
+        when(resultados.listarResultados(eq(10L), eq(20L), eq(40L),
+                any(UsuarioAutenticado.class)))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Visita agendada não encontrada."));
+
+        mvc.perform(get(URL)
+                        .with(user(new UsuarioAutenticado(coordenador))))
+                .andExpect(status().isNotFound());
+
+        verify(resultados).listarResultados(eq(10L), eq(20L), eq(40L),
+                any(UsuarioAutenticado.class));
+    }
+
+    /**
+     * Converte uma negação do serviço em HTTP 403.
+     *
+     * @throws Exception se a requisição simulada não puder ser executada
+     * @since 1.0
+     */
+    @Test
+    void consultaNegadaPeloServicoRecebe403() throws Exception {
+        when(resultados.listarResultados(eq(10L), eq(20L), eq(40L),
+                any(UsuarioAutenticado.class)))
+                .thenThrow(new AccessDeniedException("Sem permissão para este estudo."));
+
+        mvc.perform(get(URL)
+                        .with(user(new UsuarioAutenticado(coordenador))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("ACESSO_NEGADO"));
     }
 
     // <-------------------CADASTRO------------------->

@@ -49,6 +49,23 @@ public interface ResultadoAtividadeRepository
             Long id, Long visitaAgendadaId);
 
     /**
+     * Lista os resultados de uma visita, ordenados por atividade.
+     *
+     * @param visitaAgendadaId identificador da visita
+     * @return resultados registrados, ou lista vazia se não houver
+     * @since 1.0
+     */
+    @Query("""
+            SELECT r FROM ResultadoAtividade r
+            JOIN FETCH r.visitaAgendada v
+            JOIN FETCH r.atividadePrevista a
+            WHERE v.id = :visitaAgendadaId
+            ORDER BY a.id ASC, r.id ASC
+            """)
+    List<ResultadoAtividade> buscarResultadosDaVisita(
+            @Param("visitaAgendadaId") Long visitaAgendadaId);
+
+    /**
      * Lista os resultados das visitas de uma participação.
      *
      * @param participacaoId identificador da participação

@@ -7,11 +7,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,14 +25,17 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.ConfiguracaoSeguranca;
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.RespostaErroSeguranca;
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
+import br.edu.uepb.clinicalstudypb.estudos.SituacaoVisita;
 import br.edu.uepb.clinicalstudypb.estudos.service.VisitaAgendadaService;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
@@ -37,8 +43,8 @@ import br.edu.uepb.clinicalstudypb.usuarios.repository.UsuarioRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.service.AutenticacaoService;
 
 /**
- * Testa os endpoints de agendamento, reagendamento, registro
- * e correção de situação das visitas, incluindo validações e permissões.
+ * Testa os endpoints de consulta, agendamento, reagendamento,
+ * registro e correção de visitas, incluindo validações e permissões.
  *
  * @author Luiz
  * @version 1.0
@@ -79,6 +85,102 @@ class VisitaAgendadaControllerTest {
                 .thenReturn(Optional.of(coordenador));
         when(usuarios.findById(2L))
                 .thenReturn(Optional.of(pesquisador));
+    }
+
+    // <-------TESTES DE CONSULTA DE VISITA------->
+    /**
+     * Verifica se coordenadores podem consultar os dados de uma visita.
+     *
+     * @throws Exception se ocorrer erro na requisição de teste
+     * @since 1.0
+     */
+    @Test
+    void coordenadorPodeConsultarVisita() throws Exception {
+        VisitaAgendadaResposta resposta = new VisitaAgendadaResposta(
+                40L, 20L, 30L, "Visita inicial",
+                Instant.parse("2026-12-01T14:00:00Z"),
+                SituacaoVisita.AGENDADA, null, null, null);
+
+        when(visitas.consultarVisita(
+                eq(10L), eq(20L), eq(40L),
+                any(UsuarioAutenticado.class)))
+                .thenReturn(resposta);
+
+        mvc.perform(get("/estudos/10/participacoes/20/visitas/40")
+                        .with(user(new UsuarioAutenticado(coordenador))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(40))
+                .andExpect(jsonPath("$.participacaoId").value(20))
+                .andExpect(jsonPath("$.visitaPrevistaId").value(30))
+                .andExpect(jsonPath("$.nomeVisita").value("Visita inicial"))
+                .andExpect(jsonPath("$.situacao").value("AGENDADA"));
+
+        verify(visitas).consultarVisita(
+                eq(10L), eq(20L), eq(40L),
+                any(UsuarioAutenticado.class));
+    }
+
+    /**
+     * Impede que usuários sem perfil de coordenador consultem visitas.
+     *
+     * @param perfil perfil sem permissão para consulta
+     * @throws Exception se ocorrer erro na requisição de teste
+     * @since 1.0
+     */
+    @ParameterizedTest
+    @EnumSource(value = PerfilUsuario.class,
+            names = {"PESQUISADOR", "ADMINISTRADOR", "PARTICIPANTE"})
+    void usuarioSemPermissaoNaoPodeConsultarVisita(
+            PerfilUsuario perfil) throws Exception {
+        Usuario usuario = criarUsuario(50L, perfil);
+
+        when(usuarios.findById(50L))
+                .thenReturn(Optional.of(usuario));
+
+        mvc.perform(get("/estudos/10/participacoes/20/visitas/40")
+                        .with(user(new UsuarioAutenticado(usuario))))
+                .andExpect(status().isForbidden());
+
+        verify(visitas, never()).consultarVisita(
+                any(), any(), any(), any());
+    }
+
+    /**
+     * Impede a consulta de visitas sem autenticação.
+     *
+     * @throws Exception se ocorrer erro na requisição de teste
+     * @since 1.0
+     */
+    @Test
+    void consultaVisitaSemLoginEhBloqueada() throws Exception {
+        mvc.perform(get("/estudos/10/participacoes/20/visitas/40"))
+                .andExpect(status().isUnauthorized());
+
+        verify(visitas, never()).consultarVisita(
+                any(), any(), any(), any());
+    }
+
+    /**
+     * Retorna HTTP 404 quando a visita não é encontrada pelo serviço.
+     *
+     * @throws Exception se ocorrer erro na requisição de teste
+     * @since 1.0
+     */
+    @Test
+    void consultaVisitaInexistenteRetorna404() throws Exception {
+        when(visitas.consultarVisita(
+                eq(10L), eq(20L), eq(99L),
+                any(UsuarioAutenticado.class)))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Visita agendada não encontrada."));
+
+        mvc.perform(get("/estudos/10/participacoes/20/visitas/99")
+                        .with(user(new UsuarioAutenticado(coordenador))))
+                .andExpect(status().isNotFound());
+
+        verify(visitas).consultarVisita(
+                eq(10L), eq(20L), eq(99L),
+                any(UsuarioAutenticado.class));
     }
 
     /**

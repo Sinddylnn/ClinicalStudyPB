@@ -2,6 +2,7 @@ package br.edu.uepb.clinicalstudypb.estudos.api;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -22,7 +23,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 /**
- * Disponibiliza os endpoints de agendamento, reagendamento
+ * Disponibiliza os endpoints de consulta, agendamento, reagendamento
  * e registro da situação das visitas.
  *
  * @author Luiz
@@ -44,6 +45,39 @@ public class VisitaAgendadaController {
     */
     public VisitaAgendadaController(VisitaAgendadaService visitas) {
         this.visitas = visitas;
+    }
+
+    // <-------CONSULTA DE VISITA------->
+    /**
+     * Consulta os dados de uma visita agendada.
+     *
+     * @param estudoId identificador do estudo
+     * @param participacaoId identificador da participação
+     * @param visitaAgendadaId identificador da visita
+     * @param autenticado usuário autenticado
+     * @return dados da visita
+     * @since 1.0
+     */
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Visita encontrada"),
+        @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+        @ApiResponse(responseCode = "403", description = "Acesso negado"),
+        @ApiResponse(responseCode = "404", description = "Estudo, participação ou visita não encontrada")
+    })
+    @GetMapping("/{visitaAgendadaId}")
+    @Operation(summary = "Consultar visita agendada")
+    public VisitaAgendadaResposta consultarVisita(
+            @PathVariable Long estudoId,
+            @PathVariable Long participacaoId,
+            @PathVariable Long visitaAgendadaId,
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal UsuarioAutenticado autenticado) {
+
+        return visitas.consultarVisita(
+                estudoId,
+                participacaoId,
+                visitaAgendadaId,
+                autenticado);
     }
 
     // <-------AGENDAMENTO DE VISITAS------->
