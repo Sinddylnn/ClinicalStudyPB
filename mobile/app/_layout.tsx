@@ -30,12 +30,6 @@ export default function RootLayout() {
     if (error) throw error;
   }, [error]);
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
   if (!loaded) {
     return null;
   }
@@ -49,17 +43,24 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { autenticado } = useAuth();
+  const { autenticado, restaurando } = useAuth();
+
+  // Esconde a splash só depois de saber se há uma sessão ativa
+  useEffect(() => {
+    if (!restaurando) SplashScreen.hideAsync();
+  }, [restaurando]);
+
+  if (restaurando) {
+    return null;
+  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        {/* Só entra nas abas quem tem sessão */}
         <Stack.Protected guard={autenticado}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         </Stack.Protected>
-        {/* Sem sessão, só o login */}
         <Stack.Protected guard={!autenticado}>
           <Stack.Screen name="login" options={{ headerShown: false }} />
         </Stack.Protected>
