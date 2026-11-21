@@ -4,8 +4,9 @@ import { servicoAcompanhamentoSimulado } from './acompanhamentoSimulado';
 // <-------------------CONTRATO DE ACOMPANHAMENTO------------------->
 // Segue o contrato da Sprint 3 (docs/api/acompanhamento-de-participantes.md).
 // A lista de participações, o agendamento e o reagendamento seguem o PR #41 (task 3964); o registro e a
-// correção da situação das visitas, o PR #46 (RF13); a retirada, o PR #48 (RF16). O histórico (RF15) e os
-// resultados (RF14) ainda não existem no backend: conferir campos e códigos quando forem implementados.
+// correção da situação das visitas, o PR #46 (RF13); a retirada, o PR #48 (RF16); o histórico da
+// participação, o PR #54 (RF15). Os resultados (RF14) seguem o PR #52, que só tem POST e PUT: as rotas
+// GET .../visitas/{visitaAgendadaId} e GET .../resultados ainda não existem no backend.
 
 /** Situação da participação no estudo: a retirada é irreversível (RF16). */
 export type SituacaoParticipacao = 'ATIVA' | 'RETIRADA';
@@ -35,15 +36,17 @@ export type ResultadoHistorico = {
   texto: string;
 };
 
-/** Correção de uma situação final, guardada sem apagar o registro anterior. */
+/** Correção de uma situação final, guardada sem apagar o registro anterior (CorrecaoVisitaResposta do backend). */
 export type CorrecaoVisita = {
-  /** Os campos opcionais abaixo ainda não estão confirmados no contrato do histórico (RF15). */
+  // O backend sempre devolve id, visitaAgendadaId, motivoAnterior e motivoNovo (PR #54). Ficam opcionais
+  // aqui só porque parte dos dados fictícios dos testes não os traz
   id?: number;
+  visitaAgendadaId?: number;
   situacaoAnterior: SituacaoVisita;
   situacaoNova: SituacaoVisita;
   justificativa: string;
   corrigidaPorId: number;
-  corrigidaPorNome?: string;
+  corrigidaPorNome: string;
   corrigidaEm: string;
   /** Motivo que a visita tinha antes da correção; null quando não tinha. */
   motivoAnterior?: string | null;
@@ -63,8 +66,8 @@ export type ItemHistoricoVisita = {
   /** Quem registrou a situação; null enquanto a visita está agendada. */
   registradoPorId: number | null;
   /**
-   * Nome de quem registrou. O rascunho do contrato só traz o ID: o campo opcional já está pronto
-   * para quando o backend devolver o nome. Sem ele, a tela mostra "Usuário nº {id}".
+   * Nome de quem registrou, devolvido pelo backend (PR #54); null enquanto a visita está agendada ou
+   * quando o nome não está disponível. Sem ele, a tela mostra "Usuário nº {id}".
    */
   registradoPorNome?: string | null;
   registradoEm: string | null;
@@ -77,6 +80,7 @@ export type ItemHistoricoRetirada = {
   dataRetirada: string;
   motivo: string;
   retiradaPorId: number;
+  /** Nome de quem retirou, devolvido pelo backend (PR #54); null quando não está disponível. */
   retiradaPorNome?: string | null;
 };
 
@@ -161,7 +165,10 @@ export type CorrecaoVisitaEntrada = {
   motivo?: string | null;
 };
 
-/** Resposta 201 da correção (CorrecaoVisitaResposta do backend): sem o motivo anterior nem o novo. */
+/**
+ * Resposta 201 da correção (CorrecaoVisitaResposta do backend, o mesmo record do histórico). O backend
+ * também devolve motivoAnterior, motivoNovo e corrigidaPorNome; a web declara só o que usa aqui.
+ */
 export type CorrecaoVisitaRegistrada = {
   id: number;
   visitaAgendadaId: number;
@@ -371,7 +378,7 @@ export const servicoAcompanhamento: ServicoAcompanhamento = usaBackend
 
 /** O que a web pode pedir ao backend sem receber 403 de uma rota que ainda não existe ou nega o perfil. */
 export type RecursosAcompanhamento = {
-  /** GET .../historico (RF15): ainda não existe no backend. */
+  /** GET .../historico (RF15): entregue no backend (PR #54), para o coordenador vinculado e o pesquisador responsável. */
   historico: boolean;
   /** GET /estudos/{estudoId}/participacoes pelo pesquisador responsável: liberado no backend (PR #41). */
   listaPesquisador: boolean;
@@ -379,8 +386,9 @@ export type RecursosAcompanhamento = {
   retirada: boolean;
 };
 
-// No modo real, só o histórico continua desligado até o backend entregá-lo: sem ele, a web chamaria
-// uma rota negada e iria para "Acesso negado". A lista do pesquisador e a retirada já existem no backend
+// O histórico (PR #54), a lista do pesquisador (PR #41) e a retirada (PR #48) já existem no backend, então
+// os dois modos ligam tudo. Uma chave nova fica desligada no modo real até a rota existir: sem ela, a web
+// chamaria uma rota negada e iria para "Acesso negado"
 export const recursosAcompanhamento: RecursosAcompanhamento = usaBackend
-  ? { historico: false, listaPesquisador: true, retirada: true }
+  ? { historico: true, listaPesquisador: true, retirada: true }
   : { historico: true, listaPesquisador: true, retirada: true };
