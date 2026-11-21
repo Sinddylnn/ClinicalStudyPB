@@ -486,7 +486,7 @@ Para reproduzir, rode `npm test` e `npm run test:coverage` dentro de `web/`.
 
 ## Evidências da Sprint 3
 
-As capturas do RF12, do RF13 e do pesquisador foram feitas com o serviço de acompanhamento simulado (`VITE_ACOMPANHAMENTO_API=simulado`), com o login pelo backend local e só dados fictícios. As do RF16 usam a API real, como explicado na seção dele. Os arquivos estão em [`releases/release2/evidencias/web/`](../../releases/release2/evidencias/web/).
+As capturas do RF12, do RF13 e do pesquisador foram feitas com o serviço de acompanhamento simulado (`VITE_ACOMPANHAMENTO_API=simulado`), com o login pelo backend local e só dados fictícios. As do RF14, do RF15 e do RF16 usam a API real, como explicado na seção de cada um. Os arquivos estão em [`releases/release2/evidencias/web/`](../../releases/release2/evidencias/web/).
 
 A barra superior mostra a conta do backend ("Coordenador Demo"). Já o histórico mostra "Carlos Coordenador" como responsável pelos registros, porque esse é o nome fixo do serviço simulado.
 
@@ -602,6 +602,75 @@ A barra superior mostra a conta do backend ("Coordenador Demo"). Já o históric
 **Mostra:** a tela "Participantes incluídos" do pesquisador, no estudo "Acompanhamento de hábitos", com o aviso "Somente consulta. O agendamento de visitas é feito pelo coordenador do estudo.". A única ação é "Ver histórico".
 **Comprova:** RF12 e RF15. O pesquisador responsável consulta a lista e o histórico, mas não agenda, não registra visitas e não retira participantes.
 
+## RF14: resultados das avaliações
+
+Estas capturas usam a **API real**, como as do RF16, mais abaixo: as rotas `GET /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}` e `GET`, `POST` e `PUT` de `.../resultados` vieram nos PRs #52 e #59, e o histórico no PR #54. O estudo é o mesmo "Atividade física (teste 3390)". A participante fictícia "Carla Dias" foi incluída pelo fluxo real (elegibilidade, consentimento e inclusão) em 21/11/2026. A "Visita inicial" dela foi registrada como ausente e corrigida para realizada, e a segunda visita ficou agendada para 03/12/2026.
+
+### Sucesso
+
+#### 24. Histórico com a ação Registrar resultados
+
+![Histórico com o botão Registrar resultados](../../releases/release2/evidencias/web/24-rf14-historico-registrar-resultados.png)
+
+**Mostra:** o histórico de Carla Dias visto pelo coordenador. A "Visita inicial" aparece como "Realizada", com a correção de Ausente para Realizada, o texto "Nenhum resultado registrado" e o botão "Registrar resultados". A segunda visita aparece como "Agendada" para 03/12/2026.
+**Comprova:** RF14. O coordenador chega aos resultados a partir da visita realizada, no histórico.
+
+#### 25. Formulário de resultados
+
+![Formulário de resultados da visita](../../releases/release2/evidencias/web/25-rf14-resultados-formulario.png)
+
+**Mostra:** a tela "Resultados da visita", com o aviso "Dados fictícios: não registre informações reais de saúde dos participantes." e um campo para a atividade "Aplicar questionário.", com o contador em 0/1000.
+**Comprova:** RF14. A web monta um campo para cada atividade prevista da visita, a partir do protocolo, e lembra que os dados são fictícios.
+
+#### 27. Resultados salvos
+
+![Resultados salvos](../../releases/release2/evidencias/web/27-rf14-resultados-sucesso.png)
+
+**Mostra:** a volta ao histórico com a notificação "Resultados da Visita inicial salvos.". A visita realizada passa a mostrar o resultado registrado e o botão "Editar resultados".
+**Comprova:** RF14. O backend grava o resultado (`POST`, 201), e o histórico mostra o resultado junto da visita.
+
+#### 28. Edição do resultado
+
+![Edição do resultado salvo](../../releases/release2/evidencias/web/28-rf14-resultados-edicao.png)
+
+**Mostra:** o formulário reaberto com o texto salvo, alterado para "4 caminhadas", e a linha "Registrado por Usuário nº 3 em 21/11/2026 às 09:13.".
+**Comprova:** RF14. O resultado salvo pode ser editado (`PUT`), e a tela mostra quem registrou e quando.
+**Nota:** a resposta dos resultados traz só o id de quem registrou (`registradoPorId`), sem o nome. Por isso a tela mostra "Usuário nº 3" no lugar do nome do coordenador.
+
+### Erro e bloqueio
+
+#### 26. Texto acima de 1.000 caracteres
+
+![Resultado com texto longo](../../releases/release2/evidencias/web/26-rf14-resultados-erro-texto-longo.png)
+
+**Mostra:** o campo com 1019/1000 caracteres, destacado, e a mensagem "O resultado pode ter até 1000 caracteres.".
+**Comprova:** RF14. O texto do resultado tem de 1 a 1.000 caracteres, e a web valida antes de enviar.
+
+#### 29. Visita não realizada
+
+![Resultados bloqueados em visita não realizada](../../releases/release2/evidencias/web/29-rf14-resultados-visita-nao-realizada.png)
+
+**Mostra:** a tela de resultados aberta para a visita de 03/12/2026, ainda agendada, com o aviso "Visita não realizada", a explicação "Só é possível registrar resultados em visita realizada. Esta visita está como agendada." e o botão "Voltar ao histórico".
+**Comprova:** RF14. Só a visita realizada recebe resultados (`RESULTADO_INVALIDO` no backend), e a web não mostra o formulário nos outros casos.
+
+## RF15: histórico
+
+Estas capturas usam a **API real**, com a conta do pesquisador (`pesquisador@clinicalstudypb.test`) e a mesma participante "Carla Dias", depois da retirada pelo histórico (evidência 33, na seção RF16).
+
+#### 30. Histórico visto pelo pesquisador
+
+![Histórico do participante visto pelo pesquisador](../../releases/release2/evidencias/web/30-rf15-historico-pesquisador.png)
+
+**Mostra:** o histórico de Carla Dias com o aviso "Somente consulta. Os resultados das avaliações são fictícios.". Aparecem a visita realizada, com o resultado e a correção, a visita cancelada com o motivo "Retirada do participante" e o item "Retirada do estudo". Não há botões de registro, de resultados nem de retirada.
+**Comprova:** RF15. O pesquisador responsável consulta o histórico completo, em ordem cronológica, sem poder alterar nada.
+
+#### 31. Participante não encontrado
+
+![Histórico de participante inexistente](../../releases/release2/evidencias/web/31-rf15-historico-nao-encontrado.png)
+
+**Mostra:** o endereço `/estudos/5/participacoes/999/historico` aberto pelo pesquisador, com a mensagem "Participante não encontrado".
+**Comprova:** RF15. Uma participação que não existe ou não é do estudo volta 404 (`RECURSO_NAO_ENCONTRADO`), e a web mostra o erro sem expor dados.
+
 ## RF16: retirada do participante
 
 Estas capturas usam a **API real**: banco e backend no Docker ([guia Docker](execucao-docker.md)) e as quatro variáveis do `web/.env` como `real`. A rota `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada` veio no PR #48. O estudo é "Atividade física (teste 3390)", em Recrutamento, com o "Participante Demo" incluído pelo recrutamento.
@@ -655,7 +724,25 @@ A retirada não pode ser desfeita: depois da evidência 22, o "Participante Demo
 **Nota:** a captura é anterior ao PR #54. Desde então, o backend oferece o histórico, a web liga a chave `historico` no modo real, e a tela mostra a lista de visitas agendadas no lugar desse segundo aviso.
 **Comprova:** RF16. Um participante retirado não recebe novos agendamentos nem registros de visita.
 
-A retirada pelo botão "Retirar do estudo", na tela do histórico, funciona no modo real desde o PR #54, mas ainda não tem captura. A retirada repetida (`PARTICIPACAO_JA_RETIRADA`) também fica sem captura, porque a tela não mostra o botão para quem já foi retirado. Os dois casos estão nos testes automatizados.
+### Retirada pela tela do histórico
+
+As evidências 32 e 33 usam a participante "Carla Dias", a mesma das seções RF14 e RF15. A evidência 30 foi capturada depois da 33.
+
+#### 32. Diálogo aberto pelo histórico
+
+![Diálogo de retirada aberto pelo histórico](../../releases/release2/evidencias/web/32-rf16-retirada-pelo-historico-dialogo.png)
+
+**Mostra:** o diálogo "Retirar do estudo?" aberto pelo botão "Retirar do estudo" do histórico de Carla Dias, com o motivo preenchido e o aviso de que a visita agendada será cancelada.
+**Comprova:** RF16. A retirada também é feita a partir do histórico, com as mesmas consequências e o mesmo motivo obrigatório.
+
+#### 33. Retirada registrada pelo histórico
+
+![Retirada registrada pelo histórico](../../releases/release2/evidencias/web/33-rf16-retirada-pelo-historico-sucesso.png)
+
+**Mostra:** a notificação "Retirada de Carla Dias registrada.", a participante como "Retirado" e a visita de 03/12/2026 como "Cancelada", com o motivo "Retirada do participante". O histórico ganha o item da retirada, com o motivo, e mantém a visita realizada e os resultados.
+**Comprova:** RF16. A retirada cancela só as visitas agendadas e preserva as visitas realizadas, os resultados e o histórico.
+
+A retirada repetida (`PARTICIPACAO_JA_RETIRADA`) fica sem captura, porque a tela não mostra o botão para quem já foi retirado. O caso está nos testes automatizados.
 
 ## Testes e cobertura da Sprint 3
 
