@@ -1,24 +1,5 @@
-# Evidência de testes: coleção Postman (Release 2)
+# Execução Postman da Release 2
 
-| Item | Valor |
-|---|---|
-| Data e hora da execução | [preencher] |
-| Commit testado | [preencher] |
-| Branch | [preencher] |
-| Executado por | Gabriela Andrade |
-| Ferramenta | Postman, Collection Runner |
-| Ambiente | Local (`http://localhost:8080`) |
-| Iterações | 1 |
-| Duração | [preencher] |
-| Resultado geral | [N] requisições, [M] testes aprovados, 0 falhas, 0 erros |
+Não há execução Postman dos requisitos RF12 a RF18 registrada nesta release. A coleção `docs/postman/ClinicalStudyPB.postman_collection.json` contém 8 pastas e 74 requisições da Release 1; não foram encontrados cenários Postman da Release 2 nem capturas do Runner.
 
-## Execução completa
-
-[Runner completo](runner/01-runner-completo.png)
-
-## Cenários e resultados
-
-| # | Requisito | Cenário | Esperado | Resultado | Evidência |
-|---|---|---|---|---|---|
-| 1 | RF12 | Agendar visita | 201 | | [print](rf12/01-rf12-agendamento-sucesso.png) |
-| 2 | RF12 | Agendamento duplicado | 409 | | [print](rf12/02-rf12-agendamento-duplicado.png) |
+Os resultados dos testes Spring e Swagger executados estão na [tabela de testes da Release 2](../../tabela-de-testes.md).
