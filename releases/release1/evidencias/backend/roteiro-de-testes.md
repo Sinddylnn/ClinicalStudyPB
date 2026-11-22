@@ -1,4 +1,4 @@
-# Roteiro de testes — Release 1
+# Roteiro de testes Release 1
 
 Este roteiro descreve como os testes da Release 1 foram executados e onde estão as evidências. Os resultados estão no [relatório de testes](postman/relatorio-execucao.md) e a lista completa de casos, na [tabela de testes](../tabela-de-testes.md).
 

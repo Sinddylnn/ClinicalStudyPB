@@ -96,4 +96,4 @@ Rotas cobertas:
 
 ## 8. Cobertura (JaCoCo)
 
-Não há captura nem relatório JaCoCo versionado nesta release, portanto a cobertura não foi registrada. A regra de 80% aplica-se às classes `service`.
+Não há captura nem relatório JaCoCo versionado nesta sprint, ela deverá ser registrada no final da release 2, portanto a cobertura AINDA não foi registrada. 

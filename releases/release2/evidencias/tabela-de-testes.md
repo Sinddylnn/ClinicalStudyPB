@@ -4,7 +4,7 @@ Lista dos testes e evidências da Release 2. Os casos Spring e Swagger com captu
 
 ## 1. Testes automatizados do backend (Spring)
 
-Cada linha corresponde a um método de teste Spring executado na Release 2. Os resultados foram conferidos nas capturas de execução organizadas por requisito.
+Cada linha corresponde a um método de teste Spring executado na Release 2. Os resultados foram conferidos nas capturas de execução organizadas por requisito: [RF12](backend/spring/rf12-testes-spring.png), [RF13](backend/spring/rf13-testes-spring.png), [RF14](backend/spring/rf14-testes-spring.png), [RF15](backend/spring/rf15-testes-spring.png), [RF16](backend/spring/rf16-testes-spring.png), [RF17](backend/spring/rf17-testes-spring.png) e [RF18](backend/spring/rf18-testes-spring.png).
 
 | ID | Requisito | Camada | Classe de teste | Cenário | Tipo | Resultado |
 |---|---|---|---|---|---|---|
@@ -264,7 +264,6 @@ Cada linha corresponde a um método de teste Spring executado na Release 2. Os r
 | SPR-254 | RF12, RF13 | Regras de negócio | `VisitaAgendadaServiceTest` | Verifica se o pesquisador responsável pode listar as participações do seu estudo | Sucesso | Aprovado |
 | SPR-255 | RF12, RF13 | Regras de negócio | `VisitaAgendadaServiceTest` | Verifica se o pesquisador não pode consultar participações de outro estudo | Erro/negativo | Aprovado |
 | SPR-256 | RF12, RF13 | Regras de negócio | `VisitaAgendadaServiceTest` | Verifica se administradores e participantes não podem consultar a listagem | Erro/negativo | Aprovado |
-
 | SPR-257 | RF12, RF13 | API (MockMvc) | `DocumentacaoApiTest` | Confere rotas, corpos, respostas, segurança e códigos documentados das visitas | Sucesso | Aprovado |
 | SPR-258 | RF14 | API (MockMvc) | `DocumentacaoApiTest` | Confere rotas, schemas e erros publicados para cadastro e edição de resultados | Sucesso | Aprovado |
 | SPR-259 | RF12 (apoio) | API (MockMvc) | `DocumentacaoApiTest` | Confere a consulta das participações e o schema de seus dados | Sucesso | Aprovado |
@@ -277,31 +276,31 @@ Total: 263 testes Spring.
 
 ## 2. Testes manuais (Swagger)
 
-Para cada requisito, ao menos um cenário de sucesso e um de erro, com a requisição e a resposta visíveis no print. Procedimento no [roteiro de testes](backend/roteiro-de-testes.md).
+Para cada requisito, ao menos um cenário de sucesso e um de erro, com a requisição e a resposta visíveis no print. Procedimento no [roteiro de testes](backend/roteiro-de-testes-backend.md).
 
 | ID | Requisito | Cenário | Endpoint | Esperado | Responsável | Resultado | Evidência |
 |---|---|---|---|---|---|---|---|
-| SWG-001 | RF12 | Agendamento com sucesso | `POST /estudos/{estudoId}/participacoes/{participacaoId}/visitas` | 201 Created, com o id da visita agendada | Luiz | Aprovado | `swagger/rf12/01-rf12-agendamento-sucesso.png` |
-| SWG-002 | RF12 | Agendamento duplicado | `POST /estudos/{estudoId}/participacoes/{participacaoId}/visitas` | 409 Conflict, código VISITA_JA_AGENDADA | Luiz | Aprovado | `swagger/rf12/02-rf12-agendamento-erro-duplicado.png` |
-| SWG-003 | RF12 | Reagendamento com sucesso | `PUT /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}` | 200 OK | Luiz | Aprovado | `swagger/rf12/03-rf12-reagendamento-sucesso.png` |
-| SWG-004 | RF12 | Reagendamento com data inválida | `PUT /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}` | 400 Bad Request, código DATA_VISITA_INVALIDA | Luiz | Aprovado | `swagger/rf12/04-rf12-reagendamento-erro.png` |
-| SWG-005 | RF13 | Registrar visita realizada | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 200 OK | Luiz | Aprovado | `swagger/rf13/01-rf13-registro-realizada.png` |
-| SWG-006 | RF13 | Registrar visita ausente | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 200 OK | Luiz | Aprovado | `swagger/rf13/02-rf13-registro-ausente.png` |
-| SWG-007 | RF13 | Registrar visita cancelada | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 200 OK, com motivo informado | Luiz | Aprovado | `swagger/rf13/03-rf13-registro-cancelada.png` |
-| SWG-008 | RF13 | Registrar visita futura | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 400 Bad Request, código TRANSICAO_VISITA_INVALIDA (A visita ainda não pode ser registrada.) | Luiz | Aprovado | `swagger/rf13/04-rf13-registro-erro.png` |
-| SWG-009 | RF13 | Correção de visita | `POST .../visitas/{visitaAgendadaId}/correcoes` | 201 Created | Luiz | Aprovado | `swagger/rf13/05-rf13-correcao-sucesso.png` |
-| SWG-010 | RF13 | Correção para a mesma situação | `POST .../visitas/{visitaAgendadaId}/correcoes` | 400 Bad Request, código TRANSICAO_VISITA_INVALIDA | Luiz | Aprovado | `swagger/rf13/06-rf13-correcao-erro.png` |
-| SWG-011 | RF14 | Registrar resultado fictício | `POST .../visitas/{visitaAgendadaId}/resultados` | 201 Created | Luiz | Aprovado | `swagger/rf14/01-rf14-resultado-sucesso.png` |
-| SWG-012 | RF14 | Resultado duplicado | `POST /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados` | 409 Conflict, código RESULTADO_JA_REGISTRADO | Luiz | Aprovado | `swagger/rf14/02-rf14-resultado-erro.png` |
-| SWG-013 | RF15 | Consultar histórico completo | `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico` | 200 OK | Luiz | Aprovado | `swagger/rf15/01-rf15-historico-sucesso.png` |
-| SWG-014 | RF15 | Coordenador não vinculado ou perfil sem permissão | `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico` | 404 (coordenador não vinculado) ou 403 (perfil sem permissão) | Luiz | Aprovado | `swagger/rf15/02-rf15-historico-erro-acesso.png` |
-| SWG-015 | RF16 | Retirar participante e cancelar visitas pendentes | `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada` | 200 OK | Georis | Aprovado | `swagger/rf16/01-rf16-retirada-sucesso.png` |
-| SWG-016 | RF16 | Tentar retirar novamente a participação | `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada` | 400 Bad Request, código PARTICIPACAO_JA_RETIRADA | Georis | Aprovado | `swagger/rf16/03-rf16-retirada-erro-ja-retirada.png` |
-| SWG-017 | RF17 | Participante consulta seus estudos | `GET /participante/estudos` | 200 OK | Georis | Aprovado | `swagger/rf17/01-rf17-consulta-estudos-sucesso.png` |
-| SWG-018 | RF17 | Consulta sem sessão autenticada | `GET /participante/estudos` | 401 Unauthorized, código AUTENTICACAO_NECESSARIA | Georis | Aprovado | `swagger/rf17/02-rf17-estudos-erro-perfil.png` |
-| SWG-019 | RF18 | Consultar próximas visitas | `GET /participante/visitas/proximas` | 200 OK | Georis | Aprovado | `swagger/rf18/01-rf18-proximas-sucesso.png` |
-| SWG-020 | RF18 | Consultar histórico de visitas | `GET /participante/visitas/historico` | 200 OK | Georis | Aprovado | `swagger/rf18/02-rf18-historico-sucesso.png` |
-| SWG-021 | RF18 | Consultar próximas visitas de estudo sem vínculo | `GET /participante/visitas/proximas?estudoId={estudoId}` | 404 Not Found, código RECURSO_NAO_ENCONTRADO | Georis | Aprovado | `swagger/rf18/03-rf18-consulta-erro-estudo.png` |
+| SWG-001 | RF12 | Agendamento com sucesso | `POST /estudos/{estudoId}/participacoes/{participacaoId}/visitas` | 201 Created, com o id da visita agendada | Luiz | Aprovado | [01-rf12-agendamento-sucesso.png](backend/swagger/rf12/01-rf12-agendamento-sucesso.png) |
+| SWG-002 | RF12 | Agendamento duplicado | `POST /estudos/{estudoId}/participacoes/{participacaoId}/visitas` | 409 Conflict, código VISITA_JA_AGENDADA | Luiz | Aprovado | [02-rf12-agendamento-erro-duplicado.png](backend/swagger/rf12/02-rf12-agendamento-erro-duplicado.png) |
+| SWG-003 | RF12 | Reagendamento com sucesso | `PUT /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}` | 200 OK | Luiz | Aprovado | [03-rf12-reagendamento-sucesso.png](backend/swagger/rf12/03-rf12-reagendamento-sucesso.png) |
+| SWG-004 | RF12 | Reagendamento com data inválida | `PUT /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}` | 400 Bad Request, código DATA_VISITA_INVALIDA | Luiz | Aprovado | [04-rf12-reagendamento-erro.png](backend/swagger/rf12/04-rf12-reagendamento-erro.png) |
+| SWG-005 | RF13 | Registrar visita realizada | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 200 OK | Luiz | Aprovado | [01-rf13-registro-realizada.png](backend/swagger/rf13/01-rf13-registro-realizada.png) |
+| SWG-006 | RF13 | Registrar visita ausente | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 200 OK | Luiz | Aprovado | [02-rf13-registro-ausente.png](backend/swagger/rf13/02-rf13-registro-ausente.png) |
+| SWG-007 | RF13 | Registrar visita cancelada | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 200 OK, com motivo informado | Luiz | Aprovado | [03-rf13-registro-cancelada.png](backend/swagger/rf13/03-rf13-registro-cancelada.png) |
+| SWG-008 | RF13 | Registrar visita futura | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 400 Bad Request, código TRANSICAO_VISITA_INVALIDA (A visita ainda não pode ser registrada.) | Luiz | Aprovado | [04-rf13-registro-erro.png](backend/swagger/rf13/04-rf13-registro-erro.png) |
+| SWG-009 | RF13 | Correção de visita | `POST .../visitas/{visitaAgendadaId}/correcoes` | 201 Created | Luiz | Aprovado | [05-rf13-correcao-sucesso.png](backend/swagger/rf13/05-rf13-correcao-sucesso.png) |
+| SWG-010 | RF13 | Correção para a mesma situação | `POST .../visitas/{visitaAgendadaId}/correcoes` | 400 Bad Request, código TRANSICAO_VISITA_INVALIDA | Luiz | Aprovado | [06-rf13-correcao-erro.png](backend/swagger/rf13/06-rf13-correcao-erro.png) |
+| SWG-011 | RF14 | Registrar resultado fictício | `POST .../visitas/{visitaAgendadaId}/resultados` | 201 Created | Luiz | Aprovado | [01-rf14-resultado-sucesso.png](backend/swagger/rf14/01-rf14-resultado-sucesso.png) |
+| SWG-012 | RF14 | Resultado duplicado | `POST /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados` | 409 Conflict, código RESULTADO_JA_REGISTRADO | Luiz | Aprovado | [02-rf14-resultado-erro.png](backend/swagger/rf14/02-rf14-resultado-erro.png) |
+| SWG-013 | RF15 | Consultar histórico completo | `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico` | 200 OK | Luiz | Aprovado | [01-rf15-historico-sucesso.png](backend/swagger/rf15/01-rf15-historico-sucesso.png) |
+| SWG-014 | RF15 | Coordenador não vinculado ou perfil sem permissão | `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico` | 404 (coordenador não vinculado) ou 403 (perfil sem permissão) | Luiz | Aprovado | [02-rf15-historico-erro-acesso.png](backend/swagger/rf15/02-rf15-historico-erro-acesso.png) |
+| SWG-015 | RF16 | Retirar participante e cancelar visitas pendentes | `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada` | 200 OK | Georis | Aprovado | [01-rf16-retirada-sucesso.png](backend/swagger/rf16/01-rf16-retirada-sucesso.png) |
+| SWG-016 | RF16 | Tentar retirar novamente a participação | `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada` | 400 Bad Request, código PARTICIPACAO_JA_RETIRADA | Georis | Aprovado | [03-rf16-retirada-erro-ja-retirada.png](backend/swagger/rf16/03-rf16-retirada-erro-ja-retirada.png) |
+| SWG-017 | RF17 | Participante consulta seus estudos | `GET /participante/estudos` | 200 OK | Georis | Aprovado | [01-rf17-consulta-estudos-sucesso.png](backend/swagger/rf17/01-rf17-consulta-estudos-sucesso.png) |
+| SWG-018 | RF17 | Consulta sem sessão autenticada | `GET /participante/estudos` | 401 Unauthorized, código AUTENTICACAO_NECESSARIA | Georis | Aprovado | [02-rf17-estudos-erro-perfil.png](backend/swagger/rf17/02-rf17-estudos-erro-perfil.png) |
+| SWG-019 | RF18 | Consultar próximas visitas | `GET /participante/visitas/proximas` | 200 OK | Georis | Aprovado | [01-rf18-proximas-sucesso.png](backend/swagger/rf18/01-rf18-proximas-sucesso.png) |
+| SWG-020 | RF18 | Consultar histórico de visitas | `GET /participante/visitas/historico` | 200 OK | Georis | Aprovado | [02-rf18-historico-sucesso.png](backend/swagger/rf18/02-rf18-historico-sucesso.png) |
+| SWG-021 | RF18 | Consultar próximas visitas de estudo sem vínculo | `GET /participante/visitas/proximas?estudoId={estudoId}` | 404 Not Found, código RECURSO_NAO_ENCONTRADO | Georis | Aprovado | [03-rf18-consulta-erro-estudo.png](backend/swagger/rf18/03-rf18-consulta-erro-estudo.png) |
 
 ## 3. Cenários da API (Postman)
 
