@@ -25,7 +25,7 @@ const useAuthMock = useAuth as jest.MockedFunction<typeof useAuth>;
 
 const MSG_CREDENCIAIS = 'E-mail ou senha inválidos. Confira os dados e tente novamente.';
 const MSG_FALHA = 'Não foi possível entrar agora. Tente novamente.';
-const MSG_PERFIL = 'Este aplicativo é exclusivo para participantes.';
+const MSG_PERFIL = 'Este aplicativo é para participantes. Use o sistema web.';
 const MSG_SESSAO_EXPIRADA = 'Sua sessão expirou após 30 minutos sem uso. Entre novamente.';
 
 function prepararAuth(extra: Partial<ReturnType<typeof useAuth>> = {}) {

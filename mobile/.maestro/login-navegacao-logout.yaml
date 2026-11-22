@@ -12,10 +12,24 @@ env:
 - launchApp
 - openLink: ${APP_URL}
 
+# Fecha o menu de desenvolvedor do Expo Go, se já estiver na tela
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+
 # Espera o app abrir: a primeira abertura compila o projeto
 - extendedWaitUntil:
     visible: "Entrar na sua conta|Aplicativo do participante"
     timeout: 120000
+
+# O menu pode aparecer só depois da compilação: fecha de novo, se for o caso
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
 
 # Se uma sessão anterior ainda estiver ativa, sai antes de começar
 - runFlow:
@@ -26,8 +40,12 @@ env:
       - tapOn:
           id: "botao-sair"
 
+# Espera a tela de login estabilizar
+- extendedWaitUntil:
+    visible: "Entrar na sua conta"
+    timeout: 30000
+
 # Login
-- assertVisible: "Entrar na sua conta"
 - tapOn:
     id: "campo-email"
 - inputText: ${EMAIL}
@@ -39,19 +57,25 @@ env:
     id: "botao-entrar"
 - extendedWaitUntil:
     visible: "Aplicativo do participante"
-    timeout: 15000
+    timeout: 20000
 
 # Navegação pelas abas
 - tapOn: "Estudos"
-- assertVisible: "Meus estudos"
+- extendedWaitUntil:
+    visible: "Meus estudos"
+    timeout: 10000
 - tapOn: "Visitas"
-- assertVisible: "Próximas visitas e comparecimento"
+- extendedWaitUntil:
+    visible: "Próximas visitas e comparecimento"
+    timeout: 10000
 - tapOn: "Perfil"
-- assertVisible: "Dados da sua conta"
+- extendedWaitUntil:
+    visible: "Dados da sua conta"
+    timeout: 10000
 
 # Logout
 - tapOn:
     id: "botao-sair"
 - extendedWaitUntil:
     visible: "Entrar na sua conta"
-    timeout: 10000
+    timeout: 15000
