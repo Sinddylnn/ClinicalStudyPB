@@ -290,7 +290,7 @@ Os resultados abaixo são os registrados nas evidências da Release 1. É import
 
 | Módulo | Resultado registrado | Evidência |
 |---|---|---|
-| Backend | 272 testes na validação de 05/11/2026, sem falhas, erros ou testes ignorados. | [Execução dos testes](releases/release1/evidencias/backend/testes-backend.png) |
+| Backend | 272 testes na validação de 05/11/2026, sem falhas, erros ou testes ignorados. | [Execução dos testes](releases/release1/evidencias/backend/spring/testes-backend.png) |
 | Backend | 97% de cobertura geral de linhas JaCoCo. Os serviços de recrutamento alcançaram 95% e os de estudos, 96%, acima do mínimo de 80% exigido para o código de negócio. | [Relatório de cobertura JaCoCo](releases/release1/evidencias/backend/jacoco/cobertura-jacoco.png) |
 | Web | 414 testes em 28 arquivos, com 99,23% de cobertura, medidos na branch web antes do PR #39. | [Execução](releases/release1/evidencias/web/26-rf05-07-testes.png) e [cobertura](releases/release1/evidencias/web/27-rf05-07-cobertura.png) |
 | Mobile | 6 testes Jest passando; a aplicação também foi executada e navegada no emulador Android. | [Testes Jest](releases/release1/evidencias/mobile/Release1_Mobile_Jest_6_Testes_Passando.png) e [relatório de execução](releases/release1/evidencias/mobile/teste-mobile-sprint2.md) |
