@@ -5,8 +5,8 @@ import { servicoAcompanhamentoSimulado } from './acompanhamentoSimulado';
 // Segue o contrato da Sprint 3 (docs/api/acompanhamento-de-participantes.md).
 // A lista de participações, o agendamento e o reagendamento seguem o PR #41 (task 3964); o registro e a
 // correção da situação das visitas, o PR #46 (RF13); a retirada, o PR #48 (RF16); o histórico da
-// participação, o PR #54 (RF15). Os resultados (RF14) seguem o PR #52, que só tem POST e PUT: as rotas
-// GET .../visitas/{visitaAgendadaId} e GET .../resultados ainda não existem no backend.
+// participação, o PR #54 (RF15). Os resultados (RF14) seguem os PRs #52 (POST e PUT) e #59 (GET da
+// visita e dos resultados).
 
 /** Situação da participação no estudo: a retirada é irreversível (RF16). */
 export type SituacaoParticipacao = 'ATIVA' | 'RETIRADA';
