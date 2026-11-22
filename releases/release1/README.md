@@ -158,7 +158,7 @@ regras de negócio, persistência, migrações e concorrência. Os cenários fun
 | Evidência | Comprovação |
 |---|---|
 | [Execução bem sucedida do Swagger](evidencias/backend/swagger/swagger-interface-inicial.png) e [Rotas documentadas no Swagger](evidencias/backend/swagger/swagger-rotas-exemplo.png) | Contrato OpenAPI disponível para configuração, recrutamento e inclusão. |
-| [Execução dos testes](evidencias/backend/testes-backend.png) | Suíte final executada sem falhas. |
+| [Execução dos testes](evidencias/backend/spring/testes-backend.png) | Suíte final executada sem falhas. |
 | [Cobertura JaCoCo](evidencias/backend/jacoco/cobertura-jacoco.png) | Cobertura de linhas do backend, incluindo serviços acima do mínimo exigido. |
 | [Postman Runner (parte 1)](evidencias/backend/postman/runner-resultado-1.png) | Execução automatizada dos cenários da coleção. |
 | [Postman Runner (parte 2)](evidencias/backend/postman/runner-resultado-2.png) | Continuação dos cenários e resultados da coleção. |
@@ -195,7 +195,7 @@ Essas evoluções não alteram a arquitetura geral prevista, mas detalham e cons
 
 - **Testes de componentes (web)**: 28 arquivos e 414 testes passando na branch `web`, antes do PR #39 (Vitest e Testing Library), com 99,23% das linhas da web cobertas. [Execução](evidencias/web/26-rf05-07-testes.png) • [Cobertura](evidencias/web/27-rf05-07-cobertura.png)
 - **Testes do mobile:** 6 testes de componente com Jest passando, sobre a tela Início e a navegação entre as abas. O fluxo E2E de navegação com Maestro foi concluído com sucesso no emulador Android. [Execução do Jest](evidencias/mobile/Release1_Mobile_Jest_6_Testes_Passando.png) • [Teste E2E](evidencias/mobile/e2e-mobile-sprint2.md)
-- **Backend:** na validação de 05/11/2026, foram executados 272 testes, sem falhas, erros ou testes ignorados. A suíte contempla testes de regras de negócio, API, persistência, migrações e concorrência, incluindo os novos cenários de critérios, visitas, candidatos e elegibilidade. [Execução](evidencias/backend/testes-backend.png)
+- **Backend:** na validação de 05/11/2026, foram executados 272 testes, sem falhas, erros ou testes ignorados. A suíte contempla testes de regras de negócio, API, persistência, migrações e concorrência, incluindo os novos cenários de critérios, visitas, candidatos e elegibilidade. [Execução](evidencias/backend/spring/testes-backend.png)
 - **Testes de integração do backend:** executados com PostgreSQL exclusivo de testes, cobrindo persistência, migrações, transações e cenários concorrentes de recrutamento e inclusão.
 - **Cobertura do backend:** 97% de cobertura geral de linhas no JaCoCo. Os serviços de recrutamento alcançaram 95% e os serviços de estudos, 96%, ambos acima do mínimo exigido de 80%. [Relatório JaCoCo](evidencias/backend/jacoco/cobertura-jacoco.png)
 - **Validação funcional da API:** cenários executados pela coleção Postman. [Resultados do Runner](evidencias/backend/postman/)

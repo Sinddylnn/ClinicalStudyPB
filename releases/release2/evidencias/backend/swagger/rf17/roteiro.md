@@ -25,8 +25,7 @@ Comprovar que uma pessoa autenticada com perfil `PARTICIPANTE` consulta os estud
 |---|---|
 | Conta para o sucesso | `participante@clinicalstudypb.test` |
 | Perfil para o sucesso | `PARTICIPANTE` |
-| Conta para o erro | `coordenador@clinicalstudypb.test` |
-| Perfil para o erro | `COORDENADOR` |
+| Cenário de erro registrado | Requisição sem sessão autenticada |
 
 Não registrar senha, cookie de sessão ou token CSRF neste arquivo ou nas capturas.
 
@@ -49,24 +48,21 @@ Não registrar senha, cookie de sessão ou token CSRF neste arquivo ou nas captu
 
 Se a resposta for `200 OK` com uma lista vazia (`[]`), a chamada funcionou, mas essa conta não possui participação registrada no banco. Nesse caso, confirme a inclusão da conta no estudo antes de registrar a evidência como consulta de estudos vinculados.
 
-## Cenário 2: acesso com perfil incorreto
+## Cenário 2: acesso sem autenticação
 
-1. Encerre a sessão do participante: execute [`GET /auth/csrf`](http://localhost:8080/auth/csrf) e depois [`POST /auth/logout`](http://localhost:8080/auth/logout), enviando o token no cabeçalho `X-CSRF-TOKEN`.
-2. Obtenha um novo token com `GET /auth/csrf`.
-3. Faça login com a conta fictícia de coordenador usando o novo token.
-4. Execute novamente [`GET /participante/estudos`](http://localhost:8080/participante/estudos).
+Execute [`GET /participante/estudos`](http://localhost:8080/participante/estudos) sem fazer login ou após encerrar a sessão.
 
-**Resultado esperado:** `403 Forbidden`, pois o endpoint é exclusivo do perfil `PARTICIPANTE`.
+**Resultado esperado:** `401 Unauthorized`, pois a requisição não possui uma sessão autenticada.
 
-**Resultado observado:** rota bloqueada por ausência se autenticação
+**Resultado observado:** `401 Unauthorized`, com o código `AUTENTICACAO_NECESSARIA` e a mensagem para entrar no sistema.
 
 **Evidência:**
 
-![Ver captura do erro de perfil](02-rf17-estudos-erro-perfil.png)
+![Resposta 401 sem autenticação](02-rf17-estudos-erro-perfil.png)
 
-[Ver captura do erro de perfil](02-rf17-estudos-erro-perfil.png)
+[Ver captura da resposta 401](02-rf17-estudos-erro-perfil.png)
 
-Antes de compartilhar a captura, confira se ela não mostra cookie, token CSRF ou senha.
+> Para testar especificamente um perfil incorreto, faça login como coordenador e espere `403 Forbidden`. Essa captura comprova ausência de autenticação (`401`), não erro de perfil.
 
 ## Testes automatizados Spring
 
@@ -83,7 +79,7 @@ Execute o comando dentro da pasta `backend`:
 
 **Resultado esperado:** testes concluídos sem falhas e `BUILD SUCCESS`.
 
-**Resultado observado:** [preencher com a quantidade de testes, falhas e erros mostrada pelo Maven]
+**Resultado observado:** 21 testes executados, 0 falhas, 0 erros e 0 testes ignorados.
 
 **Evidência da execução Spring:**
 
