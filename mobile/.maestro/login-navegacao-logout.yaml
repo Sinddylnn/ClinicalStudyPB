@@ -1,0 +1,81 @@
+appId: host.exp.exponent
+env:
+  # Emulador Android. No celular por USB, use o IP do computador:
+  #   -e APP_URL=exp://192.168.0.6:8081
+  APP_URL: exp://10.0.2.2:8081
+---
+# Fluxo E2E do aplicativo do participante: login, navegação pelas abas e logout.
+# Antes: backend no ar, "npx expo start" rodando e o Expo Go aberto no emulador.
+# Execução (e-mail e senha de um participante de teste, nunca versionados):
+#   maestro test -e EMAIL=<email> -e SENHA=<senha> .maestro/login-navegacao-logout.yaml
+
+- launchApp
+- openLink: ${APP_URL}
+
+# Fecha o menu de desenvolvedor do Expo Go, se já estiver na tela
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+
+# Espera o app abrir: a primeira abertura compila o projeto
+- extendedWaitUntil:
+    visible: "Entrar na sua conta|Aplicativo do participante"
+    timeout: 120000
+
+# O menu pode aparecer só depois da compilação: fecha de novo, se for o caso
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+
+# Se uma sessão anterior ainda estiver ativa, sai antes de começar
+- runFlow:
+    when:
+      visible: "Aplicativo do participante"
+    commands:
+      - tapOn: "Perfil"
+      - tapOn:
+          id: "botao-sair"
+
+# Espera a tela de login estabilizar
+- extendedWaitUntil:
+    visible: "Entrar na sua conta"
+    timeout: 30000
+
+# Login
+- tapOn:
+    id: "campo-email"
+- inputText: ${EMAIL}
+- tapOn:
+    id: "campo-senha"
+- inputText: ${SENHA}
+- hideKeyboard
+- tapOn:
+    id: "botao-entrar"
+- extendedWaitUntil:
+    visible: "Aplicativo do participante"
+    timeout: 20000
+
+# Navegação pelas abas
+- tapOn: "Estudos"
+- extendedWaitUntil:
+    visible: "Meus estudos"
+    timeout: 10000
+- tapOn: "Visitas"
+- extendedWaitUntil:
+    visible: "Próximas visitas e comparecimento"
+    timeout: 10000
+- tapOn: "Perfil"
+- extendedWaitUntil:
+    visible: "Dados da sua conta"
+    timeout: 10000
+
+# Logout
+- tapOn:
+    id: "botao-sair"
+- extendedWaitUntil:
+    visible: "Entrar na sua conta"
+    timeout: 15000
