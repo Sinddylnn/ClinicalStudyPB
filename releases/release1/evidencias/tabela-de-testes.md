@@ -1,6 +1,6 @@
 # Tabela de testes — Release 1
 
-Lista de todos os testes da Release 1, por ferramenta. Os resultados correspondem à execução completa registrada no [relatório de testes](relatorio-testes.md).
+Lista de todos os testes da Release 1, por ferramenta. Os resultados correspondem à execução completa registrada no [relatório de testes](backend/postman/relatorio-execucao.md).
 
 ## 1. Testes automatizados do backend (Spring)
 
@@ -215,7 +215,7 @@ Cada linha é um método de teste. O cenário vem do comentário do próprio tes
 
 ## 2. Cenários da API (Postman)
 
-Resultado conforme a execução completa em [evidencias/backend/postman](evidencias/backend/postman/). Os valores entre chaves duplas são variáveis do ambiente Postman.
+Resultado conforme a execução completa em [evidencias/backend/postman](backend/postman/). Os valores entre chaves duplas são variáveis do ambiente Postman.
 
 | ID | Requisito | Cenário | Requisição | Esperado | Resultado |
 |---|---|---|---|---|---|
@@ -296,4 +296,4 @@ Resultado conforme a execução completa em [evidencias/backend/postman](evidenc
 
 ## 3. Testes manuais (Swagger)
 
-Os prints estão em [evidencias/backend/swagger](evidencias/backend/swagger/): documentação do contrato e rotas de exemplo.
+Os prints estão em [evidencias/backend/swagger](backend/swagger/): documentação do contrato e rotas de exemplo.

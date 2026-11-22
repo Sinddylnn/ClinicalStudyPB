@@ -1,6 +1,6 @@
 # Roteiro de testes — Release 2
 
-Este roteiro define como os testes do backend da Release 2 são executados e como as evidências são organizadas. Os resultados vão no [relatório de testes](relatorio-testes.md) e a lista de casos, na [tabela de testes](tabela-de-testes.md).
+Este roteiro define como os testes do backend da Release 2 são executados e como as evidências são organizadas. Os resultados vão no [relatório de testes](postman/relatorio-execucao.md) e a lista de casos, na [tabela de testes](../tabela-de-testes.md).
 
 ## 1. Regra por requisito
 
@@ -88,7 +88,7 @@ Mantém a estrutura de `releases/release1/evidencias/backend/postman/`, dividida
 | Execução | Importar a coleção e o ambiente `Local`, executar no Runner (Iterations 1, Delay 0), resultado sem falhas |
 | Prints por requisito | Runner mostrando só a pasta do requisito, em `postman/rfXX/`, com o nome `01-rfXX-descricao.png` |
 | Execução completa | Print do Runner com a coleção inteira em `postman/runner/` |
-| Relatório | `postman/relatorio-execucao.md`, no [modelo da Release 1](../release1/evidencias/backend/postman/relatorio-execucao.md) |
+| Relatório | `postman/relatorio-execucao.md`, no [modelo da Release 1](../../../release1/evidencias/backend/postman/relatorio-execucao.md) |
 
 Rotas cobertas:
 

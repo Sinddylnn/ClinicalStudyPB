@@ -1,6 +1,6 @@
 # Tabela de testes — Release 2
 
-Lista de todos os testes da Release 2, por ferramenta. Atualize a coluna Resultado conforme os testes forem executados (Pendente, Aprovado ou Reprovado) e preencha a coluna Evidência com o link do print.
+Lista de todos os testes da Release 2, por ferramenta, cobrindo o backend (seções 1 a 3), a web e o mobile (seção 4). Atualize a coluna Resultado conforme os testes forem executados (Pendente, Aprovado ou Reprovado) e preencha a coluna Evidência com o link do print.
 
 ## 1. Testes automatizados do backend (Spring)
 
@@ -267,7 +267,7 @@ Cada linha é um método de teste. O cenário vem do comentário do próprio tes
 
 ## 2. Testes manuais (Swagger)
 
-Para cada requisito, ao menos um cenário de sucesso e um de erro, com a requisição e a resposta visíveis no print. Procedimento no [roteiro de testes](roteiro-de-testes.md).
+Para cada requisito, ao menos um cenário de sucesso e um de erro, com a requisição e a resposta visíveis no print. Procedimento no [roteiro de testes](backend/roteiro-de-testes.md).
 
 | ID | Requisito | Cenário | Endpoint | Esperado | Responsável | Resultado | Evidência |
 |---|---|---|---|---|---|---|---|
@@ -295,14 +295,111 @@ Para cada requisito, ao menos um cenário de sucesso e um de erro, com a requisi
 
 ## 3. Cenários da API (Postman)
 
-Gere as linhas depois de executar a coleção: `python docs/relatorios/gerar_tabela_postman.py docs/postman/ClinicalStudyPB.postman_collection.json` (ajuste `RF_POR_PASTA` no script para as pastas novas). Prints do Runner por requisito em [evidencias/backend/postman](evidencias/backend/postman/).
+Gere as linhas depois de executar a coleção: `python docs/relatorios/gerar_tabela_postman.py docs/postman/ClinicalStudyPB.postman_collection.json` (ajuste `RF_POR_PASTA` no script para as pastas novas). Prints do Runner por requisito em [evidencias/backend/postman](backend/postman/).
 
 | ID | Requisito | Cenário | Requisição | Esperado | Resultado |
 |---|---|---|---|---|---|
 | API-001 | | | | | |
 
-## 4. Testes do mobile e da web
+## 4. Testes da web e do mobile
 
-| ID | Requisito | Camada | Cenário | Esperado | Resultado | Evidência |
-|---|---|---|---|---|---|---|
-| MOB-001 | | | | | | |
+### 4.1 Web (automatizados)
+
+Testes de serviços, regras e telas com Vitest e Testing Library, em `web/src`. Por causa do volume, a web tem uma linha por arquivo de teste, e não uma por teste.
+
+| ID | Requisito | Arquivo | O que cobre | Nº de testes | Resultado |
+|---|---|---|---|---|---|
+| WEB-001 | RF12 a RF16 | `web/src/api/acompanhamento.test.ts` | Serviço real do acompanhamento: rotas e métodos da lista, do histórico, do registro e da correção de visitas, dos resultados e da retirada, com token CSRF e repasse dos erros do backend | 17 | Aprovado |
+| WEB-002 | RF12 a RF16 | `web/src/api/acompanhamentoSimulado.test.ts` | Serviço simulado do acompanhamento: agendamento, registro e correção das visitas, resultados, histórico e retirada, com as mesmas regras e códigos de erro do backend | 52 | Aprovado |
+| WEB-003 | RF02 | `web/src/api/autenticacao.test.ts` | Login, logout com token CSRF e consulta da sessão atual | 6 | Aprovado |
+| WEB-004 | RF08 a RF11 | `web/src/api/candidatos.test.ts` | Serviço real dos candidatos: cadastro, elegibilidade, consentimento e inclusão, com repasse das recusas do backend | 13 | Aprovado |
+| WEB-005 | RF08 a RF11 | `web/src/api/candidatosSimulado.test.ts` | Serviço simulado dos candidatos: cadastro, elegibilidade, consentimento e inclusão | 24 | Aprovado |
+| WEB-006 | Geral | `web/src/api/cliente.test.ts` | Cliente HTTP: conversão dos erros da API, token CSRF e tratadores de sessão (401 e 403) | 12 | Aprovado |
+| WEB-007 | RF04, RF07 | `web/src/api/estudos.test.ts` | Serviço real dos estudos: listagem, cadastro, mudança de estado e atribuição de coordenador | 10 | Aprovado |
+| WEB-008 | RF04, RF07 | `web/src/api/estudosSimulado.test.ts` | Serviço simulado dos estudos: cadastro, mudança de estado com as pendências do backend e atribuição de coordenador | 18 | Aprovado |
+| WEB-009 | RF05, RF06 | `web/src/api/protocolo.test.ts` | Serviço real do protocolo: critérios de inclusão e exclusão, visitas previstas e atividades | 14 | Aprovado |
+| WEB-010 | RF05, RF06 | `web/src/api/protocoloSimulado.test.ts` | Serviço simulado do protocolo: critérios, visitas e atividades, com as validações do backend | 33 | Aprovado |
+| WEB-011 | RF12, RF15, RF16 | `web/src/api/recursosAcompanhamento.test.ts` | Recursos do acompanhamento ligados no modo real e no simulado | 2 | Aprovado |
+| WEB-012 | RF01 | `web/src/api/usuarios.test.ts` | Serviço de usuários: listagem, cadastro, edição, desativação e reativação | 6 | Aprovado |
+| WEB-013 | RF02, RF03 | `web/src/autenticacao/autenticacao.test.tsx` | Rota protegida, sessão expirada, acesso negado, revalidação da sessão e saída | 18 | Aprovado |
+| WEB-014 | RF12 | `web/src/pages/acompanhamento/agendamento.test.ts` | Regras do agendamento: datas no fuso de Recife, limites do período e validação dos campos | 9 | Aprovado |
+| WEB-015 | RF12, RF13 | `web/src/pages/acompanhamento/agendamentoVisitas.test.tsx` | Tela de agendamento: agendar e reagendar visitas, registrar realização, ausência e cancelamento, e corrigir com justificativa | 42 | Aprovado |
+| WEB-016 | RF16 | `web/src/pages/acompanhamento/dialogoRetirada.test.tsx` | Diálogo de retirada: consequências, motivo obrigatório e contador de caracteres | 8 | Aprovado |
+| WEB-017 | RF15 | `web/src/pages/acompanhamento/historico.test.ts` | Ordem cronológica do histórico e nome de quem registrou | 4 | Aprovado |
+| WEB-018 | RF15, RF16 | `web/src/pages/acompanhamento/historicoParticipante.test.tsx` | Tela do histórico: visitas, motivos, correções, resultados e retirada pelo histórico | 25 | Aprovado |
+| WEB-019 | RF12, RF16 | `web/src/pages/acompanhamento/participantesEstudo.test.tsx` | Lista de participantes: ações por perfil e estado do estudo, consulta do pesquisador e retirada | 14 | Aprovado |
+| WEB-020 | RF13 | `web/src/pages/acompanhamento/registroVisita.test.ts` | Regras do registro: motivo, justificativa, dia da visita e situações registráveis e corrigíveis | 11 | Aprovado |
+| WEB-021 | RF14 | `web/src/pages/acompanhamento/resultados.test.ts` | Regras dos resultados: limite de 1.000 caracteres e o que registrar ou editar | 4 | Aprovado |
+| WEB-022 | RF14 | `web/src/pages/acompanhamento/resultadosVisita.test.tsx` | Tela de resultados: um campo por atividade, registro, edição e bloqueio em visita não realizada | 14 | Aprovado |
+| WEB-023 | RF16 | `web/src/pages/acompanhamento/retirada.test.ts` | Regras da retirada: motivo obrigatório até 500 caracteres e quando a retirada é permitida | 2 | Aprovado |
+| WEB-024 | RF04 | `web/src/pages/estudos/estudos.test.tsx` | Lista e cadastro de estudos | 19 | Aprovado |
+| WEB-025 | RF07 | `web/src/pages/estudos/transicoes.test.ts` | Transições de estado, justificativa de encerramento e pendências do recrutamento | 31 | Aprovado |
+| WEB-026 | RF04 | `web/src/pages/estudos/validacao.test.ts` | Validação dos campos do estudo e formatação de datas | 14 | Aprovado |
+| WEB-027 | RF03 | `web/src/pages/Inicio.test.tsx` | Tela inicial com os atalhos de cada perfil | 6 | Aprovado |
+| WEB-028 | RF02 | `web/src/pages/login/Login.test.tsx` | Tela de login: campos vazios, credenciais inválidas e falha de conexão | 7 | Aprovado |
+| WEB-029 | Geral | `web/src/pages/protocolo/coordenador.test.tsx` | Atribuição e troca do coordenador na aba Resumo | 8 | Aprovado |
+| WEB-030 | RF07 | `web/src/pages/protocolo/mudancaEstado.test.tsx` | Mudança de estado do estudo pela tela, com confirmação e recusas do backend | 11 | Aprovado |
+| WEB-031 | RF05 a RF07 | `web/src/pages/protocolo/protocolo.test.tsx` | Tela do protocolo: abas, critérios e acesso aos participantes incluídos | 22 | Aprovado |
+| WEB-032 | RF06 | `web/src/pages/protocolo/visitas.test.tsx` | Aba Visitas: visitas previstas, atividades e pendências do recrutamento | 15 | Aprovado |
+| WEB-033 | RF10 | `web/src/pages/recrutamento/consentimentoCandidato.test.tsx` | Tela de consentimento: resposta obrigatória, observação e correção | 13 | Aprovado |
+| WEB-034 | RF09 | `web/src/pages/recrutamento/elegibilidade.test.ts` | Cálculo da elegibilidade e resumo da avaliação | 7 | Aprovado |
+| WEB-035 | RF09 | `web/src/pages/recrutamento/elegibilidadeCandidato.test.tsx` | Tela de elegibilidade: respostas por critério e resultado da avaliação | 13 | Aprovado |
+| WEB-036 | RF10, RF11 | `web/src/pages/recrutamento/inclusao.test.ts` | Condições da inclusão, validação do consentimento e próxima etapa do candidato | 12 | Aprovado |
+| WEB-037 | RF11 | `web/src/pages/recrutamento/inclusaoCandidato.test.tsx` | Tela de inclusão: seis condições, conta com o mesmo e-mail e bloqueios | 12 | Aprovado |
+| WEB-038 | RF08 | `web/src/pages/recrutamento/recrutamento.test.tsx` | Tela de recrutamento e cadastro de candidato | 17 | Aprovado |
+| WEB-039 | RF08 | `web/src/pages/recrutamento/validacao.test.ts` | Validação do nome e do e-mail do candidato | 11 | Aprovado |
+| WEB-040 | RF01 | `web/src/pages/usuarios/usuarios.test.tsx` | Telas de usuários: lista, cadastro, edição, desativação, reativação e a própria conta do administrador | 35 | Aprovado |
+| WEB-041 | RF01 | `web/src/pages/usuarios/validacao.test.ts` | Validação dos campos do usuário e erros do servidor por campo | 12 | Aprovado |
+| WEB-042 | RF03 | `web/src/routes/AppRoutes.test.tsx` | Rotas da aplicação, página não encontrada e acesso por perfil | 19 | Aprovado |
+
+**Total:** 42 arquivos e 642 testes passando (`npm test`). Cobertura de linhas: **99,4%** (`npm run test:coverage`).
+Evidências: [execução dos testes](web/16-rf12-13-testes.png) e [relatório de cobertura](web/17-rf12-13-cobertura.png).
+
+### 4.2 Web (manuais)
+
+Cada linha é um print da web no modo real. O cenário vem da seção "Evidências da Sprint 3" do [guia de execução da web](../../../docs/execucao/guia-execucao-web.md).
+
+| ID | Requisito | Cenário | Esperado | Resultado | Evidência |
+|---|---|---|---|---|---|
+| WEBM-001 | RF12 | Lista de participantes do coordenador | Participantes incluídos com data de inclusão, situação e as ações "Ver histórico", "Agendar visitas" e "Retirar" | Aprovado | [01-rf12-lista-participantes.png](web/01-rf12-lista-participantes.png) |
+| WEBM-002 | RF12 | Agendamento com campos vazios | Erros em visita prevista, data e hora, sem enviar ao backend | Aprovado | [02-rf12-agendamento-erro-campos-vazios.png](web/02-rf12-agendamento-erro-campos-vazios.png) |
+| WEBM-003 | RF12 | Agendamento com data anterior a hoje | Mensagem "A data da visita não pode ser anterior a hoje." | Aprovado | [03-rf12-agendamento-erro-data.png](web/03-rf12-agendamento-erro-data.png) |
+| WEBM-004 | RF12 | Agendamento com sucesso | Notificação da visita agendada; a mesma visita prevista pode ser agendada depois de uma situação final | Aprovado | [04-rf12-agendamento-sucesso.png](web/04-rf12-agendamento-sucesso.png) |
+| WEBM-005 | RF12 | Visita prevista já agendada | Mensagem no campo da visita (`VISITA_JA_AGENDADA`) | Aprovado | [05-rf12-agendamento-erro-duplicado.png](web/05-rf12-agendamento-erro-duplicado.png) |
+| WEBM-006 | RF12 | Reagendamento com sucesso | Notificação com a nova data, sem criar outra visita | Aprovado | [06-rf12-reagendamento-sucesso.png](web/06-rf12-reagendamento-sucesso.png) |
+| WEBM-007 | RF13 | Ações conforme a situação e a data | Visita futura só com "Reagendar" e "Cancelar visita"; visita registrada só com "Corrigir"; correção bloqueada na visita com resultados | Aprovado | [07-rf13-acoes-por-data.png](web/07-rf13-acoes-por-data.png) |
+| WEBM-008 | RF13 | Cancelamento sem motivo | Mensagem "Informe o motivo do cancelamento." | Aprovado | [08-rf13-cancelamento-erro-motivo.png](web/08-rf13-cancelamento-erro-motivo.png) |
+| WEBM-009 | RF13 | Cancelamento com motivo | Visita "Cancelada", com o motivo na lista | Aprovado | [09-rf13-cancelamento-sucesso.png](web/09-rf13-cancelamento-sucesso.png) |
+| WEBM-010 | RF13 | Correção de cancelada para ausente | Notificação da correção e visita "Ausente" | Aprovado | [10-rf13-correcao-cancelada-ausente.png](web/10-rf13-correcao-cancelada-ausente.png) |
+| WEBM-011 | RF13 | Correção sem justificativa | Mensagem "Informe a justificativa da correção." | Aprovado | [11-rf13-correcao-erro-justificativa.png](web/11-rf13-correcao-erro-justificativa.png) |
+| WEBM-012 | RF13 | Correção de ausente para realizada | Notificação da correção e visita "Realizada", com a mesma data | Aprovado | [12-rf13-correcao-sucesso.png](web/12-rf13-correcao-sucesso.png) |
+| WEBM-013 | RF13, RF15 | Histórico com correções | Correções listadas com autor, data e justificativa, sem apagar o registro anterior | Aprovado | [13-rf13-historico-correcao.png](web/13-rf13-historico-correcao.png) |
+| WEBM-014 | RF12, RF15 | Lista do pesquisador somente para consulta | Aviso "Somente consulta" e só a ação "Ver histórico" | Aprovado | [15-rf12-pesquisador-somente-consulta.png](web/15-rf12-pesquisador-somente-consulta.png) |
+| WEBM-015 | RF16 | Lista com a ação Retirar | Participante ativo com as ações "Agendar visitas" e "Retirar" | Aprovado | [18-rf16-retirada-lista-participantes.png](web/18-rf16-retirada-lista-participantes.png) |
+| WEBM-016 | RF16 | Diálogo de confirmação da retirada | Diálogo explica que a retirada é irreversível e o que é cancelado ou mantido | Aprovado | [19-rf16-retirada-dialogo-confirmacao.png](web/19-rf16-retirada-dialogo-confirmacao.png) |
+| WEBM-017 | RF16 | Retirada sem motivo | Mensagem "Informe o motivo da retirada.", sem enviar ao backend | Aprovado | [20-rf16-retirada-erro-motivo-obrigatorio.png](web/20-rf16-retirada-erro-motivo-obrigatorio.png) |
+| WEBM-018 | RF16 | Motivo da retirada preenchido | Motivo aceito, com contador de até 500 caracteres | Aprovado | [21-rf16-retirada-motivo-preenchido.png](web/21-rf16-retirada-motivo-preenchido.png) |
+| WEBM-019 | RF16 | Retirada registrada | Notificação da retirada e participante "Retirado", sem ações, ainda na lista | Aprovado | [22-rf16-retirada-sucesso.png](web/22-rf16-retirada-sucesso.png) |
+| WEBM-020 | RF16 | Agendamento bloqueado para o retirado | Aviso de que não é possível agendar, reagendar nem registrar visitas, sem o formulário | Aprovado | [23-rf16-retirada-agendamento-bloqueado.png](web/23-rf16-retirada-agendamento-bloqueado.png) |
+| WEBM-021 | RF14 | Histórico com a ação Registrar resultados | Visita realizada sem resultado mostra o botão "Registrar resultados" | Aprovado | [24-rf14-historico-registrar-resultados.png](web/24-rf14-historico-registrar-resultados.png) |
+| WEBM-022 | RF14 | Formulário de resultados | Um campo por atividade prevista e aviso de dados fictícios | Aprovado | [25-rf14-resultados-formulario.png](web/25-rf14-resultados-formulario.png) |
+| WEBM-023 | RF14 | Resultado acima de 1.000 caracteres | Mensagem "O resultado pode ter até 1000 caracteres.", sem enviar | Aprovado | [26-rf14-resultados-erro-texto-longo.png](web/26-rf14-resultados-erro-texto-longo.png) |
+| WEBM-024 | RF14 | Resultados salvos | Notificação e resultado exibido no histórico, com o botão "Editar resultados" | Aprovado | [27-rf14-resultados-sucesso.png](web/27-rf14-resultados-sucesso.png) |
+| WEBM-025 | RF14 | Edição do resultado | Texto salvo alterado, com quem registrou e quando | Aprovado | [28-rf14-resultados-edicao.png](web/28-rf14-resultados-edicao.png) |
+| WEBM-026 | RF14 | Resultados em visita não realizada | Aviso "Visita não realizada", sem o formulário | Aprovado | [29-rf14-resultados-visita-nao-realizada.png](web/29-rf14-resultados-visita-nao-realizada.png) |
+| WEBM-027 | RF15 | Histórico visto pelo pesquisador | Histórico completo em ordem cronológica, somente para consulta | Aprovado | [30-rf15-historico-pesquisador.png](web/30-rf15-historico-pesquisador.png) |
+| WEBM-028 | RF15 | Histórico de participante inexistente | Mensagem "Participante não encontrado" (404 `RECURSO_NAO_ENCONTRADO`), sem expor dados | Aprovado | [31-rf15-historico-nao-encontrado.png](web/31-rf15-historico-nao-encontrado.png) |
+| WEBM-029 | RF16 | Diálogo de retirada aberto pelo histórico | Mesmo diálogo da lista, com motivo obrigatório e aviso da visita que será cancelada | Aprovado | [32-rf16-retirada-pelo-historico-dialogo.png](web/32-rf16-retirada-pelo-historico-dialogo.png) |
+| WEBM-030 | RF16 | Retirada registrada pelo histórico | Participante "Retirado", visita agendada cancelada e visitas realizadas e resultados preservados | Aprovado | [33-rf16-retirada-pelo-historico-sucesso.png](web/33-rf16-retirada-pelo-historico-sucesso.png) |
+
+### 4.3 Mobile (automatizados)
+
+| ID | Requisito | Arquivo | O que cobre | Nº de testes | Resultado |
+|---|---|---|---|---|---|
+| MOB-001 | | | | | |
+
+### 4.4 Mobile (manuais)
+
+| ID | Requisito | Cenário | Esperado | Resultado | Evidência |
+|---|---|---|---|---|---|
+| MOBM-001 | | | | | |
