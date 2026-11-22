@@ -115,7 +115,7 @@ function Cartao({
       </View>
       {!!visita.estudoTitulo && <Text style={styles.estudo}>{visita.estudoTitulo}</Text>}
       <View style={styles.row}>
-        <Ionicons name="calendar-outline" size={14} color="#64748B" />
+        <Ionicons name="calendar-outline" size={14} color="#0E7C86" />
         <Text style={styles.rowText}>{formatarDataHora(visita.dataHora, comSemana)}</Text>
       </View>
 
