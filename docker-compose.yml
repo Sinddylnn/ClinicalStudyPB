@@ -12,6 +12,11 @@ name: clinicalstudypb
 
 services:
   # <-------------------BANCO DE DESENVOLVIMENTO------------------->
+
+  # Quando você não declara profiles em um serviço,
+  # ele é considerado parte do perfil padrão (default) do Docker Compose
+  # ou seja, sempre incluído nas operações normais do Compose
+  # No nosso caso: db e seu backend são a base do ambiente; web e db-test são serviços opcionais
   db:
     image: postgres:17.11
     environment:
@@ -61,7 +66,17 @@ services:
       context: ./web
     environment:
       VITE_API_URL: /api
+
+      # Serviços que usam o backend real (dados gravados no PostgreSQL).
+      # Com "simulado", os dados ficam só na memória do navegador e o backend
+      # não os enxerga (ex.: critérios e visitas "prontos" na tela, mas ausentes
+      # no banco, o que bloqueia o início do recrutamento).
+      # Para voltar aos dados simulados, troque o valor por simulado.
       VITE_ESTUDOS_API: real
+      VITE_PROTOCOLO_API: real
+      VITE_CANDIDATOS_API: real
+      VITE_ACOMPANHAMENTO_API: real
+
       # Este endereço é usado pelo proxy do Vite, nunca pelo navegador
       API_PROXY_TARGET: http://backend:8080
     ports:
