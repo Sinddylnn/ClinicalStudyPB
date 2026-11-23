@@ -39,7 +39,9 @@ releases/release2/evidencias/backend/
 ├── swagger/
 │   └── rf12/ ... rf18/                     (prints 01-rfXX-descricao.png e roteiro.md)
 └── postman/
-    └── relatorio-execucao.md
+    ├── rf12/ ... rf18/     (prints 01-rfXX-descricao.png)
+    ├── runner/             (prints da execução completa)
+    └── relatorio-execucao.md     
 ```
 
 ## 4. Preparar o ambiente
@@ -79,12 +81,12 @@ Os roteiros Swagger estão em `swagger/rf12/roteiro.md` a `swagger/rf18/roteiro.
 
 ## 7. Postman
 
-A coleção `docs/postman/ClinicalStudyPB.postman_collection.json` reúne as pastas **1 a 8** (Release 1) e as pastas **9 a 14** (24 requisições referentes aos requisitos **RF12 a RF18** na Release 2)[cite: 13]. Na branch `docs`, a atualização da coleção e do `relatorio-execucao.md` foi preparada para revisão, enquanto as capturas `.png` sob `postman/` ainda não foram adicionadas nesta branch.
+A coleção `docs/postman/ClinicalStudyPB.postman_collection.json` reúne as pastas **1 a 7 e 12** (Release 1) e as pastas **8 a 11** (**RF12 a RF18** e sessão do app), com 143 requisições e 211 testes.
 
 | Item | Como fazer |
 |---|---|
-| Coleção | Manter atualizadas em `docs/postman/ClinicalStudyPB.postman_collection.json` as pastas da Release 2 (pastas **9 a 14**, cobrindo agendamento, situação/correção, resultados, histórico, retirada e consultas do participante)[cite: 13] |
-| Execução | Importar a coleção e o ambiente `Local` (`docs/postman/Local.postman_environment.json`), respeitar o perfil de sessão (`Pesquisador` para as pastas 9–13 e `Participante` para a pasta 14) e observar os IDs/estado da base local ao rodar no Runner[cite: 13] |
+| Coleção | Manter atualizadas em `docs/postman/ClinicalStudyPB.postman_collection.json` as pastas da Release 2 (pastas **8 a 11**, cobrindo agendamento, situação/correção, resultados, histórico, retirada e consultas do participante) |
+| Execução | Importar a coleção e o ambiente `Local` (`docs/postman/Local.postman_environment.json`); cada pasta faz o login do perfil de que precisa e a coleção não depende de IDs fixos. |
 | Prints por requisito | Runner mostrando a pasta do requisito, em `postman/rfXX/`, com o nome `01-rfXX-descricao.png` |
 | Execução completa | Print do Runner com a execução em `postman/runner/` |
 | Relatório | `postman/relatorio-execucao.md`, tomando como referência o formato da Release 1 ([relatório da Release 1](../../../release1/evidencias/backend/postman/relatorio-execucao.md)) e registrando as condições reais de execução da Release 2 |
@@ -102,9 +104,9 @@ Rotas cobertas:
 
 ## 8. Cobertura (JaCoCo)
 
-A execução completa da suíte do backend (`./mvnw -B verify` após `./mvnw -B test "-Dtest=*IT"`) totalizou **586 testes executados sem falhas** (`0` erros, `0` falhas)[cite: 12].
+A execução completa da suíte do backend (`./mvnw -B verify` após `./mvnw -B test "-Dtest=*IT"`) totalizou **586 testes executados sem falhas** (`0` erros, `0` falhas).
 
-- **Cobertura total de linhas:** **97,7%** (`1891` de `1936` linhas cobertas)[cite: 13].
-- **Cobertura dos pacotes de negócio (`.service`, meta mínima de 80%):** **98,1%** (`1010` de `1030` linhas cobertas) — com `estudos.service` em **97%** de instruções, `recrutamento.service` em **95%** e `usuarios.service` em **97%**[cite: 13, 14].
+- **Cobertura total de linhas:** **97,7%** (`1891` de `1936` linhas cobertas).
+- **Cobertura dos pacotes de negócio (`.service`, meta mínima de 80%):** **98,1%** (`1010` de `1030` linhas cobertas) - com `estudos.service` em **97%** de instruções, `recrutamento.service` em **95%** e `usuarios.service` em **97%**.
 
 Evidência: [cobertura-jacoco.png](jacoco/cobertura-jacoco.png)

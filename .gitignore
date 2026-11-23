@@ -24,3 +24,8 @@ Thumbs.db
 **/.expo/
 **/playwright-report/
 **/test-results/
+
+
+# <-------------------API------------------->
+/postman/
+/.postman/
