@@ -472,7 +472,19 @@ Cada linha é um print da web no modo real. O cenário vem da seção "Evidênci
 | WEBM-029 | RF16 | Diálogo de retirada aberto pelo histórico | Mesmo diálogo da lista, com motivo obrigatório e aviso da visita que será cancelada | Aprovado | [32-rf16-retirada-pelo-historico-dialogo.png](web/32-rf16-retirada-pelo-historico-dialogo.png) |
 | WEBM-030 | RF16 | Retirada registrada pelo histórico | Participante "Retirado", visita agendada cancelada e visitas realizadas e resultados preservados | Aprovado | [33-rf16-retirada-pelo-historico-sucesso.png](web/33-rf16-retirada-pelo-historico-sucesso.png) |
 
-### 4.3 Mobile (automatizados)
+### 4.3 Web (E2E)
+
+Fluxo do coordenador na web com Playwright e o backend real, em `web/e2e/acompanhamento.e2e.ts`. Os dados são criados pela API a cada execução (`web/e2e/api.ts`). Procedimento no [guia de execução da web](../../../docs/execucao/guia-execucao-web.md).
+
+| ID | Requisito | Cenário | Esperado | Responsável | Resultado | Evidência |
+|---|---|---|---|---|---|---|
+| E2E-001 | RF12, RF13 | Coordenador agenda uma visita e registra a realização | Notificação "Visita inicial agendada para ...", visita "Agendada"; depois "Visita inicial registrada como realizada." e visita "Realizada" | Gabriela | [Aprovado] | [02-rf12-e2e-agendamento-sucesso.png](web/e2e/02-rf12-e2e-agendamento-sucesso.png) e [04-rf13-e2e-registro-sucesso.png](web/e2e/04-rf13-e2e-registro-sucesso.png) |
+| E2E-002 | RF12 | Agendamento com data anterior a hoje | Mensagem "A data da visita não pode ser anterior a hoje." | Gabriela | [Aprovado] | [05-rf12-e2e-agendamento-erro-data.png](web/e2e/05-rf12-e2e-agendamento-erro-data.png) |
+| E2E-003 | RF12 | Visita prevista já agendada | Mensagem "Já existe um agendamento pendente para essa visita." (código `VISITA_JA_AGENDADA`) | Gabriela | [Aprovado] | [06-rf12-e2e-agendamento-erro-duplicado.png](web/e2e/06-rf12-e2e-agendamento-erro-duplicado.png) |
+
+**Total:** 3 cenários E2E, [3 passando] (`npm run e2e`). Evidência da execução: [07-e2e-execucao.png](web/e2e/07-e2e-execucao.png).
+
+### 4.4 Mobile (automatizados)
 
 Testes de serviços, contexto de autenticação e telas com Jest, em `mobile/__tests__`, e fluxo E2E com Maestro. Por causa do volume, uma linha por arquivo de teste.
 
@@ -490,7 +502,7 @@ Testes de serviços, contexto de autenticação e telas com Jest, em `mobile/__t
 **Total:** 7 suítes e 39 testes Jest passando (`npm test`), mais 1 fluxo E2E com Maestro.
 Evidências: [login (Jest)](mobile/13-rf02-jest-login.png), [suíte completa (Jest)](mobile/14-geral-jest-suite-completa.png) e [E2E (Maestro)](mobile/15-rf02-e2e-maestro-login-navegacao-logout.png).
 
-### 4.4 Mobile (manuais)
+### 4.5 Mobile (manuais)
 
 Cada linha é um print do aplicativo no emulador Android, com o backend real. O procedimento está no [roteiro de testes do mobile](mobile/roteiro-rf02-validacao-sessao.md).
 
