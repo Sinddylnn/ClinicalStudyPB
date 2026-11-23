@@ -75,7 +75,7 @@ Exemplo: `./mvnw "-Dtest=VisitaAgendadaControllerTest,VisitaAgendadaServiceTest"
 
 Nos prints, registre a requisição executada e sua resposta, com endpoint, status HTTP e JSON; a seção "Example Value" sozinha não comprova o teste. Quando necessário, autentique-se como coordenador ou participante pelo fluxo de CSRF e login descrito na documentação. Os dados são fictícios. Cada cenário registrado na tabela aponta para sua captura e para o roteiro correspondente em `swagger/rfXX/`.
 
-Os roteiros Swagger estão em `swagger/rf12/roteiro.md` a `swagger/rf18/roteiro.md`. O RF18 ainda precisa de uma nova evidência com histórico preenchido; a captura atual mostra `200 OK` com lista vazia. Os testes manuais cadastrados com capturas totalizam 24 cenários.
+Os roteiros Swagger estão em `swagger/rf12/roteiro.md` a `swagger/rf18/roteiro.md`. Os testes manuais cadastrados com capturas totalizam 24 cenários.
 
 ## 7. Postman
 

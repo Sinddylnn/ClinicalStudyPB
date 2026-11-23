@@ -1,6 +1,6 @@
 # Tabela de testes Release 2
 
-Lista dos testes e evidências da Release 2. Os casos com execução comprovada pelas capturas estão marcados como aprovados. Classes Spring sem captura correspondente estão identificadas como "Não comprovado"; isso não significa que os testes falharam ou que não foram executados.
+Lista dos testes e evidências da Release 2.
 
 ## 1. Testes automatizados do backend (Spring)
 

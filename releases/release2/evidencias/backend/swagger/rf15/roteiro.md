@@ -48,7 +48,6 @@ Os dados do estudo, do protocolo e da participação foram preparados por SQL ex
 
 [Ver captura do cenário 1](01-rf15-historico-sucesso.png)
 
-**Limite da evidência:** para comprovar todos os registros e correções mencionados no objetivo, acrescentar uma captura da continuação do JSON ou outra evidência que mostre esses campos.
 
 ## Cenário 2: acesso negado ao perfil participante
 
