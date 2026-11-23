@@ -410,12 +410,12 @@ Testes de serviços, contexto de autenticação e telas com Jest, em `mobile/__t
 | ID | Requisito | Arquivo | O que cobre | Nº de testes | Resultado |
 |---|---|---|---|---|---|
 | MOB-001 | RF02 | `mobile/__tests__/authContext.test.tsx` | Sessão do participante (AuthProvider): guarda a sessão, recusa outro perfil, credenciais inválidas e saída mesmo com falha do servidor | 4 | Aprovado |
-| MOB-002 | RF02 | `mobile/__tests__/authRestricao.test.tsx` | Restrição ao participante com o AuthProvider real e só o serviço mockado: perfil recusado com logout, participante aceito e recusa na restauração da sessão | <nº> | Aprovado |
+| MOB-002 | RF02 | `mobile/__tests__/authRestricao.test.tsx` | Restrição ao participante com o AuthProvider real e só o serviço mockado: perfil recusado com logout, participante aceito e recusa na restauração da sessão | 3 | Aprovado |
 | MOB-003 | RF02 | `mobile/__tests__/login.test.tsx` | Tela de login: campos, credenciais inválidas, e-mail sem espaços, falha de conexão, outro perfil e sessão expirada | 7 | Aprovado |
 | MOB-004 | RF02 | `mobile/__tests__/loginRestricao.test.tsx` | Mensagem de perfil não participante, aviso de sessão expirada e envio de e-mail e senha | 5 | Aprovado |
-| MOB-005 | RF17 | `mobile/__tests__/estudos.test.tsx` | Tela de estudos | <nº> | Aprovado |
-| MOB-006 | RF18 | `mobile/__tests__/visitas.test.tsx` | Tela de visitas | <nº> | Aprovado |
-| MOB-007 | Geral | `mobile/__tests__/navegacao.test.tsx` | Navegação do aplicativo | <nº> | Aprovado |
+| MOB-005 | RF17 | `mobile/__tests__/estudos.test.tsx` | Tela de estudos | 6 | Aprovado |
+| MOB-006 | RF18 | `mobile/__tests__/visitas.test.tsx` | Tela de visitas | 8 | Aprovado |
+| MOB-007 | Geral | `mobile/__tests__/navegacao.test.tsx` | Navegação do aplicativo | 6 | Aprovado |
 | MOB-008 | RF02 | `mobile/.maestro/login-navegacao-logout.yaml` | E2E no emulador: login, navegação por Estudos, Visitas e Perfil e logout | 1 fluxo | Aprovado |
 
 **Total:** 7 suítes e 39 testes Jest passando (`npm test`), mais 1 fluxo E2E com Maestro.
