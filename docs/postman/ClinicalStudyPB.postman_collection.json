@@ -1,24 +1,12 @@
 {
   "info": {
+    "_postman_id": "dbc2ae96-de1b-4c53-bf84-f7a85b378fda",
     "name": "ClinicalStudyPB API",
     "description": "Coleção com dados fictícios, alinhada ao OpenAPI do backend (Release 1). Rodar a coleção inteira, na ordem, pelo Runner, com o ambiente Local. O script da coleção busca um token CSRF novo antes de cada requisição. Cada requisição traz um exemplo de resposta (válido ou inválido, conforme o nome); os exemplos foram montados a partir do contrato OpenAPI e as mensagens de erro são ilustrativas.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "60363284",
+    "_collection_link": "https://go.postman.co/collection/60363284-dbc2ae96-de1b-4c53-bf84-f7a85b378fda?source=collection_link"
   },
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "// Busca token CSRF novo antes de cada requisição (o token muda após o login)",
-          "pm.sendRequest({ url: pm.environment.get('baseUrl') + '/auth/csrf', method: 'GET' }, function (err, res) {",
-          "  if (err) { console.error('Falha ao obter CSRF', err); return; }",
-          "  pm.environment.set('csrfToken', res.json().token);",
-          "});"
-        ]
-      }
-    }
-  ],
   "item": [
     {
       "name": "1. Autenticação",
@@ -107,6 +95,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"SenhaErrada!1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
               "host": [
@@ -116,15 +113,6 @@
                 "auth",
                 "login"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"SenhaErrada!1\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -142,6 +130,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"SenhaErrada!1\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/auth/login",
                   "host": [
@@ -151,15 +148,6 @@
                     "auth",
                     "login"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"SenhaErrada!1\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Unauthorized",
@@ -201,6 +189,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminSenha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
               "host": [
@@ -210,15 +207,6 @@
                 "auth",
                 "login"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminSenha}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -236,6 +224,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminSenha}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/auth/login",
                   "host": [
@@ -245,15 +242,6 @@
                     "auth",
                     "login"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminSenha}}\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "OK",
@@ -267,6 +255,45 @@
               ],
               "cookie": [],
               "body": "{\n  \"id\": 1,\n  \"nome\": \"Admin Teste\",\n  \"email\": \"admin@example.test\",\n  \"perfil\": \"ADMINISTRADOR\"\n}"
+            },
+            {
+              "name": "Login Admin - 200",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-CSRF-TOKEN",
+                    "value": "{{csrfToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminSenha}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "json",
+              "header": null,
+              "cookie": [],
+              "body": ""
             }
           ]
         },
@@ -368,15 +395,6 @@
                 "value": "{{csrfToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/usuarios",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "usuarios"
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Pesquisador Teste\",\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\",\n  \"perfil\": \"PESQUISADOR\"\n}",
@@ -385,6 +403,15 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
             }
           },
           "response": [
@@ -402,15 +429,6 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
-                "url": {
-                  "raw": "{{baseUrl}}/usuarios",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "usuarios"
-                  ]
-                },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"nome\": \"Pesquisador Teste\",\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\",\n  \"perfil\": \"PESQUISADOR\"\n}",
@@ -419,6 +437,15 @@
                       "language": "json"
                     }
                   }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
                 }
               },
               "status": "Created",
@@ -470,15 +497,6 @@
                 "value": "{{csrfToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/usuarios",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "usuarios"
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Coordenador Teste\",\n  \"email\": \"{{coordEmail}}\",\n  \"senha\": \"{{coordSenha}}\",\n  \"perfil\": \"COORDENADOR\"\n}",
@@ -487,6 +505,15 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
             }
           },
           "response": [
@@ -504,15 +531,6 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
-                "url": {
-                  "raw": "{{baseUrl}}/usuarios",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "usuarios"
-                  ]
-                },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"nome\": \"Coordenador Teste\",\n  \"email\": \"{{coordEmail}}\",\n  \"senha\": \"{{coordSenha}}\",\n  \"perfil\": \"COORDENADOR\"\n}",
@@ -521,6 +539,15 @@
                       "language": "json"
                     }
                   }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
                 }
               },
               "status": "Created",
@@ -572,15 +599,6 @@
                 "value": "{{csrfToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/usuarios",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "usuarios"
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Participante Teste\",\n  \"email\": \"{{partEmail}}\",\n  \"senha\": \"{{partSenha}}\",\n  \"perfil\": \"PARTICIPANTE\"\n}",
@@ -589,6 +607,15 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
             }
           },
           "response": [
@@ -606,15 +633,6 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
-                "url": {
-                  "raw": "{{baseUrl}}/usuarios",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "usuarios"
-                  ]
-                },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"nome\": \"Participante Teste\",\n  \"email\": \"{{partEmail}}\",\n  \"senha\": \"{{partSenha}}\",\n  \"perfil\": \"PARTICIPANTE\"\n}",
@@ -623,6 +641,15 @@
                       "language": "json"
                     }
                   }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
                 }
               },
               "status": "Created",
@@ -664,15 +691,6 @@
                 "value": "{{csrfToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/usuarios",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "usuarios"
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"Duplicado\",\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"Outra@12345\",\n  \"perfil\": \"PESQUISADOR\"\n}",
@@ -681,6 +699,15 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
             }
           },
           "response": [
@@ -698,15 +725,6 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
-                "url": {
-                  "raw": "{{baseUrl}}/usuarios",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "usuarios"
-                  ]
-                },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"nome\": \"Duplicado\",\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"Outra@12345\",\n  \"perfil\": \"PESQUISADOR\"\n}",
@@ -715,6 +733,15 @@
                       "language": "json"
                     }
                   }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
                 }
               },
               "status": "Conflict",
@@ -757,15 +784,6 @@
                 "value": "{{csrfToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/usuarios",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "usuarios"
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"nome\": \"\",\n  \"email\": \"nao-e-email\",\n  \"senha\": \"Abc@12345\",\n  \"perfil\": \"PESQUISADOR\"\n}",
@@ -774,6 +792,15 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
             }
           },
           "response": [
@@ -791,15 +818,6 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
-                "url": {
-                  "raw": "{{baseUrl}}/usuarios",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "usuarios"
-                  ]
-                },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"nome\": \"\",\n  \"email\": \"nao-e-email\",\n  \"senha\": \"Abc@12345\",\n  \"perfil\": \"PESQUISADOR\"\n}",
@@ -808,6 +826,15 @@
                       "language": "json"
                     }
                   }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios"
+                  ]
                 }
               },
               "status": "Bad Request",
@@ -906,6 +933,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Pesquisador Teste Editado\",\n  \"email\": \"{{pesqEmail}}\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/usuarios/{{pesquisadorId}}",
               "host": [
@@ -915,15 +951,6 @@
                 "usuarios",
                 "{{pesquisadorId}}"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Pesquisador Teste Editado\",\n  \"email\": \"{{pesqEmail}}\",\n  \"perfil\": \"PESQUISADOR\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -941,6 +968,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Pesquisador Teste Editado\",\n  \"email\": \"{{pesqEmail}}\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/usuarios/{{pesquisadorId}}",
                   "host": [
@@ -950,15 +986,6 @@
                     "usuarios",
                     "{{pesquisadorId}}"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"nome\": \"Pesquisador Teste Editado\",\n  \"email\": \"{{pesqEmail}}\",\n  \"perfil\": \"PESQUISADOR\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "OK",
@@ -1000,6 +1027,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"{{pesqEmail}}\",\n  \"perfil\": \"PERFIL_FALSO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/usuarios/{{pesquisadorId}}",
               "host": [
@@ -1009,15 +1045,6 @@
                 "usuarios",
                 "{{pesquisadorId}}"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"{{pesqEmail}}\",\n  \"perfil\": \"PERFIL_FALSO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -1035,6 +1062,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"{{pesqEmail}}\",\n  \"perfil\": \"PERFIL_FALSO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/usuarios/{{pesquisadorId}}",
                   "host": [
@@ -1044,15 +1080,6 @@
                     "usuarios",
                     "{{pesquisadorId}}"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"{{pesqEmail}}\",\n  \"perfil\": \"PERFIL_FALSO\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Bad Request",
@@ -1094,6 +1121,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"x.inexistente@example.test\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/usuarios/999999",
               "host": [
@@ -1103,15 +1139,6 @@
                 "usuarios",
                 "999999"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"x.inexistente@example.test\",\n  \"perfil\": \"PESQUISADOR\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -1129,6 +1156,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"x.inexistente@example.test\",\n  \"perfil\": \"PESQUISADOR\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/usuarios/999999",
                   "host": [
@@ -1138,15 +1174,6 @@
                     "usuarios",
                     "999999"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"nome\": \"X\",\n  \"email\": \"x.inexistente@example.test\",\n  \"perfil\": \"PESQUISADOR\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Not Found",
@@ -1468,6 +1495,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
               "host": [
@@ -1477,15 +1513,6 @@
                 "auth",
                 "login"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -1503,6 +1530,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/auth/login",
                   "host": [
@@ -1512,15 +1548,6 @@
                     "auth",
                     "login"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "OK",
@@ -1626,15 +1653,6 @@
                 "value": "{{csrfToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/estudos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "estudos"
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 50\n}",
@@ -1643,6 +1661,15 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos"
+              ]
             }
           },
           "response": [
@@ -1660,15 +1687,6 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
-                "url": {
-                  "raw": "{{baseUrl}}/estudos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "estudos"
-                  ]
-                },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 50\n}",
@@ -1677,6 +1695,15 @@
                       "language": "json"
                     }
                   }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/estudos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos"
+                  ]
                 }
               },
               "status": "Created",
@@ -1719,15 +1746,6 @@
                 "value": "{{csrfToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/estudos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "estudos"
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"titulo\": \"\",\n  \"objetivo\": \"\",\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 0\n}",
@@ -1736,6 +1754,15 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos"
+              ]
             }
           },
           "response": [
@@ -1753,15 +1780,6 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
-                "url": {
-                  "raw": "{{baseUrl}}/estudos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "estudos"
-                  ]
-                },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"titulo\": \"\",\n  \"objetivo\": \"\",\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 0\n}",
@@ -1770,6 +1788,15 @@
                       "language": "json"
                     }
                   }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/estudos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos"
+                  ]
                 }
               },
               "status": "Bad Request",
@@ -1811,15 +1838,6 @@
                 "value": "{{csrfToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/estudos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "estudos"
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"dataInicio\": \"2027-05-01\",\n  \"dataFim\": \"2026-11-01\",\n  \"limiteParticipantes\": 50\n}",
@@ -1828,6 +1846,15 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos"
+              ]
             }
           },
           "response": [
@@ -1845,15 +1872,6 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
-                "url": {
-                  "raw": "{{baseUrl}}/estudos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "estudos"
-                  ]
-                },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"dataInicio\": \"2027-05-01\",\n  \"dataFim\": \"2026-11-01\",\n  \"limiteParticipantes\": 50\n}",
@@ -1862,6 +1880,15 @@
                       "language": "json"
                     }
                   }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/estudos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos"
+                  ]
                 }
               },
               "status": "Bad Request",
@@ -1903,15 +1930,6 @@
                 "value": "{{csrfToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/estudos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "estudos"
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 50,\n  \"coordenadorId\": 999999\n}",
@@ -1920,6 +1938,15 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos"
+              ]
             }
           },
           "response": [
@@ -1937,15 +1964,6 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
-                "url": {
-                  "raw": "{{baseUrl}}/estudos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "estudos"
-                  ]
-                },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 50,\n  \"coordenadorId\": 999999\n}",
@@ -1954,6 +1972,15 @@
                       "language": "json"
                     }
                   }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/estudos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos"
+                  ]
                 }
               },
               "status": "Not Found",
@@ -2052,6 +2079,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudoId}}/coordenador",
               "host": [
@@ -2062,15 +2098,6 @@
                 "{{estudoId}}",
                 "coordenador"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -2088,6 +2115,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudoId}}/coordenador",
                   "host": [
@@ -2098,15 +2134,6 @@
                     "{{estudoId}}",
                     "coordenador"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "OK",
@@ -2149,6 +2176,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordenadorId\": {{pesquisadorId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudoId}}/coordenador",
               "host": [
@@ -2159,15 +2195,6 @@
                 "{{estudoId}}",
                 "coordenador"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"coordenadorId\": {{pesquisadorId}}\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -2185,6 +2212,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"coordenadorId\": {{pesquisadorId}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudoId}}/coordenador",
                   "host": [
@@ -2195,15 +2231,6 @@
                     "{{estudoId}}",
                     "coordenador"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"coordenadorId\": {{pesquisadorId}}\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Bad Request",
@@ -2245,6 +2272,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/999999/coordenador",
               "host": [
@@ -2255,15 +2291,6 @@
                 "999999",
                 "coordenador"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -2281,6 +2308,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/999999/coordenador",
                   "host": [
@@ -2291,15 +2327,6 @@
                     "999999",
                     "coordenador"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Not Found",
@@ -2376,7 +2403,6 @@
     },
     {
       "name": "5. Estados do estudo (como Pesquisador)",
-      "description": "Executar após o cadastro e a atribuição de coordenador. Não há protocolo nem inclusão no estudo criado pela coleção. O grupo encerra esse estudo antes do logout.",
       "item": [
         {
           "name": "Abrir recrutamento sem protocolo - 400",
@@ -2404,6 +2430,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
               "host": [
@@ -2415,16 +2450,7 @@
                 "estado"
               ]
             },
-            "description": "Cadastre o protocolo antes de iniciar o recrutamento.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "description": "Cadastre o protocolo antes de iniciar o recrutamento."
           },
           "response": [
             {
@@ -2441,6 +2467,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
                   "host": [
@@ -2452,25 +2487,18 @@
                     "estado"
                   ]
                 },
-                "description": "Cadastre o protocolo antes de iniciar o recrutamento.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
+                "description": "Cadastre o protocolo antes de iniciar o recrutamento."
               },
               "status": "Bad Request",
               "code": 400,
+              "_postman_previewlanguage": "Text",
               "header": [
                 {
                   "key": "Content-Type",
                   "value": "application/json"
                 }
               ],
+              "cookie": [],
               "body": "{\n  \"codigo\": \"PROTOCOLO_INCOMPLETO\",\n  \"mensagem\": \"Cadastre o protocolo antes de iniciar o recrutamento.\"\n}"
             }
           ]
@@ -2501,6 +2529,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EXECUCAO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
               "host": [
@@ -2512,16 +2549,7 @@
                 "estado"
               ]
             },
-            "description": "Não é permitido mudar de PLANEJAMENTO para EXECUCAO.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"EXECUCAO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "description": "Não é permitido mudar de PLANEJAMENTO para EXECUCAO."
           },
           "response": [
             {
@@ -2538,6 +2566,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"EXECUCAO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
                   "host": [
@@ -2549,25 +2586,18 @@
                     "estado"
                   ]
                 },
-                "description": "Não é permitido mudar de PLANEJAMENTO para EXECUCAO.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"estado\": \"EXECUCAO\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
+                "description": "Não é permitido mudar de PLANEJAMENTO para EXECUCAO."
               },
               "status": "Bad Request",
               "code": 400,
+              "_postman_previewlanguage": "Text",
               "header": [
                 {
                   "key": "Content-Type",
                   "value": "application/json"
                 }
               ],
+              "cookie": [],
               "body": "{\n  \"codigo\": \"TRANSICAO_ESTADO_INVALIDA\",\n  \"mensagem\": \"Não é permitido mudar de PLANEJAMENTO para EXECUCAO.\"\n}"
             }
           ]
@@ -2598,6 +2628,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"ENCERRADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
               "host": [
@@ -2609,16 +2648,7 @@
                 "estado"
               ]
             },
-            "description": "Informe a justificativa para encerrar o estudo antes da execução.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"ENCERRADO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "description": "Informe a justificativa para encerrar o estudo antes da execução."
           },
           "response": [
             {
@@ -2635,6 +2665,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"ENCERRADO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
                   "host": [
@@ -2646,25 +2685,18 @@
                     "estado"
                   ]
                 },
-                "description": "Informe a justificativa para encerrar o estudo antes da execução.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"estado\": \"ENCERRADO\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
+                "description": "Informe a justificativa para encerrar o estudo antes da execução."
               },
               "status": "Bad Request",
               "code": 400,
+              "_postman_previewlanguage": "Text",
               "header": [
                 {
                   "key": "Content-Type",
                   "value": "application/json"
                 }
               ],
+              "cookie": [],
               "body": "{\n  \"codigo\": \"JUSTIFICATIVA_OBRIGATORIA\",\n  \"mensagem\": \"Informe a justificativa para encerrar o estudo antes da execução.\"\n}"
             }
           ]
@@ -2696,6 +2728,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"ENCERRADO\",\n  \"justificativaEncerramento\": \"Estudo de teste encerrado antes da inclusão.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
               "host": [
@@ -2707,16 +2748,7 @@
                 "estado"
               ]
             },
-            "description": "Encerra o estudo criado pela coleção. A resposta contém todos os campos de EstudoResposta; o exemplo destaca os campos da transição.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"ENCERRADO\",\n  \"justificativaEncerramento\": \"Estudo de teste encerrado antes da inclusão.\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "description": "Encerra o estudo criado pela coleção. A resposta contém todos os campos de EstudoResposta; o exemplo destaca os campos da transição."
           },
           "response": [
             {
@@ -2733,6 +2765,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"ENCERRADO\",\n  \"justificativaEncerramento\": \"Estudo de teste encerrado antes da inclusão.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
                   "host": [
@@ -2744,25 +2785,18 @@
                     "estado"
                   ]
                 },
-                "description": "Encerra o estudo criado pela coleção. A resposta contém todos os campos de EstudoResposta; o exemplo destaca os campos da transição.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"estado\": \"ENCERRADO\",\n  \"justificativaEncerramento\": \"Estudo de teste encerrado antes da inclusão.\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
+                "description": "Encerra o estudo criado pela coleção. A resposta contém todos os campos de EstudoResposta; o exemplo destaca os campos da transição."
               },
               "status": "OK",
               "code": 200,
+              "_postman_previewlanguage": "Text",
               "header": [
                 {
                   "key": "Content-Type",
                   "value": "application/json"
                 }
               ],
+              "cookie": [],
               "body": "{\n  \"id\": 1,\n  \"titulo\": \"Estudo Teste Postman\",\n  \"objetivo\": \"Avaliar dados fictícios para validação da API.\",\n  \"responsavelId\": 2,\n  \"responsavelNome\": \"Pesquisador de teste\",\n  \"coordenadorId\": 3,\n  \"dataInicio\": \"2026-11-01\",\n  \"dataFim\": \"2027-05-01\",\n  \"limiteParticipantes\": 50,\n  \"estado\": \"ENCERRADO\",\n  \"justificativaEncerramento\": \"Estudo de teste encerrado antes da inclusão.\"\n}"
             }
           ]
@@ -2793,6 +2827,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
               "host": [
@@ -2804,16 +2847,7 @@
                 "estado"
               ]
             },
-            "description": "Não é permitido mudar de ENCERRADO para RECRUTAMENTO.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "description": "Não é permitido mudar de ENCERRADO para RECRUTAMENTO."
           },
           "response": [
             {
@@ -2830,6 +2864,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudoId}}/estado",
                   "host": [
@@ -2841,25 +2884,18 @@
                     "estado"
                   ]
                 },
-                "description": "Não é permitido mudar de ENCERRADO para RECRUTAMENTO.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
+                "description": "Não é permitido mudar de ENCERRADO para RECRUTAMENTO."
               },
               "status": "Bad Request",
               "code": 400,
+              "_postman_previewlanguage": "Text",
               "header": [
                 {
                   "key": "Content-Type",
                   "value": "application/json"
                 }
               ],
+              "cookie": [],
               "body": "{\n  \"codigo\": \"TRANSICAO_ESTADO_INVALIDA\",\n  \"mensagem\": \"Não é permitido mudar de ENCERRADO para RECRUTAMENTO.\"\n}"
             }
           ]
@@ -2890,6 +2926,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudoId}}/coordenador",
               "host": [
@@ -2901,16 +2946,7 @@
                 "coordenador"
               ]
             },
-            "description": "Não é permitido alterar o coordenador de um estudo encerrado.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "description": "Não é permitido alterar o coordenador de um estudo encerrado."
           },
           "response": [
             {
@@ -2927,6 +2963,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudoId}}/coordenador",
                   "host": [
@@ -2938,30 +2983,24 @@
                     "coordenador"
                   ]
                 },
-                "description": "Não é permitido alterar o coordenador de um estudo encerrado.",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"coordenadorId\": {{coordenadorId}}\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
+                "description": "Não é permitido alterar o coordenador de um estudo encerrado."
               },
               "status": "Bad Request",
               "code": 400,
+              "_postman_previewlanguage": "Text",
               "header": [
                 {
                   "key": "Content-Type",
                   "value": "application/json"
                 }
               ],
+              "cookie": [],
               "body": "{\n  \"codigo\": \"ESTUDO_ENCERRADO\",\n  \"mensagem\": \"Não é permitido alterar o coordenador de um estudo encerrado.\"\n}"
             }
           ]
         }
-      ]
+      ],
+      "description": "Executar após o cadastro e a atribuição de coordenador. Não há protocolo nem inclusão no estudo criado pela coleção. O grupo encerra esse estudo antes do logout."
     },
     {
       "name": "6. Protocolo do estudo (como Pesquisador)",
@@ -2994,15 +3033,6 @@
                 "value": "{{csrfToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/estudos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "estudos"
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"titulo\": \"Estudo Completo Postman\",\n  \"objetivo\": \"Percorrer protocolo, recrutamento e inclusão com dados fictícios.\",\n  \"dataInicio\": \"2026-12-01\",\n  \"dataFim\": \"2027-06-01\",\n  \"limiteParticipantes\": 5,\n  \"coordenadorId\": {{coordenadorId}}\n}",
@@ -3011,6 +3041,15 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos"
+              ]
             }
           },
           "response": [
@@ -3028,15 +3067,6 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
-                "url": {
-                  "raw": "{{baseUrl}}/estudos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "estudos"
-                  ]
-                },
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"titulo\": \"Estudo Completo Postman\",\n  \"objetivo\": \"Percorrer protocolo, recrutamento e inclusão com dados fictícios.\",\n  \"dataInicio\": \"2026-12-01\",\n  \"dataFim\": \"2027-06-01\",\n  \"limiteParticipantes\": 5,\n  \"coordenadorId\": {{coordenadorId}}\n}",
@@ -3045,6 +3075,15 @@
                       "language": "json"
                     }
                   }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/estudos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "estudos"
+                  ]
                 }
               },
               "status": "Created",
@@ -3087,6 +3126,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter idade igual ou superior a 18 anos.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
               "host": [
@@ -3097,15 +3145,6 @@
                 "{{estudo2Id}}",
                 "criterios"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter idade igual ou superior a 18 anos.\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -3123,6 +3162,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter idade igual ou superior a 18 anos.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
                   "host": [
@@ -3133,15 +3181,6 @@
                     "{{estudo2Id}}",
                     "criterios"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter idade igual ou superior a 18 anos.\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Created",
@@ -3183,6 +3222,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
               "host": [
@@ -3193,15 +3241,6 @@
                 "{{estudo2Id}}",
                 "criterios"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -3219,6 +3258,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
                   "host": [
@@ -3229,15 +3277,6 @@
                     "{{estudo2Id}}",
                     "criterios"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Bad Request",
@@ -3279,6 +3318,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"OUTRO\",\n  \"descricao\": \"Critério com tipo inválido.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
               "host": [
@@ -3289,15 +3337,6 @@
                 "{{estudo2Id}}",
                 "criterios"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo\": \"OUTRO\",\n  \"descricao\": \"Critério com tipo inválido.\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -3315,6 +3354,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"OUTRO\",\n  \"descricao\": \"Critério com tipo inválido.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
                   "host": [
@@ -3325,15 +3373,6 @@
                     "{{estudo2Id}}",
                     "criterios"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo\": \"OUTRO\",\n  \"descricao\": \"Critério com tipo inválido.\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Bad Request",
@@ -3436,6 +3475,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter 18 anos ou mais e aceitar participar do estudo.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/{{criterioId}}",
               "host": [
@@ -3447,15 +3495,6 @@
                 "criterios",
                 "{{criterioId}}"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter 18 anos ou mais e aceitar participar do estudo.\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -3473,6 +3512,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter 18 anos ou mais e aceitar participar do estudo.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/{{criterioId}}",
                   "host": [
@@ -3484,15 +3532,6 @@
                     "criterios",
                     "{{criterioId}}"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Ter 18 anos ou mais e aceitar participar do estudo.\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "OK",
@@ -3534,6 +3573,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Critério que não existe.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/999999",
               "host": [
@@ -3545,15 +3593,6 @@
                 "criterios",
                 "999999"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Critério que não existe.\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -3571,6 +3610,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Critério que não existe.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/999999",
                   "host": [
@@ -3582,15 +3630,6 @@
                     "criterios",
                     "999999"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Critério que não existe.\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Not Found",
@@ -3633,6 +3672,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"EXCLUSAO\",\n  \"descricao\": \"Critério temporário para testar a remoção.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
               "host": [
@@ -3643,15 +3691,6 @@
                 "{{estudo2Id}}",
                 "criterios"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo\": \"EXCLUSAO\",\n  \"descricao\": \"Critério temporário para testar a remoção.\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -3669,6 +3708,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"EXCLUSAO\",\n  \"descricao\": \"Critério temporário para testar a remoção.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios",
                   "host": [
@@ -3679,15 +3727,6 @@
                     "{{estudo2Id}}",
                     "criterios"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo\": \"EXCLUSAO\",\n  \"descricao\": \"Critério temporário para testar a remoção.\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Created",
@@ -3797,6 +3836,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"semCriteriosExclusao\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/exclusao",
               "host": [
@@ -3808,15 +3856,6 @@
                 "criterios",
                 "exclusao"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"semCriteriosExclusao\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -3834,6 +3873,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"semCriteriosExclusao\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/exclusao",
                   "host": [
@@ -3845,15 +3893,6 @@
                     "criterios",
                     "exclusao"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"semCriteriosExclusao\": true\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "OK",
@@ -3958,6 +3997,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Visita inicial\",\n  \"descricao\": \"Avaliação inicial do participante.\",\n  \"ordem\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
               "host": [
@@ -3968,15 +4016,6 @@
                 "{{estudo2Id}}",
                 "visitas"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Visita inicial\",\n  \"descricao\": \"Avaliação inicial do participante.\",\n  \"ordem\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -3994,6 +4033,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Visita inicial\",\n  \"descricao\": \"Avaliação inicial do participante.\",\n  \"ordem\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
                   "host": [
@@ -4004,15 +4052,6 @@
                     "{{estudo2Id}}",
                     "visitas"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"nome\": \"Visita inicial\",\n  \"descricao\": \"Avaliação inicial do participante.\",\n  \"ordem\": 1\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Created",
@@ -4054,6 +4093,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Visita repetida\",\n  \"descricao\": \"Usa a mesma ordem da visita inicial.\",\n  \"ordem\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
               "host": [
@@ -4064,15 +4112,6 @@
                 "{{estudo2Id}}",
                 "visitas"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Visita repetida\",\n  \"descricao\": \"Usa a mesma ordem da visita inicial.\",\n  \"ordem\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -4090,6 +4129,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Visita repetida\",\n  \"descricao\": \"Usa a mesma ordem da visita inicial.\",\n  \"ordem\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
                   "host": [
@@ -4100,15 +4148,6 @@
                     "{{estudo2Id}}",
                     "visitas"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"nome\": \"Visita repetida\",\n  \"descricao\": \"Usa a mesma ordem da visita inicial.\",\n  \"ordem\": 1\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Bad Request",
@@ -4150,6 +4189,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"\",\n  \"descricao\": \"Visita inválida.\",\n  \"ordem\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
               "host": [
@@ -4160,15 +4208,6 @@
                 "{{estudo2Id}}",
                 "visitas"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"\",\n  \"descricao\": \"Visita inválida.\",\n  \"ordem\": 0\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -4186,6 +4225,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"\",\n  \"descricao\": \"Visita inválida.\",\n  \"ordem\": 0\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas",
                   "host": [
@@ -4196,15 +4244,6 @@
                     "{{estudo2Id}}",
                     "visitas"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"nome\": \"\",\n  \"descricao\": \"Visita inválida.\",\n  \"ordem\": 0\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Bad Request",
@@ -4247,6 +4286,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"Realizar aferição da pressão arterial.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas/{{visitaId}}/atividades",
               "host": [
@@ -4259,15 +4307,6 @@
                 "{{visitaId}}",
                 "atividades"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"descricao\": \"Realizar aferição da pressão arterial.\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -4285,6 +4324,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"descricao\": \"Realizar aferição da pressão arterial.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas/{{visitaId}}/atividades",
                   "host": [
@@ -4297,15 +4345,6 @@
                     "{{visitaId}}",
                     "atividades"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"descricao\": \"Realizar aferição da pressão arterial.\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Created",
@@ -4347,6 +4386,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas/{{visitaId}}/atividades",
               "host": [
@@ -4359,15 +4407,6 @@
                 "{{visitaId}}",
                 "atividades"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"descricao\": \"\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -4385,6 +4424,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"descricao\": \"\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/visitas/{{visitaId}}/atividades",
                   "host": [
@@ -4397,15 +4445,6 @@
                     "{{visitaId}}",
                     "atividades"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"descricao\": \"\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Bad Request",
@@ -4509,6 +4548,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/estado",
               "host": [
@@ -4519,15 +4567,6 @@
                 "{{estudo2Id}}",
                 "estado"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -4545,6 +4584,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/estado",
                   "host": [
@@ -4555,15 +4603,6 @@
                     "{{estudo2Id}}",
                     "estado"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"estado\": \"RECRUTAMENTO\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "OK",
@@ -4605,6 +4644,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Alteração após abrir o recrutamento.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/{{criterioId}}",
               "host": [
@@ -4616,15 +4664,6 @@
                 "criterios",
                 "{{criterioId}}"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Alteração após abrir o recrutamento.\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -4642,6 +4681,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Alteração após abrir o recrutamento.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/criterios/{{criterioId}}",
                   "host": [
@@ -4653,15 +4701,6 @@
                     "criterios",
                     "{{criterioId}}"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo\": \"INCLUSAO\",\n  \"descricao\": \"Alteração após abrir o recrutamento.\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Bad Request",
@@ -4771,6 +4810,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{coordEmail}}\",\n  \"senha\": \"{{coordSenha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
               "host": [
@@ -4780,15 +4828,6 @@
                 "auth",
                 "login"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{coordEmail}}\",\n  \"senha\": \"{{coordSenha}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -4806,6 +4845,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{coordEmail}}\",\n  \"senha\": \"{{coordSenha}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/auth/login",
                   "host": [
@@ -4815,15 +4863,6 @@
                     "auth",
                     "login"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"{{coordEmail}}\",\n  \"senha\": \"{{coordSenha}}\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "OK",
@@ -4866,6 +4905,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Participante Teste\",\n  \"email\": \"{{partEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
               "host": [
@@ -4876,15 +4924,6 @@
                 "{{estudo2Id}}",
                 "candidatos"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Participante Teste\",\n  \"email\": \"{{partEmail}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -4902,6 +4941,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Participante Teste\",\n  \"email\": \"{{partEmail}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
                   "host": [
@@ -4912,15 +4960,6 @@
                     "{{estudo2Id}}",
                     "candidatos"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"nome\": \"Participante Teste\",\n  \"email\": \"{{partEmail}}\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Created",
@@ -4962,6 +5001,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Candidato Duplicado\",\n  \"email\": \"{{partEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
               "host": [
@@ -4972,15 +5020,6 @@
                 "{{estudo2Id}}",
                 "candidatos"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Candidato Duplicado\",\n  \"email\": \"{{partEmail}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -4998,6 +5037,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Candidato Duplicado\",\n  \"email\": \"{{partEmail}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
                   "host": [
@@ -5008,15 +5056,6 @@
                     "{{estudo2Id}}",
                     "candidatos"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"nome\": \"Candidato Duplicado\",\n  \"email\": \"{{partEmail}}\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Conflict",
@@ -5058,6 +5097,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Candidato Inválido\",\n  \"email\": \"nao-e-email\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
               "host": [
@@ -5068,15 +5116,6 @@
                 "{{estudo2Id}}",
                 "candidatos"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Candidato Inválido\",\n  \"email\": \"nao-e-email\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -5094,6 +5133,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Candidato Inválido\",\n  \"email\": \"nao-e-email\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
                   "host": [
@@ -5104,15 +5152,6 @@
                     "{{estudo2Id}}",
                     "candidatos"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"nome\": \"Candidato Inválido\",\n  \"email\": \"nao-e-email\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Bad Request",
@@ -5215,6 +5254,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"respostas\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/elegibilidade",
               "host": [
@@ -5227,15 +5275,6 @@
                 "{{candidatoId}}",
                 "elegibilidade"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"respostas\": []\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -5253,6 +5292,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"respostas\": []\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/elegibilidade",
                   "host": [
@@ -5265,15 +5313,6 @@
                     "{{candidatoId}}",
                     "elegibilidade"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"respostas\": []\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Bad Request",
@@ -5316,6 +5355,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"respostas\": [\n    {\n      \"criterioId\": {{criterioId}},\n      \"resposta\": \"ATENDIDO\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/elegibilidade",
               "host": [
@@ -5328,15 +5376,6 @@
                 "{{candidatoId}}",
                 "elegibilidade"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"respostas\": [\n    {\n      \"criterioId\": {{criterioId}},\n      \"resposta\": \"ATENDIDO\"\n    }\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -5354,6 +5393,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"respostas\": [\n    {\n      \"criterioId\": {{criterioId}},\n      \"resposta\": \"ATENDIDO\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/elegibilidade",
                   "host": [
@@ -5366,15 +5414,6 @@
                     "{{candidatoId}}",
                     "elegibilidade"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"respostas\": [\n    {\n      \"criterioId\": {{criterioId}},\n      \"resposta\": \"ATENDIDO\"\n    }\n  ]\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "OK",
@@ -5481,6 +5520,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resposta\": \"ACEITOU\",\n  \"observacao\": \"Aceite fictício registrado pela coleção.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/consentimento",
               "host": [
@@ -5493,15 +5541,6 @@
                 "{{candidatoId}}",
                 "consentimento"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"resposta\": \"ACEITOU\",\n  \"observacao\": \"Aceite fictício registrado pela coleção.\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -5519,6 +5558,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"resposta\": \"ACEITOU\",\n  \"observacao\": \"Aceite fictício registrado pela coleção.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/consentimento",
                   "host": [
@@ -5531,15 +5579,6 @@
                     "{{candidatoId}}",
                     "consentimento"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"resposta\": \"ACEITOU\",\n  \"observacao\": \"Aceite fictício registrado pela coleção.\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "OK",
@@ -5713,6 +5752,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contaId\": {{participanteId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/inclusao",
               "host": [
@@ -5725,15 +5773,6 @@
                 "{{candidatoId}}",
                 "inclusao"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"contaId\": {{participanteId}}\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -5751,6 +5790,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"contaId\": {{participanteId}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/inclusao",
                   "host": [
@@ -5763,15 +5811,6 @@
                     "{{candidatoId}}",
                     "inclusao"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"contaId\": {{participanteId}}\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Created",
@@ -5814,6 +5853,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contaId\": {{participanteId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/inclusao",
               "host": [
@@ -5826,15 +5874,6 @@
                 "{{candidatoId}}",
                 "inclusao"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"contaId\": {{participanteId}}\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -5852,6 +5891,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"contaId\": {{participanteId}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/inclusao",
                   "host": [
@@ -5864,15 +5912,6 @@
                     "{{candidatoId}}",
                     "inclusao"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"contaId\": {{participanteId}}\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Conflict",
@@ -5915,6 +5954,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resposta\": \"RECUSOU\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/consentimento",
               "host": [
@@ -5927,15 +5975,6 @@
                 "{{candidatoId}}",
                 "consentimento"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"resposta\": \"RECUSOU\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -5953,6 +5992,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"resposta\": \"RECUSOU\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos/{{candidatoId}}/consentimento",
                   "host": [
@@ -5965,15 +6013,6 @@
                     "{{candidatoId}}",
                     "consentimento"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"resposta\": \"RECUSOU\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Bad Request",
@@ -6078,6 +6117,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
               "host": [
@@ -6087,15 +6135,6 @@
                 "auth",
                 "login"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -6113,6 +6152,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/auth/login",
                   "host": [
@@ -6122,15 +6170,6 @@
                     "auth",
                     "login"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"{{pesqEmail}}\",\n  \"senha\": \"{{pesqSenha}}\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "OK",
@@ -6172,6 +6211,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Candidato Sem Permissão\",\n  \"email\": \"sem.permissao@example.test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
               "host": [
@@ -6182,15 +6230,6 @@
                 "{{estudo2Id}}",
                 "candidatos"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Candidato Sem Permissão\",\n  \"email\": \"sem.permissao@example.test\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -6208,6 +6247,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Candidato Sem Permissão\",\n  \"email\": \"sem.permissao@example.test\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/candidatos",
                   "host": [
@@ -6218,15 +6266,6 @@
                     "{{estudo2Id}}",
                     "candidatos"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"nome\": \"Candidato Sem Permissão\",\n  \"email\": \"sem.permissao@example.test\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "Forbidden",
@@ -6269,6 +6308,15 @@
                 "value": "{{csrfToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EXECUCAO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/estado",
               "host": [
@@ -6279,15 +6327,6 @@
                 "{{estudo2Id}}",
                 "estado"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"EXECUCAO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
           },
           "response": [
@@ -6305,6 +6344,15 @@
                     "value": "{{csrfToken}}"
                   }
                 ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"EXECUCAO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
                 "url": {
                   "raw": "{{baseUrl}}/estudos/{{estudo2Id}}/estado",
                   "host": [
@@ -6315,15 +6363,6 @@
                     "{{estudo2Id}}",
                     "estado"
                   ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"estado\": \"EXECUCAO\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
                 }
               },
               "status": "OK",
@@ -6465,6 +6504,1126 @@
           ]
         }
       ]
+    },
+    {
+      "name": "9. Agendamento e Reagendamento",
+      "item": [
+        {
+          "name": "Login Pesquisador - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"{{pesqEmail}}\",\r\n  \"senha\": \"{{pesqSenha}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar participações do estudo - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Agendar visita - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();\r\nif (json.id) {\r\n  pm.environment.set(\"visitaAgendadaId\", json.id);\r\n}\r\npm.test(\"Status 201 ao agendar visita\", function () {\r\n  pm.response.to.have.status(201);\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"visitaPrevistaId\": 2, \r\n    \"dataHora\": \"2026-12-10T13:30:00Z\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reagendar visita - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"dataHora\": \"2026-12-15T14:00:00Z\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas/2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reagendar visita fora do período - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"dataHora\": \"2027-08-10T14:00:00Z\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas/2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registro realizado - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"situacao\": \"REALIZADA\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas/2/situacao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas",
+                "2",
+                "situacao"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registro visita ja finalizada - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"situacao\": \"REALIZADA\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas/2/situacao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas",
+                "2",
+                "situacao"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registro de ausência - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"situacao\": \"AUSENTE\",\r\n  \"motivo\": \"Ausencia ficticia\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas/3/situacao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas",
+                "3",
+                "situacao"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registro de cancelamento - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"situacao\": \"CANCELADA\",\r\n  \"motivo\": \"Cancelamento ficticio\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas/4/situacao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas",
+                "4",
+                "situacao"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Correção de ausência para realizada - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"situacao\": \"REALIZADA\",\r\n  \"justificativa\": \"Correcao de registro ficticio\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas/3/correcoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas",
+                "3",
+                "correcoes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Correção para a mesma situação - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"situacao\": \"REALIZADA\",\r\n  \"justificativa\": \"Correcao duplicada\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas/3/correcoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas",
+                "3",
+                "correcoes"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10. Resultados de Atividades",
+      "item": [
+        {
+          "name": "Registrar resultado atividade - 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"atividadePrevistaId\": 2,\r\n  \"texto\": \"Resultado ficticio registrado na visita realizada.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas/2/resultados",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas",
+                "2",
+                "resultados"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Erro ao registrar resultado duplicado - 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409\", function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"atividadePrevistaId\": 2,\r\n  \"texto\": \"Resultado ficticio registrado na visita realizada.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas/2/resultados",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas",
+                "2",
+                "resultados"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar resultado atividade - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"texto\": \"Resultado ficticio editado com sucesso.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas/2/resultados/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas",
+                "2",
+                "resultados",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar resultados atividade - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/visitas/2/resultados",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "visitas",
+                "2",
+                "resultados"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11. Histórico de Participações",
+      "item": [
+        {
+          "name": "Consultar historico participacao - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/historico",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "historico"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar historico erro - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/999/historico",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "999",
+                "historico"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12. Retirada de Participantes",
+      "item": [
+        {
+          "name": "Registrar retirada participante - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"motivo\": \"Participante solicitou a retirada do estudo.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/retirada",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "retirada"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar participacoes visitas canceladas - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar retirada ja retirada - 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"motivo\": \"Tentativa de retirar novamente.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes/2/retirada",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes",
+                "2",
+                "retirada"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "13. Consulta de Estudos",
+      "item": [
+        {
+          "name": "Consultar estudos participacoes - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/estudos/6/participacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "estudos",
+                "6",
+                "participacoes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar estudos erro perfil - 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/participante/estudos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "participante",
+                "estudos"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "14. Visita e Histórico do Participante",
+      "item": [
+        {
+          "name": "Login Participante - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-CSRF-TOKEN",
+                "value": "{{csrfToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"participante@clinicalstudypb.test\",\r\n  \"senha\": \"Teste@1234\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Proximas visitas participante - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/participante/visitas/proximas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "participante",
+                "visitas",
+                "proximas"
+              ],
+              "query": [
+                {
+                  "key": "estudoId",
+                  "value": "6",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Historico visitas participante - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/participante/visitas/historico",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "participante",
+                "visitas",
+                "historico"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consulta erro estudo - 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/participante/visitas/proximas?estudoId=999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "participante",
+                "visitas",
+                "proximas"
+              ],
+              "query": [
+                {
+                  "key": "estudoId",
+                  "value": "999"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Busca token CSRF novo antes de cada requisição (o token muda após o login)",
+          "pm.sendRequest({ url: pm.environment.get('baseUrl') + '/auth/csrf', method: 'GET' }, function (err, res) {",
+          "  if (err) { console.error('Falha ao obter CSRF', err); return; }",
+          "  pm.environment.set('csrfToken', res.json().token);",
+          "});"
+        ]
+      }
     }
   ]
 }
