@@ -77,7 +77,7 @@ Estes detalhes implementam as decisões acima e permanecem sujeitos à revisão 
 As escolhas da publicação OpenAPI nesta task não alteram o Kickoff, não ampliam o
 escopo funcional e não resolvem, sozinhas, as pendências de integração da task 3171.
 
-## Mudanças de estado — 29/10/2026
+## Mudanças de estado - 29/10/2026
 
 `PATCH /estudos/{id}/estado` implementa as cinco transições do Kickoff, verificando
 pesquisador responsável, protocolo, coordenador e inclusões no banco. O encerramento
@@ -98,7 +98,7 @@ quando seus módulos existirem.
 O contrato, as limitações e os comandos de teste estão em
 [mudança de estado do estudo](estados-estudo.md).
 
-## Ajustes aprovados na revisão de integração — 26/10/2026
+## Ajustes aprovados na revisão de integração - 26/10/2026
 
 Estas definições foram confirmadas por Georis após a revisão da web. São decisões
 da equipe que detalham o contrato; não são exigências novas atribuídas à professora.
@@ -116,7 +116,7 @@ uma data/hora de auditoria e não garante a ordem de conclusão de transações 
 Não foi criada uma coluna de data de cadastro, nem alterada qualquer migração existente.
 As mudanças não exigem apagar o banco ou recriar o volume Docker.
 
-## Execução local com Docker — 27/10/2026
+## Execução local com Docker - 27/10/2026
 
 A equipe passou a oferecer banco e backend como serviços básicos do Compose e a
 web como profile opcional `web`. O profile `test` mantém o banco descartável.
@@ -255,4 +255,4 @@ A validação foi realizada no dispositivo físico. O comportamento no emulador 
 
 O resultado fornece a validação técnica necessária para a implementação do login, logout e controle de perfil participante nas próximas tasks de Horlan.
 
-O procedimento, os resultados detalhados e as capturas estão documentados em [Validação da sessão no aplicativo mobile](../releases/release2/evidencias/mobile/validacao-sessao.md).
+O procedimento, os resultados detalhados e as capturas estão documentados em [Validação da sessão no aplicativo mobile](../releases/release2/evidencias/mobile/roteiro-rf02-validacao-sessao.md).

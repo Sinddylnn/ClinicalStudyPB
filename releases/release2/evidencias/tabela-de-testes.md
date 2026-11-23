@@ -4,35 +4,37 @@ Lista dos testes e evidências da Release 2. Os casos com execução comprovada 
 
 ## 1. Testes automatizados do backend (Spring)
 
-Cada linha identifica um caso automatizado Spring existente no projeto. As capturas comprovam a execução das classes nelas listadas, mas não necessariamente de todas as classes cadastradas nesta seção. As evidências foram organizadas por requisito: [RF12](backend/spring/rf12-testes-spring.png), [RF13](backend/spring/rf13-testes-spring.png), [RF14](backend/spring/rf14-testes-spring.png), [RF15](backend/spring/rf15-testes-spring.png), [RF16](backend/spring/rf16-testes-spring.png), [RF17](backend/spring/rf17-testes-spring.png) e [RF18](backend/spring/rf18-testes-spring.png).
+Cada linha identifica um caso automatizado Spring existente no projeto. Vale ressaltar que as capturas de execução comprovam a execução das classes nelas listadas, mas não necessariamente de todas as classes cadastradas nesta seção uma vez que a maioria já foi testada na release anterior ou durante o desenvolvimento contínuo. 
+
+As evidências foram organizadas por requisito: [RF12](backend/spring/rf12-testes-spring.png), [RF13](backend/spring/rf13-testes-spring.png), [RF14](backend/spring/rf14-testes-spring.png), [RF15](backend/spring/rf15-testes-spring.png), [RF16](backend/spring/rf16-testes-spring.png), [RF17](backend/spring/rf17-testes-spring.png) e [RF18](backend/spring/rf18-testes-spring.png).
 
 No IntelliJ é possível executar cada classe de Teste diretamente pela tabela, clicando no ícone de 'run'.
 
 | ID | Requisito | Camada | Classe de teste | Cenário | Tipo | Resultado |
 |---|---|---|---|---|---|---|
-| SPR-001 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Executa todas as migrações desde a V1 em um schema isolado e descartável | Sucesso | Não comprovado |
-| SPR-002 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Persiste visita, resultado, correção e retirada com seus vínculos e dados de autoria | Sucesso | Não comprovado |
-| SPR-003 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere no PostgreSQL a contagem de visitas por estudo e situação. Também verifica se a consulta de participantes não repete quem tem mais de uma pendência | Sucesso | Não comprovado |
-| SPR-004 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Registra a retirada no PostgreSQL e confere que somente visitas AGENDADA são canceladas | Sucesso | Não comprovado |
-| SPR-005 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere no PostgreSQL o filtro por conta, situação, ordenação e data de corte | Sucesso | Não comprovado |
-| SPR-006 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere no PostgreSQL a ordem das visitas e o carregamento da visita prevista na mesma consulta, evitando buscas adicionais durante a montagem do histórico | Sucesso | Não comprovado |
-| SPR-007 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere o filtro por participação e a ordem das correções e dos resultados | Sucesso | Não comprovado |
-| SPR-008 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere a gravação do resultado e da autoria inicial no banco | Sucesso | Não comprovado |
-| SPR-009 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere que a edição preserva o cadastro original e grava a atualização | Sucesso | Não comprovado |
-| SPR-010 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere que resultados parciais são aceitos, sem exigir todas as atividades | Sucesso | Não comprovado |
-| SPR-011 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Garante que a constraint única do PostgreSQL rejeita gravação duplicada mesmo quando a validação do serviço não é utilizada | Erro/negativo | Não comprovado |
-| SPR-012 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere a consulta por resultado e visita e a unicidade independente entre visitas diferentes | Erro/negativo | Não comprovado |
+| SPR-001 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Executa todas as migrações desde a V1 em um schema isolado e descartável | Sucesso | Aprovado |
+| SPR-002 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Persiste visita, resultado, correção e retirada com seus vínculos e dados de autoria | Sucesso | Aprovado |
+| SPR-003 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere no PostgreSQL a contagem de visitas por estudo e situação. Também verifica se a consulta de participantes não repete quem tem mais de uma pendência | Sucesso | Aprovado |
+| SPR-004 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Registra a retirada no PostgreSQL e confere que somente visitas AGENDADA são canceladas | Sucesso | Aprovado |
+| SPR-005 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere no PostgreSQL o filtro por conta, situação, ordenação e data de corte | Sucesso | Aprovado |
+| SPR-006 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere no PostgreSQL a ordem das visitas e o carregamento da visita prevista na mesma consulta, evitando buscas adicionais durante a montagem do histórico | Sucesso | Aprovado |
+| SPR-007 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere o filtro por participação e a ordem das correções e dos resultados | Sucesso | Aprovado |
+| SPR-008 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere a gravação do resultado e da autoria inicial no banco | Sucesso | Aprovado |
+| SPR-009 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere que a edição preserva o cadastro original e grava a atualização | Sucesso | Aprovado |
+| SPR-010 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere que resultados parciais são aceitos, sem exigir todas as atividades | Sucesso | Aprovado |
+| SPR-011 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Garante que a constraint única do PostgreSQL rejeita gravação duplicada mesmo quando a validação do serviço não é utilizada | Erro/negativo | Aprovado |
+| SPR-012 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere a consulta por resultado e visita e a unicidade independente entre visitas diferentes | Erro/negativo | Aprovado |
 | SPR-013 | RF15 | API (MockMvc) | `HistoricoParticipacaoControllerTest` | Confere os campos de visitas, resultados, correções, retirada e responsáveis no JSON | Sucesso | Aprovado |
 | SPR-014 | RF15 | API (MockMvc) | `HistoricoParticipacaoControllerTest` | Confere se os perfis autorizados podem consultar uma participação sem eventos | Sucesso | Aprovado |
 | SPR-015 | RF15 | API (MockMvc) | `HistoricoParticipacaoControllerTest` | Confere que administrador e participante não acessam o histórico de gestão | Erro/negativo | Aprovado |
 | SPR-016 | RF15 | API (MockMvc) | `HistoricoParticipacaoControllerTest` | Confere o bloqueio de uma consulta sem sessão autenticada | Erro/negativo | Aprovado |
 | SPR-017 | RF15 | API (MockMvc) | `HistoricoParticipacaoControllerTest` | Confere o retorno 404 quando o estudo não está no vínculo do usuário | Erro/negativo | Aprovado |
 | SPR-018 | RF15 | API (MockMvc) | `HistoricoParticipacaoControllerTest` | Confere o retorno 404 para uma participação fora do estudo informado | Erro/negativo | Aprovado |
-| SPR-019 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Coordenador pode listar participações | Sucesso | Não comprovado |
-| SPR-020 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Verifica se o pesquisador pode consultar as participações do estudo pelo qual é responsável | Sucesso | Não comprovado |
-| SPR-021 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Perfil sem permissão não pode listar | Erro/negativo | Não comprovado |
-| SPR-022 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Listagem sem login é bloqueada | Erro/negativo | Não comprovado |
-| SPR-023 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Estudo não encontrado retorna 404 | Erro/negativo | Não comprovado |
+| SPR-019 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Coordenador pode listar participações | Sucesso | Aprovado |
+| SPR-020 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Verifica se o pesquisador pode consultar as participações do estudo pelo qual é responsável | Sucesso | Aprovado |
+| SPR-021 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Perfil sem permissão não pode listar | Erro/negativo | Aprovado |
+| SPR-022 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Listagem sem login é bloqueada | Erro/negativo | Aprovado |
+| SPR-023 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Estudo não encontrado retorna 404 | Erro/negativo | Aprovado |
 | SPR-024 | RF17, RF18 | API (MockMvc) | `ParticipanteConsultaControllerTest` | Participante consulta estudos sem expor campos de gestão | Sucesso | Aprovado |
 | SPR-025 | RF17, RF18 | API (MockMvc) | `ParticipanteConsultaControllerTest` | Participante consulta próximas visitas sem expor motivo | Sucesso | Aprovado |
 | SPR-026 | RF17, RF18 | API (MockMvc) | `ParticipanteConsultaControllerTest` | Participante consulta histórico filtrando por estudo sem expor dados internos | Sucesso | Aprovado |
@@ -266,13 +268,13 @@ No IntelliJ é possível executar cada classe de Teste diretamente pela tabela, 
 | SPR-254 | RF12, RF13 | Regras de negócio | `VisitaAgendadaServiceTest` | Verifica se o pesquisador responsável pode listar as participações do seu estudo | Sucesso | Aprovado |
 | SPR-255 | RF12, RF13 | Regras de negócio | `VisitaAgendadaServiceTest` | Verifica se o pesquisador não pode consultar participações de outro estudo | Erro/negativo | Aprovado |
 | SPR-256 | RF12, RF13 | Regras de negócio | `VisitaAgendadaServiceTest` | Verifica se administradores e participantes não podem consultar a listagem | Erro/negativo | Aprovado |
-| SPR-257 | RF12, RF13 | API (MockMvc) | `DocumentacaoApiTest` | Confere rotas, corpos, respostas, segurança e códigos documentados das visitas | Sucesso | Não comprovado |
-| SPR-258 | RF14 | API (MockMvc) | `DocumentacaoApiTest` | Confere rotas, schemas e erros publicados para cadastro e edição de resultados | Sucesso | Não comprovado |
-| SPR-259 | RF12 (apoio) | API (MockMvc) | `DocumentacaoApiTest` | Confere a consulta das participações e o schema de seus dados | Sucesso | Não comprovado |
-| SPR-260 | RF16 | API (MockMvc) | `DocumentacaoApiTest` | Confere que a retirada de participantes está publicada no contrato | Sucesso | Não comprovado |
-| SPR-261 | RF17, RF18 | API (MockMvc) | `DocumentacaoApiTest` | Confere que as consultas do participante estão publicadas, sem exigir CSRF | Sucesso | Não comprovado |
-| SPR-262 | RF13, RF14 | API (MockMvc) | `DocumentacaoApiTest` | Confere os contratos GET da visita e de seus resultados para a web | Sucesso | Não comprovado |
-| SPR-263 | RF15 | API (MockMvc) | `DocumentacaoApiTest` | Confere a publicação da consulta do histórico completo de gestão (RF15) | Sucesso | Não comprovado |
+| SPR-257 | RF12, RF13 | API (MockMvc) | `DocumentacaoApiTest` | Confere rotas, corpos, respostas, segurança e códigos documentados das visitas | Sucesso | Aprovado |
+| SPR-258 | RF14 | API (MockMvc) | `DocumentacaoApiTest` | Confere rotas, schemas e erros publicados para cadastro e edição de resultados | Sucesso | Aprovado |
+| SPR-259 | RF12 (apoio) | API (MockMvc) | `DocumentacaoApiTest` | Confere a consulta das participações e o schema de seus dados | Sucesso | Aprovado |
+| SPR-260 | RF16 | API (MockMvc) | `DocumentacaoApiTest` | Confere que a retirada de participantes está publicada no contrato | Sucesso | Aprovado |
+| SPR-261 | RF17, RF18 | API (MockMvc) | `DocumentacaoApiTest` | Confere que as consultas do participante estão publicadas, sem exigir CSRF | Sucesso | Aprovado |
+| SPR-262 | RF13, RF14 | API (MockMvc) | `DocumentacaoApiTest` | Confere os contratos GET da visita e de seus resultados para a web | Sucesso | Aprovado |
+| SPR-263 | RF15 | API (MockMvc) | `DocumentacaoApiTest` | Confere a publicação da consulta do histórico completo de gestão (RF15) | Sucesso | Aprovado |
 
 Total: 263 casos Spring cadastrados; 239 com execução indicada pelas capturas disponíveis e 24 sem captura correspondente.
 
