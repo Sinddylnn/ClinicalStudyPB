@@ -405,10 +405,42 @@ Cada linha é um print da web no modo real. O cenário vem da seção "Evidênci
 
 ### 4.3 Mobile (automatizados)
 
-Não há testes automatizados mobile documentados nesta release.
+Testes de serviços, contexto de autenticação e telas com Jest, em `mobile/__tests__`, e fluxo E2E com Maestro. Por causa do volume, uma linha por arquivo de teste.
+
+| ID | Requisito | Arquivo | O que cobre | Nº de testes | Resultado |
+|---|---|---|---|---|---|
+| MOB-001 | RF02 | `mobile/__tests__/authContext.test.tsx` | Sessão do participante (AuthProvider): guarda a sessão, recusa outro perfil, credenciais inválidas e saída mesmo com falha do servidor | 4 | Aprovado |
+| MOB-002 | RF02 | `mobile/__tests__/authRestricao.test.tsx` | Restrição ao participante com o AuthProvider real e só o serviço mockado: perfil recusado com logout, participante aceito e recusa na restauração da sessão | <nº> | Aprovado |
+| MOB-003 | RF02 | `mobile/__tests__/login.test.tsx` | Tela de login: campos, credenciais inválidas, e-mail sem espaços, falha de conexão, outro perfil e sessão expirada | 7 | Aprovado |
+| MOB-004 | RF02 | `mobile/__tests__/loginRestricao.test.tsx` | Mensagem de perfil não participante, aviso de sessão expirada e envio de e-mail e senha | 5 | Aprovado |
+| MOB-005 | RF17 | `mobile/__tests__/estudos.test.tsx` | Tela de estudos | <nº> | Aprovado |
+| MOB-006 | RF18 | `mobile/__tests__/visitas.test.tsx` | Tela de visitas | <nº> | Aprovado |
+| MOB-007 | Geral | `mobile/__tests__/navegacao.test.tsx` | Navegação do aplicativo | <nº> | Aprovado |
+| MOB-008 | RF02 | `mobile/.maestro/login-navegacao-logout.yaml` | E2E no emulador: login, navegação por Estudos, Visitas e Perfil e logout | 1 fluxo | Aprovado |
+
+**Total:** 7 suítes e 39 testes Jest passando (`npm test`), mais 1 fluxo E2E com Maestro.
+Evidências: [login (Jest)](mobile/13-rf02-jest-login.png), [suíte completa (Jest)](mobile/14-geral-jest-suite-completa.png) e [E2E (Maestro)](mobile/15-rf02-e2e-maestro-login-navegacao-logout.png).
 
 ### 4.4 Mobile (manuais)
 
+Cada linha é um print do aplicativo no emulador Android, com o backend real. O procedimento está no [roteiro de testes do mobile](mobile/roteiro-testes-mobile.md).
+
 | ID | Requisito | Cenário | Esperado | Resultado | Evidência |
 |---|---|---|---|---|---|
-| MOBM-001 | RF02 | Validação de autenticação e sessão no Android | Login, reutilização de sessão por cookie, proteção CSRF, logout e persistência após reabrir o Expo Go, conforme roteiro | Aprovado | [Roteiro e evidências](mobile/validacao-sessao.md) |
+| MOBM-001 | RF02 | Validação de autenticação e sessão no Android | Login, reutilização de sessão por cookie, proteção CSRF, logout e persistência após reabrir o Expo Go, conforme roteiro | Aprovado | [Roteiro e evidências](mobile/roteiro-rf02-validacao-sessao.md) |
+| MOBM-002 | RF02 | Tela de login vazia | Campos de e-mail e senha e botão Entrar | Aprovado | [01-rf02-login-tela-vazia.jpeg](mobile/01-rf02-login-tela-vazia.jpeg) |
+| MOBM-003 | RF02 | Credenciais inválidas | Aviso "E-mail ou senha inválidos. Confira os dados e tente novamente." | Aprovado | [02-rf02-login-erro-credenciais.jpeg](mobile/02-rf02-login-erro-credenciais.jpeg) |
+| MOBM-004 | RF02 | Login com sucesso | Abre a tela inicial do participante | Aprovado | [03-rf02-login-sucesso.jpeg](mobile/03-rf02-login-sucesso.jpeg) |
+| MOBM-005 | RF02 | Sair pela aba Perfil | Retorno à tela de login | Aprovado | [04-rf02-login-aba-perfil-sair.jpeg](mobile/04-rf02-login-aba-perfil-sair.jpeg) |
+| MOBM-006 | RF02 | Acesso de pesquisador bloqueado | Sessão encerrada e aviso "Este aplicativo é para participantes. Use o sistema web." | Aprovado | [05-rf02-acesso-pesquisador-bloqueado.jpeg](mobile/05-rf02-acesso-pesquisador-bloqueado.jpeg) |
+| MOBM-007 | RF02 | Acesso de coordenador bloqueado | Mesmo comportamento do pesquisador | Aprovado | [06-rf02-acesso-coordenador-bloqueado.jpeg](mobile/06-rf02-acesso-coordenador-bloqueado.jpeg) |
+| MOBM-008 | RF02 | Falha de conexão no login | Aviso "Não foi possível entrar agora. Tente novamente." | Aprovado | [19-rf02-login-erro-conexao.jpeg](mobile/19-rf02-login-erro-conexao.jpeg) |
+| MOBM-009 | RF17 | Lista de estudos vazia | Mensagem de que não há estudos | Aprovado | [07-rf17-estudos-lista-vazia.jpeg](mobile/07-rf17-estudos-lista-vazia.jpeg) |
+| MOBM-010 | RF17 | Participação ativa | Estudo listado com a situação ativa | Aprovado | [08-rf17-estudos-participacao-ativa.jpeg](mobile/08-rf17-estudos-participacao-ativa.jpeg) |
+| MOBM-011 | RF17 | Participação retirada | Estudo listado com a situação "Retirada" | Aprovado | [09-rf17-estudos-participacao-retirada.jpeg](mobile/09-rf17-estudos-participacao-retirada.jpeg) |
+| MOBM-012 | RF17 | Falha ao carregar estudos | Aviso "Não foi possível carregar seus estudos. Tente novamente." | Aprovado | [20-rf17-estudos-erro-carregamento.jpeg](mobile/20-rf17-estudos-erro-carregamento.jpeg) |
+| MOBM-013 | RF18 | Lista de visitas vazia | Mensagem de que não há visitas | Aprovado | [10-rf18-visitas-lista-vazia.jpeg](mobile/10-rf18-visitas-lista-vazia.jpeg) |
+| MOBM-014 | RF18 | Visita agendada | Visita futura na aba Próximas | Aprovado | [11-rf18-visitas-visita-agendada.jpeg](mobile/11-rf18-visitas-visita-agendada.jpeg) |
+| MOBM-015 | RF18 | Histórico com visitas canceladas | Aba Histórico com contadores e visitas "Cancelada" | Aprovado | [12-rf18-visitas-historico-visitas-canceladas.jpeg](mobile/12-rf18-visitas-historico-visitas-canceladas.jpeg) |
+| MOBM-016 | RF18 | Falha ao carregar, aba Próximas | Aviso "Não foi possível carregar suas visitas. Tente novamente." | Aprovado | [21-rf18-visitas-proximas-erro-carregamento.jpeg](mobile/21-rf18-visitas-proximas-erro-carregamento.jpeg) |
+| MOBM-017 | RF18 | Falha ao carregar, aba Histórico | Mesmo aviso, com os dados da última carga mantidos | Aprovado | [22-rf18-visitas-historico-erro-carregamento.jpeg](mobile/22-rf18-visitas-historico-erro-carregamento.jpeg) |
