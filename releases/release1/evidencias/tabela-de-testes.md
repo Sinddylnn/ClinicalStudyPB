@@ -5,6 +5,7 @@ Lista de todos os testes da Release 1, por ferramenta. Os resultados da seção 
 ## 1. Testes automatizados do backend (Spring)
 
 Cada linha é um método de teste. O cenário descreve o comportamento verificado pelo método, e o tipo distingue operações aceitas de recusas esperadas.
+No IntelliJ é possível executar cada classe de Teste diretamente pela tabela, clicando no ícone de 'run'.
 
 | ID | Requisito | Camada | Classe de teste | Cenário | Tipo | Resultado |
 |---|---|---|---|---|---|---|

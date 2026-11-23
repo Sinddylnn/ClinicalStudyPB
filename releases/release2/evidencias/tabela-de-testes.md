@@ -6,6 +6,8 @@ Lista dos testes e evidências da Release 2. Os casos com execução comprovada 
 
 Cada linha identifica um caso automatizado Spring existente no projeto. As capturas comprovam a execução das classes nelas listadas, mas não necessariamente de todas as classes cadastradas nesta seção. As evidências foram organizadas por requisito: [RF12](backend/spring/rf12-testes-spring.png), [RF13](backend/spring/rf13-testes-spring.png), [RF14](backend/spring/rf14-testes-spring.png), [RF15](backend/spring/rf15-testes-spring.png), [RF16](backend/spring/rf16-testes-spring.png), [RF17](backend/spring/rf17-testes-spring.png) e [RF18](backend/spring/rf18-testes-spring.png).
 
+No IntelliJ é possível executar cada classe de Teste diretamente pela tabela, clicando no ícone de 'run'.
+
 | ID | Requisito | Camada | Classe de teste | Cenário | Tipo | Resultado |
 |---|---|---|---|---|---|---|
 | SPR-001 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Executa todas as migrações desde a V1 em um schema isolado e descartável | Sucesso | Não comprovado |
@@ -333,7 +335,7 @@ Cenários da Release 2 presentes na coleção `ClinicalStudyPB API` (`../../../d
 | PMN-013 | RF14 | Editar resultado atividade - 200 | `PUT /estudos/6/participacoes/2/visitas/2/resultados/1` | 200 OK | Aprovado | [03-rf14-resultado-edicao.png](backend/postman/rf14/03-rf14-resultado-edicao.png) |
 | PMN-014 | RF14 | Listar resultados atividade - 200 | `GET /estudos/6/participacoes/2/visitas/2/resultados` | 200 OK | Aprovado | [04-rf14-resultado-listagem.png](backend/postman/rf14/04-rf14-resultado-listagem.png) |
 | PMN-015 | RF15 | Consultar historico participacao - 200 | `GET /estudos/6/participacoes/2/historico` | 200 OK | Aprovado | [01-rf15-historico-sucesso.png](backend/postman/rf15/01-rf15-historico-sucesso.png) |
-| PMN-016 | RF15 | Consultar historico erro - 404 | `GET /estudos/6/participacoes/999/historico` | 404 Not Found | Aprovado | [02-rf15-historico-erro-acesso.png.png](backend/postman/rf15/02-rf15-historico-erro-acesso.png.png) |
+| PMN-016 | RF15 | Consultar historico erro - 404 | `GET /estudos/6/participacoes/999/historico` | 404 Not Found | Aprovado | [02-rf15-historico-erro-acesso.png](backend/postman/rf15/02-rf15-historico-erro-acesso.png.png) |
 | PMN-017 | RF16 | Registrar retirada participante - 200 | `POST /estudos/6/participacoes/2/retirada` | 200 OK | Aprovado | [01-rf16-retirada-sucesso.png](backend/postman/rf16/01-rf16-retirada-sucesso.png) |
 | PMN-018 | RF16 | Listar participacoes visitas canceladas - 200 | `GET /estudos/6/participacoes` | 200 OK | Aprovado | [02-rf16-visitas-pendentes-canceladas.png](backend/postman/rf16/02-rf16-visitas-pendentes-canceladas.png) |
 | PMN-019 | RF16 | Registrar retirada ja retirada - 400 | `POST /estudos/6/participacoes/2/retirada` | 400 Bad Request | Aprovado | [03-rf16-retirada-erro-ja-retirada.png](backend/postman/rf16/03-rf16-retirada-erro-ja-retirada.png) |

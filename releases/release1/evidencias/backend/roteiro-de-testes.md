@@ -24,7 +24,7 @@ Este roteiro descreve como os testes da Release 1 foram executados e onde estão
 
 | Evidência | Local |
 |---|---|
-| Execução dos testes do backend | [testes-backend.png](testes-backend.png) |
+| Execução dos testes do backend | [testes-backend.png](spring/testes-backend.png) |
 | Cobertura (JaCoCo) | [cobertura-jacoco.png](jacoco/cobertura-jacoco.png) |
 | Postman | [evidencias/backend/postman](postman/) |
 | Swagger | [evidencias/backend/swagger](swagger/) |
