@@ -276,6 +276,9 @@ Total: 263 casos Spring cadastrados; 239 com execução indicada pelas capturas 
 
 **Classes sem comprovação nas capturas Spring desta release:** `AcompanhamentoPersistenciaIT` (7 casos), `ResultadoAtividadePersistenciaIT` (5), `ParticipacaoConsultaControllerTest` (5) e `DocumentacaoApiTest` (7). Para marcar esses casos como aprovados, anexar a execução das respectivas classes e conferir os resultados. Os testes de integração `*IT` exigem o ambiente de banco de testes.
 
+**Cobertura do backend (JaCoCo):** execução completa via `./mvnw -B test "-Dtest=*IT"` e `./mvnw -B verify` totalizou **586 testes sem falhas** (`0` erros, `0` falhas), com **97,7%** de cobertura total de linhas (`1891` de `1936`) e **98,1%** nos pacotes de serviço (`1010` de `1030`, meta mínima de `80%`).
+Evidência: [cobertura-jacoco.png](backend/jacoco/cobertura-jacoco.png).
+
 ## 2. Testes manuais (Swagger)
 
 Para cada requisito, ao menos um cenário de sucesso e um de erro, com a requisição e a resposta visíveis no print. Procedimento no [roteiro de testes](backend/roteiro-de-testes-backend.md).

@@ -102,4 +102,9 @@ Rotas cobertas:
 
 ## 8. Cobertura (JaCoCo)
 
-Não há captura nem relatório JaCoCo versionado nesta release. Portanto, a cobertura automatizada ainda não foi documentada.
+A execução completa da suíte do backend (`./mvnw -B verify` após `./mvnw -B test "-Dtest=*IT"`) totalizou **586 testes executados sem falhas** (`0` erros, `0` falhas)[cite: 12].
+
+- **Cobertura total de linhas:** **97,7%** (`1891` de `1936` linhas cobertas)[cite: 13].
+- **Cobertura dos pacotes de negócio (`.service`, meta mínima de 80%):** **98,1%** (`1010` de `1030` linhas cobertas) — com `estudos.service` em **97%** de instruções, `recrutamento.service` em **95%** e `usuarios.service` em **97%**[cite: 13, 14].
+
+Evidência: [cobertura-jacoco.png](jacoco/cobertura-jacoco.png)
