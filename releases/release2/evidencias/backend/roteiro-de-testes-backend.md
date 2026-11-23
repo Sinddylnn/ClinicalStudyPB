@@ -79,15 +79,15 @@ Os roteiros Swagger estão em `swagger/rf12/roteiro.md` a `swagger/rf18/roteiro.
 
 ## 7. Postman
 
-A coleção `docs/postman/ClinicalStudyPB.postman_collection.json` contém atualmente 8 pastas e 74 requisições da Release 1. Não há pastas de RF12 a RF18 nem evidências de execução Postman da Release 2, por isso esses testes ainda não estão registrados como realizados.
+A coleção `docs/postman/ClinicalStudyPB.postman_collection.json` reúne as pastas **1 a 8** (Release 1) e as pastas **9 a 14** (24 requisições referentes aos requisitos **RF12 a RF18** na Release 2)[cite: 13]. Na branch `docs`, a atualização da coleção e do `relatorio-execucao.md` foi preparada para revisão, enquanto as capturas `.png` sob `postman/` ainda não foram adicionadas nesta branch.
 
 | Item | Como fazer |
 |---|---|
-| Coleção | Incluir pastas em `docs/postman/ClinicalStudyPB.postman_collection.json` para os grupos de requisitos (agendamento, histórico e retirada, participante) |
-| Execução | Importar a coleção e o ambiente `Local`, executar no Runner (Iterations 1, Delay 0), resultado sem falhas |
-| Prints por requisito | Runner mostrando só a pasta do requisito, em `postman/rfXX/`, com o nome `01-rfXX-descricao.png` |
-| Execução completa | Print do Runner com a coleção inteira em `postman/runner/` |
-| Relatório | `postman/relatorio-execucao.md`, no [modelo da Release 1](../../../release1/evidencias/backend/postman/relatorio-execucao.md) |
+| Coleção | Manter atualizadas em `docs/postman/ClinicalStudyPB.postman_collection.json` as pastas da Release 2 (pastas **9 a 14**, cobrindo agendamento, situação/correção, resultados, histórico, retirada e consultas do participante)[cite: 13] |
+| Execução | Importar a coleção e o ambiente `Local` (`docs/postman/Local.postman_environment.json`), respeitar o perfil de sessão (`Pesquisador` para as pastas 9–13 e `Participante` para a pasta 14) e observar os IDs/estado da base local ao rodar no Runner[cite: 13] |
+| Prints por requisito | Runner mostrando a pasta do requisito, em `postman/rfXX/`, com o nome `01-rfXX-descricao.png` |
+| Execução completa | Print do Runner com a execução em `postman/runner/` |
+| Relatório | `postman/relatorio-execucao.md`, tomando como referência o formato da Release 1 ([relatório da Release 1](../../../release1/evidencias/backend/postman/relatorio-execucao.md)) e registrando as condições reais de execução da Release 2 |
 
 Rotas cobertas:
 

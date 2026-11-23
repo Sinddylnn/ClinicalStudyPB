@@ -311,7 +311,35 @@ Para cada requisito, ao menos um cenário de sucesso e um de erro, com a requisi
 
 ## 3. Cenários da API (Postman)
 
-A coleção `docs/postman/ClinicalStudyPB.postman_collection.json` contém atualmente 8 pastas e 74 requisições da Release 1, sem os cenários RF12 a RF18. Como não há coleção, execução ou prints do Runner para esses requisitos, nenhum teste Postman da Release 2 é marcado como realizado. A seção será preenchida após a inclusão e execução desses cenários.
+Cenários da Release 2 presentes na coleção `ClinicalStudyPB API` (`../../../docs/postman/ClinicalStudyPB.postman_collection.json`, pastas `9` a `14`), executados contra a API local com capturas em `backend/postman/`.
+
+| ID | Requisito | Cenário (Collection) | Método e Endpoint | Esperado | Resultado | Evidência |
+|---|---|---|---|---|---|---|
+| PMN-001 | RF12 | Listar participações do estudo - 200 | `GET /estudos/6/participacoes` | 200 OK | Aprovado | [01-rf12-listar-participacoes.png](backend/postman/rf12/01-rf12-listar-participacoes.png) |
+| PMN-002 | RF12 | Agendar visita - 201 | `POST /estudos/6/participacoes/2/visitas` | 201 Created | Aprovado | [02-rf12-agendar-visita.png](backend/postman/rf12/02-rf12-agendar-visita.png) |
+| PMN-003 | RF12 | Reagendar visita - 200 | `PUT /estudos/6/participacoes/2/visitas/2` | 200 OK | Aprovado | [03-rf12-reagendar-visita.png](backend/postman/rf12/03-rf12-reagendar-visita.png) |
+| PMN-004 | RF12 | Reagendar visita fora do período - 400 | `PUT /estudos/6/participacoes/2/visitas/2` | 400 Bad Request | Aprovado | [04-rf12-reagendar-fora-periodo.png](backend/postman/rf12/04-rf12-reagendar-fora-periodo.png) |
+| PMN-005 | RF12 | Registro realizado - 200 | `PATCH /estudos/6/participacoes/2/visitas/2/situacao` | 200 OK (`REALIZADA`) | Aprovado | [05-rf12-registro-realizada.png](backend/postman/rf12/05-rf12-registro-realizada.png) |
+| PMN-006 | RF12 | Registro visita ja finalizada - 400 | `PATCH /estudos/6/participacoes/2/visitas/2/situacao` | 400 Bad Request | Aprovado | [06-rf12-visita-finalizada.png](backend/postman/rf12/06-rf12-visita-finalizada.png) |
+| PMN-007 | RF12 | Registro de ausência - 200 | `PATCH /estudos/6/participacoes/2/visitas/3/situacao` | 200 OK (`AUSENTE`) | Aprovado | [07-rf12-registro-ausencia.png](backend/postman/rf12/07-rf12-registro-ausencia.png) |
+| PMN-008 | RF12 | Registro de cancelamento - 200 | `PATCH /estudos/6/participacoes/2/visitas/4/situacao` | 200 OK (`CANCELADA`) | Aprovado | [08-rf12-registro-cancelamento.png](backend/postman/rf12/08-rf12-registro-cancelamento.png) |
+| PMN-009 | RF14 | Correção de ausência para realizada - 201 | `POST /estudos/6/participacoes/2/visitas/3/correcoes` | 201 Created | Aprovado | [01-rf14-correcao-ausencia.png](backend/postman/rf14/01-rf14-correcao-ausencia.png) |
+| PMN-010 | RF14 | Correção para a mesma situação - 400 | `POST /estudos/6/participacoes/2/visitas/3/correcoes` | 400 Bad Request | Aprovado | [02-rf14-correcao-mesma-situacao.png](backend/postman/rf14/02-rf14-correcao-mesma-situacao.png) |
+| PMN-011 | RF13 | Registrar resultado atividade - 201 | `POST /estudos/6/participacoes/2/visitas/2/resultados` | 201 Created | Aprovado | [01-rf13-registrar-resultado.png](backend/postman/rf13/01-rf13-registrar-resultado.png) |
+| PMN-012 | RF13 | Erro ao registrar resultado duplicado - 409 | `POST /estudos/6/participacoes/2/visitas/2/resultados` | 409 Conflict | Aprovado | [02-rf13-resultado-duplicado.png](backend/postman/rf13/02-rf13-resultado-duplicado.png) |
+| PMN-013 | RF13 | Editar resultado atividade - 200 | `PUT /estudos/6/participacoes/2/visitas/2/resultados/1` | 200 OK | Aprovado | [03-rf13-editar-resultado.png](backend/postman/rf13/03-rf13-editar-resultado.png) |
+| PMN-014 | RF13 | Listar resultados atividade - 200 | `GET /estudos/6/participacoes/2/visitas/2/resultados` | 200 OK | Aprovado | [04-rf13-listar-resultados.png](backend/postman/rf13/04-rf13-listar-resultados.png) |
+| PMN-015 | RF15 | Consultar historico participacao - 200 | `GET /estudos/6/participacoes/2/historico` | 200 OK | Aprovado | [01-rf15-historico-sucesso.png](backend/postman/rf15/01-rf15-historico-sucesso.png) |
+| PMN-016 | RF15 | Consultar historico erro - 404 | `GET /estudos/6/participacoes/999/historico` | 404 Not Found | Aprovado | [02-rf15-historico-erro.png](backend/postman/rf15/02-rf15-historico-erro.png) |
+| PMN-017 | RF16 | Registrar retirada participante - 200 | `POST /estudos/6/participacoes/2/retirada` | 200 OK | Aprovado | [01-rf16-registrar-retirada.png](backend/postman/rf16/01-rf16-registrar-retirada.png) |
+| PMN-018 | RF16 | Listar participacoes visitas canceladas - 200 | `GET /estudos/6/participacoes` | 200 OK | Aprovado | [02-rf16-visitas-canceladas.png](backend/postman/rf16/02-rf16-visitas-canceladas.png) |
+| PMN-019 | RF16 | Registrar retirada ja retirada - 400 | `POST /estudos/6/participacoes/2/retirada` | 400 Bad Request | Aprovado | [03-rf16-ja-retirada.png](backend/postman/rf16/03-rf16-ja-retirada.png) |
+| PMN-020 | RF17 | Consultar estudos participacoes - 200 | `GET /estudos/6/participacoes` | 200 OK | Aprovado | [01-rf17-consulta-participacoes.png](backend/postman/rf17/01-rf17-consulta-participacoes.png) |
+| PMN-021 | RF17 | Consultar estudos erro perfil - 403 | `GET /participante/estudos` | 403 Forbidden | Aprovado | [02-rf17-erro-perfil.png](backend/postman/rf17/02-rf17-erro-perfil.png) |
+| PMN-022 | RF18 | Proximas visitas participante - 200 | `GET /participante/visitas/proximas` | 200 OK | Aprovado | [01-rf18-proximas-visitas.png](backend/postman/rf18/01-rf18-proximas-visitas.png) |
+| PMN-023 | RF18 | Historico visitas participante - 200 | `GET /participante/visitas/historico` | 200 OK | Aprovado | [02-rf18-historico-visitas.png](backend/postman/rf18/02-rf18-historico-visitas.png) |
+| PMN-024 | RF18 | Consulta erro estudo - 404 | `GET /participante/visitas/proximas?estudoId=999` | 404 Not Found | Aprovado | [03-rf18-erro-estudo.png](backend/postman/rf18/03-rf18-erro-estudo.png) |
+
 ## 4. Testes da web e do mobile
 
 ### 4.1 Web (automatizados)
