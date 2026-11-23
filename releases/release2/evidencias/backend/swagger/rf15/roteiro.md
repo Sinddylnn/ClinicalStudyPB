@@ -40,13 +40,15 @@ Os dados do estudo, do protocolo e da participação foram preparados por SQL ex
 
 **Resultado esperado:** `200 OK`, histórico com visitas, resultados e correções.
 
-**Resultado observado:** A API retornou `200`; foram confirmados pelo menos três itens no histórico, com resultados e correções.
+**Resultado observado:** A API retornou `200`. A captura mostra itens do histórico e um resultado de atividade, mas exibe apenas parte do JSON; não é possível confirmar nela a existência de três itens completos nem de correções.
 
 **Evidência:**
 
 ![Consulta do histórico completo](01-rf15-historico-sucesso.png)
 
 [Ver captura do cenário 1](01-rf15-historico-sucesso.png)
+
+**Limite da evidência:** para comprovar todos os registros e correções mencionados no objetivo, acrescentar uma captura da continuação do JSON ou outra evidência que mostre esses campos.
 
 ## Cenário 2: acesso negado ao perfil participante
 

@@ -15,12 +15,12 @@ Para cada requisito com teste executado, registre:
 | Requisito | Responsável (Spring e Swagger) | Evidência de sucesso | Evidência de erro |
 |---|---|---|---|
 | RF12: agendamento e reagendamento | Luiz | Agendamento e reagendamento | Agendamento duplicado ou data inválida |
-| RF13: registrar e corrigir visitas | Luiz | Registrar realizada, ausente e cancelada | Registrar visita futura ou corrigir visita com resultados |
-| RF14: resultados fictícios das atividades | Luiz | Registrar resultados fictícios | Resultado em visita não realizada ou atividade incorreta |
-| RF15: histórico completo de visitas | Luiz | Consultar histórico completo | Acesso por coordenador não vinculado ou perfil sem permissão |
+| RF13: registrar e corrigir visitas | Luiz | Registrar realizada, ausente e cancelada | Repetir registro de visita finalizada ou corrigir para a mesma situação |
+| RF14: resultados fictícios das atividades | Luiz | Registrar, editar e consultar resultados | Tentar cadastrar resultado duplicado |
+| RF15: histórico completo de visitas | Luiz | Consultar histórico completo | Acesso negado a participante (403) |
 | RF16: retirada do participante | Georis | Retirar participante e cancelar visitas pendentes | Tentar retirar novamente a participação |
 | RF17: consultar estudos do participante | Georis | Participante consultar seus estudos | Consultar sem sessão autenticada |
-| RF18: próximas visitas e histórico | Georis | Consultar próximas visitas e histórico | Consultar estudo sem vínculo com o participante |
+| RF18: próximas visitas e histórico | Georis | Consultar próximas visitas e histórico (resposta vazia no print) | Consultar estudo sem vínculo com o participante |
 
 Os testes do Postman são de responsabilidade da Gabriela.
 
@@ -53,23 +53,29 @@ docker compose ps
 
 O PostgreSQL precisa aparecer como `healthy`. Em outro terminal, na pasta `backend`, defina `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD` e execute `./mvnw spring-boot:run` (no PowerShell, `.\mvnw.cmd spring-boot:run`). Aguarde a mensagem de inicialização. Swagger em `http://localhost:8080/swagger-ui.html`.
 
+**Dados de teste:** os roteiros RF12 a RF15 usam um estudo, uma participação e visitas preparados anteriormente por SQL. O script de preparação não foi encontrado entre as evidências da Release 2. Para reproduzir os exemplos, preparar registros equivalentes e atualizar os IDs conforme o banco utilizado.
+
 ## 5. Testes Spring (por requisito)
 
 No PowerShell, coloque o argumento `-Dtest` entre aspas. A captura deve mostrar as classes, os testes terminados, a ausência de falhas e `BUILD SUCCESS`. Os arquivos desta release estão em `releases/release2/evidencias/backend/spring/`.
 
 | Requisito | Classes de teste | Arquivo do print |
 |---|---|---|
-| RF12 e RF13 | `VisitaAgendadaControllerTest`, `VisitaAgendadaServiceTest`, `ParticipacaoConsultaControllerTest` | `rf12-testes-spring.png`, `rf13-testes-spring.png` |
-| RF14 | `ResultadoAtividadeControllerTest`, `ResultadoAtividadeServiceTest`, `ResultadoAtividadePersistenciaIT` | `rf14-testes-spring.png` |
+| RF12 e RF13 | `VisitaAgendadaControllerTest`, `VisitaAgendadaServiceTest` | `rf12-testes-spring.png`, `rf13-testes-spring.png` |
+| RF14 | `ResultadoAtividadeControllerTest`, `ResultadoAtividadeServiceTest` | `rf14-testes-spring.png` |
 | RF15 | `HistoricoParticipacaoControllerTest`, `HistoricoParticipacaoServiceTest` | `rf15-testes-spring.png` |
 | RF16 | `RetiradaParticipanteControllerTest`, `RetiradaParticipanteServiceTest` | `rf16-testes-spring.png` |
 | RF17 e RF18 | `ParticipanteConsultaControllerTest`, `ParticipanteConsultaServiceTest` | `rf17-testes-spring.png`, `rf18-testes-spring.png` |
 
 Exemplo: `./mvnw "-Dtest=VisitaAgendadaControllerTest,VisitaAgendadaServiceTest" test`. A suíte completa, com os testes de banco, usa `./mvnw -B verify "-Dtest=*Test,*IT"` e as variáveis `CLINICALSTUDYPB_TEST_DB_*` do banco de testes.
 
+**Execuções sem captura correspondente:** as classes `ParticipacaoConsultaControllerTest`, `DocumentacaoApiTest`, `AcompanhamentoPersistenciaIT` e `ResultadoAtividadePersistenciaIT` aparecem na tabelona, mas não nos prints Spring anexados. Por isso, seus 24 casos estão identificados como **Não comprovado** até haver evidência de execução. Um comando listado neste roteiro não substitui a captura nem comprova que a classe foi executada.
+
 ## 6. Swagger
 
 Nos prints, registre a requisição executada e sua resposta, com endpoint, status HTTP e JSON; a seção "Example Value" sozinha não comprova o teste. Quando necessário, autentique-se como coordenador ou participante pelo fluxo de CSRF e login descrito na documentação. Os dados são fictícios. Cada cenário registrado na tabela aponta para sua captura e para o roteiro correspondente em `swagger/rfXX/`.
+
+Os roteiros Swagger estão em `swagger/rf12/roteiro.md` a `swagger/rf18/roteiro.md`. O RF18 ainda precisa de uma nova evidência com histórico preenchido; a captura atual mostra `200 OK` com lista vazia. Os testes manuais cadastrados com capturas totalizam 24 cenários.
 
 ## 7. Postman
 
@@ -87,13 +93,13 @@ Rotas cobertas:
 
 | Requisito | Rotas |
 |---|---|
-| RF12 | `POST` e `PUT /estudos/{estudoId}/participacoes/{participacaoId}/visitas` |
+| RF12 | `POST /estudos/{estudoId}/participacoes/{participacaoId}/visitas` e `PUT /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}` |
 | RF13 | `PATCH .../visitas/{visitaAgendadaId}/situacao` e `POST .../visitas/{visitaAgendadaId}/correcoes` |
-| RF14 | `GET`, `POST` e `PUT .../visitas/{visitaAgendadaId}/resultados` |
+| RF14 | `GET` e `POST .../visitas/{visitaAgendadaId}/resultados`; `PUT .../visitas/{visitaAgendadaId}/resultados/{resultadoId}` |
 | RF15 | `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico` |
 | RF16 | `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada` |
 | RF17 e RF18 | `GET /participante/estudos`, `/participante/visitas/proximas` e `/participante/visitas/historico` |
 
 ## 8. Cobertura (JaCoCo)
 
-Não há captura nem relatório JaCoCo versionado nesta sprint, ela deverá ser registrada no final da release 2, portanto a cobertura AINDA não foi registrada. 
+Não há captura nem relatório JaCoCo versionado nesta release. Portanto, a cobertura automatizada ainda não foi documentada.

@@ -121,6 +121,12 @@ Os dados do estudo, do protocolo e da participação foram preparados por SQL ex
 
 [Ver captura do cenário 4](04-rf12-reagendamento-erro.png)
 
+## Reexecução dos cenários
+
+As datas nos corpos JSON acima são as utilizadas nas capturas originais de novembro de 2026 e foram preservadas para manter a correspondência com as evidências. **Não reutilizar essas datas em novas execuções sem conferir o dia atual e o período do estudo.**
+
+Para repetir os cenários 1 a 3, preparar datas futuras válidas dentro da vigência do estudo e manter o mesmo identificador de visita entre agendamento e reagendamento. No cenário 4, utilizar uma data anterior ao dia da nova execução para verificar a rejeição. Atualizar também os IDs de exemplo caso o banco tenha sido recriado.
+
 ## Testes Spring
 
 - Classes: `VisitaAgendadaControllerTest` e `VisitaAgendadaServiceTest`

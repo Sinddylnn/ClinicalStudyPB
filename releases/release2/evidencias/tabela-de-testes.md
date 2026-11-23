@@ -1,36 +1,36 @@
 # Tabela de testes Release 2
 
-Lista dos testes e evidências da Release 2. Os casos Spring e Swagger com capturas e roteiros disponíveis estão registrados como aprovados; itens sem execução comprovada permanecem identificados como pendentes ou não documentados.
+Lista dos testes e evidências da Release 2. Os casos com execução comprovada pelas capturas estão marcados como aprovados. Classes Spring sem captura correspondente estão identificadas como "Não comprovado"; isso não significa que os testes falharam ou que não foram executados.
 
 ## 1. Testes automatizados do backend (Spring)
 
-Cada linha corresponde a um método de teste Spring executado na Release 2. Os resultados foram conferidos nas capturas de execução organizadas por requisito: [RF12](backend/spring/rf12-testes-spring.png), [RF13](backend/spring/rf13-testes-spring.png), [RF14](backend/spring/rf14-testes-spring.png), [RF15](backend/spring/rf15-testes-spring.png), [RF16](backend/spring/rf16-testes-spring.png), [RF17](backend/spring/rf17-testes-spring.png) e [RF18](backend/spring/rf18-testes-spring.png).
+Cada linha identifica um caso automatizado Spring existente no projeto. As capturas comprovam a execução das classes nelas listadas, mas não necessariamente de todas as classes cadastradas nesta seção. As evidências foram organizadas por requisito: [RF12](backend/spring/rf12-testes-spring.png), [RF13](backend/spring/rf13-testes-spring.png), [RF14](backend/spring/rf14-testes-spring.png), [RF15](backend/spring/rf15-testes-spring.png), [RF16](backend/spring/rf16-testes-spring.png), [RF17](backend/spring/rf17-testes-spring.png) e [RF18](backend/spring/rf18-testes-spring.png).
 
 | ID | Requisito | Camada | Classe de teste | Cenário | Tipo | Resultado |
 |---|---|---|---|---|---|---|
-| SPR-001 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Executa todas as migrações desde a V1 em um schema isolado e descartável | Sucesso | Aprovado |
-| SPR-002 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Persiste visita, resultado, correção e retirada com seus vínculos e dados de autoria | Sucesso | Aprovado |
-| SPR-003 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere no PostgreSQL a contagem de visitas por estudo e situação. Também verifica se a consulta de participantes não repete quem tem mais de uma pendência | Sucesso | Aprovado |
-| SPR-004 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Registra a retirada no PostgreSQL e confere que somente visitas AGENDADA são canceladas | Sucesso | Aprovado |
-| SPR-005 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere no PostgreSQL o filtro por conta, situação, ordenação e data de corte | Sucesso | Aprovado |
-| SPR-006 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere no PostgreSQL a ordem das visitas e o carregamento da visita prevista na mesma consulta, evitando buscas adicionais durante a montagem do histórico | Sucesso | Aprovado |
-| SPR-007 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere o filtro por participação e a ordem das correções e dos resultados | Sucesso | Aprovado |
-| SPR-008 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere a gravação do resultado e da autoria inicial no banco | Sucesso | Aprovado |
-| SPR-009 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere que a edição preserva o cadastro original e grava a atualização | Sucesso | Aprovado |
-| SPR-010 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere que resultados parciais são aceitos, sem exigir todas as atividades | Sucesso | Aprovado |
-| SPR-011 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Garante que a constraint única do PostgreSQL rejeita gravação duplicada mesmo quando a validação do serviço não é utilizada | Erro/negativo | Aprovado |
-| SPR-012 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere a consulta por resultado e visita e a unicidade independente entre visitas diferentes | Erro/negativo | Aprovado |
+| SPR-001 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Executa todas as migrações desde a V1 em um schema isolado e descartável | Sucesso | Não comprovado |
+| SPR-002 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Persiste visita, resultado, correção e retirada com seus vínculos e dados de autoria | Sucesso | Não comprovado |
+| SPR-003 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere no PostgreSQL a contagem de visitas por estudo e situação. Também verifica se a consulta de participantes não repete quem tem mais de uma pendência | Sucesso | Não comprovado |
+| SPR-004 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Registra a retirada no PostgreSQL e confere que somente visitas AGENDADA são canceladas | Sucesso | Não comprovado |
+| SPR-005 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere no PostgreSQL o filtro por conta, situação, ordenação e data de corte | Sucesso | Não comprovado |
+| SPR-006 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere no PostgreSQL a ordem das visitas e o carregamento da visita prevista na mesma consulta, evitando buscas adicionais durante a montagem do histórico | Sucesso | Não comprovado |
+| SPR-007 | RF12 a RF16 | Integração (PostgreSQL) | `AcompanhamentoPersistenciaIT` | Confere o filtro por participação e a ordem das correções e dos resultados | Sucesso | Não comprovado |
+| SPR-008 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere a gravação do resultado e da autoria inicial no banco | Sucesso | Não comprovado |
+| SPR-009 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere que a edição preserva o cadastro original e grava a atualização | Sucesso | Não comprovado |
+| SPR-010 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere que resultados parciais são aceitos, sem exigir todas as atividades | Sucesso | Não comprovado |
+| SPR-011 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Garante que a constraint única do PostgreSQL rejeita gravação duplicada mesmo quando a validação do serviço não é utilizada | Erro/negativo | Não comprovado |
+| SPR-012 | RF14 | Integração (PostgreSQL) | `ResultadoAtividadePersistenciaIT` | Confere a consulta por resultado e visita e a unicidade independente entre visitas diferentes | Erro/negativo | Não comprovado |
 | SPR-013 | RF15 | API (MockMvc) | `HistoricoParticipacaoControllerTest` | Confere os campos de visitas, resultados, correções, retirada e responsáveis no JSON | Sucesso | Aprovado |
 | SPR-014 | RF15 | API (MockMvc) | `HistoricoParticipacaoControllerTest` | Confere se os perfis autorizados podem consultar uma participação sem eventos | Sucesso | Aprovado |
 | SPR-015 | RF15 | API (MockMvc) | `HistoricoParticipacaoControllerTest` | Confere que administrador e participante não acessam o histórico de gestão | Erro/negativo | Aprovado |
 | SPR-016 | RF15 | API (MockMvc) | `HistoricoParticipacaoControllerTest` | Confere o bloqueio de uma consulta sem sessão autenticada | Erro/negativo | Aprovado |
 | SPR-017 | RF15 | API (MockMvc) | `HistoricoParticipacaoControllerTest` | Confere o retorno 404 quando o estudo não está no vínculo do usuário | Erro/negativo | Aprovado |
 | SPR-018 | RF15 | API (MockMvc) | `HistoricoParticipacaoControllerTest` | Confere o retorno 404 para uma participação fora do estudo informado | Erro/negativo | Aprovado |
-| SPR-019 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Coordenador pode listar participações | Sucesso | Aprovado |
-| SPR-020 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Verifica se o pesquisador pode consultar as participações do estudo pelo qual é responsável | Sucesso | Aprovado |
-| SPR-021 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Perfil sem permissão não pode listar | Erro/negativo | Aprovado |
-| SPR-022 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Listagem sem login é bloqueada | Erro/negativo | Aprovado |
-| SPR-023 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Estudo não encontrado retorna 404 | Erro/negativo | Aprovado |
+| SPR-019 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Coordenador pode listar participações | Sucesso | Não comprovado |
+| SPR-020 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Verifica se o pesquisador pode consultar as participações do estudo pelo qual é responsável | Sucesso | Não comprovado |
+| SPR-021 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Perfil sem permissão não pode listar | Erro/negativo | Não comprovado |
+| SPR-022 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Listagem sem login é bloqueada | Erro/negativo | Não comprovado |
+| SPR-023 | RF12 (apoio) | API (MockMvc) | `ParticipacaoConsultaControllerTest` | Estudo não encontrado retorna 404 | Erro/negativo | Não comprovado |
 | SPR-024 | RF17, RF18 | API (MockMvc) | `ParticipanteConsultaControllerTest` | Participante consulta estudos sem expor campos de gestão | Sucesso | Aprovado |
 | SPR-025 | RF17, RF18 | API (MockMvc) | `ParticipanteConsultaControllerTest` | Participante consulta próximas visitas sem expor motivo | Sucesso | Aprovado |
 | SPR-026 | RF17, RF18 | API (MockMvc) | `ParticipanteConsultaControllerTest` | Participante consulta histórico filtrando por estudo sem expor dados internos | Sucesso | Aprovado |
@@ -264,15 +264,17 @@ Cada linha corresponde a um método de teste Spring executado na Release 2. Os r
 | SPR-254 | RF12, RF13 | Regras de negócio | `VisitaAgendadaServiceTest` | Verifica se o pesquisador responsável pode listar as participações do seu estudo | Sucesso | Aprovado |
 | SPR-255 | RF12, RF13 | Regras de negócio | `VisitaAgendadaServiceTest` | Verifica se o pesquisador não pode consultar participações de outro estudo | Erro/negativo | Aprovado |
 | SPR-256 | RF12, RF13 | Regras de negócio | `VisitaAgendadaServiceTest` | Verifica se administradores e participantes não podem consultar a listagem | Erro/negativo | Aprovado |
-| SPR-257 | RF12, RF13 | API (MockMvc) | `DocumentacaoApiTest` | Confere rotas, corpos, respostas, segurança e códigos documentados das visitas | Sucesso | Aprovado |
-| SPR-258 | RF14 | API (MockMvc) | `DocumentacaoApiTest` | Confere rotas, schemas e erros publicados para cadastro e edição de resultados | Sucesso | Aprovado |
-| SPR-259 | RF12 (apoio) | API (MockMvc) | `DocumentacaoApiTest` | Confere a consulta das participações e o schema de seus dados | Sucesso | Aprovado |
-| SPR-260 | RF16 | API (MockMvc) | `DocumentacaoApiTest` | Confere que a retirada de participantes está publicada no contrato | Sucesso | Aprovado |
-| SPR-261 | RF17, RF18 | API (MockMvc) | `DocumentacaoApiTest` | Confere que as consultas do participante estão publicadas, sem exigir CSRF | Sucesso | Aprovado |
-| SPR-262 | RF13, RF14 | API (MockMvc) | `DocumentacaoApiTest` | Confere os contratos GET da visita e de seus resultados para a web | Sucesso | Aprovado |
-| SPR-263 | RF15 | API (MockMvc) | `DocumentacaoApiTest` | Confere a publicação da consulta do histórico completo de gestão (RF15) | Sucesso | Aprovado |
+| SPR-257 | RF12, RF13 | API (MockMvc) | `DocumentacaoApiTest` | Confere rotas, corpos, respostas, segurança e códigos documentados das visitas | Sucesso | Não comprovado |
+| SPR-258 | RF14 | API (MockMvc) | `DocumentacaoApiTest` | Confere rotas, schemas e erros publicados para cadastro e edição de resultados | Sucesso | Não comprovado |
+| SPR-259 | RF12 (apoio) | API (MockMvc) | `DocumentacaoApiTest` | Confere a consulta das participações e o schema de seus dados | Sucesso | Não comprovado |
+| SPR-260 | RF16 | API (MockMvc) | `DocumentacaoApiTest` | Confere que a retirada de participantes está publicada no contrato | Sucesso | Não comprovado |
+| SPR-261 | RF17, RF18 | API (MockMvc) | `DocumentacaoApiTest` | Confere que as consultas do participante estão publicadas, sem exigir CSRF | Sucesso | Não comprovado |
+| SPR-262 | RF13, RF14 | API (MockMvc) | `DocumentacaoApiTest` | Confere os contratos GET da visita e de seus resultados para a web | Sucesso | Não comprovado |
+| SPR-263 | RF15 | API (MockMvc) | `DocumentacaoApiTest` | Confere a publicação da consulta do histórico completo de gestão (RF15) | Sucesso | Não comprovado |
 
-Total: 263 testes Spring.
+Total: 263 casos Spring cadastrados; 239 com execução indicada pelas capturas disponíveis e 24 sem captura correspondente.
+
+**Classes sem comprovação nas capturas Spring desta release:** `AcompanhamentoPersistenciaIT` (7 casos), `ResultadoAtividadePersistenciaIT` (5), `ParticipacaoConsultaControllerTest` (5) e `DocumentacaoApiTest` (7). Para marcar esses casos como aprovados, anexar a execução das respectivas classes e conferir os resultados. Os testes de integração `*IT` exigem o ambiente de banco de testes.
 
 ## 2. Testes manuais (Swagger)
 
@@ -287,20 +289,25 @@ Para cada requisito, ao menos um cenário de sucesso e um de erro, com a requisi
 | SWG-005 | RF13 | Registrar visita realizada | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 200 OK | Luiz | Aprovado | [01-rf13-registro-realizada.png](backend/swagger/rf13/01-rf13-registro-realizada.png) |
 | SWG-006 | RF13 | Registrar visita ausente | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 200 OK | Luiz | Aprovado | [02-rf13-registro-ausente.png](backend/swagger/rf13/02-rf13-registro-ausente.png) |
 | SWG-007 | RF13 | Registrar visita cancelada | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 200 OK, com motivo informado | Luiz | Aprovado | [03-rf13-registro-cancelada.png](backend/swagger/rf13/03-rf13-registro-cancelada.png) |
-| SWG-008 | RF13 | Registrar visita futura | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 400 Bad Request, código TRANSICAO_VISITA_INVALIDA (A visita ainda não pode ser registrada.) | Luiz | Aprovado | [04-rf13-registro-erro.png](backend/swagger/rf13/04-rf13-registro-erro.png) |
+| SWG-008 | RF13 | Tentar registrar novamente visita já finalizada | `PATCH .../visitas/{visitaAgendadaId}/situacao` | 400 Bad Request, código `TRANSICAO_VISITA_INVALIDA` (apenas visitas agendadas podem ser registradas) | Luiz | Aprovado | [04-rf13-registro-erro.png](backend/swagger/rf13/04-rf13-registro-erro.png) |
 | SWG-009 | RF13 | Correção de visita | `POST .../visitas/{visitaAgendadaId}/correcoes` | 201 Created | Luiz | Aprovado | [05-rf13-correcao-sucesso.png](backend/swagger/rf13/05-rf13-correcao-sucesso.png) |
 | SWG-010 | RF13 | Correção para a mesma situação | `POST .../visitas/{visitaAgendadaId}/correcoes` | 400 Bad Request, código TRANSICAO_VISITA_INVALIDA | Luiz | Aprovado | [06-rf13-correcao-erro.png](backend/swagger/rf13/06-rf13-correcao-erro.png) |
 | SWG-011 | RF14 | Registrar resultado fictício | `POST .../visitas/{visitaAgendadaId}/resultados` | 201 Created | Luiz | Aprovado | [01-rf14-resultado-sucesso.png](backend/swagger/rf14/01-rf14-resultado-sucesso.png) |
 | SWG-012 | RF14 | Resultado duplicado | `POST /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados` | 409 Conflict, código RESULTADO_JA_REGISTRADO | Luiz | Aprovado | [02-rf14-resultado-erro.png](backend/swagger/rf14/02-rf14-resultado-erro.png) |
 | SWG-013 | RF15 | Consultar histórico completo | `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico` | 200 OK | Luiz | Aprovado | [01-rf15-historico-sucesso.png](backend/swagger/rf15/01-rf15-historico-sucesso.png) |
-| SWG-014 | RF15 | Coordenador não vinculado ou perfil sem permissão | `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico` | 404 (coordenador não vinculado) ou 403 (perfil sem permissão) | Luiz | Aprovado | [02-rf15-historico-erro-acesso.png](backend/swagger/rf15/02-rf15-historico-erro-acesso.png) |
-| SWG-015 | RF16 | Retirar participante e cancelar visitas pendentes | `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada` | 200 OK | Georis | Aprovado | [01-rf16-retirada-sucesso.png](backend/swagger/rf16/01-rf16-retirada-sucesso.png) |
+| SWG-014 | RF15 | Participante tenta consultar histórico de gestão | `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico` | 403 Forbidden, código `ACESSO_NEGADO` | Luiz | Aprovado | [02-rf15-historico-erro-acesso.png](backend/swagger/rf15/02-rf15-historico-erro-acesso.png) |
+| SWG-015 | RF16 | Registrar retirada do participante | `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada` | 200 OK | Georis | Aprovado | [01-rf16-retirada-sucesso.png](backend/swagger/rf16/01-rf16-retirada-sucesso.png) |
 | SWG-016 | RF16 | Tentar retirar novamente a participação | `POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada` | 400 Bad Request, código PARTICIPACAO_JA_RETIRADA | Georis | Aprovado | [03-rf16-retirada-erro-ja-retirada.png](backend/swagger/rf16/03-rf16-retirada-erro-ja-retirada.png) |
 | SWG-017 | RF17 | Participante consulta seus estudos | `GET /participante/estudos` | 200 OK | Georis | Aprovado | [01-rf17-consulta-estudos-sucesso.png](backend/swagger/rf17/01-rf17-consulta-estudos-sucesso.png) |
 | SWG-018 | RF17 | Consulta sem sessão autenticada | `GET /participante/estudos` | 401 Unauthorized, código AUTENTICACAO_NECESSARIA | Georis | Aprovado | [02-rf17-estudos-erro-perfil.png](backend/swagger/rf17/02-rf17-estudos-erro-perfil.png) |
 | SWG-019 | RF18 | Consultar próximas visitas | `GET /participante/visitas/proximas` | 200 OK | Georis | Aprovado | [01-rf18-proximas-sucesso.png](backend/swagger/rf18/01-rf18-proximas-sucesso.png) |
-| SWG-020 | RF18 | Consultar histórico de visitas | `GET /participante/visitas/historico` | 200 OK | Georis | Aprovado | [02-rf18-historico-sucesso.png](backend/swagger/rf18/02-rf18-historico-sucesso.png) |
+| SWG-020 | RF18 | Consultar histórico sem visitas finalizadas na resposta | `GET /participante/visitas/historico` | 200 OK, lista vazia (`[]`) | Georis | Aprovado | [02-rf18-historico-sucesso.png](backend/swagger/rf18/02-rf18-historico-sucesso.png) |
 | SWG-021 | RF18 | Consultar próximas visitas de estudo sem vínculo | `GET /participante/visitas/proximas?estudoId={estudoId}` | 404 Not Found, código RECURSO_NAO_ENCONTRADO | Georis | Aprovado | [03-rf18-consulta-erro-estudo.png](backend/swagger/rf18/03-rf18-consulta-erro-estudo.png) |
+| SWG-022 | RF14 | Editar resultado fictício | `PUT /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados/{resultadoId}` | 200 OK, texto atualizado | Luiz | Aprovado | [03-rf14-resultado-edicao.png](backend/swagger/rf14/03-rf14-resultado-edicao.png) |
+| SWG-023 | RF14 | Consultar resultados da visita | `GET /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados` | 200 OK, com resultado cadastrado | Luiz | Aprovado | [04-rf14-resultado-listagem.png](backend/swagger/rf14/04-rf14-resultado-listagem.png) |
+| SWG-024 | RF16 | Confirmar cancelamento das visitas pendentes após retirada | `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico` | 200 OK, visita antes agendada com situação `CANCELADA` e motivo da retirada | Georis | Aprovado | [02-rf16-visitas-pendentes-canceladas.png](backend/swagger/rf16/02-rf16-visitas-pendentes-canceladas.png) |
+
+**Observações sobre a comprovação Swagger:** a evidência do SWG-020 retorna `200 OK` com `[]`, demonstrando a resposta válida de uma consulta sem itens. Ainda falta uma captura com visitas realizadas, ausentes ou canceladas para comprovar o histórico preenchido do RF18. No SWG-024, a captura comprova o cancelamento da visita pendente; a preservação de visitas já finalizadas deve ser verificada separadamente (a regra também é coberta por testes de serviço). Os IDs SWG-022 a SWG-024 foram acrescentados sem renumerar os registros anteriores.
 
 ## 3. Cenários da API (Postman)
 

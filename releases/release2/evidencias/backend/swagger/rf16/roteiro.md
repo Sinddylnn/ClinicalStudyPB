@@ -8,7 +8,7 @@ Comprovar o registro da retirada de um participante pelo coordenador vinculado, 
 
 - [Abrir Swagger UI](http://localhost:8080/swagger-ui.html)
 - [Consultar contrato OpenAPI](http://localhost:8080/v3/api-docs)
-- [Documentação do RF16](../../../../../docs/api/acompanhamento-de-participantes.md)
+- [Documentação do RF16](../../../../../../docs/api/acompanhamento-de-participantes.md)
 - Endpoint testado: [`POST /estudos/{estudoId}/participacoes/{participacaoId}/retirada`](http://localhost:8080/swagger-ui.html)
 
 ## Pré-requisitos
@@ -53,13 +53,15 @@ Comprovar o registro da retirada de um participante pelo coordenador vinculado, 
 
 **Resultado esperado:** visitas que estavam `AGENDADA` passam para `CANCELADA`, com o motivo automático “Retirada do participante”. Visitas finalizadas e seus resultados devem permanecer preservados.
 
-**Resultado observado:** a participação aparece como `RETIRADA` e não há novas consultas agendadas para ela.
+**Resultado observado:** A resposta `200 OK` mostra a retirada e a visita antes agendada como `CANCELADA`, com motivo `Retirada do participante`. A captura não mostra visitas já finalizadas nem resultados, portanto não comprova isoladamente sua preservação.
 
 **Evidência:**
 
 ![Visitas pendentes canceladas após a retirada](02-rf16-visitas-pendentes-canceladas.png)
 
 [Ver captura das visitas pendentes canceladas](02-rf16-visitas-pendentes-canceladas.png)
+
+**Complemento para reexecução:** verificar uma participação que tenha visita finalizada e resultado registrado antes da retirada. Após a operação, confirmar que ambos foram preservados. A regra também é contemplada em `RetiradaParticipanteServiceTest` (SPR-173), mas a captura Swagger acima comprova apenas o cancelamento da pendência.
 
 ## Cenário 3: tentar retirar novamente
 

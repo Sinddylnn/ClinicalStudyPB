@@ -2,13 +2,13 @@
 
 ## Objetivo
 
-Comprovar que uma pessoa autenticada com perfil `PARTICIPANTE` consulta os estudos aos quais está vinculada e que um perfil diferente não pode acessar essa operação.
+Comprovar que uma pessoa autenticada com perfil `PARTICIPANTE` consulta os estudos aos quais está vinculada e que a operação exige autenticação. A restrição de outros perfis é coberta nos testes Spring, mas não tem captura Swagger específica neste roteiro.
 
 ## Links
 
 - [Abrir Swagger UI](http://localhost:8080/swagger-ui.html)
 - [Consultar contrato OpenAPI](http://localhost:8080/v3/api-docs)
-- [Documentação do acompanhamento no repositório](../../../../../docs/api/acompanhamento-de-participantes.md)
+- [Documentação do acompanhamento no repositório](../../../../../../docs/api/acompanhamento-de-participantes.md)
 - Endpoint testado: [`GET /participante/estudos`](http://localhost:8080/participante/estudos)
 
 > O endpoint exige sessão. Faça login pelo Swagger antes de abri-lo. A resposta é vinculada à conta autenticada, não há ID de participante na URL.
@@ -38,7 +38,7 @@ Não registrar senha, cookie de sessão ou token CSRF neste arquivo ou nas captu
 
 **Resultado esperado:** `200 OK`, com os estudos vinculados à conta. Cada item pode incluir `estudoId`, `titulo`, `objetivo`, `estado`, `dataInicio`, `dataFim` e `situacaoParticipacao`. Estudos dos quais a pessoa se retirou continuam na lista, identificados como `RETIRADA`.
 
-**Resultado observado:** Estudo vinculado listado com sucesso
+**Resultado observado:** `200 OK`, com estudo vinculado listado na resposta.
 
 **Evidência:**
 
