@@ -314,7 +314,7 @@ Para cada requisito, ao menos um cenário de sucesso e um de erro, com a requisi
 | SWG-023 | RF14 | Consultar resultados da visita | `GET /estudos/{estudoId}/participacoes/{participacaoId}/visitas/{visitaAgendadaId}/resultados` | 200 OK, com resultado cadastrado | Luiz | Aprovado | [04-rf14-resultado-listagem.png](backend/swagger/rf14/04-rf14-resultado-listagem.png) |
 | SWG-024 | RF16 | Confirmar cancelamento das visitas pendentes após retirada | `GET /estudos/{estudoId}/participacoes/{participacaoId}/historico` | 200 OK, visita antes agendada com situação `CANCELADA` e motivo da retirada | Georis | Aprovado | [02-rf16-visitas-pendentes-canceladas.png](backend/swagger/rf16/02-rf16-visitas-pendentes-canceladas.png) |
 
-**Observações sobre a comprovação Swagger:** a evidência do SWG-020 retorna `200 OK` com `[]`, demonstrando a resposta válida de uma consulta sem itens. Ainda falta uma captura com visitas realizadas, ausentes ou canceladas para comprovar o histórico preenchido do RF18. No SWG-024, a captura comprova o cancelamento da visita pendente; a preservação de visitas já finalizadas deve ser verificada separadamente (a regra também é coberta por testes de serviço). Os IDs SWG-022 a SWG-024 foram acrescentados sem renumerar os registros anteriores.
+**Observações sobre a comprovação Swagger:** a evidência do SWG-020 retorna `200 OK` com `[]`, demonstrando a resposta válida de uma consulta sem itens. No SWG-024, a captura comprova o cancelamento da visita pendente; a preservação de visitas já finalizadas deve ser verificada separadamente (a regra também é coberta por testes de serviço). Os IDs SWG-022 a SWG-024 foram acrescentados sem renumerar os registros anteriores.
 
 ## 3. Cenários da API (Postman)
 
