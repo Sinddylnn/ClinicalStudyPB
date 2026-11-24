@@ -2,7 +2,7 @@
 
 | Informação | Definição |
 |---|---|
-| Projeto | ClinicalStudyPB — Engenharia de Software II, UEPB, 2026.2 |
+| Projeto | ClinicalStudyPB - Engenharia de Software II, UEPB, 2026.2 |
 | Product Owner da Sprint | Suelle Ferreira Maciel |
 | Período planejado | 10/11/2026 a 23/11/2026 |
 | Situação | Concluída em 23/11/2026, apresentada na Review de 24/11/2026 |
@@ -96,7 +96,7 @@ Além do escopo planejado, a equipe incorporou ajustes que reforçaram a seguran
 
 ## Pendências registradas no fechamento
 
-Nenhuma pendência foi registrada nesta sprint.
+Nenhuma pendência impediu o fechamento da Sprint. O que ficou para a próxima está nas recomendações a seguir.
 
 ## Recomendações para a Sprint 4
 
@@ -109,6 +109,8 @@ Pontos identificados durante a Sprint 3 que ficaram para a próxima:
 - **Botão "Agendar visitas" na web:** renomear para "Visitas", já que ali também se registra e corrige.
 - **Teste instável na web:** o teste de sessão expirada em `autenticacao.test.tsx` às vezes falha, principalmente com a cobertura ligada.
 - **Testes do mobile no GitHub Actions:** o pipeline ainda não executa os testes do mobile, que hoje rodam localmente.
+- **Formato de data e hora na web:** padronizar a exibição no formato brasileiro (dd/mm/aaaa e 24 horas) nas telas que ainda mostram o padrão estadunidense.
+- **Revisão do Javadoc:** completar e padronizar a documentação das classes e dos métodos do backend.
 
 ## Fechamento da Sprint
 
