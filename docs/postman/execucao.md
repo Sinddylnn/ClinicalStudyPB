@@ -1,12 +1,12 @@
 # Como executar a coleção Postman
 
-Instruções para importar e executar a coleção da API ClinicalStudyPB (Release 1). Todos os dados são fictícios.
+Instruções para importar e executar a coleção da API ClinicalStudyPB (Releases 1 e 2). Todos os dados são fictícios.
 
 ## Arquivos
 
 | Arquivo | Descrição |
 |---|---|
-| `ClinicalStudyPB.postman_collection.json` | Coleção principal com 74 requisições em 8 pastas |
+| `ClinicalStudyPB.postman_collection.json` | Coleção principal com 143 requisições em 12 pastas |
 | `Local.postman_environment.json` | Ambiente `Local` (`baseUrl` e credenciais fictícias) |
 | `Consentimento-inclusao.postman_collection.json` | Coleção separada (AB#3423) que detalha o fluxo de consentimento e inclusão. Exige preencher variáveis à mão e **não** faz parte da execução abaixo |
 
@@ -79,7 +79,7 @@ Se você já tinha uma versão antiga da coleção, renomeie ou apague a antiga 
 - A sessão (`JSESSIONID`) é mantida automaticamente pelo Postman.
 - O backend exige token CSRF nas requisições de alteração (POST, PUT, PATCH e DELETE). Um script no nível da coleção consulta `GET /auth/csrf` antes de cada requisição e grava o token em `{{csrfToken}}`. As requisições enviam o header `X-CSRF-TOKEN`.
 - Não é preciso copiar token nem cookie manualmente.
-- O login é feito pelas requisições **Login Admin**, **Login Pesquisador** e **Login Coordenador**, usando as credenciais do ambiente.
+- O login é feito pelas requisições **Login Admin**, **Login Pesquisador**, **Login Coordenador** e **Login Participante**, usando as credenciais do ambiente.
 
 ## 6. Executar a coleção
 
@@ -89,7 +89,7 @@ Se você já tinha uma versão antiga da coleção, renomeie ou apague a antiga 
 2. Mantenha a ordem padrão, **Iterations = 1** e **Delay = 0**.
 3. Clique em **Run ClinicalStudyPB API**.
 
-**Resultado esperado:** 74 requisições, 102 testes aprovados, 0 falhas.
+**Resultado esperado:** 143 requisições, 211 testes aprovados, 0 falhas.
 
 A coleção cria usuários, estudos e candidatos de teste com e-mails únicos (timestamp), então pode ser executada várias vezes seguidas. Os ids criados ficam gravados no ambiente durante a execução.
 
@@ -104,7 +104,11 @@ A coleção cria usuários, estudos e candidatos de teste com e-mails únicos (t
 5. **Estados do estudo (pesquisador):** protocolo ausente, salto de estado, falta de justificativa, encerramento e recusas após o encerramento.
 6. **Protocolo do estudo (pesquisador):** novo estudo com coordenador, critérios de inclusão e exclusão, visitas e atividades, com casos inválidos. Termina abrindo o recrutamento e recusando alteração do protocolo.
 7. **Candidatos, elegibilidade e inclusão (coordenador):** cadastrar candidato, avaliar elegibilidade, registrar consentimento, incluir candidato, recusar duplicidade e correção após a inclusão. Volta ao pesquisador para confirmar o 403 em candidatos e iniciar a execução do estudo.
-8. **Encerrar sessão:** logout (204) e rota protegida (401).
+8. **Agendamento e reagendamento (coordenador).**
+9. **Participante e sessão do app:** login, logout, estudos, próximas visitas e histórico, com os acessos negados.
+10. **Registro de visitas, correções e resultados (coordenador).**
+11. **Histórico, retirada e acesso por perfil.**
+12. **Encerrar sessão:** logout (204) e rota protegida (401).
 
 ## 8. Problemas comuns
 
@@ -115,8 +119,9 @@ A coleção cria usuários, estudos e candidatos de teste com e-mails únicos (t
 | `403 CSRF_INVALIDO` em várias requisições | Token CSRF não atualizado | Rodar a coleção pelo Runner, na ordem padrão |
 | `401` no login admin | Conta inicial inexistente ou senha diferente | Criar o administrador (seção 3) |
 | `409` ao cadastrar usuário | E-mail já existente | Reexecutar a coleção; o e-mail é gerado a cada execução |
-| Falhas em cascata nas pastas 6 e 7 | Uma requisição anterior falhou e deixou um id vazio | Corrigir a primeira falha e rodar a coleção inteira de novo |
+| Falhas em cascata nas pastas pastas 6 a 11 | Uma requisição anterior falhou e deixou um id vazio | Corrigir a primeira falha e rodar a coleção inteira de novo |
 | `password authentication failed` ao subir o backend | Senha do PostgreSQL incorreta nas variáveis | Conferir `SPRING_DATASOURCE_PASSWORD` |
+| 500 ao agendar visita ou erros nas pastas 8 a 11 | Backend rodando com imagem antiga | Reconstruir: 'docker compose up -d --build backend' |
 
 ## 9. Cobertura e limites
 

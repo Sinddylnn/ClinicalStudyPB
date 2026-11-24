@@ -2,20 +2,20 @@
 
 ## Objetivo
 
-Comprovar que uma pessoa com perfil `PARTICIPANTE` consulta suas próximas visitas e seu histórico de comparecimento, e que perfis diferentes não podem acessar essas operações.
+Comprovar que uma pessoa com perfil `PARTICIPANTE` consulta suas próximas visitas e o endpoint de histórico, além de rejeitar a consulta a estudo sem vínculo. O bloqueio de perfis diferentes é contemplado nos testes Spring, mas não tem captura Swagger específica neste roteiro.
 
 ## Links
 
 - [Abrir Swagger UI](http://localhost:8080/swagger-ui.html)
 - [Consultar contrato OpenAPI](http://localhost:8080/v3/api-docs)
-- [Documentação do acompanhamento](../../../../../docs/api/acompanhamento-de-participantes.md)
+- [Documentação do acompanhamento](../../../../../../docs/api/acompanhamento-de-participantes.md)
 
 ## Pré-requisitos
 
 - Backend iniciado e banco saudável
 - Conta participante vinculada a um estudo
 - Pelo menos uma visita futura `AGENDADA` para aparecer em próximas visitas
-- Pelo menos uma visita `REALIZADA`, `AUSENTE` ou `CANCELADA` para aparecer no histórico
+- Para demonstrar o histórico preenchido: pelo menos uma visita `REALIZADA`, `AUSENTE` ou `CANCELADA` (a captura existente mostra uma lista vazia)
 
 ## Dados de teste
 
@@ -53,9 +53,9 @@ Execute `GET /participante/visitas/proximas`. Para filtrar pelo estudo, use o pa
 
 Execute `GET /participante/visitas/historico`. Para filtrar pelo estudo, use `estudoId=1`.
 
-**Resultado esperado:** `200 OK`, com visitas `REALIZADA`, `AUSENTE` ou `CANCELADA`, da mais recente para a mais antiga. A resposta não deve expor motivos, resultados ou quem registrou.
+**Resultado esperado:** `200 OK`. Quando houver registros, a lista deve conter visitas `REALIZADA`, `AUSENTE` ou `CANCELADA`, da mais recente para a mais antiga, sem expor motivos, resultados ou quem registrou. Sem registros, uma lista vazia é válida.
 
-**Resultado observado:** consulta realizada com sucesso no Swagger.
+**Resultado observado:** `200 OK`, com resposta vazia (`[]`). A captura comprova a chamada, mas não a composição do histórico com visitas finalizadas.
 
 **Evidência:**
 
@@ -63,19 +63,22 @@ Execute `GET /participante/visitas/historico`. Para filtrar pelo estudo, use `es
 
 [Ver captura do histórico](02-rf18-historico-sucesso.png)
 
-## Cenário 3: acesso com perfil incorreto
-1. Ainda autenticado como participante, executar `GET /participante/visitas/proximas?estudoId=999`.
-2. Não usar o ID de um estudo vinculado à conta.
+## Cenário 3: consulta de estudo sem vínculo
+
+1. Ainda autenticado como participante, executar `GET /participante/visitas/proximas?estudoId=9999`.
+2. Informar um ID de estudo inexistente ou não vinculado à conta.
 
 **Resultado esperado:** `404 Not Found`, com `codigo: RECURSO_NAO_ENCONTRADO`.
 
-**Resultado observado:** estudo não encontrado.
+**Resultado observado:** `404 Not Found`, com código `RECURSO_NAO_ENCONTRADO` para `estudoId=9999`.
 
 **Evidência:**
 
 ![Acesso negado ao estudo sem vínculo](03-rf18-consulta-erro-estudo.png)
 
 [Ver captura do erro](03-rf18-consulta-erro-estudo.png)
+
+**Evidência que ainda falta:** executar novamente o cenário 2 com uma participação que possua visitas finalizadas e registrar uma captura contendo pelo menos uma delas. Não marcar esse comportamento específico como comprovado apenas pela imagem da lista vazia. Para verificar `403` com perfil incorreto, executar outro cenário autenticado com um perfil diferente de `PARTICIPANTE`.
 
 ## Testes automatizados Spring
 

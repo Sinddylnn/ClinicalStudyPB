@@ -1,5 +1,11 @@
 # Evidência de testes: coleção Postman (Release 1)
 
+## Execução completa registrada
+
+A captura [Release 1, 102 testes aprovados e 0 falhas](Release1_Postman_Execucao_Completa_102_testes_0_falhas.png) registra a execução completa da coleção: 74 requisições, 102 testes aprovados, 0 falhas e 0 erros. Os cenários estão relacionados na [tabela de testes](../../tabela-de-testes.md#2-cenários-da-api-postman). A captura não informa data, commit ou responsável por essa execução, portanto esses dados não são atribuídos.
+
+## Registro detalhado da execução anterior (29 requisições)
+
 | Item                    | Valor                                                                    |
 | ----------------------- | ------------------------------------------------------------------------ |
 | Data e hora da execução | 26/10/2026, 17:01                                                        |
