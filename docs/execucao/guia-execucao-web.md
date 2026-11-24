@@ -776,7 +776,7 @@ A única pasta em vermelho é `src`, com 0%, por causa do `App.tsx`, explicado n
 Os testes E2E abrem o navegador, entram como coordenador e percorrem o agendamento e o registro de visitas com o backend real. Os dados são fictícios e criados pela própria suíte, então ela pode rodar várias vezes.
 
 1. Na raiz do projeto, suba o banco e o backend: `docker compose up -d --build`. Confirme `http://localhost:8080/auth/csrf` com `200`.
-2. O administrador `admin@example.test` (senha `Admin@12345`) precisa existir. Para outras credenciais, defina `E2E_ADMIN_EMAIL` e `E2E_ADMIN_SENHA`.
+2. Por padrão, a suíte usa `admin@example.test`. Com o banco de demonstração, defina `E2E_ADMIN_EMAIL=admin@clinicalstudypb.test` e `E2E_ADMIN_SENHA=Demo@123` antes de rodar.
 3. Na pasta `web`, na primeira vez: `npm ci` e `npx playwright install chromium`.
 4. Execute `npm run e2e`. O Vite sobe sozinho na porta 5173 com `VITE_*_API=real`.
 5. Os prints dos cenários ficam em `web/test-results/capturas/` e o relatório HTML em `web/playwright-report/` (`npx playwright show-report`). As duas pastas são ignoradas pelo Git.
