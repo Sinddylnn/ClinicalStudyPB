@@ -478,11 +478,11 @@ Fluxo do coordenador na web com Playwright e o backend real, em `web/e2e/acompan
 
 | ID | Requisito | Cenário | Esperado | Responsável | Resultado | Evidência |
 |---|---|---|---|---|---|---|
-| E2E-001 | RF12, RF13 | Coordenador agenda uma visita e registra a realização | Notificação "Visita inicial agendada para ...", visita "Agendada"; depois "Visita inicial registrada como realizada." e visita "Realizada" | Gabriela | [Aprovado] | [02-rf12-e2e-agendamento-sucesso.png](web/e2e/02-rf12-e2e-agendamento-sucesso.png) e [04-rf13-e2e-registro-sucesso.png](web/e2e/04-rf13-e2e-registro-sucesso.png) |
-| E2E-002 | RF12 | Agendamento com data anterior a hoje | Mensagem "A data da visita não pode ser anterior a hoje." | Gabriela | [Aprovado] | [05-rf12-e2e-agendamento-erro-data.png](web/e2e/05-rf12-e2e-agendamento-erro-data.png) |
-| E2E-003 | RF12 | Visita prevista já agendada | Mensagem "Já existe um agendamento pendente para essa visita." (código `VISITA_JA_AGENDADA`) | Gabriela | [Aprovado] | [06-rf12-e2e-agendamento-erro-duplicado.png](web/e2e/06-rf12-e2e-agendamento-erro-duplicado.png) |
+| E2E-001 | RF12, RF13 | Coordenador agenda uma visita e registra a realização | Notificação "Visita inicial agendada para ...", visita "Agendada"; depois "Visita inicial registrada como realizada." e visita "Realizada" | Gabriela | Aprovado | [02-rf12-e2e-agendamento-sucesso.png](web/e2e/02-rf12-e2e-agendamento-sucesso.png) e [04-rf13-e2e-registro-sucesso.png](web/e2e/04-rf13-e2e-registro-sucesso.png) |
+| E2E-002 | RF12 | Agendamento com data anterior a hoje | Mensagem "A data da visita não pode ser anterior a hoje." | Gabriela | Aprovado | [05-rf12-e2e-agendamento-erro-data.png](web/e2e/05-rf12-e2e-agendamento-erro-data.png) |
+| E2E-003 | RF12 | Visita prevista já agendada | Mensagem "Já existe um agendamento pendente para essa visita." (código `VISITA_JA_AGENDADA`) | Gabriela | Aprovado | [06-rf12-e2e-agendamento-erro-duplicado.png](web/e2e/06-rf12-e2e-agendamento-erro-duplicado.png) |
 
-**Total:** 3 cenários E2E, [3 passando] (`npm run e2e`). Evidência da execução: [07-e2e-execucao.png](web/e2e/07-e2e-execucao.png).
+**Total:** 3 cenários E2E, 3 passando (`npm run e2e`). Evidência da execução: [07-e2e-execucao.png](web/e2e/07-e2e-execucao.png).
 
 ### 4.4 Mobile (automatizados)
 
