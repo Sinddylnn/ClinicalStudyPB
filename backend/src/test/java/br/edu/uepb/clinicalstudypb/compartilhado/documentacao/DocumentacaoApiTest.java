@@ -738,9 +738,16 @@ class DocumentacaoApiTest {
                     .as("Resposta HTTP %s", codigo).isTrue();
         }
 
-        assertThat(operacao.path("responses").path("200")
-                .path("content").toString())
-                .contains("IndicadoresPainelResposta");
+        for (String codigo : new String[]{"400", "401", "403", "404"}) {
+            assertThat(operacao.path("responses").path(codigo).path("content")
+                    .path("*/*").path("schema").path("$ref").asText())
+                    .as("Schema de erro HTTP %s", codigo)
+                    .endsWith("/ErroApi");
+        }
+
+        assertThat(operacao.path("responses").path("200").path("content")
+                .path("*/*").path("schema").path("$ref").asText())
+                .endsWith("/IndicadoresPainelResposta");
 
         JsonNode resposta = contrato.path("components")
                 .path("schemas")
@@ -757,8 +764,13 @@ class DocumentacaoApiTest {
 
             assertThat(resposta.path(campo).path("type").asText())
                     .isEqualTo("integer");
+
+            assertThat(resposta.path(campo).path("description").asText())
+                    .as("Descrição do campo: %s", campo).isNotBlank();
         }
 
         assertThat(resposta.size()).isEqualTo(7);
+        assertThat(resposta.path("visitasPendentes").path("description").asText())
+                .contains("AGENDADA", "data passada");
     }
 }

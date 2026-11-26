@@ -1018,15 +1018,23 @@ class AcompanhamentoPersistenciaIT {
     @Test
     void contabilizaIndicadoresDoPainelPorEstudo() {
         Instant agora = Instant.now();
+        Usuario pesquisador = conta(PerfilUsuario.PESQUISADOR);
         Usuario coordenador = conta(PerfilUsuario.COORDENADOR);
 
         Estudo estudo = new Estudo("Estudo do painel", "Objetivo fictício",
-                coordenador, LocalDate.now().minusDays(30),
+                pesquisador, LocalDate.now().minusDays(30),
                 LocalDate.now().plusDays(30), 10);
 
         Estudo outroEstudo = new Estudo("Outro estudo", "Objetivo fictício",
-                coordenador, LocalDate.now().minusDays(30),
+                pesquisador, LocalDate.now().minusDays(30),
                 LocalDate.now().plusDays(30), 10);
+
+        estudo.atribuirCoordenador(coordenador);
+        outroEstudo.atribuirCoordenador(coordenador);
+        estudo.alterarEstado(EstadoEstudo.RECRUTAMENTO, null);
+        estudo.alterarEstado(EstadoEstudo.EXECUCAO, null);
+        outroEstudo.alterarEstado(EstadoEstudo.RECRUTAMENTO, null);
+        outroEstudo.alterarEstado(EstadoEstudo.EXECUCAO, null);
 
         entidades.persist(estudo);
         entidades.persist(outroEstudo);
@@ -1045,9 +1053,7 @@ class AcompanhamentoPersistenciaIT {
                 conta(PerfilUsuario.PARTICIPANTE), agora.minusSeconds(86400));
 
         Participacao externa = new Participacao(outroEstudo,
-                conta(PerfilUsuario.PARTICIPANTE), agora);
-
-        retirada.registrarRetirada("Retirada solicitada", agora, coordenador);
+                conta(PerfilUsuario.PARTICIPANTE), agora.minusSeconds(86400));
 
         entidades.persist(ativa);
         entidades.persist(retirada);
@@ -1070,6 +1076,7 @@ class AcompanhamentoPersistenciaIT {
 
         realizada.registrarSituacao(
                 SituacaoVisita.REALIZADA, null, coordenador, agora);
+        retirada.registrarRetirada("Retirada solicitada", agora, coordenador);
 
         VisitaAgendada pendentePassada = new VisitaAgendada(
                 ativa, prevista, agora.minusSeconds(3600));
@@ -1096,10 +1103,24 @@ class AcompanhamentoPersistenciaIT {
         entidades.persist(cancelada);
         entidades.persist(ausente);
 
+        Protocolo protocoloExterno = new Protocolo(outroEstudo, false);
+        entidades.persist(protocoloExterno);
+        VisitaPrevista previstaExterna = new VisitaPrevista(
+                protocoloExterno, "Visita externa", null, 1);
+        entidades.persist(previstaExterna);
+        VisitaAgendada realizadaExterna = new VisitaAgendada(
+                externa, previstaExterna, agora.minusSeconds(3600));
+        realizadaExterna.registrarSituacao(
+                SituacaoVisita.REALIZADA, null, coordenador, agora);
+        entidades.persist(realizadaExterna);
+
         entidades.flush();
         entidades.clear();
 
         Long estudoId = estudo.getId();
+        assertThat(visitasAgendadas.countByParticipacao_Estudo_IdAndSituacao(
+                outroEstudo.getId(), SituacaoVisita.REALIZADA))
+                .isEqualTo(1);
 
         assertThat(candidatos.countByEstudoId(estudoId))
                 .isEqualTo(2);

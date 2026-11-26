@@ -64,6 +64,7 @@ class IndicadoresPainelServiceTest {
                 LocalDate.of(2026, 11, 1),
                 LocalDate.of(2026, 12, 31), 10);
 
+        estudo.atribuirCoordenador(coordenador);
         ReflectionTestUtils.setField(estudo, "id", 10L);
     }
 
@@ -73,7 +74,9 @@ class IndicadoresPainelServiceTest {
         when(estudos.findByIdAndResponsavelId(10L, 1L))
                 .thenReturn(Optional.of(estudo));
 
-        prepararContagens();
+        estudo.alterarEstado(EstadoEstudo.RECRUTAMENTO, null);
+        estudo.alterarEstado(EstadoEstudo.EXECUCAO, null);
+        prepararContagens(4L);
 
         var resposta = servico.consultar(
                 10L, new UsuarioAutenticado(pesquisador));
@@ -90,7 +93,9 @@ class IndicadoresPainelServiceTest {
         when(estudos.findByIdAndCoordenadorId(10L, 2L))
                 .thenReturn(Optional.of(estudo));
 
-        prepararContagens();
+        estudo.alterarEstado(EstadoEstudo.RECRUTAMENTO, null);
+        estudo.alterarEstado(EstadoEstudo.EXECUCAO, null);
+        prepararContagens(4L);
 
         var resposta = servico.consultar(
                 10L, new UsuarioAutenticado(coordenador));
@@ -112,24 +117,32 @@ class IndicadoresPainelServiceTest {
 
         assertThat(resposta).isEqualTo(
                 new IndicadoresPainelResposta(10L, 0, 0, 0, 0, 0, 0));
+
+        verify(candidatos).countByEstudoId(10L);
+        verify(participacoes).countByEstudoId(10L);
+        verify(participacoes).countByEstudoIdAndSituacao(10L, SituacaoParticipacao.ATIVA);
+        verify(participacoes).countByEstudoIdAndSituacao(10L, SituacaoParticipacao.RETIRADA);
+        verify(visitas).countByParticipacao_Estudo_IdAndSituacao(10L, SituacaoVisita.REALIZADA);
+        verify(visitas).countByParticipacao_Estudo_IdAndSituacao(10L, SituacaoVisita.AGENDADA);
     }
 
     /** Mantém disponíveis os indicadores de um estudo encerrado. */
     @Test
     void estudoEncerradoPermiteConsulta() {
-        ReflectionTestUtils.setField(
-                estudo, "estado", EstadoEstudo.ENCERRADO);
+        estudo.alterarEstado(EstadoEstudo.RECRUTAMENTO, null);
+        estudo.alterarEstado(EstadoEstudo.EXECUCAO, null);
+        estudo.alterarEstado(EstadoEstudo.ENCERRADO, null);
 
         when(estudos.findByIdAndResponsavelId(10L, 1L))
                 .thenReturn(Optional.of(estudo));
 
-        prepararContagens();
+        prepararContagens(0L);
 
         var resposta = servico.consultar(
                 10L, new UsuarioAutenticado(pesquisador));
 
         assertThat(resposta).isEqualTo(
-                new IndicadoresPainelResposta(10L, 8, 5, 3, 2, 7, 4));
+                new IndicadoresPainelResposta(10L, 8, 5, 3, 2, 7, 0));
     }
 
     /** Impede que o pesquisador consulte indicadores de outro estudo. */
@@ -200,8 +213,12 @@ class IndicadoresPainelServiceTest {
         verifyNoInteractions(estudos, candidatos, participacoes, visitas);
     }
 
-    /** Configura as contagens utilizadas nos cenários de sucesso. */
-    private void prepararContagens() {
+    /**
+     * Configura as contagens utilizadas nos cenários de sucesso.
+     *
+     * @param pendentes quantidade de visitas agendadas
+     */
+    private void prepararContagens(long pendentes) {
         when(candidatos.countByEstudoId(10L)).thenReturn(8L);
         when(participacoes.countByEstudoId(10L)).thenReturn(5L);
 
@@ -215,7 +232,7 @@ class IndicadoresPainelServiceTest {
                 10L, SituacaoVisita.REALIZADA)).thenReturn(7L);
 
         when(visitas.countByParticipacao_Estudo_IdAndSituacao(
-                10L, SituacaoVisita.AGENDADA)).thenReturn(4L);
+                10L, SituacaoVisita.AGENDADA)).thenReturn(pendentes);
     }
 
     /** Cria uma conta com identificador definido para os testes. */
