@@ -208,7 +208,7 @@ describe('AgendamentoVisitas', () => {
 
     await usuario.selectOptions(await screen.findByLabelText('Visita prevista'), 'Visita de acompanhamento');
     preencher('2026-11-20', '09:30');
-    await usuario.click(screen.getByRole('button', { name: 'Salvar visita' }));
+    await usuario.click(screen.getByRole('button', { name: 'Agendar visita' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Visita de acompanhamento agendada para 20/11/2026 às 09:30.');
     expect(servicos.servicoAcompanhamento.agendarVisita).toHaveBeenCalledWith(3, 1, {
@@ -226,7 +226,7 @@ describe('AgendamentoVisitas', () => {
     const servicos = criarServicos();
     renderizar(servicos);
 
-    await usuario.click(await screen.findByRole('button', { name: 'Salvar visita' }));
+    await usuario.click(await screen.findByRole('button', { name: 'Agendar visita' }));
 
     expect(screen.getByText('Selecione a visita prevista.')).toBeInTheDocument();
     expect(screen.getByText('Informe a data da visita.')).toBeInTheDocument();
@@ -238,11 +238,11 @@ describe('AgendamentoVisitas', () => {
     expect(screen.queryByText('Selecione a visita prevista.')).not.toBeInTheDocument();
 
     preencher('2026-11-13', '09:00');
-    await usuario.click(screen.getByRole('button', { name: 'Salvar visita' }));
+    await usuario.click(screen.getByRole('button', { name: 'Agendar visita' }));
     expect(screen.getByText('A data da visita não pode ser anterior a hoje.')).toBeInTheDocument();
 
     preencher('2026-12-21', '09:00');
-    await usuario.click(screen.getByRole('button', { name: 'Salvar visita' }));
+    await usuario.click(screen.getByRole('button', { name: 'Agendar visita' }));
     expect(screen.getByText(/dentro do período do estudo \(20\/10\/2026 a 20\/12\/2026\)/)).toBeInTheDocument();
     expect(servicos.servicoAcompanhamento.agendarVisita).not.toHaveBeenCalled();
   });
@@ -272,7 +272,7 @@ describe('AgendamentoVisitas', () => {
 
     await usuario.selectOptions(await screen.findByLabelText('Visita prevista'), 'Visita final');
     preencher('2026-11-20', '09:30');
-    await usuario.click(screen.getByRole('button', { name: 'Salvar visita' }));
+    await usuario.click(screen.getByRole('button', { name: 'Agendar visita' }));
 
     for (const mensagem of mensagens) {
       expect(await screen.findByText(mensagem)).toHaveClass('campo-erro');
@@ -287,7 +287,7 @@ describe('AgendamentoVisitas', () => {
 
     await usuario.selectOptions(await screen.findByLabelText('Visita prevista'), 'Visita final');
     preencher('2026-11-20', '09:30');
-    await usuario.click(screen.getByRole('button', { name: 'Salvar visita' }));
+    await usuario.click(screen.getByRole('button', { name: 'Agendar visita' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Confira os campos informados.');
   });
@@ -300,11 +300,11 @@ describe('AgendamentoVisitas', () => {
 
     await usuario.selectOptions(await screen.findByLabelText('Visita prevista'), 'Visita final');
     preencher('2026-11-20', '09:30');
-    await usuario.click(screen.getByRole('button', { name: 'Salvar visita' }));
+    await usuario.click(screen.getByRole('button', { name: 'Agendar visita' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Não é possível agendar visita para participante retirado.');
     expect(await screen.findByText(/foi retirado do estudo/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Salvar visita' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Agendar visita' })).not.toBeInTheDocument();
     expect(listarParticipacoes).toHaveBeenCalledTimes(2);
   });
 
@@ -314,7 +314,7 @@ describe('AgendamentoVisitas', () => {
 
     await usuario.selectOptions(await screen.findByLabelText('Visita prevista'), 'Visita final');
     preencher('2026-11-20', '09:30');
-    await usuario.click(screen.getByRole('button', { name: 'Salvar visita' }));
+    await usuario.click(screen.getByRole('button', { name: 'Agendar visita' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível salvar o agendamento.');
   });

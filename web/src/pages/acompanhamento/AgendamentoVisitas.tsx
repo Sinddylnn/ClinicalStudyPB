@@ -494,7 +494,7 @@ export default function AgendamentoVisitas({
                   )}
                   <button type="submit" className="botao botao-primario" disabled={enviando}>
                     <Icone nome="calendario" />
-                    {enviando ? 'Salvando…' : modo.tipo === 'reagendar' ? 'Salvar nova data' : 'Salvar visita'}
+                    {enviando ? 'Salvando…' : modo.tipo === 'reagendar' ? 'Salvar nova data' : 'Agendar visita'}
                   </button>
                 </div>
               </form>

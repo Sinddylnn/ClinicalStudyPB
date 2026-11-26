@@ -23,7 +23,7 @@ async function entrarComoCoordenador(page: Page) {
 async function abrirAgendamento(page: Page) {
   await page.goto(`/estudos/${cenario.estudoId}/participacoes`);
   await expect(page.getByRole('heading', { name: 'Participantes incluídos' })).toBeVisible();
-  await page.getByRole('link', { name: `Gerenciar visitas de ${cenario.participanteNome}` }).click();
+  await page.getByRole('link', { name: `Agendar visitas de ${cenario.participanteNome}` }).click();
   await expect(page.getByRole('heading', { name: 'Agendamento de visitas' })).toBeVisible();
 }
 
@@ -43,7 +43,7 @@ test('coordenador agenda uma visita e registra a realização', async ({ page })
   // Agendamento (hoje, para que a visita já possa ser registrada)
   await preencherAgendamento(page, dataRecife(0), '09:00');
   await capturar(page, '01-rf12-e2e-agendamento-preenchido');
-  await page.getByRole('button', { name: 'Salvar visita', exact: true }).click();
+  await page.getByRole('button', { name: 'Agendar visita', exact: true }).click();
 
   await expect(page.getByRole('status')).toContainText(`${cenario.visitaPrevista} agendada para`);
   const visita = page.getByRole('listitem').filter({ hasText: cenario.visitaPrevista });
@@ -66,7 +66,7 @@ test('recusa agendar com data anterior a hoje', async ({ page }) => {
   await abrirAgendamento(page);
 
   await preencherAgendamento(page, dataRecife(-1), '09:00');
-  await page.getByRole('button', { name: 'Salvar visita', exact: true }).click();
+  await page.getByRole('button', { name: 'Agendar visita', exact: true }).click();
 
   await expect(page.getByText('A data da visita não pode ser anterior a hoje.')).toBeVisible();
   await capturar(page, '05-rf12-e2e-agendamento-erro-data');
@@ -78,12 +78,12 @@ test('recusa agendar uma visita prevista que já está agendada', async ({ page 
 
   // A visita do primeiro cenário já foi realizada, então um novo agendamento é aceito
   await preencherAgendamento(page, dataRecife(0), '10:00');
-  await page.getByRole('button', { name: 'Salvar visita', exact: true }).click();
+  await page.getByRole('button', { name: 'Agendar visita', exact: true }).click();
   await expect(page.getByRole('status')).toContainText(`${cenario.visitaPrevista} agendada para`);
 
   // O segundo agendamento da mesma visita enquanto o primeiro está pendente é recusado pelo backend
   await preencherAgendamento(page, dataRecife(0), '11:00');
-  await page.getByRole('button', { name: 'Salvar visita', exact: true }).click();
+  await page.getByRole('button', { name: 'Agendar visita', exact: true }).click();
   await expect(page.getByText('Já existe um agendamento pendente para essa visita.')).toBeVisible();
   await capturar(page, '06-rf12-e2e-agendamento-erro-duplicado');
 });
