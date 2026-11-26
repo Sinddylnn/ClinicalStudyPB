@@ -12,6 +12,8 @@ import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
 import br.edu.uepb.clinicalstudypb.estudos.api.RetiradaEntrada;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
+import br.edu.uepb.clinicalstudypb.recrutamento.Candidato;
+import br.edu.uepb.clinicalstudypb.recrutamento.repository.CandidatoRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 import java.sql.DriverManager;
@@ -56,6 +58,7 @@ class AcompanhamentoPersistenciaIT {
     @Autowired private SolicitacaoRetiradaRepository pedidosRetirada;
     @Autowired private RetiradaParticipanteService retiradas;
     @Autowired private ParticipanteConsultaService consultasParticipante;
+    @Autowired private CandidatoRepository candidatos;
 
     /**
      * Configura o banco explicitamente destinado aos testes de persistência.
@@ -1005,6 +1008,120 @@ class AcompanhamentoPersistenciaIT {
                 .containsExactly(resultadoExterno.getId());
         assertThat(correcoes.buscarCorrecoesDaParticipacao(-1L)).isEmpty();
         assertThat(resultados.buscarResultadosDaParticipacao(-1L)).isEmpty();
+    }
+
+    /**
+     * Confere as contagens do painel por estudo e situação.
+     *
+     * @since 1.1
+     */
+    @Test
+    void contabilizaIndicadoresDoPainelPorEstudo() {
+        Instant agora = Instant.now();
+        Usuario coordenador = conta(PerfilUsuario.COORDENADOR);
+
+        Estudo estudo = new Estudo("Estudo do painel", "Objetivo fictício",
+                coordenador, LocalDate.now().minusDays(30),
+                LocalDate.now().plusDays(30), 10);
+
+        Estudo outroEstudo = new Estudo("Outro estudo", "Objetivo fictício",
+                coordenador, LocalDate.now().minusDays(30),
+                LocalDate.now().plusDays(30), 10);
+
+        entidades.persist(estudo);
+        entidades.persist(outroEstudo);
+
+        entidades.persist(new Candidato(estudo,
+                "Candidato A", "candidato.a@example.test"));
+        entidades.persist(new Candidato(estudo,
+                "Candidato B", "candidato.b@example.test"));
+        entidades.persist(new Candidato(outroEstudo,
+                "Candidato C", "candidato.c@example.test"));
+
+        Participacao ativa = new Participacao(estudo,
+                conta(PerfilUsuario.PARTICIPANTE), agora.minusSeconds(86400));
+
+        Participacao retirada = new Participacao(estudo,
+                conta(PerfilUsuario.PARTICIPANTE), agora.minusSeconds(86400));
+
+        Participacao externa = new Participacao(outroEstudo,
+                conta(PerfilUsuario.PARTICIPANTE), agora);
+
+        retirada.registrarRetirada("Retirada solicitada", agora, coordenador);
+
+        entidades.persist(ativa);
+        entidades.persist(retirada);
+        entidades.persist(externa);
+
+        Protocolo protocolo = new Protocolo(estudo, false);
+        entidades.persist(protocolo);
+
+        VisitaPrevista prevista = new VisitaPrevista(
+                protocolo, "Visita inicial", null, 1);
+
+        VisitaPrevista segundaPrevista = new VisitaPrevista(
+                protocolo, "Segunda visita", null, 2);
+
+        entidades.persist(prevista);
+        entidades.persist(segundaPrevista);
+
+        VisitaAgendada realizada = new VisitaAgendada(
+                retirada, prevista, agora.minusSeconds(7200));
+
+        realizada.registrarSituacao(
+                SituacaoVisita.REALIZADA, null, coordenador, agora);
+
+        VisitaAgendada pendentePassada = new VisitaAgendada(
+                ativa, prevista, agora.minusSeconds(3600));
+
+        VisitaAgendada pendenteFutura = new VisitaAgendada(
+                ativa, segundaPrevista, agora.plusSeconds(3600));
+
+        VisitaAgendada cancelada = new VisitaAgendada(
+                ativa, prevista, agora.minusSeconds(1800));
+
+        cancelada.registrarSituacao(
+                SituacaoVisita.CANCELADA, "Cancelamento solicitado",
+                coordenador, agora);
+
+        VisitaAgendada ausente = new VisitaAgendada(
+                ativa, prevista, agora.minusSeconds(900));
+
+        ausente.registrarSituacao(
+                SituacaoVisita.AUSENTE, null, coordenador, agora);
+
+        entidades.persist(realizada);
+        entidades.persist(pendentePassada);
+        entidades.persist(pendenteFutura);
+        entidades.persist(cancelada);
+        entidades.persist(ausente);
+
+        entidades.flush();
+        entidades.clear();
+
+        Long estudoId = estudo.getId();
+
+        assertThat(candidatos.countByEstudoId(estudoId))
+                .isEqualTo(2);
+
+        assertThat(participacoes.countByEstudoId(estudoId))
+                .isEqualTo(2);
+
+        assertThat(participacoes.countByEstudoIdAndSituacao(
+                estudoId, SituacaoParticipacao.ATIVA))
+                .isEqualTo(1);
+
+        assertThat(participacoes.countByEstudoIdAndSituacao(
+                estudoId, SituacaoParticipacao.RETIRADA))
+                .isEqualTo(1);
+
+        assertThat(visitasAgendadas.countByParticipacao_Estudo_IdAndSituacao(
+                estudoId, SituacaoVisita.REALIZADA))
+                .isEqualTo(1);
+
+        assertThat(visitasAgendadas.countByParticipacao_Estudo_IdAndSituacao(
+                estudoId, SituacaoVisita.AGENDADA))
+                .isEqualTo(2);
     }
 
     /**

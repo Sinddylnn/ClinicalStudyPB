@@ -1,6 +1,7 @@
 package br.edu.uepb.clinicalstudypb.estudos.repository;
 
 import br.edu.uepb.clinicalstudypb.estudos.Participacao;
+import br.edu.uepb.clinicalstudypb.estudos.SituacaoParticipacao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -27,6 +28,16 @@ public interface ParticipacaoRepository extends JpaRepository<Participacao, Long
 
     /** Conta inclusões históricas; uma retirada não libera a vaga. */
     long countByEstudoId(Long estudoId);
+
+    /**
+     * Conta as participações de um estudo em determinada situação.
+     *
+     * @param estudoId identificador do estudo
+     * @param situacao situação da participação
+     * @return quantidade de participações encontradas
+     * @since 1.1
+     */
+    long countByEstudoIdAndSituacao(Long estudoId, SituacaoParticipacao situacao);
 
     boolean existsByEstudoIdAndParticipanteId(Long estudoId, Long participanteId);
 
