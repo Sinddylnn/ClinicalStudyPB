@@ -701,4 +701,64 @@ class DocumentacaoApiTest {
             assertThat(retirada.has(campo)).as("Campo da retirada: %s", campo).isTrue();
         }
     }
+
+    /**
+     * Confere a publicação do painel de indicadores (RF21).
+     *
+     * @throws Exception se a consulta ou a leitura do contrato falhar
+     * @since 1.0
+     */
+    @Test
+    void documentaPainelDeIndicadores() throws Exception {
+        JsonNode contrato = json.readTree(mvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+
+        JsonNode operacao = contrato.path("paths")
+                .path("/estudos/{estudoId}/indicadores")
+                .path("get");
+
+        assertThat(operacao.isMissingNode()).isFalse();
+
+        assertThat(operacao.path("security").toString())
+                .contains("sessao");
+
+        assertThat(operacao.path("parameters").toString())
+                .contains("estudoId")
+                .doesNotContain("TokenCsrf");
+
+        assertThat(operacao.has("requestBody")).isFalse();
+
+        assertThat(operacao.path("description").asText())
+                .containsIgnoringCase("pesquisador")
+                .containsIgnoringCase("coordenador");
+
+        for (String codigo : new String[]{"200", "400", "401", "403", "404"}) {
+            assertThat(operacao.path("responses").has(codigo))
+                    .as("Resposta HTTP %s", codigo).isTrue();
+        }
+
+        assertThat(operacao.path("responses").path("200")
+                .path("content").toString())
+                .contains("IndicadoresPainelResposta");
+
+        JsonNode resposta = contrato.path("components")
+                .path("schemas")
+                .path("IndicadoresPainelResposta")
+                .path("properties");
+
+        for (String campo : new String[]{
+                "estudoId", "totalCandidatos", "totalIncluidos",
+                "participantesAtivos", "participantesRetirados",
+                "visitasRealizadas", "visitasPendentes"}) {
+
+            assertThat(resposta.has(campo))
+                    .as("Campo do painel: %s", campo).isTrue();
+
+            assertThat(resposta.path(campo).path("type").asText())
+                    .isEqualTo("integer");
+        }
+
+        assertThat(resposta.size()).isEqualTo(7);
+    }
 }

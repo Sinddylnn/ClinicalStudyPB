@@ -183,6 +183,28 @@ class IndicadoresPainelControllerTest {
     }
 
     /**
+     * Rejeita identificadores de estudo com formato inválido.
+     *
+     * @throws Exception se a chamada HTTP simulada falhar
+     * @since 1.0
+     */
+    @Test
+    void identificadorInvalidoRecebe400() throws Exception {
+        Usuario usuario = conta(1L, PerfilUsuario.PESQUISADOR);
+        when(usuarios.findById(1L)).thenReturn(Optional.of(usuario));
+
+        mvc.perform(get("/estudos/abc/indicadores")
+                        .with(user(new UsuarioAutenticado(usuario))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo")
+                        .value("REQUISICAO_INVALIDA"))
+                .andExpect(jsonPath("$.mensagem")
+                        .value("Confira o formato e os dados da requisição."));
+
+        verifyNoInteractions(indicadores);
+    }
+
+    /**
      * Cria um usuário para simular uma sessão autenticada.
      *
      * @param id identificador do usuário

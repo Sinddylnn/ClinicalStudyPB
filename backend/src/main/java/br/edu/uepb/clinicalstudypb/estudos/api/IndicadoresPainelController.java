@@ -63,6 +63,10 @@ public class IndicadoresPainelController {
                 description = "Indicadores consultados com sucesso",
                 content = @Content(schema = @Schema(
                         implementation = IndicadoresPainelResposta.class))),
+        @ApiResponse(responseCode = "400",
+                description = "Identificador do estudo inválido",
+                content = @Content(schema = @Schema(
+                        implementation = ErroApi.class))),
         @ApiResponse(responseCode = "401",
                 description = "Sessão ausente ou inválida",
                 content = @Content(schema = @Schema(
