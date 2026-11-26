@@ -39,8 +39,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * {@code CLINICALSTUDYPB_TEST_DB_USER} e {@code CLINICALSTUDYPB_TEST_DB_PASSWORD}.</p>
  *
  * @author Georis
- * @version 1.3
- * @since 25/11/2026
+ * @version 1.4
+ * @since 26/11/2026
  */
 @SpringBootTest
 @Transactional
@@ -366,6 +366,36 @@ class AcompanhamentoPersistenciaIT {
     }
 
     // <-------------------PEDIDOS DO PARTICIPANTE (RF19 E RF20)------------------->
+
+    /**
+     * Confere que a confirmação de presença é gravada, preserva a situação e a data da visita
+     * e pode ser removida depois.
+     *
+     * @since 1.4
+     */
+    @Test
+    void persisteConfirmacaoDePresencaSemAlterarAVisita() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        VisitaAgendada visita = cenarioDePedidos(agora).visita();
+        Instant dataOriginal = visita.getDataHora();
+
+        visita.confirmarPresenca(agora);
+        entidades.flush();
+        entidades.clear();
+
+        VisitaAgendada confirmada = entidades.find(VisitaAgendada.class, visita.getId());
+        assertThat(confirmada.getPresencaConfirmadaEm()).isEqualTo(agora);
+        assertThat(confirmada.getSituacao()).isEqualTo(SituacaoVisita.AGENDADA);
+        assertThat(confirmada.getDataHora()).isEqualTo(dataOriginal);
+
+        // a limpeza também precisa chegar ao banco
+        confirmada.limparConfirmacaoPresenca();
+        entidades.flush();
+        entidades.clear();
+
+        assertThat(entidades.find(VisitaAgendada.class, visita.getId())
+                .getPresencaConfirmadaEm()).isNull();
+    }
 
     /**
      * Persiste a confirmação de presença e os pedidos de reagendamento e de retirada com suas respostas.
