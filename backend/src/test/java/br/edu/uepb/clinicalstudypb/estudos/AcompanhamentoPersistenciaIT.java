@@ -543,6 +543,195 @@ class AcompanhamentoPersistenciaIT {
                 .executeUpdate()).isInstanceOf(PersistenceException.class);
     }
 
+    /**
+     * Confere que os INSERTs usados nos testes negativos são válidos quando coerentes com a situação
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoAceitaRespostasCoerentesComASituacao() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+        Long coordenadorId = c.coordenador().getId();
+
+        entidades.createNativeQuery(insercaoReagendamento(c, agora, "APROVADA", coordenadorId,
+                agora.plusSeconds(60), agora.plusSeconds(172_800), null)).executeUpdate();
+        entidades.createNativeQuery(insercaoReagendamento(c, agora, "RECUSADA", coordenadorId,
+                agora.plusSeconds(60), null, "Agenda cheia")).executeUpdate();
+        entidades.createNativeQuery(insercaoReagendamento(c, agora, "CANCELADA", null,
+                agora.plusSeconds(60), null, null)).executeUpdate();
+        entidades.createNativeQuery(insercaoRetirada(c, agora, "CONCLUIDA", coordenadorId,
+                agora.plusSeconds(60))).executeUpdate();
+    }
+
+    /**
+     * Confere que o banco recusa uma aprovação sem a data aprovada
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaAprovadaSemDataAprovada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "APROVADA",
+                c.coordenador().getId(), agora.plusSeconds(60), null, null));
+    }
+
+    /**
+     * Confere que o banco recusa uma aprovação sem responsável
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaAprovadaSemResponsavel() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "APROVADA", null,
+                agora.plusSeconds(60), agora.plusSeconds(172_800), null));
+    }
+
+    /**
+     * Confere que o banco recusa um pedido pendente com dados de resposta
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaPendenteComDadosDeResposta() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "PENDENTE",
+                c.coordenador().getId(), agora.plusSeconds(60), null, null));
+    }
+
+    /**
+     * Confere que o banco recusa um pedido pendente com data aprovada
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaPendenteComDataAprovada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "PENDENTE", null,
+                null, agora.plusSeconds(172_800), null));
+    }
+
+    /**
+     * Confere que o banco recusa uma solicitação recusada com data aprovada
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaRecusadaComDataAprovada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "RECUSADA",
+                c.coordenador().getId(), agora.plusSeconds(60),
+                agora.plusSeconds(172_800), "Agenda cheia"));
+    }
+
+    /**
+     * Confere que o banco recusa uma solicitação cancelada com responsável
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaCanceladaComResponsavel() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "CANCELADA",
+                c.coordenador().getId(), agora.plusSeconds(60), null, null));
+    }
+
+    /**
+     * Confere que o banco recusa a situação CONCLUIDA em um pedido de reagendamento
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaSituacaoConcluidaNoReagendamento() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "CONCLUIDA",
+                c.coordenador().getId(), agora.plusSeconds(60), null, null));
+    }
+
+    /**
+     * Confere que o banco recusa uma retirada concluída sem responsável
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaConcluidaSemResponsavelNaRetirada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoRetirada(c, agora, "CONCLUIDA", null, agora.plusSeconds(60)));
+    }
+
+    /**
+     * Confere que o banco recusa uma retirada concluída sem data de encerramento
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaConcluidaSemEncerramentoNaRetirada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoRetirada(c, agora, "CONCLUIDA",
+                c.coordenador().getId(), null));
+    }
+
+    /**
+     * Confere que o banco recusa uma retirada pendente com dados de resposta
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaPendenteComRespostaNaRetirada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoRetirada(c, agora, "PENDENTE",
+                c.coordenador().getId(), agora.plusSeconds(60)));
+    }
+
+    /**
+     * Confere que o banco recusa a situação RECUSADA em uma solicitação de retirada
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaSituacaoRecusadaNaRetirada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoRetirada(c, agora, "RECUSADA",
+                c.coordenador().getId(), agora.plusSeconds(60)));
+    }
+
+    /**
+     * Confere que o banco recusa a situação APROVADA em uma solicitação de retirada
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaSituacaoAprovadaNaRetirada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoRetirada(c, agora, "APROVADA",
+                c.coordenador().getId(), agora.plusSeconds(60)));
+    }
+
     // <-------------------CONSULTAS DO PARTICIPANTE------------------->
 
     /**
@@ -812,6 +1001,44 @@ class AcompanhamentoPersistenciaIT {
         entidades.persist(visita);
         entidades.flush();
         return new CenarioPedidos(coordenador, participacao, visita);
+    }
+
+    // monta o valor como literal SQL; nulo vira NULL e o resto vai entre aspas simples
+    private static String literal(Object valor) {
+        return valor == null ? "NULL" : "'" + valor.toString().replace("'", "''") + "'";
+    }
+
+    // INSERT direto em solicitacoes_reagendamento para exercitar os CHECKs sem passar pelo domínio
+    private String insercaoReagendamento(CenarioPedidos cenario, Instant agora, String situacao,
+            Long respondidaPorId, Instant encerradaEm, Instant dataHoraAprovada, String justificativa) {
+        return """
+                INSERT INTO solicitacoes_reagendamento
+                    (visita_agendada_id, data_hora_original, data_hora_desejada, situacao, solicitada_em,
+                     respondida_por_id, encerrada_em, data_hora_aprovada, justificativa_recusa)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """.formatted(literal(cenario.visita().getId()), literal(agora),
+                literal(agora.plusSeconds(86_400)), literal(situacao), literal(agora),
+                literal(respondidaPorId), literal(encerradaEm), literal(dataHoraAprovada),
+                literal(justificativa));
+    }
+
+    // INSERT direto em solicitacoes_retirada pelo mesmo motivo
+    private String insercaoRetirada(CenarioPedidos cenario, Instant agora, String situacao,
+            Long respondidaPorId, Instant encerradaEm) {
+        return """
+                INSERT INTO solicitacoes_retirada
+                    (participacao_id, situacao, solicitada_em, respondida_por_id, encerrada_em)
+                VALUES (%s, %s, %s, %s, %s)
+                """.formatted(literal(cenario.participacao().getId()), literal(situacao), literal(agora),
+                literal(respondidaPorId), literal(encerradaEm));
+    }
+
+    // confere que o banco recusou por CHECK, e não por SQL malformado
+    private void rejeitaPorCheck(String sql) {
+        assertThatThrownBy(() -> entidades.createNativeQuery(sql).executeUpdate())
+                .isInstanceOf(PersistenceException.class)
+                .rootCause()
+                .hasMessageContaining("violates check constraint");
     }
 
     private record CenarioPedidos(Usuario coordenador, Participacao participacao, VisitaAgendada visita) {
