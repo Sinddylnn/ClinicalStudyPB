@@ -441,10 +441,12 @@ class AcompanhamentoPersistenciaIT {
         SolicitacaoRetirada retirada = new SolicitacaoRetirada(cenario.participacao(), null, agora);
         entidades.persist(retirada);
         entidades.flush();
-        assertThat(pedidosRetirada.findByParticipacaoIdAndSituacao(
-                cenario.participacao().getId(), SituacaoSolicitacao.PENDENTE)).isPresent();
+        assertThat(pedidosRetirada.buscarPendentePorParticipacao(
+                cenario.participacao().getId())).isPresent();
         retirada.concluir(coordenador, agora.plusSeconds(360));
         entidades.flush();
+        assertThat(pedidosRetirada.buscarPendentePorParticipacao(
+                cenario.participacao().getId())).isEmpty();
         entidades.clear();
 
         VisitaAgendada visitaPersistida = entidades.find(VisitaAgendada.class, visita.getId());
@@ -479,6 +481,42 @@ class AcompanhamentoPersistenciaIT {
         assertThat(retiradaPersistida.getRespondidaPor().getId()).isEqualTo(coordenador.getId());
         assertThat(reagendamentos.existsByVisitaAgendadaIdAndSituacao(
                 visita.getId(), SituacaoSolicitacao.PENDENTE)).isFalse();
+    }
+
+    /**
+     * Confere que a busca do pedido pendente ignora pedidos encerrados da mesma visita
+     *
+     * @since 1.4
+     */
+    @Test
+    void buscaDoPedidoPendenteIgnoraPedidosEncerradosDaMesmaVisita() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos cenario = cenarioDePedidos(agora);
+        VisitaAgendada visita = cenario.visita();
+        Usuario coordenador = cenario.coordenador();
+
+        assertThat(reagendamentos.buscarPendentePorVisita(visita.getId())).isEmpty();
+
+        // dois pedidos recusados na mesma visita não podem quebrar a busca
+        // flush a cada passo, pois persist faz INSERT imediato e o índice só aceita um pendente
+        SolicitacaoReagendamento primeiro = new SolicitacaoReagendamento(
+                visita, agora.plus(5, ChronoUnit.DAYS), null, agora);
+        entidades.persist(primeiro);
+        primeiro.recusar(coordenador, "Agenda cheia", agora.plusSeconds(60));
+        entidades.flush();
+        SolicitacaoReagendamento segundo = new SolicitacaoReagendamento(
+                visita, agora.plus(6, ChronoUnit.DAYS), null, agora.plusSeconds(120));
+        entidades.persist(segundo);
+        segundo.recusar(coordenador, "Agenda cheia", agora.plusSeconds(180));
+        entidades.flush();
+        assertThat(reagendamentos.buscarPendentePorVisita(visita.getId())).isEmpty();
+
+        SolicitacaoReagendamento pendente = new SolicitacaoReagendamento(
+                visita, agora.plus(7, ChronoUnit.DAYS), null, agora.plusSeconds(240));
+        entidades.persist(pendente);
+        entidades.flush();
+        assertThat(reagendamentos.buscarPendentePorVisita(visita.getId()))
+                .get().extracting(SolicitacaoReagendamento::getId).isEqualTo(pendente.getId());
     }
 
 
