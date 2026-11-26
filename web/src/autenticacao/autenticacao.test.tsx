@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter, Route, Routes } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { login, logout, sessaoAtual, type UsuarioSessao } from '../api/autenticacao';
 import { registrarTratadoresSessao } from '../api/cliente';
 import { ErroRequisicao } from '../api/erros';
@@ -88,6 +88,10 @@ async function clicarEmSair() {
 
 beforeEach(() => {
   vi.resetAllMocks();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 // <-------------------ROTA PROTEGIDA------------------->
@@ -244,14 +248,15 @@ describe('revalidação da sessão', () => {
     renderizarEm('/estudos');
     await screen.findByRole('heading', { name: 'Estudos protegidos' });
 
-    const visibilidade = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
-    act(() => {
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+
+    await waitFor(() => {
       document.dispatchEvent(new Event('visibilitychange'));
+      expect(vi.mocked(sessaoAtual).mock.calls.length).toBeGreaterThanOrEqual(2);
     });
 
     expect(await screen.findByRole('heading', { name: 'Entrar na sua conta' })).toBeInTheDocument();
     expect(await screen.findByText('Sua sessão expirou. Entre novamente.')).toBeInTheDocument();
-    visibilidade.mockRestore();
   });
 });
 
