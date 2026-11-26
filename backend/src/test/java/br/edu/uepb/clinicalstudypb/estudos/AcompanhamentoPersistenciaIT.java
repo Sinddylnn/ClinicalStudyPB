@@ -393,16 +393,20 @@ class AcompanhamentoPersistenciaIT {
         aprovado.aprovar(coordenador, dataAprovada, agora.plusSeconds(60));
         visita.reagendar(dataAprovada);
         visita.limparConfirmacaoPresenca();
+        // persist usa INSERT imediato: grava a aprovação antes, para liberar o índice do pedido pendente
+        entidades.flush();
 
         SolicitacaoReagendamento recusado = new SolicitacaoReagendamento(
                 visita, agora.plus(9, ChronoUnit.DAYS), "   ", agora.plusSeconds(120));
         entidades.persist(recusado);
         recusado.recusar(coordenador, "  Agenda cheia nessa data  ", agora.plusSeconds(180));
+        entidades.flush();
 
         SolicitacaoReagendamento cancelado = new SolicitacaoReagendamento(
                 visita, agora.plus(10, ChronoUnit.DAYS), null, agora.plusSeconds(240));
         entidades.persist(cancelado);
         cancelado.cancelar(agora.plusSeconds(300));
+        entidades.flush();
 
         SolicitacaoRetirada retirada = new SolicitacaoRetirada(cenario.participacao(), null, agora);
         entidades.persist(retirada);
@@ -446,6 +450,7 @@ class AcompanhamentoPersistenciaIT {
         assertThat(reagendamentos.existsByVisitaAgendadaIdAndSituacao(
                 visita.getId(), SituacaoSolicitacao.PENDENTE)).isFalse();
     }
+
 
     /**
      * Confere que o banco recusa um segundo pedido de reagendamento pendente para a mesma visita.
