@@ -47,18 +47,22 @@ describe('Início', () => {
     ).toBeInTheDocument();
   });
 
-  it('mostra ao pesquisador os atalhos de cadastrar e ver estudos', () => {
+  it('mostra ao pesquisador os atalhos de cadastrar e ver estudos e o painel', () => {
     renderizarCom(usuarioCom('PESQUISADOR', 'Paula Pesquisadora'));
     expect(atalhos()).toEqual([
       ['Cadastrar estudo', '/estudos/novo'],
       ['Ver meus estudos', '/estudos'],
+      ['Ver painel de indicadores', '/painel'],
     ]);
   });
 
-  it('mostra ao coordenador só a consulta dos estudos', () => {
+  it('mostra ao coordenador a consulta dos estudos e o painel', () => {
     renderizarCom(usuarioCom('COORDENADOR', 'Carlos Coordenador'));
     expect(screen.getByText(/Acompanhamento dos estudos vinculados a você/)).toBeInTheDocument();
-    expect(atalhos()).toEqual([['Ver estudos', '/estudos']]);
+    expect(atalhos()).toEqual([
+      ['Ver estudos', '/estudos'],
+      ['Ver painel de indicadores', '/painel'],
+    ]);
   });
 
   it('mostra ao administrador os atalhos de usuários', () => {
