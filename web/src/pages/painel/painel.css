@@ -1,0 +1,137 @@
+/* <-------------------PAINEL DE INDICADORES (RF21)-------------------> */
+/* Mesma base das telas de estudos (estudos.css): cartões, trilha, cabeçalho e avisos.
+   Aqui ficam só a escolha do estudo e os cartões das contagens. */
+
+/* <-------------------ESCOLHA DO ESTUDO-------------------> */
+.painel-selecao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 20px 24px;
+  overflow: visible;
+}
+
+.painel-campo-estudo {
+  flex: 1 1 360px;
+  max-width: 560px;
+}
+
+.painel-estudo-dados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
+  margin: 0;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--texto-suave);
+}
+
+.painel-estudo-dados > span:last-child {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* <-------------------GRUPOS DE INDICADORES-------------------> */
+.painel-grupo {
+  padding: 20px 24px 24px;
+}
+
+.painel-grupo h2 {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.painel-indicadores {
+  display: grid;
+  /* Quatro colunas nos dois grupos, para os cartões de Visitas alinharem com os de Recrutamento */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.painel-indicador {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid var(--borda-cartao);
+  border-radius: 12px;
+}
+
+.painel-indicador-destaque {
+  background: #e6f4f5;
+  border-color: #b5dde0;
+}
+
+.painel-indicador-icone {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--primaria);
+  background: #fff;
+  border: 1px solid var(--borda-cartao);
+  border-radius: 10px;
+}
+
+.painel-indicador-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.painel-indicador-rotulo {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--texto-tabela);
+}
+
+.painel-indicador-valor {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 34px;
+  color: var(--texto);
+}
+
+.painel-indicador-detalhe {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--texto-suave);
+}
+
+/* <-------------------TELAS ESTREITAS-------------------> */
+@media (max-width: 1100px) {
+  .painel-indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .painel-indicadores {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .painel-selecao,
+  .painel-grupo {
+    padding: 16px;
+  }
+
+  .painel-campo-estudo {
+    max-width: none;
+  }
+}

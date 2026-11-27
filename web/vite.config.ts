@@ -31,6 +31,7 @@ export default defineConfig({
       VITE_CANDIDATOS_API: 'simulado',
       VITE_PROTOCOLO_API: 'simulado',
       VITE_ACOMPANHAMENTO_API: 'simulado',
+      VITE_PAINEL_API: 'simulado',
     },
     // Cobertura com Istanbul (kickoff): npm run test:coverage gera o resumo no terminal
     // e o relatório em coverage/index.html (pasta ignorada pelo Git)

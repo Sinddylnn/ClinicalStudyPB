@@ -12,8 +12,14 @@ type ItemMenu = { rotulo: string; destino: string; icone: NomeIcone };
 // Mesmos itens das barras do protótipo para cada perfil
 const MENUS: Record<PerfilUsuario, ItemMenu[]> = {
   ADMINISTRADOR: [{ rotulo: 'Usuários', destino: '/usuarios', icone: 'usuarios' }],
-  PESQUISADOR: [{ rotulo: 'Meus estudos', destino: '/estudos', icone: 'frasco' }],
-  COORDENADOR: [{ rotulo: 'Estudos', destino: '/estudos', icone: 'frasco' }],
+  PESQUISADOR: [
+    { rotulo: 'Meus estudos', destino: '/estudos', icone: 'frasco' },
+    { rotulo: 'Painel', destino: '/painel', icone: 'atividade' },
+  ],
+  COORDENADOR: [
+    { rotulo: 'Estudos', destino: '/estudos', icone: 'frasco' },
+    { rotulo: 'Painel', destino: '/painel', icone: 'atividade' },
+  ],
   PARTICIPANTE: [],
 };
 

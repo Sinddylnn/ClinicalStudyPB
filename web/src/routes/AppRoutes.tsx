@@ -16,6 +16,7 @@ import ParticipantesEstudo from '../pages/acompanhamento/ParticipantesEstudo';
 import AgendamentoVisitas from '../pages/acompanhamento/AgendamentoVisitas';
 import HistoricoParticipante from '../pages/acompanhamento/HistoricoParticipante';
 import ResultadosVisita from '../pages/acompanhamento/ResultadosVisita';
+import PainelIndicadores from '../pages/painel/PainelIndicadores';
 import ListaUsuarios from '../pages/usuarios/ListaUsuarios';
 import NovoUsuario from '../pages/usuarios/NovoUsuario';
 import EditarUsuario from '../pages/usuarios/EditarUsuario';
@@ -80,6 +81,12 @@ export default function AppRoutes() {
           path="/estudos/:id/participacoes/:participacaoId/visitas/:visitaId/resultados"
           element={<ResultadosVisita />}
         />
+      </Route>
+
+      {/* <-------------------PAINEL DE INDICADORES-------------------> */}
+      {/* Painel do estudo (RF21): pesquisador responsável e coordenador vinculado, só para consulta */}
+      <Route element={<RotaProtegida perfis={['PESQUISADOR', 'COORDENADOR']} />}>
+        <Route path="/painel" element={<PainelIndicadores />} />
       </Route>
 
       {/* <-------------------ROTA NÃO ENCONTRADA-------------------> */}

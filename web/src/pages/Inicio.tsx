@@ -64,6 +64,13 @@ const PAINEIS: Record<PerfilUsuario, Painel> = {
         icone: 'frasco',
         tom: 'azul',
       },
+      {
+        titulo: 'Ver painel de indicadores',
+        descricao: 'Candidatos, participantes e visitas de cada estudo.',
+        destino: '/painel',
+        icone: 'atividade',
+        tom: 'azul',
+      },
     ],
   },
   COORDENADOR: {
@@ -76,6 +83,13 @@ const PAINEIS: Record<PerfilUsuario, Painel> = {
         destino: '/estudos',
         icone: 'frasco',
         tom: 'primario',
+      },
+      {
+        titulo: 'Ver painel de indicadores',
+        descricao: 'Candidatos, participantes e visitas de cada estudo.',
+        destino: '/painel',
+        icone: 'atividade',
+        tom: 'azul',
       },
     ],
   },
