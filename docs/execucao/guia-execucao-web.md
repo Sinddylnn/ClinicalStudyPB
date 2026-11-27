@@ -195,16 +195,16 @@ As visitas realizadas e as ausentes só podem ser registradas a partir do dia ag
 Entre com `coordenador@clinicalstudypb.test` e a senha `Demo@123`.
 
 1. No menu "Estudos", clique em "Acompanhamento de hábitos". A tela de recrutamento do estudo abre.
-2. Clique em "Participantes incluídos". Confira a lista: Maria Souza aparece com a situação "Ativo" e as ações "Ver histórico", "Agendar visitas" e "Retirar".
-3. Clique em "Agendar visitas". Na tela "Agendamento de visitas", escolha a "Visita inicial", uma data entre hoje e 20/12/2026 e uma hora. Clique em "Agendar visita". A notificação confirma o agendamento, e a visita aparece em "Visitas agendadas" como "Agendada".
+2. Clique em "Participantes incluídos". Confira a lista: Maria Souza aparece com a situação "Ativo" e as ações "Ver histórico", "Gerenciar visitas" e "Retirar".
+3. Clique em "Gerenciar visitas". Na tela "Agendamento de visitas", escolha a "Visita inicial", uma data entre hoje e 20/12/2026 e uma hora. Clique em "Salvar visita". A notificação confirma o agendamento, e a visita aparece em "Visitas agendadas" como "Agendada".
 4. Agende de novo a "Visita inicial". O campo da visita mostra "Já existe um agendamento pendente para essa visita.", porque só pode haver uma visita agendada para cada visita prevista.
 5. Na "Visita de acompanhamento" de 16/11/2026, clique em "Ausente" e confirme em "Registrar ausência". O motivo é opcional. A visita passa a "Ausente".
 6. Na "Visita final", clique em "Cancelar visita" e confirme sem preencher o motivo. O diálogo mostra "Informe o motivo do cancelamento.". Preencha o motivo e confirme de novo. A visita passa a "Cancelada".
 7. Na visita de 16/11/2026, agora "Ausente", clique em "Corrigir". Escolha "Realizada", preencha a "Justificativa da correção (obrigatória)" e clique em "Salvar correção". A notificação informa a correção, e a visita passa a "Realizada".
 8. Volte à lista e clique em "Ver histórico". A tela "Histórico do participante" mostra as visitas em ordem cronológica, com a situação, quem registrou, os resultados e as correções. A correção do passo 7 aparece em "Correções".
 9. Na visita de 16/11/2026, clique em "Registrar resultados". Na tela "Resultados da visita", preencha a avaliação e clique em "Salvar resultados". A web volta ao histórico, já com o resultado.
-10. Pela trilha, volte a "Participantes" e clique em "Agendar visitas". Na visita de 16/11/2026, o botão "Corrigir" sumiu e aparece "Correção bloqueada: a visita já tem resultados registrados.".
-11. Volte à lista e clique em "Retirar". No diálogo "Retirar do estudo?", preencha o "Motivo da retirada (obrigatório)" e clique em "Retirar participante". Maria Souza passa a "Retirado", sem as ações "Agendar visitas" e "Retirar". A visita ainda agendada é cancelada com o motivo "Retirada do participante", e a retirada aparece no histórico.
+10. Pela trilha, volte a "Participantes" e clique em "Gerenciar visitas". Na visita de 16/11/2026, o botão "Corrigir" sumiu e aparece "Correção bloqueada: a visita já tem resultados registrados.".
+11. Volte à lista e clique em "Retirar". No diálogo "Retirar do estudo?", preencha o "Motivo da retirada (obrigatório)" e clique em "Retirar participante". Maria Souza passa a "Retirado", sem as ações "Gerenciar visitas" e "Retirar". A visita ainda agendada é cancelada com o motivo "Retirada do participante", e a retirada aparece no histórico.
 
 A retirada também pode ser feita pelo botão "Retirar do estudo", na tela do histórico.
 

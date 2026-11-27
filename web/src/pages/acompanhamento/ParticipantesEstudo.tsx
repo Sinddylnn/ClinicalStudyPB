@@ -253,10 +253,10 @@ export default function ParticipantesEstudo({
                                 <Link
                                   className="botao botao-primario"
                                   to={`/estudos/${estudoId}/participacoes/${p.id}/visitas`}
-                                  aria-label={`Agendar visitas de ${p.participanteNome}`}
+                                  aria-label={`Gerenciar visitas de ${p.participanteNome}`}
                                 >
                                   <Icone nome="calendario" />
-                                  Agendar visitas
+                                  Gerenciar visitas
                                 </Link>
                               )}
                               {retiraParticipantes && p.situacao === 'ATIVA' && (

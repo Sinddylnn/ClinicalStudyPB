@@ -115,7 +115,7 @@ describe('ParticipantesEstudo', () => {
     expect(within(await linhaDe('Joana Ribeiro')).queryByRole('link', { name: /Agendar/ })).not.toBeInTheDocument();
     expect(screen.getByText(/Participantes retirados continuam na lista/)).toBeInTheDocument();
 
-    await usuario.click(within(maria).getByRole('link', { name: 'Agendar visitas de Maria Souza' }));
+    await usuario.click(within(maria).getByRole('link', { name: 'Gerenciar visitas de Maria Souza' }));
     expect(await screen.findByRole('heading', { name: 'Agendamento' })).toBeInTheDocument();
   });
 
@@ -123,7 +123,7 @@ describe('ParticipantesEstudo', () => {
     renderizar(criarServicos({}, [{ ...ESTUDO, estado: 'ENCERRADO' }]));
 
     await linhaDe('Maria Souza');
-    expect(screen.queryByRole('link', { name: /Agendar visitas/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Gerenciar visitas/ })).not.toBeInTheDocument();
     expect(
       screen.getByText('O agendamento de visitas só fica disponível com o estudo em Recrutamento ou Execução.'),
     ).toBeInTheDocument();
@@ -157,7 +157,7 @@ describe('ParticipantesEstudo', () => {
 
     const maria = await linhaDe('Maria Souza');
     expect(within(maria).queryByRole('link', { name: /Ver histórico/ })).not.toBeInTheDocument();
-    expect(within(maria).getByRole('link', { name: /Agendar visitas/ })).toBeInTheDocument();
+    expect(within(maria).getByRole('link', { name: /Gerenciar visitas/ })).toBeInTheDocument();
   });
 
   it('sem a lista liberada ao pesquisador no backend, não chama a rota e explica', async () => {
@@ -236,7 +236,7 @@ describe('ParticipantesEstudo: retirada', () => {
     const linha = await linhaDe('Maria Souza');
     expect(await within(linha).findByText('Retirado')).toBeInTheDocument();
     expect(botaoRetirar('Maria Souza')).not.toBeInTheDocument();
-    expect(within(linha).queryByRole('link', { name: /Agendar visitas/ })).not.toBeInTheDocument();
+    expect(within(linha).queryByRole('link', { name: /Gerenciar visitas/ })).not.toBeInTheDocument();
   });
 
   it('não oferece a retirada ao pesquisador, com o estudo encerrado nem sem o backend', async () => {
