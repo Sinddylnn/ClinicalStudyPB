@@ -18,9 +18,11 @@ import java.time.Instant;
 /**
  * Registra uma ocorrência de visita prevista para uma participação.
  *
+ * <p>A confirmação de presença (RF19) guarda apenas a data em que o participante confirmou;
+ * a visita continua {@code AGENDADA} e só vira {@code REALIZADA} pelo registro do coordenador.</p>
  * @author Georis
- * @version 1.0
- * @since 11/11/2026
+ * @version 1.1
+ * @since 25/11/2026
  */
 @Entity
 @Table(name = "visitas_agendadas")
@@ -54,6 +56,10 @@ public class VisitaAgendada {
 
     @Column(name = "registrado_em")
     private Instant registradoEm;
+
+    // nulo enquanto o participante não confirmou a data atual
+    @Column(name = "presenca_confirmada_em")
+    private Instant presencaConfirmadaEm;
 
     protected VisitaAgendada() {
     }
@@ -106,6 +112,10 @@ public class VisitaAgendada {
         return registradoEm;
     }
 
+    public Instant getPresencaConfirmadaEm() {
+        return presencaConfirmadaEm;
+    }
+
     /**
      * Atualiza a data e hora de uma visita agendada.
      *
@@ -129,5 +139,26 @@ public class VisitaAgendada {
         this.motivo = motivo == null ? null : motivo.strip();
         this.registradoPor = registradoPor;
         this.registradoEm = registradoEm;
+    }
+
+    // <-------------------CONFIRMAÇÃO DE PRESENÇA------------------->
+
+    /**
+     * Guarda a confirmação de presença do participante sem alterar a situação da visita.
+     *
+     * @param confirmadaEm instante da confirmação, após o serviço validar visita futura e AGENDADA
+     * @since 1.1
+     */
+    public void confirmarPresenca(Instant confirmadaEm) {
+        this.presencaConfirmadaEm = confirmadaEm;
+    }
+
+    /**
+     * Remove a confirmação quando a data da visita muda, para o participante confirmar de novo.
+     *
+     * @since 1.1
+     */
+    public void limparConfirmacaoPresenca() {
+        this.presencaConfirmadaEm = null;
     }
 }

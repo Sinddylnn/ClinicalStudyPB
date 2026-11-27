@@ -4,6 +4,8 @@ import br.edu.uepb.clinicalstudypb.estudos.repository.CorrecaoVisitaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ResultadoAtividadeRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.SolicitacaoReagendamentoRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.SolicitacaoRetiradaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.service.RetiradaParticipanteService;
 import br.edu.uepb.clinicalstudypb.estudos.service.ParticipanteConsultaService;
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
@@ -11,6 +13,7 @@ import br.edu.uepb.clinicalstudypb.estudos.api.RetiradaEntrada;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceException;
 import java.sql.DriverManager;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -36,8 +39,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * {@code CLINICALSTUDYPB_TEST_DB_USER} e {@code CLINICALSTUDYPB_TEST_DB_PASSWORD}.</p>
  *
  * @author Georis
- * @version 1.0
- * @since 11/11/2026
+ * @version 1.4
+ * @since 26/11/2026
  */
 @SpringBootTest
 @Transactional
@@ -49,6 +52,8 @@ class AcompanhamentoPersistenciaIT {
     @Autowired private CorrecaoVisitaRepository correcoes;
     @Autowired private ResultadoAtividadeRepository resultados;
     @Autowired private ParticipacaoRepository participacoes;
+    @Autowired private SolicitacaoReagendamentoRepository reagendamentos;
+    @Autowired private SolicitacaoRetiradaRepository pedidosRetirada;
     @Autowired private RetiradaParticipanteService retiradas;
     @Autowired private ParticipanteConsultaService consultasParticipante;
 
@@ -68,20 +73,20 @@ class AcompanhamentoPersistenciaIT {
     // <-------------------MIGRAÇÃO EM BANCO LIMPO------------------->
 
     /**
-     * Executa todas as migrações desde a V1 em um schema isolado e descartável.
+     * Executa todas as migrações desde a V1 em um schema isolado e descartável, até a V12.
      *
      * @throws Exception se a conexão ou alguma migração falhar
      * @since 1.0
      */
     @Test
-    void migraBancoLimpoAteV11() throws Exception {
+    void migraBancoLimpoAteV12() throws Exception {
         String url = System.getenv("CLINICALSTUDYPB_TEST_DB_URL");
         String usuario = System.getenv("CLINICALSTUDYPB_TEST_DB_USER");
         String senha = System.getenv("CLINICALSTUDYPB_TEST_DB_PASSWORD");
         String schema = "teste_acompanhamento_" + UUID.randomUUID().toString().replace("-", "");
 
         try (var conexao = DriverManager.getConnection(url, usuario, senha);
-                var sql = conexao.createStatement()) {
+             var sql = conexao.createStatement()) {
             try {
                 Flyway.configure().dataSource(url, usuario, senha).schemas(schema).defaultSchema(schema)
                         .target("10").load().migrate();
@@ -108,7 +113,7 @@ class AcompanhamentoPersistenciaIT {
                         LIMIT 1
                         """)) {
                     assertThat(versao.next()).isTrue();
-                    assertThat(versao.getString("version")).isEqualTo("11");
+                    assertThat(versao.getString("version")).isEqualTo("12");
                 }
                 try (var participacoes = sql.executeQuery("""
                         SELECT situacao, data_retirada, motivo_retirada, retirada_por_id
@@ -135,7 +140,8 @@ class AcompanhamentoPersistenciaIT {
                     assertThat(nomes).containsExactlyInAnyOrder(
                             "situacao", "data_retirada", "motivo_retirada", "retirada_por_id");
                 }
-                for (String tabela : new String[]{"visitas_agendadas", "resultados_atividades", "correcoes_visitas"}) {
+                for (String tabela : new String[]{"visitas_agendadas", "resultados_atividades", "correcoes_visitas",
+                        "solicitacoes_reagendamento", "solicitacoes_retirada"}) {
                     try (var existe = sql.executeQuery("""
                             SELECT EXISTS (
                                 SELECT 1 FROM information_schema.tables
@@ -357,6 +363,411 @@ class AcompanhamentoPersistenciaIT {
         UsuarioAutenticado app = new UsuarioAutenticado(participante);
         assertThat(consultasParticipante.listarProximasVisitas(null, app)).isEmpty();
         assertThat(consultasParticipante.listarHistorico(null, app)).hasSize(3);
+    }
+
+    // <-------------------PEDIDOS DO PARTICIPANTE (RF19 E RF20)------------------->
+
+    /**
+     * Confere que a confirmação de presença é gravada, preserva a situação e a data da visita
+     * e pode ser removida depois.
+     *
+     * @since 1.4
+     */
+    @Test
+    void persisteConfirmacaoDePresencaSemAlterarAVisita() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        VisitaAgendada visita = cenarioDePedidos(agora).visita();
+        Instant dataOriginal = visita.getDataHora();
+
+        visita.confirmarPresenca(agora);
+        entidades.flush();
+        entidades.clear();
+
+        VisitaAgendada confirmada = entidades.find(VisitaAgendada.class, visita.getId());
+        assertThat(confirmada.getPresencaConfirmadaEm()).isEqualTo(agora);
+        assertThat(confirmada.getSituacao()).isEqualTo(SituacaoVisita.AGENDADA);
+        assertThat(confirmada.getDataHora()).isEqualTo(dataOriginal);
+
+        // a limpeza também precisa chegar ao banco
+        confirmada.limparConfirmacaoPresenca();
+        entidades.flush();
+        entidades.clear();
+
+        assertThat(entidades.find(VisitaAgendada.class, visita.getId())
+                .getPresencaConfirmadaEm()).isNull();
+    }
+
+    /**
+     * Persiste a confirmação de presença e os pedidos de reagendamento e de retirada com suas respostas.
+     *
+     * @since 1.3
+     */
+    @Test
+    void persisteConfirmacaoEPedidosDoParticipante() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos cenario = cenarioDePedidos(agora);
+        Usuario coordenador = cenario.coordenador();
+        VisitaAgendada visita = cenario.visita();
+
+        visita.confirmarPresenca(agora);
+        SolicitacaoReagendamento aprovado = new SolicitacaoReagendamento(
+                visita, agora.plus(5, ChronoUnit.DAYS), "  Consulta médica  ", agora);
+        entidades.persist(aprovado);
+        entidades.flush();
+
+        // Pendente: sem resposta e com um único pedido pendente na visita
+        assertThat(reagendamentos.existsByVisitaAgendadaIdAndSituacao(
+                visita.getId(), SituacaoSolicitacao.PENDENTE)).isTrue();
+
+        Instant dataAprovada = agora.plus(6, ChronoUnit.DAYS);
+        aprovado.aprovar(coordenador, dataAprovada, agora.plusSeconds(60));
+        visita.reagendar(dataAprovada);
+        visita.limparConfirmacaoPresenca();
+        // persist usa INSERT imediato: grava a aprovação antes, para liberar o índice do pedido pendente
+        entidades.flush();
+
+        SolicitacaoReagendamento recusado = new SolicitacaoReagendamento(
+                visita, agora.plus(9, ChronoUnit.DAYS), "   ", agora.plusSeconds(120));
+        entidades.persist(recusado);
+        recusado.recusar(coordenador, "  Agenda cheia nessa data  ", agora.plusSeconds(180));
+        entidades.flush();
+
+        SolicitacaoReagendamento cancelado = new SolicitacaoReagendamento(
+                visita, agora.plus(10, ChronoUnit.DAYS), null, agora.plusSeconds(240));
+        entidades.persist(cancelado);
+        cancelado.cancelar(agora.plusSeconds(300));
+        entidades.flush();
+
+        SolicitacaoRetirada retirada = new SolicitacaoRetirada(cenario.participacao(), null, agora);
+        entidades.persist(retirada);
+        entidades.flush();
+        assertThat(pedidosRetirada.buscarPendentePorParticipacao(
+                cenario.participacao().getId())).isPresent();
+        retirada.concluir(coordenador, agora.plusSeconds(360));
+        entidades.flush();
+        assertThat(pedidosRetirada.buscarPendentePorParticipacao(
+                cenario.participacao().getId())).isEmpty();
+        entidades.clear();
+
+        VisitaAgendada visitaPersistida = entidades.find(VisitaAgendada.class, visita.getId());
+        SolicitacaoReagendamento aprovadoPersistido =
+                entidades.find(SolicitacaoReagendamento.class, aprovado.getId());
+        SolicitacaoReagendamento recusadoPersistido =
+                entidades.find(SolicitacaoReagendamento.class, recusado.getId());
+        SolicitacaoReagendamento canceladoPersistido =
+                entidades.find(SolicitacaoReagendamento.class, cancelado.getId());
+        SolicitacaoRetirada retiradaPersistida = entidades.find(SolicitacaoRetirada.class, retirada.getId());
+
+        assertThat(visitaPersistida.getPresencaConfirmadaEm()).isNull();
+        assertThat(visitaPersistida.getDataHora()).isEqualTo(dataAprovada);
+        assertThat(visitaPersistida.getSituacao()).isEqualTo(SituacaoVisita.AGENDADA);
+
+        assertThat(aprovadoPersistido.getSituacao()).isEqualTo(SituacaoSolicitacao.APROVADA);
+        assertThat(aprovadoPersistido.getMotivo()).isEqualTo("Consulta médica");
+        assertThat(aprovadoPersistido.getDataHoraOriginal()).isEqualTo(agora.plus(2, ChronoUnit.DAYS));
+        assertThat(aprovadoPersistido.getDataHoraAprovada()).isEqualTo(dataAprovada);
+        assertThat(aprovadoPersistido.getRespondidaPor().getId()).isEqualTo(coordenador.getId());
+
+        assertThat(recusadoPersistido.getSituacao()).isEqualTo(SituacaoSolicitacao.RECUSADA);
+        assertThat(recusadoPersistido.getMotivo()).isNull();
+        assertThat(recusadoPersistido.getJustificativaRecusa()).isEqualTo("Agenda cheia nessa data");
+
+        assertThat(canceladoPersistido.getSituacao()).isEqualTo(SituacaoSolicitacao.CANCELADA);
+        assertThat(canceladoPersistido.getRespondidaPor()).isNull();
+        assertThat(canceladoPersistido.getEncerradaEm()).isEqualTo(agora.plusSeconds(300));
+
+        assertThat(retiradaPersistida.getSituacao()).isEqualTo(SituacaoSolicitacao.CONCLUIDA);
+        assertThat(retiradaPersistida.getMotivo()).isNull();
+        assertThat(retiradaPersistida.getRespondidaPor().getId()).isEqualTo(coordenador.getId());
+        assertThat(reagendamentos.existsByVisitaAgendadaIdAndSituacao(
+                visita.getId(), SituacaoSolicitacao.PENDENTE)).isFalse();
+    }
+
+    /**
+     * Confere que a busca do pedido pendente ignora pedidos encerrados da mesma visita
+     *
+     * @since 1.4
+     */
+    @Test
+    void buscaDoPedidoPendenteIgnoraPedidosEncerradosDaMesmaVisita() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos cenario = cenarioDePedidos(agora);
+        VisitaAgendada visita = cenario.visita();
+        Usuario coordenador = cenario.coordenador();
+
+        assertThat(reagendamentos.buscarPendentePorVisita(visita.getId())).isEmpty();
+
+        // dois pedidos recusados na mesma visita não podem quebrar a busca
+        // flush a cada passo, pois persist faz INSERT imediato e o índice só aceita um pendente
+        SolicitacaoReagendamento primeiro = new SolicitacaoReagendamento(
+                visita, agora.plus(5, ChronoUnit.DAYS), null, agora);
+        entidades.persist(primeiro);
+        primeiro.recusar(coordenador, "Agenda cheia", agora.plusSeconds(60));
+        entidades.flush();
+        SolicitacaoReagendamento segundo = new SolicitacaoReagendamento(
+                visita, agora.plus(6, ChronoUnit.DAYS), null, agora.plusSeconds(120));
+        entidades.persist(segundo);
+        segundo.recusar(coordenador, "Agenda cheia", agora.plusSeconds(180));
+        entidades.flush();
+        assertThat(reagendamentos.buscarPendentePorVisita(visita.getId())).isEmpty();
+
+        SolicitacaoReagendamento pendente = new SolicitacaoReagendamento(
+                visita, agora.plus(7, ChronoUnit.DAYS), null, agora.plusSeconds(240));
+        entidades.persist(pendente);
+        entidades.flush();
+        assertThat(reagendamentos.buscarPendentePorVisita(visita.getId()))
+                .get().extracting(SolicitacaoReagendamento::getId).isEqualTo(pendente.getId());
+    }
+
+
+    /**
+     * Confere que o banco recusa um segundo pedido de reagendamento pendente para a mesma visita.
+     *
+     * @since 1.3
+     */
+    @Test
+    void bancoRecusaSegundoReagendamentoPendenteNaMesmaVisita() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        VisitaAgendada visita = cenarioDePedidos(agora).visita();
+        entidades.persist(new SolicitacaoReagendamento(visita, agora.plus(5, ChronoUnit.DAYS), null, agora));
+        entidades.flush();
+
+        assertThatThrownBy(() -> {
+            entidades.persist(new SolicitacaoReagendamento(
+                    visita, agora.plus(6, ChronoUnit.DAYS), null, agora));
+            entidades.flush();
+        }).isInstanceOf(PersistenceException.class);
+    }
+
+    /**
+     * Confere que o banco recusa um segundo pedido de retirada pendente para a mesma participação.
+     *
+     * @since 1.3
+     */
+    @Test
+    void bancoRecusaSegundaRetiradaPendenteNaMesmaParticipacao() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        Participacao participacao = cenarioDePedidos(agora).participacao();
+        entidades.persist(new SolicitacaoRetirada(participacao, "Mudança de cidade", agora));
+        entidades.flush();
+
+        assertThatThrownBy(() -> {
+            entidades.persist(new SolicitacaoRetirada(participacao, null, agora));
+            entidades.flush();
+        }).isInstanceOf(PersistenceException.class);
+    }
+
+    /**
+     * Confere que o banco recusa uma recusa sem justificativa, mesmo gravada fora do domínio Java.
+     *
+     * @since 1.3
+     */
+    @Test
+    void bancoRecusaRecusadoSemJustificativa() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos cenario = cenarioDePedidos(agora);
+
+        assertThatThrownBy(() -> entidades.createNativeQuery("""
+                INSERT INTO solicitacoes_reagendamento
+                    (visita_agendada_id, data_hora_original, data_hora_desejada, situacao,
+                     solicitada_em, respondida_por_id, encerrada_em)
+                VALUES (:visita, :original, :desejada, 'RECUSADA', :agora, :coordenador, :agora)
+                """)
+                .setParameter("visita", cenario.visita().getId())
+                .setParameter("original", agora)
+                .setParameter("desejada", agora.plusSeconds(86_400))
+                .setParameter("agora", agora)
+                .setParameter("coordenador", cenario.coordenador().getId())
+                .executeUpdate()).isInstanceOf(PersistenceException.class);
+    }
+
+    /**
+     * Confere que os INSERTs usados nos testes negativos são válidos quando coerentes com a situação
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoAceitaRespostasCoerentesComASituacao() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+        Long coordenadorId = c.coordenador().getId();
+
+        entidades.createNativeQuery(insercaoReagendamento(c, agora, "APROVADA", coordenadorId,
+                agora.plusSeconds(60), agora.plusSeconds(172_800), null)).executeUpdate();
+        entidades.createNativeQuery(insercaoReagendamento(c, agora, "RECUSADA", coordenadorId,
+                agora.plusSeconds(60), null, "Agenda cheia")).executeUpdate();
+        entidades.createNativeQuery(insercaoReagendamento(c, agora, "CANCELADA", null,
+                agora.plusSeconds(60), null, null)).executeUpdate();
+        entidades.createNativeQuery(insercaoRetirada(c, agora, "CONCLUIDA", coordenadorId,
+                agora.plusSeconds(60))).executeUpdate();
+    }
+
+    /**
+     * Confere que o banco recusa uma aprovação sem a data aprovada
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaAprovadaSemDataAprovada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "APROVADA",
+                c.coordenador().getId(), agora.plusSeconds(60), null, null));
+    }
+
+    /**
+     * Confere que o banco recusa uma aprovação sem responsável
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaAprovadaSemResponsavel() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "APROVADA", null,
+                agora.plusSeconds(60), agora.plusSeconds(172_800), null));
+    }
+
+    /**
+     * Confere que o banco recusa um pedido pendente com dados de resposta
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaPendenteComDadosDeResposta() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "PENDENTE",
+                c.coordenador().getId(), agora.plusSeconds(60), null, null));
+    }
+
+    /**
+     * Confere que o banco recusa um pedido pendente com data aprovada
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaPendenteComDataAprovada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "PENDENTE", null,
+                null, agora.plusSeconds(172_800), null));
+    }
+
+    /**
+     * Confere que o banco recusa uma solicitação recusada com data aprovada
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaRecusadaComDataAprovada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "RECUSADA",
+                c.coordenador().getId(), agora.plusSeconds(60),
+                agora.plusSeconds(172_800), "Agenda cheia"));
+    }
+
+    /**
+     * Confere que o banco recusa uma solicitação cancelada com responsável
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaCanceladaComResponsavel() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "CANCELADA",
+                c.coordenador().getId(), agora.plusSeconds(60), null, null));
+    }
+
+    /**
+     * Confere que o banco recusa a situação CONCLUIDA em um pedido de reagendamento
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaSituacaoConcluidaNoReagendamento() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoReagendamento(c, agora, "CONCLUIDA",
+                c.coordenador().getId(), agora.plusSeconds(60), null, null));
+    }
+
+    /**
+     * Confere que o banco recusa uma retirada concluída sem responsável
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaConcluidaSemResponsavelNaRetirada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoRetirada(c, agora, "CONCLUIDA", null, agora.plusSeconds(60)));
+    }
+
+    /**
+     * Confere que o banco recusa uma retirada concluída sem data de encerramento
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaConcluidaSemEncerramentoNaRetirada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoRetirada(c, agora, "CONCLUIDA",
+                c.coordenador().getId(), null));
+    }
+
+    /**
+     * Confere que o banco recusa uma retirada pendente com dados de resposta
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaPendenteComRespostaNaRetirada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoRetirada(c, agora, "PENDENTE",
+                c.coordenador().getId(), agora.plusSeconds(60)));
+    }
+
+    /**
+     * Confere que o banco recusa a situação RECUSADA em uma solicitação de retirada
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaSituacaoRecusadaNaRetirada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoRetirada(c, agora, "RECUSADA",
+                c.coordenador().getId(), agora.plusSeconds(60)));
+    }
+
+    /**
+     * Confere que o banco recusa a situação APROVADA em uma solicitação de retirada
+     *
+     * @since 1.4
+     */
+    @Test
+    void bancoRecusaSituacaoAprovadaNaRetirada() {
+        Instant agora = Instant.parse("2026-11-25T12:00:00Z");
+        CenarioPedidos c = cenarioDePedidos(agora);
+
+        rejeitaPorCheck(insercaoRetirada(c, agora, "APROVADA",
+                c.coordenador().getId(), agora.plusSeconds(60)));
     }
 
     // <-------------------CONSULTAS DO PARTICIPANTE------------------->
@@ -608,5 +1019,66 @@ class AcompanhamentoPersistenciaIT {
         Usuario conta = new Usuario("Teste " + perfil, identificador + "@example.test", "hash-ficticio", perfil);
         entidades.persist(conta);
         return conta;
+    }
+
+    // monta estudo, participação e uma visita AGENDADA para os testes dos pedidos do participante
+    private CenarioPedidos cenarioDePedidos(Instant agora) {
+        Usuario participante = conta(PerfilUsuario.PARTICIPANTE);
+        Usuario coordenador = conta(PerfilUsuario.COORDENADOR);
+        Estudo estudo = new Estudo("Estudo de pedidos", "Objetivo fictício", coordenador,
+                LocalDate.of(2026, 11, 1), LocalDate.of(2026, 12, 31), 10);
+        estudo.atribuirCoordenador(coordenador);
+        entidades.persist(estudo);
+        Protocolo protocolo = new Protocolo(estudo, false);
+        entidades.persist(protocolo);
+        VisitaPrevista prevista = new VisitaPrevista(protocolo, "Visita inicial", null, 1);
+        entidades.persist(prevista);
+        Participacao participacao = new Participacao(estudo, participante, agora);
+        entidades.persist(participacao);
+        VisitaAgendada visita = new VisitaAgendada(participacao, prevista, agora.plus(2, ChronoUnit.DAYS));
+        entidades.persist(visita);
+        entidades.flush();
+        return new CenarioPedidos(coordenador, participacao, visita);
+    }
+
+    // monta o valor como literal SQL; nulo vira NULL e o resto vai entre aspas simples
+    private static String literal(Object valor) {
+        return valor == null ? "NULL" : "'" + valor.toString().replace("'", "''") + "'";
+    }
+
+    // INSERT direto em solicitacoes_reagendamento para exercitar os CHECKs sem passar pelo domínio
+    private String insercaoReagendamento(CenarioPedidos cenario, Instant agora, String situacao,
+            Long respondidaPorId, Instant encerradaEm, Instant dataHoraAprovada, String justificativa) {
+        return """
+                INSERT INTO solicitacoes_reagendamento
+                    (visita_agendada_id, data_hora_original, data_hora_desejada, situacao, solicitada_em,
+                     respondida_por_id, encerrada_em, data_hora_aprovada, justificativa_recusa)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """.formatted(literal(cenario.visita().getId()), literal(agora),
+                literal(agora.plusSeconds(86_400)), literal(situacao), literal(agora),
+                literal(respondidaPorId), literal(encerradaEm), literal(dataHoraAprovada),
+                literal(justificativa));
+    }
+
+    // INSERT direto em solicitacoes_retirada pelo mesmo motivo
+    private String insercaoRetirada(CenarioPedidos cenario, Instant agora, String situacao,
+            Long respondidaPorId, Instant encerradaEm) {
+        return """
+                INSERT INTO solicitacoes_retirada
+                    (participacao_id, situacao, solicitada_em, respondida_por_id, encerrada_em)
+                VALUES (%s, %s, %s, %s, %s)
+                """.formatted(literal(cenario.participacao().getId()), literal(situacao), literal(agora),
+                literal(respondidaPorId), literal(encerradaEm));
+    }
+
+    // confere que o banco recusou por CHECK, e não por SQL malformado
+    private void rejeitaPorCheck(String sql) {
+        assertThatThrownBy(() -> entidades.createNativeQuery(sql).executeUpdate())
+                .isInstanceOf(PersistenceException.class)
+                .rootCause()
+                .hasMessageContaining("violates check constraint");
+    }
+
+    private record CenarioPedidos(Usuario coordenador, Participacao participacao, VisitaAgendada visita) {
     }
 }
