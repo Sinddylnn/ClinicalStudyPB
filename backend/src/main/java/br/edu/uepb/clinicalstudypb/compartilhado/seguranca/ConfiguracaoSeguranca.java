@@ -378,6 +378,13 @@ public SecurityFilterChain securityFilterChain(
                     )
                     .hasRole("PARTICIPANTE")
 
+                    .requestMatchers(
+                            HttpMethod.POST,
+                            "/participante/visitas/*/confirmacao",
+                            "/participante/visitas/*/reagendamentos"
+                    )
+                    .hasRole("PARTICIPANTE")
+
                     // Tudo que não foi declarado acima fica bloqueado
                     .anyRequest()
                     .denyAll()
