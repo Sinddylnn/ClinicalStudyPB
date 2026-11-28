@@ -8,8 +8,8 @@ requisições. O **springdoc 3.1.1** lê os controllers e DTOs Java para gerar o
 Essa é uma entrega da task **3191: Publicar OpenAPI e documentar decisões e versões**.
 O contrato cobre autenticação, gestão de usuários e estudos, recrutamento,
 configuração de protocolos e acompanhamento de participantes, incluindo visitas,
-resultados, retirada, histórico e consultas do aplicativo. As operações descritas
-correspondem aos controllers implementados.
+resultados, retirada, histórico, consultas do aplicativo e painel de
+indicadores. As operações descritas correspondem aos controllers implementados.
 
 ## Abrir a documentação
 
@@ -235,6 +235,7 @@ códigos e o fluxo por `curl` estão em [autenticação](autenticacao.md).
 | `usuarios/api/AutenticacaoController.java` e `UsuarioController.java` | Descrevem autenticação e gestão de usuários, resultados e requisitos de acesso |
 | `estudos/api/EstudoController.java` | Descreve cadastro, listagem, opções e atribuição de coordenadores |
 | `estudos/api/VisitaAgendadaController.java`, `ResultadoAtividadeController.java`, `ParticipacaoConsultaController.java`, `RetiradaParticipanteController.java`, `HistoricoParticipacaoController.java` e `ParticipanteConsultaController.java` | Descrevem visitas, resultados, participações, retirada, histórico e consultas do participante |
+| `estudos/api/IndicadoresPainelController.java` | Descreve a consulta dos indicadores do painel de um estudo (RF21) |
 | DTOs em `usuarios/api`, `estudos/api` e `compartilhado/erro/ErroApi.java` | Explicam os campos que entram e saem da API |
 | `compartilhado/seguranca/ConfiguracaoSeguranca.java` | Permite consultar os arquivos da documentação sem liberar as operações protegidas |
 | `application.properties` | Configura a página Swagger e a geração das respostas documentadas |
@@ -397,3 +398,19 @@ e os campos de responsáveis e motivos das correções. Os testes de API também
 verificam as permissões e a resposta JSON do endpoint. A resposta de
 `POST .../correcoes` utiliza `CorrecaoVisitaResposta` e inclui os mesmos campos
 `motivoAnterior`, `motivoNovo` e `corrigidaPorNome`.
+
+## Painel de indicadores, RF21
+
+A consulta dos indicadores (`GET /estudos/{estudoId}/indicadores`)
+foi implementada no backend na task #4061.
+
+A operação retorna as contagens de candidatos, total histórico de
+incluídos, participantes ativos e retirados, visitas realizadas e
+pendentes. Visitas com situação `AGENDADA` são consideradas pendentes,
+mesmo quando possuem data passada.
+
+A consulta é permitida ao pesquisador responsável e ao coordenador
+vinculado ao estudo. Exige sessão autenticada, mas não exige CSRF.
+
+As regras de contagem, o exemplo JSON e os códigos de erro estão em
+[Painel de indicadores](painel-de-indicadores.md).

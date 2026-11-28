@@ -19,4 +19,13 @@ public interface CandidatoRepository extends JpaRepository<Candidato, Long> {
 
     // Verifica se o e-mail já foi cadastrado no mesmo estudo.
     boolean existsByEstudoIdAndEmailIgnoreCase(Long estudoId, String email);
+
+    /**
+     * Conta os candidatos cadastrados em um estudo.
+     *
+     * @param estudoId identificador do estudo
+     * @return quantidade de candidatos cadastrados
+     * @since 1.1
+     */
+    long countByEstudoId(Long estudoId);
 }

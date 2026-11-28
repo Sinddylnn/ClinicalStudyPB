@@ -302,6 +302,13 @@ public SecurityFilterChain securityFilterChain(
                     )
                     .hasAnyRole("PESQUISADOR", "COORDENADOR")
 
+                    // Painel de indicadores (RF21)
+                    .requestMatchers(
+                            HttpMethod.GET,
+                            "/estudos/*/indicadores"
+                    )
+                    .hasAnyRole("PESQUISADOR", "COORDENADOR")
+
                     // Consulta de visita agendada
                     .requestMatchers(
                             HttpMethod.GET,
