@@ -150,7 +150,7 @@ public class VisitaAgendadaService {
                         "Visita prevista não encontrada."));
 
         // Confere a data do agendamento
-        validarData(estudo, entrada.dataHora());
+        RegraDataVisita.validar(estudo, entrada.dataHora());
 
         // Impede agendamento pendente duplicado
         boolean duplicada = visitasAgendadas
@@ -239,7 +239,7 @@ public class VisitaAgendadaService {
                 "Apenas visitas agendadas podem ser reagendadas.");
         }
 
-        validarData(estudo, entrada.dataHora());
+        RegraDataVisita.validar(estudo, entrada.dataHora());
 
         visita.reagendar(entrada.dataHora());
 
@@ -587,32 +587,4 @@ public class VisitaAgendadaService {
 
 
     // <-------VALIDACAO DA DATA------->
-    /**
-     * Verifica se a data está dentro do período permitido,
-     * considerando o fuso horário de Recife.
-     *
-     * @param estudo estudo com o período permitido
-     * @param dataHora data e hora da visita
-     * @throws RegraNegocioException se a data for nula ou inválida
-     * @since 1.0
-     */
-    private void validarData(Estudo estudo, Instant dataHora) {
-
-        if (dataHora == null) {
-            throw new RegraNegocioException(
-                    "DATA_VISITA_INVALIDA",
-                    "Informe a data da visita.");
-        }
-
-        LocalDate diaVisita = dataHora.atZone(ZONA).toLocalDate();
-        LocalDate hoje = LocalDate.now(ZONA);
-
-        if (diaVisita.isBefore(hoje)
-                || diaVisita.isBefore(estudo.getDataInicio())
-                || diaVisita.isAfter(estudo.getDataFim())) {
-            throw new RegraNegocioException(
-                    "DATA_VISITA_INVALIDA",
-                    "A data da visita está fora do período permitido.");
-        }
-    }
 }
