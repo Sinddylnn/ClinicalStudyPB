@@ -265,6 +265,55 @@ class VisitaParticipanteServiceTest {
                 org.mockito.ArgumentMatchers.any());
     }
 
+    @Test
+    void datasInvalidasRejeitamNoPedidoAntesDaChecagemDePendente() {
+        prepararVinculos();
+
+        assertCodigo(() -> servico.pedirReagendamento(
+                        40L,
+                        new PedidoReagendamentoEntrada(
+                                LocalDate.now(ZONA).minusDays(1)
+                                        .atStartOfDay(ZONA).toInstant(),
+                                null),
+                        participante),
+                "DATA_VISITA_INVALIDA");
+        assertCodigo(() -> servico.pedirReagendamento(
+                        40L,
+                        new PedidoReagendamentoEntrada(null, null),
+                        participante),
+                "DATA_VISITA_INVALIDA");
+
+        verify(solicitacoesReagendamento, never()).existsByVisitaAgendadaIdAndSituacao(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any());
+        verify(solicitacoesReagendamento, never()).saveAndFlush(
+                org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void hojeEOUltimoDiaDoEstudoAceitamPedido() {
+        prepararVinculos();
+        when(solicitacoesReagendamento.saveAndFlush(
+                org.mockito.ArgumentMatchers.any(SolicitacaoReagendamento.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
+
+        Instant hoje = LocalDate.now(ZONA).atTime(14, 0).atZone(ZONA).toInstant();
+        servico.pedirReagendamento(
+                40L,
+                new PedidoReagendamentoEntrada(hoje, null),
+                participante);
+
+        Instant ultimoDia = estudo.getDataFim().atTime(22, 0).atZone(ZONA).toInstant();
+        servico.pedirReagendamento(
+                40L,
+                new PedidoReagendamentoEntrada(ultimoDia, "x".repeat(500)),
+                participante);
+
+        verify(solicitacoesReagendamento,
+                org.mockito.Mockito.times(2)).saveAndFlush(
+                        org.mockito.ArgumentMatchers.any(SolicitacaoReagendamento.class));
+    }
+
     private void prepararVinculos() {
         when(visitasAgendadas.buscarEstudoIdDaVisitaDoParticipante(40L, 5L))
                 .thenReturn(Optional.of(10L));
