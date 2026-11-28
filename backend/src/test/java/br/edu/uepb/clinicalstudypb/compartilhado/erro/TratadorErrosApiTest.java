@@ -3,6 +3,7 @@ package br.edu.uepb.clinicalstudypb.compartilhado.erro;
 import br.edu.uepb.clinicalstudypb.estudos.repository.EstudoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ProtocoloRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ResultadoAtividadeRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.SolicitacaoReagendamentoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.CriterioRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaPrevistaRepository;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.hibernate.exception.ConstraintViolationException;
 import br.edu.uepb.clinicalstudypb.estudos.repository.AtividadePrevistaRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.CorrecaoVisitaRepository;
 import br.edu.uepb.clinicalstudypb.recrutamento.repository.CandidatoRepository;
@@ -86,6 +89,8 @@ class TratadorErrosApiTest {
     private CorrecaoVisitaRepository correcaoVisitaRepository;
     @MockitoBean
     private ResultadoAtividadeRepository resultadoAtividadeRepository;
+    @MockitoBean
+    private SolicitacaoReagendamentoRepository solicitacaoReagendamentoRepository;
 
     @Autowired
     private MockMvc mockMvc;
@@ -209,6 +214,35 @@ class TratadorErrosApiTest {
                 .andExpect(jsonPath("$.trace").doesNotExist());
     }
 
+    @Test
+    void reagendamentoPendenteEmConcorrenciaRecebe409() throws Exception {
+        mockMvc.perform(get("/__teste/integridade/reagendamento"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("SOLICITACAO_JA_PENDENTE"));
+    }
+
+    @Test
+    void retiradaPendenteEmConcorrenciaRecebe409() throws Exception {
+        mockMvc.perform(get("/__teste/integridade/retirada"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("SOLICITACAO_JA_PENDENTE"));
+    }
+
+    @Test
+    void emailDuplicadoContinua409() throws Exception {
+        mockMvc.perform(get("/__teste/integridade/email"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("EMAIL_JA_CADASTRADO"));
+    }
+
+    @Test
+    void restricaoDesconhecidaContinua500() throws Exception {
+        mockMvc.perform(get("/__teste/integridade/desconhecida"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.codigo").value("ERRO_INTERNO"))
+                .andExpect(jsonPath("$.mensagem").value("Ocorreu um erro interno. Tente novamente."));
+    }
+
     // <-------------------CENÁRIOS EXCLUSIVOS DOS TESTES------------------->
     /**
      * Disponibiliza rotas exclusivas para provocar os cenários dos testes.
@@ -256,6 +290,32 @@ class TratadorErrosApiTest {
         @GetMapping("/__teste/falha")
         void provocarFalha() {
             throw new IllegalStateException("Detalhe interno que não deve chegar ao cliente.");
+        }
+
+        @GetMapping("/__teste/integridade/reagendamento")
+        void provocarReagendamentoPendente() {
+            throw new DataIntegrityViolationException("x",
+                    new ConstraintViolationException(
+                            "x", null, "uk_solicitacoes_reagendamento_pendente"));
+        }
+
+        @GetMapping("/__teste/integridade/retirada")
+        void provocarRetiradaPendente() {
+            throw new DataIntegrityViolationException("x",
+                    new ConstraintViolationException(
+                            "x", null, "uk_solicitacoes_retirada_pendente"));
+        }
+
+        @GetMapping("/__teste/integridade/email")
+        void provocarEmailDuplicado() {
+            throw new DataIntegrityViolationException("x",
+                    new ConstraintViolationException("x", null, "uk_usuarios_email"));
+        }
+
+        @GetMapping("/__teste/integridade/desconhecida")
+        void provocarRestricaoDesconhecida() {
+            throw new DataIntegrityViolationException("x",
+                    new ConstraintViolationException("x", null, "restricao_desconhecida"));
         }
     }
 
