@@ -4,6 +4,7 @@ import br.edu.uepb.clinicalstudypb.estudos.SituacaoSolicitacao;
 import br.edu.uepb.clinicalstudypb.estudos.SolicitacaoReagendamento;
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,6 +21,16 @@ import org.springframework.data.repository.query.Param;
  */
 public interface SolicitacaoReagendamentoRepository
         extends JpaRepository<SolicitacaoReagendamento, Long> {
+
+    /**
+     * Lista os pedidos das visitas informadas, do mais recente para o mais antigo.
+     *
+     * @param visitaIds identificadores das visitas
+     * @return pedidos das visitas, com todos os estados encerrados
+     * @since 1.0
+     */
+    List<SolicitacaoReagendamento> findByVisitaAgendadaIdInOrderBySolicitadaEmDescIdDesc(
+            Collection<Long> visitaIds);
 
     /**
      * Confere se a visita já tem um pedido na situação informada (use PENDENTE).

@@ -18,6 +18,7 @@ import br.edu.uepb.clinicalstudypb.estudos.SituacaoVisita;
 import br.edu.uepb.clinicalstudypb.estudos.VisitaAgendada;
 import br.edu.uepb.clinicalstudypb.estudos.VisitaPrevista;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.SolicitacaoReagendamentoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
@@ -54,6 +55,7 @@ class ParticipanteConsultaServiceTest {
 
     @Mock private ParticipacaoRepository participacoes;
     @Mock private VisitaAgendadaRepository visitasAgendadas;
+    @Mock private SolicitacaoReagendamentoRepository solicitacoesReagendamento;
 
     @InjectMocks private ParticipanteConsultaService servico;
 

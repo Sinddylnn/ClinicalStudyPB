@@ -16,6 +16,7 @@ import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
 import br.edu.uepb.clinicalstudypb.estudos.EstadoEstudo;
 import br.edu.uepb.clinicalstudypb.estudos.SituacaoParticipacao;
 import br.edu.uepb.clinicalstudypb.estudos.SituacaoVisita;
+import br.edu.uepb.clinicalstudypb.estudos.SituacaoSolicitacao;
 import br.edu.uepb.clinicalstudypb.estudos.service.ParticipanteConsultaService;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
@@ -89,10 +90,19 @@ class ParticipanteConsultaControllerTest {
 
     @Test
     void participanteConsultaProximasVisitasSemExporMotivo() throws Exception {
+        Instant confirmada = Instant.parse("2026-11-20T12:30:00Z");
+        SolicitacaoReagendamentoParticipanteResposta pedido =
+                new SolicitacaoReagendamentoParticipanteResposta(
+                        601L, SituacaoSolicitacao.PENDENTE,
+                        Instant.parse("2026-11-20T13:30:00Z"),
+                        Instant.parse("2026-11-22T13:30:00Z"),
+                        "Consulta", Instant.parse("2026-11-20T12:30:00Z"),
+                        null, null, null);
         when(consultas.listarProximasVisitas(eq(null), any(UsuarioAutenticado.class)))
                 .thenReturn(List.of(new ProximaVisitaParticipanteResposta(
                         501L, 30L, "Estudo", "Visita inicial",
-                        Instant.parse("2026-11-20T13:30:00Z"))));
+                        Instant.parse("2026-11-20T13:30:00Z"),
+                        confirmada, List.of(pedido))));
 
         mvc.perform(get("/participante/visitas/proximas")
                         .with(user(new UsuarioAutenticado(participante))))
@@ -101,7 +111,15 @@ class ParticipanteConsultaControllerTest {
                 .andExpect(jsonPath("$[0].nomeVisita").value("Visita inicial"))
                 .andExpect(jsonPath("$[0].dataHora").value("2026-11-20T13:30:00Z"))
                 .andExpect(jsonPath("$[0].motivo").doesNotExist())
-                .andExpect(jsonPath("$[0].resultados").doesNotExist());
+                .andExpect(jsonPath("$[0].resultados").doesNotExist())
+                .andExpect(jsonPath("$[0].presencaConfirmadaEm").value(
+                        "2026-11-20T12:30:00Z"))
+                .andExpect(jsonPath("$[0].solicitacoesReagendamento[0].situacao")
+                        .value("PENDENTE"))
+                .andExpect(jsonPath("$[0].solicitacoesReagendamento[0].respondidaPor")
+                        .doesNotExist())
+                .andExpect(jsonPath("$[0].solicitacoesReagendamento[0].respondidaPorId")
+                        .doesNotExist());
     }
 
     @Test
@@ -109,7 +127,8 @@ class ParticipanteConsultaControllerTest {
         when(consultas.listarHistorico(eq(30L), any(UsuarioAutenticado.class)))
                 .thenReturn(List.of(new HistoricoVisitaParticipanteResposta(
                         499L, 30L, "Estudo", "Visita anterior",
-                        Instant.parse("2026-11-10T13:30:00Z"), SituacaoVisita.AUSENTE)));
+                        Instant.parse("2026-11-10T13:30:00Z"),
+                        SituacaoVisita.AUSENTE, null, List.of())));
 
         mvc.perform(get("/participante/visitas/historico").param("estudoId", "30")
                         .with(user(new UsuarioAutenticado(participante))))
