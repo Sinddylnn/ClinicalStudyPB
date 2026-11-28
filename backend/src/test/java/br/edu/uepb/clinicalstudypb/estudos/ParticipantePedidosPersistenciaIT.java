@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import br.edu.uepb.clinicalstudypb.compartilhado.erro.ConflitoException;
+import br.edu.uepb.clinicalstudypb.compartilhado.erro.RegraNegocioException;
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
 import br.edu.uepb.clinicalstudypb.estudos.api.PedidoReagendamentoEntrada;
 import br.edu.uepb.clinicalstudypb.estudos.repository.SolicitacaoReagendamentoRepository;
@@ -12,7 +13,6 @@ import br.edu.uepb.clinicalstudypb.estudos.service.VisitaParticipanteService;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import br.edu.uepb.clinicalstudypb.usuarios.Usuario;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -168,40 +169,41 @@ class ParticipantePedidosPersistenciaIT {
         assertThatThrownBy(() -> visitasParticipante.confirmarPresenca(
                 cenario.visita().getId(),
                 new UsuarioAutenticado(cenario.participante())))
-                .isInstanceOfSatisfying(
-                        RuntimeException.class,
-                        erro -> assertThat(erro).isNotNull());
+                .isInstanceOfSatisfying(RegraNegocioException.class,
+                        erro -> assertThat(erro.getCodigo())
+                                .isEqualTo("PARTICIPACAO_INVALIDA"));
     }
 
     @Test
     void indiceParcialRejeitaSegundoPedidoPendente() {
         Cenario cenario = criarCenario();
-        SolicitacaoReagendamento primeiro = new SolicitacaoReagendamento(
+        reagendamentos.saveAndFlush(new SolicitacaoReagendamento(
                 cenario.visita(),
                 cenario.visita().getDataHora().plusSeconds(3600),
                 null,
-                Instant.now());
-        entidades.persist(primeiro);
-        entidades.flush();
+                Instant.now()));
 
         SolicitacaoReagendamento segundo = new SolicitacaoReagendamento(
                 cenario.visita(),
                 cenario.visita().getDataHora().plusSeconds(7200),
                 null,
                 Instant.now());
-        entidades.persist(segundo);
 
-        assertThatThrownBy(entidades::flush)
-                .isInstanceOf(PersistenceException.class)
-                .hasRootCauseInstanceOf(ConstraintViolationException.class)
-                .satisfies(erro -> {
-                    Throwable causa = erro;
-                    while (causa.getCause() != null) {
-                        causa = causa.getCause();
-                    }
-                    assertThat(((ConstraintViolationException) causa).getConstraintName())
-                            .isEqualTo("uk_solicitacoes_reagendamento_pendente");
-                });
+        // O INSERT ocorre dentro do saveAndFlush (IDENTITY), por isso a chamada fica no lambda
+        assertThatThrownBy(() -> reagendamentos.saveAndFlush(segundo))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .satisfies(erro -> assertThat(nomeDaRestricao(erro))
+                        .isEqualTo("uk_solicitacoes_reagendamento_pendente"));
+    }
+
+    // procura na cadeia a violação do Hibernate; a causa raiz é o erro do driver, não ela
+    private static String nomeDaRestricao(Throwable erro) {
+        for (Throwable causa = erro; causa != null; causa = causa.getCause()) {
+            if (causa instanceof ConstraintViolationException violacao) {
+                return violacao.getConstraintName();
+            }
+        }
+        return null;
     }
 
     private Cenario criarCenario() {
