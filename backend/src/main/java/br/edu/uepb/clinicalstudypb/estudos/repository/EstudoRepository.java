@@ -20,6 +20,20 @@ import org.springframework.data.repository.query.Param;
 public interface EstudoRepository extends JpaRepository<Estudo, Long> {
 
     /**
+     * Bloqueia um estudo pelas operações do participante.
+     *
+     * <p>O mesmo bloqueio pessimista é usado pelo RF07 e pelas tarefas RF12 a RF16,
+     * evitando leitura do estado antigo durante operações coordenadas.</p>
+     *
+     * @param id identificador do estudo
+     * @return estudo com bloqueio de escrita, ou resultado vazio
+     * @since 1.0
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select e from Estudo e where e.id = :id")
+    Optional<Estudo> bloquearPorId(@Param("id") Long id);
+
+    /**
      * Lista os estudos do pesquisador pela ordem decrescente dos IDs de cadastro.
      *
      * @param responsavelId identificador do pesquisador responsável

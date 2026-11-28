@@ -5,6 +5,7 @@ import br.edu.uepb.clinicalstudypb.estudos.VisitaAgendada;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,22 @@ import org.springframework.data.repository.query.Param;
  * @since 13/11/2026
  */
 public interface VisitaAgendadaRepository extends JpaRepository<VisitaAgendada, Long> {
+
+    /**
+     * Identifica o estudo da visita quando ela pertence à participação da conta.
+     *
+     * @param visitaId identificador da visita
+     * @param participanteId identificador da conta participante
+     * @return identificador do estudo, ou resultado vazio
+     * @since 1.0
+     */
+    @Query("""
+            SELECT p.estudo.id FROM VisitaAgendada v JOIN v.participacao p
+            WHERE v.id = :visitaId AND p.participante.id = :participanteId
+            """)
+    Optional<Long> buscarEstudoIdDaVisitaDoParticipante(
+            @Param("visitaId") Long visitaId,
+            @Param("participanteId") Long participanteId);
 
     /**
     * Verifica se uma visita prevista já possui agendamento

@@ -3,17 +3,23 @@ package br.edu.uepb.clinicalstudypb.estudos.service;
 import br.edu.uepb.clinicalstudypb.compartilhado.seguranca.UsuarioAutenticado;
 import br.edu.uepb.clinicalstudypb.estudos.Participacao;
 import br.edu.uepb.clinicalstudypb.estudos.SituacaoVisita;
+import br.edu.uepb.clinicalstudypb.estudos.SolicitacaoReagendamento;
+import br.edu.uepb.clinicalstudypb.estudos.VisitaAgendada;
 import br.edu.uepb.clinicalstudypb.estudos.api.HistoricoVisitaParticipanteResposta;
 import br.edu.uepb.clinicalstudypb.estudos.api.ParticipanteEstudoResposta;
 import br.edu.uepb.clinicalstudypb.estudos.api.ProximaVisitaParticipanteResposta;
+import br.edu.uepb.clinicalstudypb.estudos.api.SolicitacaoReagendamentoParticipanteResposta;
 import br.edu.uepb.clinicalstudypb.estudos.repository.ParticipacaoRepository;
+import br.edu.uepb.clinicalstudypb.estudos.repository.SolicitacaoReagendamentoRepository;
 import br.edu.uepb.clinicalstudypb.estudos.repository.VisitaAgendadaRepository;
 import br.edu.uepb.clinicalstudypb.usuarios.PerfilUsuario;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -42,18 +48,22 @@ public class ParticipanteConsultaService {
 
     private final ParticipacaoRepository participacoes;
     private final VisitaAgendadaRepository visitasAgendadas;
+    private final SolicitacaoReagendamentoRepository solicitacoesReagendamento;
 
     /**
      * Recebe os repositórios usados nas consultas.
      *
      * @param participacoes repositório de participações
      * @param visitasAgendadas repositório de visitas agendadas
+     * @param solicitacoesReagendamento repositório de pedidos de reagendamento
      */
     public ParticipanteConsultaService(
             ParticipacaoRepository participacoes,
-            VisitaAgendadaRepository visitasAgendadas) {
+            VisitaAgendadaRepository visitasAgendadas,
+            SolicitacaoReagendamentoRepository solicitacoesReagendamento) {
         this.participacoes = participacoes;
         this.visitasAgendadas = visitasAgendadas;
+        this.solicitacoesReagendamento = solicitacoesReagendamento;
     }
 
     // <-------------------ESTUDOS DO PARTICIPANTE (RF17)------------------->
@@ -96,10 +106,18 @@ public class ParticipanteConsultaService {
         }
 
         Instant inicioHoje = LocalDate.now(ZONA).atStartOfDay(ZONA).toInstant();
-        return visitasAgendadas
-                .buscarProximasDasParticipacoes(ids, SituacaoVisita.AGENDADA, inicioHoje)
-                .stream()
-                .map(ProximaVisitaParticipanteResposta::de)
+        List<VisitaAgendada> visitas = visitasAgendadas
+                .buscarProximasDasParticipacoes(
+                        ids, SituacaoVisita.AGENDADA, inicioHoje);
+        Map<Long, List<SolicitacaoReagendamentoParticipanteResposta>> pedidos =
+                agruparPedidos(visitas);
+
+        return visitas.stream()
+                .map(visita -> ProximaVisitaParticipanteResposta.de(
+                        visita,
+                        pedidos.getOrDefault(
+                                visita.getId(),
+                                List.of())))
                 .toList();
     }
 
@@ -123,10 +141,17 @@ public class ParticipanteConsultaService {
             return List.of();
         }
 
-        return visitasAgendadas
-                .buscarHistoricoDasParticipacoes(ids, SITUACOES_HISTORICO)
-                .stream()
-                .map(HistoricoVisitaParticipanteResposta::de)
+        List<VisitaAgendada> visitas = visitasAgendadas
+                .buscarHistoricoDasParticipacoes(ids, SITUACOES_HISTORICO);
+        Map<Long, List<SolicitacaoReagendamentoParticipanteResposta>> pedidos =
+                agruparPedidos(visitas);
+
+        return visitas.stream()
+                .map(visita -> HistoricoVisitaParticipanteResposta.de(
+                        visita,
+                        pedidos.getOrDefault(
+                                visita.getId(),
+                                List.of())))
                 .toList();
     }
 
@@ -156,6 +181,25 @@ public class ParticipanteConsultaService {
         }
 
         return minhas.stream().map(Participacao::getId).toList();
+    }
+
+    private Map<Long, List<SolicitacaoReagendamentoParticipanteResposta>>
+            agruparPedidos(List<VisitaAgendada> visitas) {
+        if (visitas.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Long> visitaIds = visitas.stream()
+                .map(VisitaAgendada::getId)
+                .toList();
+        return solicitacoesReagendamento
+                .findByVisitaAgendadaIdInOrderBySolicitadaEmDescIdDesc(visitaIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        pedido -> pedido.getVisitaAgendada().getId(),
+                        Collectors.mapping(
+                                SolicitacaoReagendamentoParticipanteResposta::de,
+                                Collectors.toList())));
     }
 
     /**

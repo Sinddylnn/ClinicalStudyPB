@@ -1,6 +1,6 @@
-# Contrato de acompanhamento de participantes (RF12 a RF18)
+# Contrato de acompanhamento de participantes (RF12 a RF19)
 
-> **Estado em 20/11/2026:** agendamento e reagendamento (RF12, task #3964), registro e correção de visitas (RF13, task #3965), resultados de atividades (RF14, task #3958), retirada de participante (RF16, task #3957) e consultas do aplicativo (RF17 e RF18, task #3951) implementadas. A consulta de histórico completo de gestão (RF15, task #3959) está implementada no backend. Também foram adicionadas as consultas individuais de visita agendada e de resultados da visita para a tela web de acompanhamento.
+> **Estado em 28/11/2026:** agendamento e reagendamento (RF12, task #3964), registro e correção de visitas (RF13, task #3965), resultados de atividades (RF14, task #3958), retirada de participante (RF16, task #3957), consultas do aplicativo (RF17 e RF18, task #3951) e ações do participante para confirmar presença e pedir reagendamento (RF19, task #4056) implementadas. A consulta de histórico completo de gestão (RF15, task #3959) está implementada no backend. Também foram adicionadas as consultas individuais de visita agendada e de resultados da visita para a tela web de acompanhamento.
 
 Este documento reúne os contratos de acompanhamento dos RF12 a RF18. A web e o aplicativo utilizam a mesma API e os mesmos dados persistidos.
 
@@ -39,6 +39,8 @@ As respostas de erro usam o formato já adotado pelo projeto:
 | Consultar histórico completo | Pesquisador responsável ou coordenador vinculado |
 | Listar as participações do estudo | Pesquisador responsável ou coordenador vinculado, somente leitura |
 | Consultar estudos, próximas visitas e comparecimento no app | Participante autenticado, apenas para seus próprios dados, implementado |
+| Confirmar presença e pedir reagendamento no app | Participante autenticado, apenas nas próprias participações |
+| Confirmar presença e pedir reagendamento no app | Coordenador, pesquisador ou administrador, não permitido |
 | Acessar estas operações | Administrador, não permitido |
 
 
@@ -555,6 +557,69 @@ Nas duas consultas de visitas, `estudoId` é um parâmetro de consulta opcional 
 
 Uma visita `AGENDADA` cuja data já passou continua pendente: não aparece nas próximas nem no histórico até o coordenador registrá-la.
 
+### Confirmar presença e pedir reagendamento (RF19)
+
+`POST /participante/visitas/{visitaId}/confirmacao`
+
+Perfil permitido: `PARTICIPANTE`, somente para uma visita da própria participação. Exige CSRF no cabeçalho `X-CSRF-TOKEN`. O corpo da requisição fica vazio. A confirmação não registra a visita como realizada nem altera sua situação ou data.
+
+Resposta `200`:
+
+```json
+{
+  "visitaAgendadaId": 501,
+  "estudoId": 30,
+  "tituloEstudo": "Estudo de acompanhamento",
+  "nomeVisita": "Visita inicial",
+  "dataHora": "2026-11-29T13:30:00Z",
+  "situacao": "AGENDADA",
+  "presencaConfirmadaEm": "2026-11-28T13:30:00Z"
+}
+```
+
+`POST /participante/visitas/{visitaId}/reagendamentos`
+
+Perfil permitido: `PARTICIPANTE`, somente para uma visita da própria participação. Exige CSRF no cabeçalho `X-CSRF-TOKEN`.
+
+Requisição:
+
+```json
+{
+  "dataHoraDesejada": "2026-12-03T14:00:00-03:00",
+  "motivo": "Consulta médica no mesmo horário"
+}
+```
+
+Resposta `201`:
+
+```json
+{
+  "id": 601,
+  "situacao": "PENDENTE",
+  "dataHoraOriginal": "2026-11-29T13:30:00Z",
+  "dataHoraDesejada": "2026-12-03T17:00:00Z",
+  "motivo": "Consulta médica no mesmo horário",
+  "solicitadaEm": "2026-11-28T13:30:00Z",
+  "dataHoraAprovada": null,
+  "justificativaRecusa": null,
+  "encerradaEm": null
+}
+```
+
+O pedido não altera `dataHora` nem `presencaConfirmadaEm` da visita. A data desejada segue a regra do RF12 no fuso `America/Recife`, inclusive hoje e os limites `dataInicio` e `dataFim` do estudo. O motivo é opcional e pode ter até 500 caracteres depois da retirada dos espaços das pontas.
+
+| HTTP | Código | Situação |
+|---|---|---|
+| `400` | `PARTICIPACAO_INVALIDA` | Participação retirada |
+| `400` | `ESTADO_ESTUDO_INVALIDO` | Estudo fora de recrutamento ou execução |
+| `400` | `TRANSICAO_VISITA_INVALIDA` | Visita não está `AGENDADA` ou já passou |
+| `400` | `DATA_VISITA_INVALIDA` | Data desejada anterior a hoje ou fora do período do estudo |
+| `400` | `VALIDACAO_INVALIDA` | Data desejada ausente ou motivo com mais de 500 caracteres |
+| `404` | `RECURSO_NAO_ENCONTRADO` | Visita fora da conta autenticada |
+| `409` | `SOLICITACAO_JA_PENDENTE` | Já existe pedido pendente para a visita |
+
+Nas consultas `GET /participante/visitas/proximas` e `GET /participante/visitas/historico`, cada visita inclui `presencaConfirmadaEm` e `solicitacoesReagendamento`. Os pedidos são ordenados do mais recente para o mais antigo e incluem pedidos encerrados. A lista fica vazia quando não há pedidos. As respostas nunca incluem `respondidaPor` ou `respondidaPorId`.
+
 O app não recebe resultados, motivos, justificativas, correções nem dados de quem registrou. Participante retirado continua vendo o estudo com `situacaoParticipacao` igual a `RETIRADA`; suas visitas pendentes foram canceladas na retirada e aparecem no histórico como `CANCELADA`.
 
 | HTTP | Situação |
@@ -590,7 +655,9 @@ Exemplo de `GET /participante/visitas/proximas`:
     "estudoId": 30,
     "tituloEstudo": "Estudo de acompanhamento",
     "nomeVisita": "Visita inicial",
-    "dataHora": "2027-02-20T13:30:00Z"
+    "dataHora": "2027-02-20T13:30:00Z",
+    "presencaConfirmadaEm": "2026-11-28T13:30:00Z",
+    "solicitacoesReagendamento": []
   }
 ]
 ```
@@ -605,7 +672,9 @@ Exemplo de `GET /participante/visitas/historico`:
     "tituloEstudo": "Estudo de acompanhamento",
     "nomeVisita": "Visita anterior",
     "dataHora": "2026-11-10T13:30:00Z",
-    "situacao": "REALIZADA"
+    "situacao": "REALIZADA",
+    "presencaConfirmadaEm": "2026-11-09T13:30:00Z",
+    "solicitacoesReagendamento": []
   }
 ]
 ```
@@ -630,6 +699,7 @@ Os códigos das operações de RF12 a RF18 seguem os cenários de teste e a mode
 | `404` | `RECURSO_NAO_ENCONTRADO` | Estudo, participação, visita ou resultado não existe ou está fora do vínculo autorizado |
 | `409` | `VISITA_JA_AGENDADA` | Já existe visita agendada para a mesma participação e visita prevista |
 | `409` | `RESULTADO_JA_REGISTRADO` | Já existe resultado para a mesma visita e atividade |
+| `409` | `SOLICITACAO_JA_PENDENTE` | Já existe pedido pendente de reagendamento ou retirada |
 
 
 ## Conferência ao concluir os requisitos restantes
@@ -643,3 +713,5 @@ Para novas rotas e ajustes de contrato:
 5. Atualizar [OpenAPI](openapi.md) e os testes do contrato, quando necessário.
 
 As rotas de RF12 a RF18 estão implementadas no backend, incluindo o histórico completo de gestão (RF15, task #3959) e as consultas individuais de visita e de resultados. As anotações OpenAPI das duas novas operações estão no código; a conferência do documento gerado em `/v3/api-docs` e a integração das telas web são etapas independentes.
+
+A revisão consolidada do contrato RF19 ao RF22 será feita na task #4059. Este documento registra apenas o contrato implementado do RF19 nesta task.

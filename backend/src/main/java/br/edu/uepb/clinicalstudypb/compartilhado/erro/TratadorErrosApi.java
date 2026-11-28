@@ -1,6 +1,7 @@
 package br.edu.uepb.clinicalstudypb.compartilhado.erro;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -38,6 +39,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class TratadorErrosApi extends ResponseEntityExceptionHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(TratadorErrosApi.class);
+    private static final Set<String> RESTRICOES_PEDIDO_PENDENTE = Set.of(
+            "uk_solicitacoes_reagendamento_pendente",
+            "uk_solicitacoes_retirada_pendente");
 
     // <-------------------VALIDAÇÃO DOS CAMPOS DO DTO------------------->
     /**
@@ -110,10 +114,16 @@ public class TratadorErrosApi extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErroApi> tratarIntegridade(DataIntegrityViolationException exception) {
         // A consulta prévia não impede duas transações de tentarem o mesmo e-mail
         for (Throwable causa = exception; causa != null; causa = causa.getCause()) {
-            if (causa instanceof ConstraintViolationException violacao
-                    && "uk_usuarios_email".equals(violacao.getConstraintName())) {
-                return tratarConflito(new ConflitoException(
-                        "EMAIL_JA_CADASTRADO", "Já existe um usuário cadastrado com este e-mail."));
+            if (causa instanceof ConstraintViolationException violacao) {
+                String nome = violacao.getConstraintName();
+                if ("uk_usuarios_email".equals(nome)) {
+                    return tratarConflito(new ConflitoException(
+                            "EMAIL_JA_CADASTRADO", "Já existe um usuário cadastrado com este e-mail."));
+                }
+                if (RESTRICOES_PEDIDO_PENDENTE.contains(nome)) {
+                    return tratarConflito(new ConflitoException(
+                            "SOLICITACAO_JA_PENDENTE", "Já existe um pedido pendente."));
+                }
             }
         }
         return tratarErroInesperado(exception);
